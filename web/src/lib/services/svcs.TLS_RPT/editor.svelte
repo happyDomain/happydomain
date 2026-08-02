@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { untrack } from "svelte";
+
     import { Button, Icon, Input } from "@sveltestrap/sveltestrap";
 
     import type { Domain } from "$lib/model/domain";
@@ -40,7 +42,10 @@
     let { dn, origin, value = $bindable({}) }: Props = $props();
 
     if (!value["txt"]) {
-        value["txt"] = newRR(dn, getRrtype("TXT")) as dnsTypeTXT;
+        value["txt"] = newRR(
+            untrack(() => dn),
+            getRrtype("TXT"),
+        ) as dnsTypeTXT;
     }
 
     let val = $derived(new TLSRPTPolicy(value["txt"] as dnsTypeTXT));

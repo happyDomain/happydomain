@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import { tick } from "svelte";
+    import { tick, untrack } from "svelte";
 
     import { Button, Icon, InputGroup, ListGroup, ListGroupItem } from "@sveltestrap/sveltestrap";
 
@@ -44,7 +44,10 @@
     const ALL_RE = /^[-~?+]?all$/;
 
     if (!value["txt"]) {
-        const txtRecord = newRR(dn, 16) as dnsTypeTXT; // TXT record type is 16
+        const txtRecord = newRR(
+            untrack(() => dn),
+            16,
+        ) as dnsTypeTXT; // TXT record type is 16
         txtRecord.Txt = DEFAULT_SPF;
         value["txt"] = txtRecord;
     } else if (!/^\s*v=spf1(\s|$)/i.test(value["txt"].Txt || "")) {

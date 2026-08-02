@@ -480,7 +480,7 @@ func main() {
 		}
 
 		// Records that are typically used as arrays in service bodies
-		if ty == dns.TypeCAA || ty == dns.TypeMX || ty == dns.TypeNS || ty == dns.TypeDS {
+		if ty == dns.TypeCAA || ty == dns.TypeMX || ty == dns.TypeNS || ty == dns.TypeDS || ty == dns.TypeTLSA {
 			fmt.Fprintf(fd, "    %s?: dnsType%s | Array<dnsType%s>;\n", strings.Replace(strings.ToLower(dns.TypeToString[ty]), "-", "_", -1), strings.Replace(dns.TypeToString[ty], "-", "_", -1), strings.Replace(dns.TypeToString[ty], "-", "_", -1))
 		} else {
 			fmt.Fprintf(fd, "    %s?: dnsType%s;\n", strings.Replace(strings.ToLower(dns.TypeToString[ty]), "-", "_", -1), strings.Replace(dns.TypeToString[ty], "-", "_", -1))

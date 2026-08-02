@@ -1307,7 +1307,7 @@ export interface dnsResource {
     dhcid?: dnsTypeDHCID;
     nsec3?: dnsTypeNSEC3;
     nsec3param?: dnsTypeNSEC3PARAM;
-    tlsa?: dnsTypeTLSA;
+    tlsa?: dnsTypeTLSA | Array<dnsTypeTLSA>;
     smimea?: dnsTypeSMIMEA;
     hip?: dnsTypeHIP;
     ninfo?: dnsTypeNINFO;

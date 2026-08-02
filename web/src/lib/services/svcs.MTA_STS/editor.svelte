@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { untrack } from "svelte";
+
     import type { Domain } from "$lib/model/domain";
     import BasicInput from "$lib/components/inputs/basic.svelte";
     import type { dnsResource } from "$lib/dns_rr";
@@ -37,7 +39,10 @@
     let { dn, origin, value = $bindable({}) }: Props = $props();
 
     if (!value["txt"]) {
-        value["txt"] = newRR(dn, getRrtype("TXT")) as any;
+        value["txt"] = newRR(
+            untrack(() => dn),
+            getRrtype("TXT"),
+        ) as any;
     }
 
     let val = $state(parseMTASTS(value["txt"]?.Txt || ""));

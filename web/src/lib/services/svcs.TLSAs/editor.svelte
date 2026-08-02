@@ -23,7 +23,7 @@
 
 <script lang="ts">
     import type { Domain } from "$lib/model/domain";
-    import type { dnsResource, dnsRR } from "$lib/dns_rr";
+    import type { dnsResource, dnsTypeTLSA } from "$lib/dns_rr";
     import { digestHex, hasSubtleCrypto, toHex } from "$lib/utils/crypto";
 
     interface Props {
@@ -35,10 +35,10 @@
 
     let { dn, origin, readonly = false, value = $bindable({}) }: Props = $props();
 
-    if (!value["tlsa"]) {
-        value["tlsa"] = [] as any;
+    if (!Array.isArray(value["tlsa"])) {
+        value["tlsa"] = [];
     }
-    const records = (): dnsRR[] => value["tlsa"] as any as dnsRR[];
+    const records = (): dnsTypeTLSA[] => value["tlsa"] as dnsTypeTLSA[];
 
     // Port + protocol are encoded in the owner name ("_443._tcp.host"). Parse
     // them out of the first record so an existing service opens with the
@@ -139,7 +139,7 @@
             Selector: 1,
             MatchingType: 1,
             Certificate: "",
-        } as unknown as dnsRR;
+        } as dnsTypeTLSA;
         records().push(r);
     }
     function removeRecord(i: number) {

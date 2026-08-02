@@ -40,7 +40,11 @@
     const type = "svcs.DMARCReport";
     const SUFFIX = "._report._dmarc";
 
-    if (!Array.isArray(value["txt"])) value["txt"] = [];
+    // The generated dnsResource declares txt as a single record, but this
+    // service body carries a list of them, hence the casts.
+    if (!Array.isArray(value["txt"])) value["txt"] = [] as unknown as dnsTypeTXT;
+
+    const records = (): dnsTypeTXT[] => value["txt"] as unknown as dnsTypeTXT[];
 
     function getDomain(rr: dnsTypeTXT): string {
         const n = rr.Hdr?.Name ?? "";
@@ -48,18 +52,17 @@
     }
 
     function setDomain(idx: number, d: string) {
-        const rrs = value["txt"] as dnsTypeTXT[];
-        rrs[idx].Hdr.Name = (d || "") + SUFFIX;
+        records()[idx].Hdr.Name = (d || "") + SUFFIX;
     }
 
     function addDomain() {
         const rec = newRR("" + SUFFIX, getRrtype("TXT")) as dnsTypeTXT;
         rec.Txt = "v=DMARC1";
-        (value["txt"] as dnsTypeTXT[]).push(rec);
+        records().push(rec);
     }
 
     function removeDomain(idx: number) {
-        (value["txt"] as dnsTypeTXT[]).splice(idx, 1);
+        records().splice(idx, 1);
     }
 </script>
 
@@ -75,8 +78,8 @@
             </tr>
         </thead>
         <tbody>
-            {#if (value["txt"] as dnsTypeTXT[]).length}
-                {#each value["txt"] as dnsTypeTXT[] as rr, idx}
+            {#if records().length}
+                {#each records() as rr, idx}
                     <tr>
                         <td>
                             <Input

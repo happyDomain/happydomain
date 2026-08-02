@@ -22,6 +22,8 @@
 -->
 
 <script lang="ts">
+    import { untrack } from "svelte";
+
     import { Alert, FormGroup, Input, Label } from "@sveltestrap/sveltestrap";
 
     import type { Domain } from "$lib/model/domain";
@@ -100,7 +102,7 @@
         host: stripDot(outgoingSRV?.Target),
         port: outgoingSRV?.Port,
     });
-    const initialPublishHTTP = publishHTTP;
+    const initialPublishHTTP = untrack(() => publishHTTP);
 
     // ── Defaults wiring ──────────────────────────────────────────────────
 
@@ -115,8 +117,8 @@
         submissions: 465,
     };
 
-    let prevIncomingType = incomingType;
-    let prevOutgoingType = outgoingType;
+    let prevIncomingType = untrack(() => incomingType);
+    let prevOutgoingType = untrack(() => outgoingType);
 
     $effect(() => {
         if (incomingType !== prevIncomingType) {
@@ -215,14 +217,7 @@
         if (publishHTTP) {
             value.autoconfigCNAME = makeCNAME("autoconfig", discoveryTarget);
             value.autodiscoverCNAME = makeCNAME("autodiscover", discoveryTarget);
-            value.autodiscoverSRV = makeSRV(
-                "_autodiscover._tcp",
-                443,
-                discoveryTarget,
-                0,
-                0,
-                0,
-            );
+            value.autodiscoverSRV = makeSRV("_autodiscover._tcp", 443, discoveryTarget, 0, 0, 0);
         } else {
             value.autoconfigCNAME = null;
             value.autodiscoverCNAME = null;
@@ -296,7 +291,9 @@
     </h5>
 
     <FormGroup row>
-        <Label md="4" class="text-md-end text-primary">{$t("services.email-autoconfig.protocol", { default: "Protocol" })}</Label>
+        <Label md="4" class="text-md-end text-primary"
+            >{$t("services.email-autoconfig.protocol", { default: "Protocol" })}</Label
+        >
         <div class="col-md-8">
             <Input type="select" bind:value={incomingType} bsSize="sm">
                 {#each incomingProtocols as p}
@@ -336,7 +333,9 @@
     />
 
     <FormGroup row>
-        <Label md="4" class="text-md-end text-primary">{$t("services.email-autoconfig.auth", { default: "Authentication" })}</Label>
+        <Label md="4" class="text-md-end text-primary"
+            >{$t("services.email-autoconfig.auth", { default: "Authentication" })}</Label
+        >
         <div class="col-md-8">
             <Input type="select" bind:value={value.incomingAuth} bsSize="sm">
                 {#each authChoices as a}
@@ -351,7 +350,9 @@
     </h5>
 
     <FormGroup row>
-        <Label md="4" class="text-md-end text-primary">{$t("services.email-autoconfig.protocol", { default: "Protocol" })}</Label>
+        <Label md="4" class="text-md-end text-primary"
+            >{$t("services.email-autoconfig.protocol", { default: "Protocol" })}</Label
+        >
         <div class="col-md-8">
             <Input type="select" bind:value={outgoingType} bsSize="sm">
                 {#each outgoingProtocols as p}
@@ -391,7 +392,9 @@
     />
 
     <FormGroup row>
-        <Label md="4" class="text-md-end text-primary">{$t("services.email-autoconfig.auth", { default: "Authentication" })}</Label>
+        <Label md="4" class="text-md-end text-primary"
+            >{$t("services.email-autoconfig.auth", { default: "Authentication" })}</Label
+        >
         <div class="col-md-8">
             <Input type="select" bind:value={value.outgoingAuth} bsSize="sm">
                 {#each authChoices as a}
@@ -426,7 +429,9 @@
         index="exchangeServer"
         specs={{
             id: "exchangeServer",
-            label: $t("services.email-autoconfig.exchange", { default: "Exchange Server (optional)" }),
+            label: $t("services.email-autoconfig.exchange", {
+                default: "Exchange Server (optional)",
+            }),
             placeholder: "mail.example.com",
             type: "string",
             description: $t("services.email-autoconfig.exchange-desc", {
@@ -446,7 +451,9 @@
         index="displayName"
         specs={{
             id: "displayName",
-            label: $t("services.email-autoconfig.display-name", { default: "Provider Display Name" }),
+            label: $t("services.email-autoconfig.display-name", {
+                default: "Provider Display Name",
+            }),
             placeholder: "Example Mail",
             type: "string",
         }}
@@ -466,7 +473,11 @@
     />
 
     <FormGroup row>
-        <Label md="4" class="text-md-end text-primary">{$t("services.email-autoconfig.username-format", { default: "Username Format" })}</Label>
+        <Label md="4" class="text-md-end text-primary"
+            >{$t("services.email-autoconfig.username-format", {
+                default: "Username Format",
+            })}</Label
+        >
         <div class="col-md-8">
             <Input type="select" bind:value={value.usernameFormat} bsSize="sm">
                 {#each usernameFormats as f}
