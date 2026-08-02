@@ -113,8 +113,8 @@ export function domainCompare(
     b: string | Domain | { domain: string },
 ) {
     // Convert to string if Domain
-    let domainA = typeof a === "object" ? a.domain : a;
-    let domainB = typeof b === "object" ? b.domain : b;
+    const domainA = typeof a === "object" ? a.domain : a;
+    const domainB = typeof b === "object" ? b.domain : b;
 
     const as = domainA.split(".").reverse();
     const bs = domainB.split(".").reverse();
@@ -150,8 +150,8 @@ export function fqdnCompare(
     b: string | Domain | { domain: string },
 ) {
     // Convert to string if Domain
-    let domainA = typeof a === "object" ? a.domain : a;
-    let domainB = typeof b === "object" ? b.domain : b;
+    const domainA = typeof a === "object" ? a.domain : a;
+    const domainB = typeof b === "object" ? b.domain : b;
 
     const as = domainA.split(".").reverse();
     const bs = domainB.split(".").reverse();
@@ -313,8 +313,8 @@ export function isReverseZone(fqdn: string) {
 function normalizeIPv6(addr: string): string | null {
     try {
         const parts = addr.split("::");
-        let head = parts[0].split(":");
-        let tail = parts[1] ? parts[1].split(":") : [];
+        const head = parts[0].split(":");
+        const tail = parts[1] ? parts[1].split(":") : [];
 
         // Fill the "::" gap with zeroes
         const fullParts = [...head, ...Array(8 - head.length - tail.length).fill("0"), ...tail];
