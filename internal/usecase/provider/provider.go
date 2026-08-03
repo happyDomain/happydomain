@@ -26,6 +26,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"git.happydns.org/happyDomain/internal/forms"
 	"git.happydns.org/happyDomain/internal/netguard"
 	providerReg "git.happydns.org/happyDomain/internal/providerregistry"
 	"git.happydns.org/happyDomain/model"
@@ -93,6 +94,12 @@ func (s *Service) CreateProvider(ctx context.Context, user *happydns.User, msg *
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse provider: %w", err)
 	}
+
+	// Nothing is stored yet, so a secret still holding happydns.RedactedSecret
+	// has no value behind it. Clear it rather than let the placeholder reach a
+	// provider API as if it were a credential: Validate below dials for real,
+	// and `required` should report the field as empty.
+	forms.MergeSecrets(nil, provider.Provider)
 
 	if err := s.validator.Validate(ctx, provider); err != nil {
 		return nil, fmt.Errorf("invalid provider: %w", err)
@@ -199,6 +206,20 @@ func (s *Service) UpdateProviderFromMessage(ctx context.Context, providerID happ
 	}
 
 	return s.UpdateProvider(ctx, providerID, user, func(provider *happydns.Provider) {
+		// provider is what is stored; a secret field still holding
+		// happydns.RedactedSecret means the client is echoing back what the
+		// user API withheld from it, so carry the stored value forward instead
+		// of writing the placeholder. Skipped when the type changed: the two
+		// bodies are then unrelated structs.
+		//
+		// This runs before UpdateProvider validates, which matters: the
+		// validator dials the provider with these credentials.
+		if provider.Type == newprovider.Type {
+			forms.MergeSecrets(provider.Provider, newprovider.Provider)
+		} else {
+			forms.MergeSecrets(nil, newprovider.Provider)
+		}
+
 		provider.Type = newprovider.Type
 		provider.Comment = newprovider.Comment
 		provider.Provider = newprovider.Provider

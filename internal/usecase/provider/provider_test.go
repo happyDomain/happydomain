@@ -22,10 +22,13 @@
 package provider_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"testing"
 
+	"git.happydns.org/happyDomain/internal/forms"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	"git.happydns.org/happyDomain/internal/usecase/provider"
@@ -512,5 +515,140 @@ func Test_RestrictedService_DeleteProvider_Disabled(t *testing.T) {
 	}
 	if _, ok := err.(happydns.ForbiddenError); !ok {
 		t.Errorf("expected ForbiddenError, got: %T", err)
+	}
+}
+
+// readBackAsClient reproduces what the user API hands a browser: the stored
+// provider, redacted, serialised, and parsed back into the message the client
+// will submit again.
+func readBackAsClient(t *testing.T, p *happydns.Provider) *happydns.ProviderMessage {
+	t.Helper()
+
+	forms.RedactSecrets(p.Provider)
+
+	msg, err := p.ToMessage()
+	if err != nil {
+		t.Fatalf("failed to serialise provider: %v", err)
+	}
+
+	// KeyBlob is a []byte, so the sentinel travels base64-encoded.
+	if !bytes.Contains(msg.Provider, []byte(base64.StdEncoding.EncodeToString([]byte(happydns.RedactedSecret)))) {
+		t.Fatalf("redacted body carries no sentinel: %s", msg.Provider)
+	}
+	if bytes.Contains(msg.Provider, []byte(base64.StdEncoding.EncodeToString([]byte("testkey")))) {
+		t.Fatalf("redacted body still carries the key material: %s", msg.Provider)
+	}
+
+	return &msg
+}
+
+// The round-trip a browser performs on every provider edit: read the redacted
+// provider, submit it back, and expect the stored credential to survive.
+func Test_UpdateProvider_RedactedRoundTripKeepsSecret(t *testing.T) {
+	providerService, db := newTestService(t)
+
+	user := createTestUser(t, db, "roundtrip@example.com")
+	created, err := providerService.CreateProvider(ctx, user, createTestProviderMessage(t, "DDNSServer", "Test Provider"))
+	if err != nil {
+		t.Fatalf("unexpected error creating provider: %v", err)
+	}
+
+	stored, err := providerService.GetUserProvider(ctx, user, created.Id)
+	if err != nil {
+		t.Fatalf("unexpected error reading provider: %v", err)
+	}
+
+	msg := readBackAsClient(t, stored)
+	msg.Comment = "Renamed"
+
+	if err := providerService.UpdateProviderFromMessage(ctx, created.Id, user, msg); err != nil {
+		t.Fatalf("unexpected error updating provider: %v", err)
+	}
+
+	updated, err := providerService.GetUserProvider(ctx, user, created.Id)
+	if err != nil {
+		t.Fatalf("unexpected error re-reading provider: %v", err)
+	}
+
+	body, ok := updated.Provider.(*providers.DDNSServer)
+	if !ok {
+		t.Fatalf("unexpected provider body type %T", updated.Provider)
+	}
+
+	if !bytes.Equal(body.KeyBlob, []byte("testkey")) {
+		t.Errorf("KeyBlob = %q, want the stored key material carried forward", body.KeyBlob)
+	}
+	if updated.Comment != "Renamed" {
+		t.Errorf("Comment = %q, want the submitted change applied", updated.Comment)
+	}
+}
+
+// A user who does type a new credential must have it stored.
+func Test_UpdateProvider_NewSecretWins(t *testing.T) {
+	providerService, db := newTestService(t)
+
+	user := createTestUser(t, db, "newsecret@example.com")
+	created, err := providerService.CreateProvider(ctx, user, createTestProviderMessage(t, "DDNSServer", "Test Provider"))
+	if err != nil {
+		t.Fatalf("unexpected error creating provider: %v", err)
+	}
+
+	stored, err := providerService.GetUserProvider(ctx, user, created.Id)
+	if err != nil {
+		t.Fatalf("unexpected error reading provider: %v", err)
+	}
+
+	msg := readBackAsClient(t, stored)
+
+	var submitted providers.DDNSServer
+	if err := json.Unmarshal(msg.Provider, &submitted); err != nil {
+		t.Fatalf("failed to decode submitted body: %v", err)
+	}
+	submitted.KeyBlob = []byte("rotated")
+	if msg.Provider, err = json.Marshal(&submitted); err != nil {
+		t.Fatalf("failed to encode submitted body: %v", err)
+	}
+
+	if err := providerService.UpdateProviderFromMessage(ctx, created.Id, user, msg); err != nil {
+		t.Fatalf("unexpected error updating provider: %v", err)
+	}
+
+	updated, err := providerService.GetUserProvider(ctx, user, created.Id)
+	if err != nil {
+		t.Fatalf("unexpected error re-reading provider: %v", err)
+	}
+
+	body := updated.Provider.(*providers.DDNSServer)
+	if !bytes.Equal(body.KeyBlob, []byte("rotated")) {
+		t.Errorf("KeyBlob = %q, want the newly submitted value", body.KeyBlob)
+	}
+}
+
+// Nothing is stored at creation time, so the sentinel must not be taken for a
+// credential: it has to reach storage cleared.
+func Test_CreateProvider_ClearsSentinel(t *testing.T) {
+	providerService, db := newTestService(t)
+
+	user := createTestUser(t, db, "sentinel@example.com")
+
+	msg := createTestProviderMessage(t, "DDNSServer", "Test Provider")
+	var body providers.DDNSServer
+	if err := json.Unmarshal(msg.Provider, &body); err != nil {
+		t.Fatalf("failed to decode body: %v", err)
+	}
+	body.KeyBlob = []byte(happydns.RedactedSecret)
+	raw, err := json.Marshal(&body)
+	if err != nil {
+		t.Fatalf("failed to encode body: %v", err)
+	}
+	msg.Provider = raw
+
+	created, err := providerService.CreateProvider(ctx, user, msg)
+	if err != nil {
+		t.Fatalf("unexpected error creating provider: %v", err)
+	}
+
+	if blob := created.Provider.(*providers.DDNSServer).KeyBlob; len(blob) != 0 {
+		t.Errorf("KeyBlob = %q, want it cleared rather than the placeholder stored", blob)
 	}
 }

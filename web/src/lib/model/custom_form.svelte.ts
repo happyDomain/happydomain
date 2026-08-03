@@ -19,6 +19,21 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+// REDACTED_SECRET is what the API sends in place of a stored value whose field
+// is tagged `secret`. Submitting it back unchanged means "keep the value
+// already stored"; the server resolves it (happydns.RedactedSecret in
+// model/form.go, forms.MergeSecrets), so it must be sent back verbatim and
+// never edited in part.
+export const REDACTED_SECRET = "••••••••";
+
+// REDACTED_SECRET_B64 is the same sentinel as it appears on the wire for a
+// `[]byte`-typed secret field: encoding/json base64-encodes byte slices, and
+// the server sets those to the raw UTF-8 bytes of REDACTED_SECRET before
+// encoding, so the literal string never shows up for those fields.
+export const REDACTED_SECRET_B64 = btoa(
+    String.fromCharCode(...new TextEncoder().encode(REDACTED_SECRET)),
+);
+
 export class Field {
     id = $state<string>('');
     type = $state<string>('');

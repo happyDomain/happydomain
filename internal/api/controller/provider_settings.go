@@ -29,6 +29,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api/middleware"
+	"git.happydns.org/happyDomain/internal/forms"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -85,8 +86,15 @@ func (psc *ProviderSettingsController) NextProviderSettingsState(c *gin.Context)
 	}
 
 	if provider != nil {
+		// The wizard is done and the provider was read back from the store, so
+		// this body carries stored credentials.
+		forms.RedactSecrets(provider.Provider)
 		c.JSON(http.StatusOK, provider)
 	} else {
+		// form.Values is not redacted on purpose: NextProviderSettingsState
+		// builds it from the state the client just posted, never from the
+		// store. Blanking it would replace a secret the user is in the middle
+		// of typing, and creation has no stored value to merge back from.
 		c.JSON(http.StatusAccepted, form)
 	}
 }

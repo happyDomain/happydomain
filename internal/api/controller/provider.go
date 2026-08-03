@@ -28,17 +28,41 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api/middleware"
+	"git.happydns.org/happyDomain/internal/forms"
 	"git.happydns.org/happyDomain/model"
 )
 
 type ProviderController struct {
 	providerService happydns.ProviderUsecase
+
+	// redactSecrets withholds the value of every `secret`-tagged provider
+	// field from the responses this controller writes. The user API sets it;
+	// the admin API reuses these same handlers with it off, as an
+	// administrator is expected to read the credentials back.
+	redactSecrets bool
 }
 
-func NewProviderController(providerService happydns.ProviderUsecase) *ProviderController {
+func NewProviderController(providerService happydns.ProviderUsecase, redactSecrets bool) *ProviderController {
 	return &ProviderController{
 		providerService: providerService,
+		redactSecrets:   redactSecrets,
 	}
+}
+
+// writeProvider answers with p, hiding stored credentials unless the caller is
+// the admin API.
+//
+// Redacting in place is safe here: GetUserProvider and the provider middleware
+// both ParseProvider a fresh body out of the store on every request, so p is
+// never shared with anything that still needs the real values. That is also why
+// the middleware must not redact: ListZones, RetrieveZone and every apply path
+// read the provider from the same context key and do need them.
+func (pc *ProviderController) writeProvider(c *gin.Context, status int, p *happydns.Provider) {
+	if pc.redactSecrets {
+		forms.RedactSecrets(p.Provider)
+	}
+
+	c.JSON(status, p)
 }
 
 // ListProviders retrieves all providers belonging to the user.
@@ -87,7 +111,7 @@ func (pc *ProviderController) ListProviders(c *gin.Context) {
 func (pc *ProviderController) GetProvider(c *gin.Context) {
 	provider := c.MustGet("provider").(*happydns.Provider)
 
-	c.JSON(http.StatusOK, provider)
+	pc.writeProvider(c, http.StatusOK, provider)
 }
 
 // AddProvider appends a new provider.
@@ -125,7 +149,7 @@ func (pc *ProviderController) AddProvider(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, provider)
+	pc.writeProvider(c, http.StatusOK, provider)
 }
 
 // UpdateProvider updates the information about a given Provider owned by the user.
@@ -163,7 +187,7 @@ func (pc *ProviderController) UpdateProvider(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, old)
+	pc.writeProvider(c, http.StatusOK, old)
 }
 
 // DeleteProvider removes a provider from the database.

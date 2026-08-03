@@ -85,7 +85,9 @@ func (pc *ProviderController) ListProviders(c *gin.Context) {
 //	@Router			/providers [post]
 //	@Router			/users/{uid}/providers [post]
 func (pc *ProviderController) AddProvider(c *gin.Context) {
-	apidc := controller.NewProviderController(pc.providerService)
+	// No redaction: an administrator is expected to read provider credentials
+	// back. The user API passes true instead.
+	apidc := controller.NewProviderController(pc.providerService, false)
 	apidc.AddProvider(c)
 }
 
@@ -125,7 +127,9 @@ func (pc *ProviderController) DeleteProvider(c *gin.Context) {
 //	@Router			/providers/{pid} [get]
 //	@Router			/users/{uid}/providers/{pid} [get]
 func (pc *ProviderController) GetProvider(c *gin.Context) {
-	apidc := controller.NewProviderController(pc.providerService)
+	// No redaction: an administrator is expected to read provider credentials
+	// back. The user API passes true instead.
+	apidc := controller.NewProviderController(pc.providerService, false)
 	apidc.GetProvider(c)
 }
 
@@ -147,7 +151,9 @@ func (pc *ProviderController) GetProvider(c *gin.Context) {
 //	@Router			/providers/{pid} [put]
 //	@Router			/users/{uid}/providers/{pid} [put]
 func (pc *ProviderController) UpdateProvider(c *gin.Context) {
-	apidc := controller.NewProviderController(pc.providerService)
+	// No redaction: an administrator is expected to read provider credentials
+	// back. The user API passes true instead.
+	apidc := controller.NewProviderController(pc.providerService, false)
 	apidc.UpdateProvider(c)
 }
 

@@ -33,7 +33,7 @@
         type InputType,
     } from "@sveltestrap/sveltestrap";
 
-    import type { Field } from "$lib/model/custom_form.svelte";
+    import { REDACTED_SECRET, REDACTED_SECRET_B64, type Field } from "$lib/model/custom_form.svelte";
     import { t } from "$lib/translations";
 
     const dispatch = createEventDispatcher();
@@ -62,6 +62,44 @@
     );
 
     let secretVisible = $state(false);
+
+    // The server withheld this value: what we hold is the placeholder standing
+    // in for a stored credential, and submitting it back unchanged is what
+    // tells the server to keep that credential. It must therefore travel back
+    // verbatim, hence a read-only input, replaced whole or not at all.
+    // A `[]byte`-typed secret is base64 on the wire, so the sentinel never
+    // shows up as the literal REDACTED_SECRET for those fields.
+    let isRedacted: boolean = $derived(
+        Boolean(specs.secret) &&
+            (specs.type === "[]byte" || specs.type === "[]uint8"
+                ? value === REDACTED_SECRET_B64
+                : value === REDACTED_SECRET),
+    );
+
+    // Set while the user is typing a replacement, so we can offer to put the
+    // placeholder back and leave the stored credential alone after all.
+    let replacing = $state(false);
+
+    // There is nothing behind the placeholder to reveal, and an eye suggesting
+    // otherwise would read as "your secret is one click away".
+    $effect(() => {
+        if (isRedacted) secretVisible = false;
+    });
+
+    function replaceSecret() {
+        replacing = true;
+        value = "";
+        // Sveltestrap owns the <input>, so reach for it by the id set below.
+        document.getElementById("spec-" + index + "-" + specs.id)?.focus();
+    }
+
+    function keepStoredSecret() {
+        replacing = false;
+        value =
+            specs.type === "[]byte" || specs.type === "[]uint8"
+                ? REDACTED_SECRET_B64
+                : REDACTED_SECRET;
+    }
 
     let inputtype: InputType = $derived(
         specs.type && (specs.type.startsWith("uint") || specs.type.startsWith("int"))
@@ -231,7 +269,7 @@
             max={inputmax}
             placeholder={displayPlaceholder}
             plaintext={!edit || readonly}
-            readonly={!edit || readonly}
+            readonly={!edit || readonly || isRedacted}
             required={specs.required}
             bind:value={val}
             on:focus={() => dispatch("focus")}
@@ -250,10 +288,35 @@
             outline
             size="sm"
             type="button"
+            disabled={isRedacted}
             onclick={() => (secretVisible = !secretVisible)}
-            title={secretVisible ? "Hide" : "Show"}
+            title={isRedacted ? "Hidden by the server" : secretVisible ? "Hide" : "Show"}
         >
             <Icon name={secretVisible ? "eye-slash" : "eye"} />
         </Button>
+
+        {#if edit && !readonly && isRedacted}
+            <Button
+                color="secondary"
+                outline
+                size="sm"
+                type="button"
+                onclick={replaceSecret}
+                title="Replace this secret"
+            >
+                <Icon name="pencil" />
+            </Button>
+        {:else if edit && !readonly && replacing}
+            <Button
+                color="secondary"
+                outline
+                size="sm"
+                type="button"
+                onclick={keepStoredSecret}
+                title="Keep the current secret"
+            >
+                <Icon name="arrow-counterclockwise" />
+            </Button>
+        {/if}
     {/if}
 </InputGroup>

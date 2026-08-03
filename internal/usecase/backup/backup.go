@@ -22,9 +22,11 @@
 package backup
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 
+	"git.happydns.org/happyDomain/internal/forms"
 	"git.happydns.org/happyDomain/internal/storage"
 	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
 	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
@@ -189,6 +191,25 @@ func (u *Usecase) Backup() happydns.Backup {
 	return ret
 }
 
+// redactProviderMessage returns a copy of pm whose `secret`-tagged settings
+// have been replaced by happydns.RedactedSecret. The original is left alone: it
+// comes straight from the store and the caller does not own it.
+func redactProviderMessage(pm *happydns.ProviderMessage) (*happydns.ProviderMessage, error) {
+	p, err := providerUC.ParseProvider(pm)
+	if err != nil {
+		return nil, err
+	}
+
+	forms.RedactSecrets(p.Provider)
+
+	msg, err := p.ToMessage()
+	if err != nil {
+		return nil, err
+	}
+
+	return &msg, nil
+}
+
 func (u *Usecase) BackupUser(user *happydns.User) happydns.Backup {
 	uid := user.Id.String()
 
@@ -211,6 +232,24 @@ func (u *Usecase) BackupUser(user *happydns.User) happydns.Backup {
 	// Strip session IDs — they are live credentials, not portable data.
 	for _, s := range ret.Sessions {
 		s.Id = ""
+	}
+
+	// Same reasoning for the API keys and passwords a user entrusted to their
+	// providers: this file leaves happyDomain, so it must not carry anything
+	// that still opens a door. The administrative Backup() keeps them, as
+	// Restore has to put working providers back.
+	for i, pm := range ret.Providers {
+		redacted, err := redactProviderMessage(pm)
+		if err != nil {
+			ret.Errors = append(ret.Errors, fmt.Sprintf("unable to redact Provider %s: %s", pm.Id.String(), err.Error()))
+			// Fail closed: an unredactable body is exported without its
+			// settings rather than in clear.
+			stripped := *pm
+			stripped.Provider = json.RawMessage("{}")
+			ret.Providers[i] = &stripped
+			continue
+		}
+		ret.Providers[i] = redacted
 	}
 
 	// Checker configurations scoped to this user.
