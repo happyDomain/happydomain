@@ -33,7 +33,9 @@
     import { createEventDispatcher } from "svelte";
 
     import { escape } from "html-escaper";
-    import { Modal, ModalBody } from "@sveltestrap/sveltestrap";
+    import { ModalBody } from "@sveltestrap/sveltestrap";
+
+    import Modal from "$lib/components/Modal.svelte";
 
     import DomainNameInput from "$lib/components/inputs/DomainName.svelte";
     import ModalFooter from "$lib/components/modals/Footer.svelte";

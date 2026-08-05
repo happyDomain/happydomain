@@ -62,6 +62,8 @@
     import { thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
     import { getStatusColor, getStatusI18nKey } from "$lib/utils";
+    import { trapFocus } from "$lib/utils/focustrap";
+    import { randomUUID } from "$lib/utils/uuid";
 
     interface Props {
         domain: Domain;
@@ -84,6 +86,29 @@
     }
 
     controls.Open = Open;
+
+    // Unlike its Modal, sveltestrap's Offcanvas neither moves focus into the
+    // panel nor keeps it there, nor returns it to the trigger on close.
+    const panelId = `offcanvas-${randomUUID()}`;
+
+    $effect(() => {
+        if (!isOpen) return;
+
+        const trigger = document.activeElement as HTMLElement | null;
+        let release: (() => void) | undefined;
+
+        // Wait for the panel to turn visible, focus() is a no-op until then.
+        const frame = requestAnimationFrame(() => {
+            const panel = document.getElementById(panelId);
+            if (panel) release = trapFocus(panel, panelId);
+        });
+
+        return () => {
+            cancelAnimationFrame(frame);
+            release?.();
+            if (trigger?.isConnected) trigger.focus();
+        };
+    });
 
     let deleteInProgress = $state(false);
 
@@ -177,6 +202,7 @@
     header={service._svctype && $servicesSpecsLoaded
         ? $serviceName($servicesSpecs[service._svctype], service._svctype)
         : ""}
+    id={panelId}
     {isOpen}
     {toggle}
     body={false}

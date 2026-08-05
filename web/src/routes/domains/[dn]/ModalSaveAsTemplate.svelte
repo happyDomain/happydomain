@@ -36,12 +36,13 @@
     import {
         Alert,
         Button,
-        Modal,
         ModalBody,
         ModalFooter,
         ModalHeader,
         Spinner,
     } from "@sveltestrap/sveltestrap";
+
+    import Modal from "$lib/components/Modal.svelte";
 
     import { createZoneTemplate } from "$lib/api/zone_template";
     import TemplateFields from "$lib/components/zone_templates/TemplateFields.svelte";

@@ -27,11 +27,12 @@
         Icon,
         Input,
         InputGroup,
-        Modal,
         ModalBody,
         ModalFooter,
         ModalHeader,
     } from "@sveltestrap/sveltestrap";
+
+    import Modal from "$lib/components/Modal.svelte";
 
     import { t } from "$lib/translations";
     import { toasts } from "$lib/stores/toasts";

@@ -38,12 +38,13 @@
         FormGroup,
         Input,
         Label,
-        Modal,
         ModalBody,
         ModalFooter,
         ModalHeader,
         Spinner,
     } from "@sveltestrap/sveltestrap";
+
+    import Modal from "$lib/components/Modal.svelte";
 
     import { applyZoneTemplate } from "$lib/api/zone_template";
     import type { Domain } from "$lib/model/domain";

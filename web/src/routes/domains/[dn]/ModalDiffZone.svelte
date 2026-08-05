@@ -35,12 +35,13 @@
         Button,
         Icon,
         Input,
-        Modal,
         ModalBody,
         ModalFooter,
         ModalHeader,
         Spinner,
     } from "@sveltestrap/sveltestrap";
+
+    import Modal from "$lib/components/Modal.svelte";
 
     import { applyZone as APIApplyZone, prepareZone as APIPrepareZone } from "$lib/api/zone";
     import { notifyZonePublished } from "$lib/stores/zonefeedback";

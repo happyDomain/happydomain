@@ -35,12 +35,13 @@
         Button,
         Input,
         ListGroupItem,
-        Modal,
         ModalBody,
         ModalFooter,
         ModalHeader,
         Spinner,
     } from "@sveltestrap/sveltestrap";
+
+    import Modal from "$lib/components/Modal.svelte";
 
     import { deleteMyUser, deleteUserAccount } from "$lib/api/user";
     import { t } from "$lib/translations";

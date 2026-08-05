@@ -30,7 +30,9 @@
 </script>
 
 <script lang="ts">
-    import { Modal, ModalBody, ModalHeader, Spinner } from "@sveltestrap/sveltestrap";
+    import { ModalBody, ModalHeader, Spinner } from "@sveltestrap/sveltestrap";
+
+    import Modal from "$lib/components/Modal.svelte";
 
     import { type DomainInfoState, createDomainInfoState, fetchDomainInfo } from "$lib/components/DomainInfoFetcher.svelte";
     import { t } from "$lib/translations";

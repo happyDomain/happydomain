@@ -33,12 +33,13 @@
     import {
         Alert,
         Button,
-        Modal,
         ModalBody,
         ModalFooter,
         ModalHeader,
         Spinner,
     } from "@sveltestrap/sveltestrap";
+
+    import Modal from "$lib/components/Modal.svelte";
 
     import type { ZoneTemplate, ZoneTemplateInput } from "$lib/model/zone_template";
     import { t } from "$lib/translations";

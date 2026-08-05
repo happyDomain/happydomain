@@ -35,7 +35,6 @@
     import {
         Button,
         Input,
-        Modal,
         ModalBody,
         ModalFooter,
         ModalHeader,
@@ -43,6 +42,8 @@
         TabContent,
         TabPane,
     } from "@sveltestrap/sveltestrap";
+
+    import Modal from "$lib/components/Modal.svelte";
 
     import { importZone as APIImportZone } from "$lib/api/zone";
     import type { Domain } from "$lib/model/domain";

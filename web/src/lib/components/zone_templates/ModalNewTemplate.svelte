@@ -37,7 +37,6 @@
         Alert,
         Button,
         Input,
-        Modal,
         ModalBody,
         ModalFooter,
         ModalHeader,
@@ -45,6 +44,8 @@
         TabContent,
         TabPane,
     } from "@sveltestrap/sveltestrap";
+
+    import Modal from "$lib/components/Modal.svelte";
 
     import type { ZoneTemplate, ZoneTemplateImportInput } from "$lib/model/zone_template";
     import { t } from "$lib/translations";

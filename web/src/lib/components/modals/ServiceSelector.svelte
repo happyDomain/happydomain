@@ -30,7 +30,9 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
 
-    import { Modal, ModalBody } from "@sveltestrap/sveltestrap";
+    import { ModalBody } from "@sveltestrap/sveltestrap";
+
+    import Modal from "$lib/components/Modal.svelte";
 
     import { getProviderSpec } from "$lib/api/provider_specs";
     import { initializeService } from "$lib/api/service_specs";

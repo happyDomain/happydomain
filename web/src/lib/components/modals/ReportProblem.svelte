@@ -31,12 +31,12 @@
         Icon,
         Input,
         Label,
-        Modal,
         ModalBody,
         ModalFooter,
         ModalHeader,
     } from "@sveltestrap/sveltestrap";
 
+    import Modal from "$lib/components/Modal.svelte";
     import { buildDiagnosticsReport } from "$lib/stores/diagnostics";
     import { FORGES, issueURL, mailtoURL, reportMarkdown } from "$lib/utils/report";
     import { t } from "$lib/translations";
