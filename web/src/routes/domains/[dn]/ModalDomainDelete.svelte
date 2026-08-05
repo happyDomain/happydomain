@@ -32,7 +32,9 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
 
-    import { Button, Modal, ModalBody, ModalFooter, ModalHeader, Spinner } from "@sveltestrap/sveltestrap";
+    import { Button, ModalBody, ModalFooter, ModalHeader, Spinner } from "@sveltestrap/sveltestrap";
+
+    import Modal from "$lib/components/Modal.svelte";
 
     import { t } from "$lib/translations";
 

@@ -25,13 +25,13 @@
     import {
         Alert,
         Button,
-        Modal,
         ModalBody,
         ModalFooter,
         ModalHeader,
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
+    import Modal from "$lib/components/Modal.svelte";
     import { unlockKeystore } from "$lib/api/keystores";
     import ResourceInput from "$lib/components/inputs/basic.svelte";
     import type { Field } from "$lib/model/custom_form.svelte";

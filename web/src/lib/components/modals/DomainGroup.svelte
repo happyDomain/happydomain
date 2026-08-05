@@ -34,11 +34,12 @@
         Button,
         Input,
         InputGroup,
-        Modal,
         ModalBody,
         ModalHeader,
         Spinner,
     } from "@sveltestrap/sveltestrap";
+
+    import Modal from "$lib/components/Modal.svelte";
 
     import ZoneList from "$lib/components/zones/ZoneList.svelte";
     import { updateDomain } from "$lib/api/domains";

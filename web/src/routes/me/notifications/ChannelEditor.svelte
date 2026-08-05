@@ -27,13 +27,13 @@
     import {
         Button,
         Input,
-        Modal,
         ModalBody,
         ModalFooter,
         ModalHeader,
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
+    import Modal from "$lib/components/Modal.svelte";
     import RawInput from "$lib/components/inputs/raw.svelte";
     import { Field } from "$lib/model/custom_form.svelte";
     import {

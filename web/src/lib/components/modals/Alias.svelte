@@ -34,12 +34,13 @@
     import {
         Button,
         Icon,
-        Modal,
         ModalBody,
         ModalFooter,
         ModalHeader,
         Spinner,
     } from "@sveltestrap/sveltestrap";
+
+    import Modal from "$lib/components/Modal.svelte";
 
     import { addZoneService } from "$lib/api/zone";
     import {

@@ -33,12 +33,13 @@
         Card,
         Col,
         Icon,
-        Modal,
         ModalBody,
         ModalFooter,
         ModalHeader,
         Row,
     } from "@sveltestrap/sveltestrap";
+
+    import Modal from "$lib/components/Modal.svelte";
 
     import DomainImport from "$lib/components/forms/DomainImport.svelte";
     import ProviderConnect from "$lib/components/forms/ProviderConnect.svelte";

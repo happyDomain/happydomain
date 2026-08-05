@@ -30,14 +30,9 @@
 </script>
 
 <script lang="ts">
-    import {
-        Button,
-        Icon,
-        Modal,
-        ModalBody,
-        ModalFooter,
-        ModalHeader,
-    } from "@sveltestrap/sveltestrap";
+    import { Button, Icon, ModalBody, ModalFooter, ModalHeader } from "@sveltestrap/sveltestrap";
+
+    import Modal from "$lib/components/Modal.svelte";
 
     import ProviderPicker from "$lib/components/forms/ProviderPicker.svelte";
     import SettingsStateButtons from "$lib/components/providers/SettingsStateButtons.svelte";

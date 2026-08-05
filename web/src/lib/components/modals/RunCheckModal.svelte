@@ -30,12 +30,13 @@
         Icon,
         Input,
         Label,
-        Modal,
         ModalBody,
         ModalFooter,
         ModalHeader,
         Spinner,
     } from "@sveltestrap/sveltestrap";
+
+    import Modal from "$lib/components/Modal.svelte";
 
     import {
         getCheckStatus,

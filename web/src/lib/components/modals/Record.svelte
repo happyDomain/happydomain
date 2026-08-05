@@ -34,12 +34,13 @@
     import {
         Button,
         Icon,
-        Modal,
         ModalBody,
         ModalFooter,
         ModalHeader,
         Spinner,
     } from "@sveltestrap/sveltestrap";
+
+    import Modal from "$lib/components/Modal.svelte";
 
     import { addZoneRecord, deleteZoneRecord, updateZoneRecord } from "$lib/api/zone";
     import RecordEditor from "$lib/components/records/Editor.svelte";

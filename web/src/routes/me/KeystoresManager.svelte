@@ -29,13 +29,13 @@
         InputGroup,
         ListGroup,
         ListGroupItem,
-        Modal,
         ModalBody,
         ModalFooter,
         ModalHeader,
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
+    import Modal from "$lib/components/Modal.svelte";
     import {
         createKeystore,
         deleteKeystore,

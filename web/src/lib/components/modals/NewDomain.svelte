@@ -33,12 +33,13 @@
     import {
         Button,
         Icon,
-        Modal,
         ModalBody,
         ModalFooter,
         ModalHeader,
         Spinner,
     } from "@sveltestrap/sveltestrap";
+
+    import Modal from "$lib/components/Modal.svelte";
 
     import DomainImport from "$lib/components/forms/DomainImport.svelte";
     import ProviderPicker from "$lib/components/forms/ProviderPicker.svelte";

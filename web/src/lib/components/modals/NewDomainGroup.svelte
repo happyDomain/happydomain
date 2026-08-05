@@ -30,14 +30,9 @@
 </script>
 
 <script lang="ts">
-    import {
-        Button,
-        Input,
-        InputGroup,
-        Modal,
-        ModalBody,
-        ModalHeader,
-    } from "@sveltestrap/sveltestrap";
+    import { Button, Input, InputGroup, ModalBody, ModalHeader } from "@sveltestrap/sveltestrap";
+
+    import Modal from "$lib/components/Modal.svelte";
 
     import { newlyGroups } from "$lib/stores/domains";
     import { t } from "$lib/translations";
@@ -73,7 +68,7 @@
     controls.Open = Open;
 </script>
 
-<Modal {isOpen} {toggle} on:open={focusInput}>
+<Modal {isOpen} {toggle} onopen={focusInput}>
     <ModalHeader {toggle}>
         {$t("domaingroups.new")}
     </ModalHeader>
