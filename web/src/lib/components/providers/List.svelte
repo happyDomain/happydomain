@@ -45,6 +45,7 @@
     import HListGroup from "$lib/components/ListGroup.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { Provider } from "$lib/model/provider";
+    import { toasts } from "$lib/stores/toasts";
     import { domains, refreshDomains } from "$lib/stores/domains";
     import {
         providers,
@@ -112,13 +113,20 @@
         }
     }
 
+    // The action handlers stop the click from bubbling, so it never reaches the
+    // document listener sveltestrap uses to close the dropdown: track each
+    // dropdown state to close it explicitly.
+    let openDropdowns: Record<string, boolean> = $state({});
+
     function updateProvider(event: Event, item: Provider) {
         event.stopPropagation();
+        openDropdowns[item._id] = false;
         goto(providerLinks().provider(encodeURIComponent(item._id)));
     }
 
     async function delProvider(event: Event, item: Provider) {
         event.stopPropagation();
+        openDropdowns[item._id] = false;
 
         if ($domains) {
             // Check that there is no domain attached
@@ -139,7 +147,21 @@
             }
         }
 
-        await deleteProvider(item._id);
+        const providerName =
+            item._comment || $providersSpecs?.[item._srctype]?.name || item._srctype;
+        try {
+            await deleteProvider(item._id);
+            toasts.addToast({
+                message: $t("provider.deleted", { name: providerName }),
+                type: "success",
+                timeout: 5000,
+            });
+        } catch (error) {
+            toasts.addErrorToast({
+                message: $t("provider.delete-failed", { name: providerName, error: String(error) }),
+                timeout: 10000,
+            });
+        }
         refreshProviders();
     }
 
@@ -230,7 +252,11 @@
                             </ButtonGroup>
                         {/if}
                         {#if !noDropdown}
-                            <Dropdown size="sm" style="margin-right: -10px">
+                            <Dropdown
+                                size="sm"
+                                style="margin-right: -10px"
+                                bind:isOpen={openDropdowns[item._id]}
+                            >
                                 <DropdownToggle
                                     color="link"
                                     onclick={(event) => event.stopPropagation()}

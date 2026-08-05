@@ -70,7 +70,7 @@ $hd-bg-inset: #eeeeef;
 $hd-fg-1: #0a0a0b;
 $hd-fg-2: #3f3f46;
 $hd-fg-3: #5f5f68; // secondary / muted — AA (>=4.5) on light surfaces
-$hd-fg-4: #6f6f77; // placeholder — AA (>=4.5) on light surfaces
+$hd-fg-4: #74747c; // placeholder — 4.63:1 on white, just over the AA floor
 $hd-fg-disabled: #a1a1aa; // disabled controls ONLY — exempt from contrast
 
 $hd-border-1: #e4e4e7;
@@ -609,7 +609,7 @@ $theme-colors: map-merge($theme-colors, $custom-theme-colors);
     --hd-fg-1: #f4f7f6;
     --hd-fg-2: #b8c4bf;
     --hd-fg-3: #7a9189;
-    --hd-fg-4: #79918a; // placeholder — AA on dark surfaces
+    --hd-fg-4: #688079; // placeholder — 4.62:1 on the dark input canvas
     --hd-fg-disabled: #4a5e58; // disabled ONLY — exempt
     --hd-fg-inverse: #0c0f0e;
 
@@ -742,6 +742,21 @@ $theme-colors: map-merge($theme-colors, $custom-theme-colors);
         border-color: var(--hd-accent);
         color: var(--hd-fg-1);
         box-shadow: 0 0 0 3px var(--hd-focus-ring);
+    }
+}
+
+// Bootstrap compiles ::placeholder to a static colour from
+// $input-placeholder-color, a Sass scalar, so the dark theme inherited the
+// light-mode tone (#6f6f77 on the dark canvas, 3.93:1, failing 1.4.3). Route
+// it through the token so each theme carries its own placeholder shade, both
+// sitting just above the 4.5:1 floor so the hint stays legible without
+// reading as a filled-in value.
+.form-control,
+.form-select,
+textarea.form-control {
+    &::placeholder {
+        color: var(--hd-fg-4);
+        opacity: 1; // Firefox dims placeholders by default
     }
 }
 

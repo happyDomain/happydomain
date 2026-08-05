@@ -534,6 +534,8 @@
         "all": "Tous les fournisseurs",
         "another": "Choisir un autre fournisseur",
         "delete": "Supprimer cet hébergeur de domaines",
+        "deleted": "L'hébergeur de domaines « {{name}} » a été supprimé.",
+        "delete-failed": "Impossible de supprimer l'hébergeur de domaines « {{name}} » : {{error}}",
         "find": "Vous ne trouvez pas votre hébergeur de domaines ici ?",
         "name-your": "Nommer cet hébergeur de domaines",
         "provider": "Domaines existant sur {{provider}}",
