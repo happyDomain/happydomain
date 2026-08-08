@@ -227,15 +227,27 @@ func (n *NoSQLStorage) prepareSearch() error {
 	return err
 }
 
+// newQuery wraps a query request with the settings every search needs.
+//
+// TableName is what makes client-side rate limiting work: the SDK only
+// attaches a rate limiter to a request whose table it can name (see
+// Client.execute), and without one a query hammers the service at full speed
+// until it gets throttled. Get/Put/Delete already carry it, which is why
+// regular site traffic stays paced while unnamed queries did not.
+func (n *NoSQLStorage) newQuery(req *nosqldb.QueryRequest) storage.Iterator {
+	req.TableName = n.table
+	return NewIteratorFromRequest(n, req)
+}
+
 func (n *NoSQLStorage) Search(prefix string) storage.Iterator {
 	if err := n.prepareSearch(); err != nil {
 		// Fall back to unprepared query (SQL string literal needs double-escaped regex)
 		query := fmt.Sprintf("SELECT * FROM %s WHERE regex_like(key, '%s.*')", n.table, strings.ReplaceAll(escapeRegexForSQL(prefix), "'", "''"))
-		return NewIteratorFromRequest(n, &nosqldb.QueryRequest{Statement: query})
+		return n.newQuery(&nosqldb.QueryRequest{Statement: query})
 	}
 
 	// Struct copy — each Search gets its own bindVariables map
 	stmt := n.searchStmt
 	stmt.SetVariable("$pattern", escapeRegexLiteral(prefix)+".*")
-	return NewIteratorFromRequest(n, &nosqldb.QueryRequest{PreparedStatement: &stmt})
+	return n.newQuery(&nosqldb.QueryRequest{PreparedStatement: &stmt})
 }

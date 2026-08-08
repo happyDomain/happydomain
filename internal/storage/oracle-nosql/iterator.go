@@ -22,6 +22,7 @@
 package database
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -30,13 +31,35 @@ import (
 	"github.com/oracle/nosql-go-sdk/nosqldb/types"
 )
 
+// Fetch pacing for a single iterator.
+//
+// A query that runs into its read limit must slow down rather than spin. The
+// service answers such a fetch with an *empty batch plus a continuation key*,
+// not an error, so retrying immediately still consumes read units and keeps
+// the table throttled — a query large enough to be throttled once then stays
+// throttled forever, entirely on its own. Empty batches and explicit
+// throttling errors therefore share a single backoff, and the whole iterator
+// runs on one budget so the caller always ends up with an error instead of
+// blocking indefinitely.
+const (
+	iteratorBudget  = 2 * time.Minute
+	backoffInitial  = 100 * time.Millisecond
+	backoffMax      = 5 * time.Second
+	backoffLogFloor = time.Second
+)
+
 type Iterator struct {
-	n          *NoSQLStorage
-	req        *nosqldb.QueryRequest
-	results    []*types.MapValue
-	cur_result int
-	started    bool
-	err        error
+	n       *NoSQLStorage
+	req     *nosqldb.QueryRequest
+	results []*types.MapValue
+	cur     int
+	started bool
+	err     error
+
+	// deadline is armed on the first fetch and spans the whole iterator, not
+	// a single Next call, so a slow query cannot renew its budget forever.
+	deadline time.Time
+	backoff  time.Duration
 }
 
 func NewIteratorFromRequest(n *NoSQLStorage, req *nosqldb.QueryRequest) *Iterator {
@@ -51,68 +74,134 @@ func (i *Iterator) Release() {
 }
 
 func (i *Iterator) Next() bool {
-	i.err = nil
-
-	// Advance within current batch.
-	if i.results != nil {
-		i.cur_result++
-		if i.cur_result < len(i.results) {
-			return true
-		}
+	// Once failed, stay failed: never clear a recorded error, and never issue
+	// further queries for an iterator whose results are already incomplete.
+	if i.err != nil {
+		return false
 	}
 
-	// Fetch new batches until we get results or the query is done.
-	// The SDK may return empty batches (e.g. during auto-preparation
-	// or when the read limit is hit), so we must loop.
-	// Note: IsDone() checks continuationKey == nil, which is also true
-	// for a fresh QueryRequest that has never been executed. We skip the
-	// check only before the first Query() call.
+	// Advance within the batch already in hand.
+	if i.cur+1 < len(i.results) {
+		i.cur++
+		return true
+	}
+
+	return i.fetch()
+}
+
+// fetch pulls batches until one carries results, the query is exhausted, or
+// the budget runs out.
+func (i *Iterator) fetch() bool {
+	if i.deadline.IsZero() {
+		i.deadline = time.Now().Add(iteratorBudget)
+	}
+
 	for {
+		// IsDone reports continuationKey == nil, which is also true of a fresh
+		// request that has never run — hence the started guard.
 		if i.started && i.req.IsDone() {
 			return false
 		}
 
 		res, err := i.n.client.Query(i.req)
 		if err != nil {
-			// Retry with backoff on rate-limit errors
 			if nosqlerr.Is(err, nosqlerr.ReadLimitExceeded, nosqlerr.WriteLimitExceeded, nosqlerr.RequestTimeout) {
-				log.Println("rate limited in iterator, backing off:", err.Error())
-				time.Sleep(2 * time.Second)
+				if !i.pause("throttled: " + err.Error()) {
+					return false
+				}
 				continue
 			}
-			i.err = err
-			log.Println("error in iterator:", err.Error())
+			i.fail(err)
 			return false
 		}
 		i.started = true
 
-		i.results, i.err = res.GetResults()
-		if i.err != nil {
-			log.Println("error in iterator:", i.err.Error())
+		results, err := res.GetResults()
+		if err != nil {
+			i.fail(fmt.Errorf("decoding query results: %w", err))
 			return false
 		}
 
-		if len(i.results) > 0 {
-			i.cur_result = 0
+		if len(results) > 0 {
+			i.results = results
+			i.cur = 0
+			i.backoff = 0
 			return true
+		}
+
+		// Empty batch with the query still unfinished: the read limit was hit
+		// server-side. Treated exactly like a throttling error.
+		if i.req.IsDone() {
+			return false
+		}
+		if !i.pause("read limit reached, empty batch") {
+			return false
 		}
 	}
 }
 
-func (i *Iterator) Valid() bool {
-	_, okkey := i.results[i.cur_result].Get("key")
-	_, okvalue := i.results[i.cur_result].Get("value")
+// pause sleeps for the current backoff and doubles it, returning false once
+// the iterator's budget is exhausted.
+func (i *Iterator) pause(reason string) bool {
+	switch {
+	case i.backoff == 0:
+		i.backoff = backoffInitial
+	case i.backoff < backoffMax:
+		i.backoff = min(i.backoff*2, backoffMax)
+	}
 
-	return i.err == nil && okkey && okvalue
+	remaining := time.Until(i.deadline)
+	if remaining <= 0 {
+		i.fail(fmt.Errorf("query still incomplete after %s (%s)", iteratorBudget, reason))
+		return false
+	}
+
+	// Only report once the backoff is long enough to matter, so a briefly
+	// throttled query stays quiet instead of flooding the logs.
+	if i.backoff >= backoffLogFloor {
+		log.Printf("oracle-nosql: %s, retrying in %s (%s left)",
+			reason, i.backoff, remaining.Round(time.Second))
+	}
+
+	time.Sleep(min(i.backoff, remaining))
+	return true
+}
+
+func (i *Iterator) fail(err error) {
+	i.err = err
+	i.results = nil
+	i.cur = 0
+	log.Printf("oracle-nosql iterator: %v", err)
+}
+
+// Valid reports whether the iterator currently points at a usable row.
+func (i *Iterator) Valid() bool {
+	if i.err != nil || i.cur >= len(i.results) {
+		return false
+	}
+
+	_, okkey := i.results[i.cur].Get("key")
+	_, okvalue := i.results[i.cur].Get("value")
+
+	return okkey && okvalue
 }
 
 func (i *Iterator) Key() string {
-	key, _ := i.results[i.cur_result].Get("key")
-	return key.(string)
+	if i.cur >= len(i.results) {
+		return ""
+	}
+
+	key, _ := i.results[i.cur].Get("key")
+	s, _ := key.(string)
+	return s
 }
 
 func (i *Iterator) Value() any {
-	value, _ := i.results[i.cur_result].Get("value")
+	if i.cur >= len(i.results) {
+		return nil
+	}
+
+	value, _ := i.results[i.cur].Get("value")
 	return value
 }
 
