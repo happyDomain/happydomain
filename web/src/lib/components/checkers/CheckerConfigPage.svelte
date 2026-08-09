@@ -28,7 +28,9 @@
     import { t } from "$lib/translations";
     import { base } from "$app/paths";
     import { checkers } from "$lib/stores/checkers";
+    import { domains_idx, isDomainReadOnly } from "$lib/stores/domains";
     import { toasts } from "$lib/stores/toasts";
+    import { userSession } from "$lib/stores/usersession";
     import type {
         CheckerCheckerOptionDocumentation,
         HappydnsCheckPlanWritable,
@@ -62,6 +64,10 @@
 
     let checkStatusPromise = $derived(getScopedCheckStatus(scope, checkerId));
     let checkOptionsPromise = $derived(getScopedCheckOptions(scope, checkerId));
+
+    // Checks are configured by the domain owner: a user invited on the domain
+    // sees the same settings, but the API refuses to let them change any.
+    let readonly = $derived(isDomainReadOnly($domains_idx, scope.domainId, $userSession.id));
 
     let resolvedStatus = $state<any>(null);
     let optionValues = $state<Record<string, unknown>>({});
@@ -239,6 +245,7 @@
                             onsaveplan={showSchedule ? () => scheduleCard!.save() : undefined}
                             bind:plan
                             precheckFailures={(status as any).precheckFailures}
+                            {readonly}
                         />
                     {/if}
                 </Col>
@@ -255,6 +262,7 @@
                         onsave={saveOptions}
                         {orphanedOpts}
                         onclean={() => cleanOrphanedOptions(allEditableOpts)}
+                        {readonly}
                     />
                 </Col>
             </Row>

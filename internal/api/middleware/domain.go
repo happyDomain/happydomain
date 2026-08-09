@@ -86,3 +86,27 @@ func DomainHandler(domainService happydns.DomainUsecase, allowFQDN bool) gin.Han
 		c.Next()
 	}
 }
+
+// DomainOwnerOnly restricts a route to the owner of the domain resolved by
+// DomainHandler. It guards the operations that mutate state shared by everyone
+// working on the domain (check plans, checker options, executions,
+// acknowledgements): a user invited through a share grant keeps a read-only
+// view of them.
+func DomainOwnerOnly() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		d, exists := c.Get("domain")
+		if !exists {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": "Domain not resolved."})
+			return
+		}
+		domain := d.(*happydns.Domain)
+
+		user := MyUser(c)
+		if user == nil || !user.Id.Equals(domain.Owner) {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"errmsg": "Only the domain owner can perform this action."})
+			return
+		}
+
+		c.Next()
+	}
+}

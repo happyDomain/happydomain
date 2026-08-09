@@ -124,3 +124,22 @@ export function isDomainOwner(
 ): boolean {
     return !userId || domain?.id_owner === userId;
 }
+
+/**
+ * Whether the domain is one somebody else shared with us, in which case the
+ * backend only grants a read-only view of the checks. A domain missing from the
+ * index is not restricted: it is simply not one of ours to reason about (admin
+ * views, list not loaded yet), and the API stays the authority.
+ */
+export function isDomainReadOnly(
+    idx: Record<string, HappydnsDomainWithCheckStatus>,
+    dnid: string | undefined,
+    userId: string | undefined,
+): boolean {
+    if (!dnid || !userId) {
+        return false;
+    }
+
+    const domain = idx[dnid];
+    return domain !== undefined && !isDomainOwner(domain, userId);
+}

@@ -377,6 +377,53 @@ func TestCheckStatusUsecase_GetWorstDomainStatuses(t *testing.T) {
 	}
 }
 
+// A domain shared with someone keeps its executions under its owner: looking
+// the domain up directly must still report their worst status.
+func TestCheckStatusUsecase_GetWorstDomainStatus_ForeignOwner(t *testing.T) {
+	uc, _, ms := setupStatusUC(t)
+
+	ownerID, _ := happydns.NewRandomIdentifier()
+	did, _ := happydns.NewRandomIdentifier()
+
+	for _, status := range []happydns.Status{happydns.StatusOK, happydns.StatusCrit} {
+		exec := &happydns.Execution{
+			CheckerID: "status_test_checker",
+			Target:    happydns.CheckTarget{UserId: ownerID.String(), DomainId: did.String()},
+			StartedAt: time.Now(),
+			Status:    happydns.ExecutionDone,
+			Result:    happydns.CheckState{Status: status},
+		}
+		if err := ms.CreateExecution(exec); err != nil {
+			t.Fatalf("CreateExecution() error: %v", err)
+		}
+	}
+
+	worst, err := uc.GetWorstDomainStatus(did)
+	if err != nil {
+		t.Fatalf("GetWorstDomainStatus() error: %v", err)
+	}
+	if worst == nil {
+		t.Fatal("expected a status, got nil")
+	}
+	if *worst != happydns.StatusCrit {
+		t.Errorf("expected worst status CRIT, got %v", *worst)
+	}
+}
+
+func TestCheckStatusUsecase_GetWorstDomainStatus_NoExecution(t *testing.T) {
+	uc, _, _ := setupStatusUC(t)
+
+	did, _ := happydns.NewRandomIdentifier()
+
+	worst, err := uc.GetWorstDomainStatus(did)
+	if err != nil {
+		t.Fatalf("GetWorstDomainStatus() error: %v", err)
+	}
+	if worst != nil {
+		t.Errorf("expected no status, got %v", *worst)
+	}
+}
+
 func TestCheckStatusUsecase_GetWorstServiceStatuses(t *testing.T) {
 	uc, _, ms := setupStatusUC(t)
 

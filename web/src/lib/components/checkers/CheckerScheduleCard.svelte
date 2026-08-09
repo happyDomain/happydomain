@@ -31,6 +31,8 @@
     import { t } from "$lib/translations";
     import { toasts } from "$lib/stores/toasts";
     import { appConfig } from "$lib/stores/config";
+    import { domains_idx, isDomainReadOnly } from "$lib/stores/domains";
+    import { userSession } from "$lib/stores/usersession";
     import type { CheckerScope } from "$lib/api/checkers";
     import {
         getScopedCheckPlans,
@@ -147,6 +149,9 @@
     }
 
     let isEnabled = $derived(!$appConfig.disable_checker_scheduler && !(plan.disabled ?? false));
+
+    // The schedule belongs to the domain owner: an invited user only reads it.
+    let readonly = $derived(isDomainReadOnly($domains_idx, scope.domainId, $userSession.id));
 </script>
 
 <Card class="mb-3">
@@ -166,7 +171,7 @@
             <Input
                 type="switch"
                 id="schedule-enabled-toggle"
-                disabled={$appConfig.disable_checker_scheduler}
+                disabled={readonly || $appConfig.disable_checker_scheduler}
                 checked={isEnabled}
                 onchange={(e: Event) => {
                     plan.disabled = !(e.target as HTMLInputElement).checked;
@@ -185,6 +190,7 @@
                         type="number"
                         min={Math.round(minNs / unitNs)}
                         max={Math.round(maxNs / unitNs)}
+                        disabled={readonly}
                         value={intervalDisplayValue()}
                         oninput={(e: Event) => {
                             setIntervalValue(parseInt((e.target as HTMLInputElement).value) || 1);

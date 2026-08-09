@@ -91,6 +91,16 @@ func (dc *DomainController) GetDomains(c *gin.Context) {
 		if statusByDomain != nil {
 			entry.LastCheckStatus = statusByDomain[d.Id.String()]
 		}
+		if entry.LastCheckStatus == nil && dc.checkStatusUC != nil && !user.Id.Equals(d.Owner) {
+			// A domain shared with us has its executions indexed under its
+			// owner, out of reach of the per-user lookup above.
+			status, err := dc.checkStatusUC.GetWorstDomainStatus(d.Id)
+			if err != nil {
+				log.Printf("GetWorstDomainStatus: %s", err.Error())
+			} else {
+				entry.LastCheckStatus = status
+			}
+		}
 		entry.CanManageProvider = dc.domainService.CanManageProvider(user, d)
 		result = append(result, entry)
 	}

@@ -28,7 +28,9 @@
 
     import { t } from "$lib/translations";
     import { appConfig } from "$lib/stores/config";
+    import { domains_idx, isDomainReadOnly } from "$lib/stores/domains";
     import { toasts } from "$lib/stores/toasts";
+    import { userSession } from "$lib/stores/usersession";
     import type { HappydnsExecution } from "$lib/api-base/types.gen";
     import type { CheckerScope, CheckMetric } from "$lib/api/checkers";
     import {
@@ -57,6 +59,10 @@
     }
 
     let { scope, links, checkerId, domainName }: Props = $props();
+
+    // Checks belong to the domain owner: a user invited on the domain reads
+    // them, but cannot run nor erase them.
+    let readonly = $derived(isDomainReadOnly($domains_idx, scope.domainId, $userSession.id));
 
     let resolvedName = $state<string>("");
     let executions = $state<HappydnsExecution[]>([]);
@@ -170,7 +176,7 @@
             </Button>
             <Button
                 color="primary"
-                disabled={$appConfig.disable_checker_scheduler}
+                disabled={readonly || $appConfig.disable_checker_scheduler}
                 onclick={() => runCheckModal?.open(checkerId, resolvedName || checkerId)}
             >
                 <Icon name="play-fill"></Icon>
@@ -179,7 +185,7 @@
             <Button
                 color="danger"
                 outline
-                disabled={executions.filter((e) => e.id).length === 0}
+                disabled={readonly || executions.filter((e) => e.id).length === 0}
                 onclick={deleteAllExecutions}
             >
                 <Icon name="trash-fill"></Icon>
@@ -287,7 +293,7 @@
                                         color="danger"
                                         size="sm"
                                         outline
-                                        disabled={!!isPending || !!isRunning}
+                                        disabled={readonly || !!isPending || !!isRunning}
                                         onclick={() =>
                                             execution.id && deleteExecution(execution.id)}
                                     >
