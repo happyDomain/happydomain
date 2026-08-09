@@ -35,6 +35,7 @@
         "add-object": "Añadir un objeto {{thing}} a este servicio",
         "by": "por",
         "cancel": "Cancelar",
+        "close": "Cerrar",
         "cancel-edit": "Cancelar edición",
         "copy-clipboard": "Copiar al portapapeles",
         "continue": "Continuar",
@@ -105,6 +106,9 @@
             },
             "modifications": "{{count:eq; 0:ninguna modificación; 1:{{count}} modificación; default:{{count}} modificaciones}}",
             "nochange": "¡No hay cambios para aplicar! La zona actual está sincronizada con el servidor.",
+            "nochange-title": "Zona ya sincronizada",
+            "rollback-uptodate": "Esta versión coincide con su zona en línea actual, no hay nada que restaurar.",
+            "rollback-uptodate-title": "Nada que restaurar",
             "others": "{{count:eq; 0:ningún otro cambio; 1:{{count}} otro cambio; default:{{count}} otros cambios}}"
         },
         "attached-new": "¡Nuevo dominio conectado a happyDomain!",

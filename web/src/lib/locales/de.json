@@ -35,6 +35,7 @@
         "add-object": "Ein {{thing}}-Objekt zu diesem Dienst hinzufügen",
         "by": "von",
         "cancel": "Abbrechen",
+        "close": "Schließen",
         "cancel-edit": "Bearbeitung abbrechen",
         "copy-clipboard": "In die Zwischenablage kopieren",
         "continue": "Fortfahren",
@@ -105,6 +106,9 @@
             },
             "modifications": "{{count:eq; 0:keine Änderung; 1:{{count}} Änderung; default:{{count}} Änderungen}}",
             "nochange": "Es gibt keine Änderungen anzuwenden! Die aktuelle Zone ist mit dem Server synchronisiert.",
+            "nochange-title": "Zone bereits synchron",
+            "rollback-uptodate": "Diese Version entspricht Ihrer aktuellen Live-Zone, es gibt nichts zurückzusetzen.",
+            "rollback-uptodate-title": "Nichts zurückzusetzen",
             "others": "{{count:eq; 0:keine andere Änderung; 1:{{count}} andere Änderung; default:{{count}} andere Änderungen}}"
         },
         "attached-new": "Neue Domain an happyDomain angehängt!",

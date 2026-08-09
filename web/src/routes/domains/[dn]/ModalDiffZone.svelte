@@ -53,6 +53,7 @@
     } from "$lib/model/usersettings";
     import DiffZone from "$lib/components/zones/DiffZone.svelte";
     import DiffZoneView from "$lib/components/zones/DiffZoneView.svelte";
+    import { domains_idx } from "$lib/stores/domains";
     import { invalidateZoneDiff } from "$lib/stores/zonediff";
     import { userSession } from "$lib/stores/usersession";
     import { getZone, thisZone } from "$lib/stores/thiszone";
@@ -67,6 +68,7 @@
     let { domain, selectedHistory = "", isOpen = $bindable(false) }: Props = $props();
 
     let zoneDiffLength = $state(0);
+    let diffComputed = $state(false);
     let zoneDiffCreated = $state(0);
     let zoneDiffDeleted = $state(0);
     let zoneDiffModified = $state(0);
@@ -84,8 +86,19 @@
     } | null = $state(null);
     let prepareInProgress = $state(false);
 
+    // The same modal serves the propagate action (latest version) and the
+    // rollback action (any older version): the wording has to follow.
+    let isRollback = $derived.by(() => {
+        const history = $domains_idx[domain?.id]?.zone_history;
+        return Boolean(selectedHistory && history?.length && history[0] !== selectedHistory);
+    });
+
+    // Nothing to apply: the action requested is a no-op, not a pending change.
+    let nothingToApply = $derived(preparePhase === "select" && diffComputed && !zoneDiffLength);
+
     function Open(): void {
         zoneDiffLength = 0;
+        diffComputed = false;
         selectedDiff = null;
         isOpen = true;
         propagationInProgress = false;
@@ -101,6 +114,7 @@
     }
 
     function computedDiff(evt: CustomEvent): void {
+        diffComputed = true;
         zoneDiffLength = evt.detail.zoneDiffLength;
         zoneDiffCreated = evt.detail.zoneDiffCreated;
         zoneDiffDeleted = evt.detail.zoneDiffDeleted;
@@ -171,11 +185,17 @@
 
 <Modal {isOpen} size="lg" scrollable {toggle}>
     {#if domain}
-        <ModalHeader {toggle} class="bg-warning-subtle">
-            <!-- eslint-disable-next-line svelte/no-at-html-tags -- Translations ship with the app; interpolated values are literals or escaped -->
-            {@html $t("domains.view.description", {
-                domain: `<span class="font-monospace">${escape(domain.domain)}</span>`,
-            })}
+        <ModalHeader {toggle} class={nothingToApply ? "bg-light" : "bg-warning-subtle"}>
+            {#if nothingToApply}
+                {isRollback
+                    ? $t("domains.apply.rollback-uptodate-title")
+                    : $t("domains.apply.nochange-title")}
+            {:else}
+                <!-- eslint-disable-next-line svelte/no-at-html-tags -- Translations ship with the app; interpolated values are literals or escaped -->
+                {@html $t("domains.view.description", {
+                    domain: `<span class="font-monospace">${escape(domain.domain)}</span>`,
+                })}
+            {/if}
         </ModalHeader>
     {/if}
     <ModalBody>
@@ -204,7 +224,9 @@
                 {#snippet nodiff()}
                     <div class="d-flex gap-3 align-items-center justify-content-center">
                         <Icon name="check2-all" class="display-5 text-success" />
-                        {$t("domains.apply.nochange")}
+                        {isRollback
+                            ? $t("domains.apply.rollback-uptodate")
+                            : $t("domains.apply.nochange")}
                     </div>
                 {/snippet}
             </DiffZone>
@@ -241,7 +263,12 @@
         {/if}
     </ModalBody>
     <ModalFooter>
-        {#if preparePhase === "select"}
+        {#if nothingToApply}
+            <!-- No pending change: only offer a way out, not a disabled apply button. -->
+            <Button color="secondary" outline on:click={() => (isOpen = false)}>
+                {$t("common.close")}
+            </Button>
+        {:else if preparePhase === "select"}
             {#if zoneDiffLength > 0 && !(prepareInProgress || propagationInProgress)}
                 <Input
                     id="commitmsg"

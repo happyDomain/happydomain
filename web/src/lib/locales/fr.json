@@ -41,6 +41,7 @@
         "add-object": "Add un objet {{thing}} à ce service",
         "by": "par",
         "cancel": "Annuler",
+        "close": "Fermer",
         "cancel-edit": "Abandonner",
         "copy-clipboard": "Copier dans le presse-papier",
         "continue": "Continuer",
@@ -113,6 +114,9 @@
                 "description": "!"
             },
             "nochange": "Il n'y a pas de changement à faire ! Cette zone est synchronisée avec le serveur.",
+            "nochange-title": "Zone déjà synchronisée",
+            "rollback-uptodate": "Cette version est identique à votre zone en ligne actuelle, il n'y a rien à restaurer.",
+            "rollback-uptodate-title": "Rien à restaurer",
             "nodiff": "Aucune différence.",
             "modifications": "{{count:eq; 0:pas de modifications; 1:{{count}} modification; default:{{count}} modifications}}",
             "others": "{{count:eq; 0:pas d'autres changements; 1:{{count}} autre changement; default:{{count}} autres changements}}",
