@@ -43,6 +43,7 @@
     } from "@sveltestrap/sveltestrap";
 
     import { applyZone as APIApplyZone, prepareZone as APIPrepareZone } from "$lib/api/zone";
+    import { notifyZonePublished } from "$lib/stores/zonefeedback";
     import type { FullCorrection } from "$lib/model/correction";
     import type { Domain } from "$lib/model/domain";
     import {
@@ -120,6 +121,8 @@
         propagationInProgress = true;
         try {
             await APIApplyZone(domain, selectedHistory, selectedDiff, diffCommitMsg);
+            // Inside the try: a failed apply must not claim success.
+            notifyZonePublished(selectedDiff.length);
             invalidateZoneDiff();
             if ($thisZone)
                 getZone(domain, $thisZone.id).then(() => {

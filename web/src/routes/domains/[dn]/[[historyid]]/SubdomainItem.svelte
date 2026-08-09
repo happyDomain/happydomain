@@ -29,6 +29,7 @@
     import type { Domain } from "$lib/model/domain";
     import type { HappydnsService } from "$lib/api-base/types.gen";
     import { thisZone } from "$lib/stores/thiszone";
+    import { zoneHighlight } from "$lib/stores/zonefeedback";
 
     interface Props {
         children: Snippet;
@@ -46,6 +47,12 @@
         showResources = !showResources && (!dn || services.length > 1 || (services.length === 1 && services[0]._svctype !== "svcs.Alias" && services[0]._svctype !== "svcs.PTR"));
     }
     toggleShowResources();
+
+    // A change the user just made must not stay hidden inside a collapsed
+    // subdomain: open it so the card can be pointed at.
+    $effect(() => {
+        if ($zoneHighlight?.dn === dn) showResources = true;
+    });
 </script>
 
 {#if $thisZone}

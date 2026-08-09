@@ -42,6 +42,11 @@
     } from "@sveltestrap/sveltestrap";
 
     import { addZoneService } from "$lib/api/zone";
+    import {
+        newServiceIdIn,
+        notifyServiceChange,
+        zoneWasForked,
+    } from "$lib/stores/zonefeedback";
     import { ServiceCombined } from "$lib/model/service.svelte";
     import DomainInput from "$lib/components/inputs/Domain.svelte";
     import { fqdn } from "$lib/dns";
@@ -101,6 +106,10 @@
 
         if (zone && validSubDomain) {
             addAliasInProgress = true;
+            // `zone` is a snapshot taken when the modal was built; the store
+            // holds what the zone actually looks like right now.
+            const previousZone = $thisZone;
+            const aliasDn = value;
             addZoneService(origin, zone.id, new ServiceCombined({
                 _domain: value,
                 _svctype: "svcs.Alias",
@@ -109,6 +118,13 @@
                 (z) => {
                     thisZone.set(z);
                     addAliasInProgress = false;
+                    notifyServiceChange("added", {
+                        svctype: "svcs.Alias",
+                        dn: aliasDn,
+                        serviceId: newServiceIdIn(previousZone, z, aliasDn),
+                        scroll: true,
+                        forked: zoneWasForked(previousZone, z),
+                    });
                     toggle();
                 },
                 (err) => {

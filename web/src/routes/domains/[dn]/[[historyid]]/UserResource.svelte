@@ -37,6 +37,7 @@
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
         import { userSession } from "$lib/stores/usersession";
     import { t } from "$lib/translations";
+    import { highlightTarget } from "$lib/utils/zone-highlight";
 
     interface Props {
         dn: string;
@@ -87,7 +88,10 @@
                             <Service {specs} bind:value={service.Service}>
                                 {#snippet aservice(_type: string, rr: any)}
                                     {#if rr}
-                                        <tr>
+                                        <tr
+                                            id={service._id ? `svc-${service._id}` : undefined}
+                                            use:highlightTarget={{ dn, serviceId: service._id }}
+                                        >
                                             <td
                                                 class="d-flex justify-content-between"
                                                 style="cursor: pointer"
@@ -109,7 +113,10 @@
                             </Service>
                         {/await}
                     {:else if $servicesSpecsLoaded}
-                        <tr>
+                        <tr
+                            id={service._id ? `svc-${service._id}` : undefined}
+                            use:highlightTarget={{ dn, serviceId: service._id }}
+                        >
                             <td
                                 class="d-flex justify-content-between gap-2"
                                 style="cursor: pointer"
@@ -146,7 +153,11 @@
 {:else}
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 pb-3 px-1">
         {#each services as service}
-            <div class="col mb-2 mb-md-3 px-2">
+            <div
+                class="col mb-2 mb-md-3 px-2"
+                id={service._id ? `svc-${service._id}` : undefined}
+                use:highlightTarget={{ dn, serviceId: service._id }}
+            >
                 {#key service}
                     <ServiceCard {dn} {service} />
                 {/key}

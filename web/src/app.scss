@@ -178,3 +178,65 @@ a.sidebar-back.text-muted:hover {
         }
     }
 }
+
+// Points out the card a zone change just affected. Applied by the
+// highlightTarget action, so it has to live outside any component.
+.zone-highlight {
+    // The sticky subdomain header would otherwise sit over a scrolled-to card.
+    scroll-margin-block: 5em;
+
+    .card {
+        animation: zone-highlight-pulse 2s ease-out;
+    }
+}
+
+// Table rows can't take a box-shadow border reliably, so the list/records
+// views get a background tint pulse instead of the card border glow.
+tr.zone-highlight {
+    animation: zone-highlight-row-pulse 2s ease-out;
+}
+
+@keyframes zone-highlight-pulse {
+    0% {
+        border-color: $primary;
+        box-shadow: 0 0 0 0.25rem rgba($primary, 0.5);
+    }
+    30% {
+        border-color: $primary;
+        box-shadow: 0 0 0 0.25rem rgba($primary, 0.4);
+    }
+    100% {
+        box-shadow: 0 0 0 0.25rem rgba($primary, 0);
+    }
+}
+
+@keyframes zone-highlight-row-pulse {
+    0%,
+    30% {
+        background-color: rgba($primary, 0.25);
+    }
+    100% {
+        background-color: rgba($primary, 0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    // Keep the cue, drop the movement: a flat tint that just fades away.
+    .zone-highlight .card {
+        animation: zone-highlight-fade 2s linear;
+    }
+
+    tr.zone-highlight {
+        animation: zone-highlight-fade 2s linear;
+    }
+
+    @keyframes zone-highlight-fade {
+        0%,
+        60% {
+            background-color: rgba($primary, 0.15);
+        }
+        100% {
+            background-color: rgba($primary, 0);
+        }
+    }
+}

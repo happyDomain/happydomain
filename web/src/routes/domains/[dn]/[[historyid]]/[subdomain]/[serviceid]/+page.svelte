@@ -32,6 +32,11 @@
     import type { ServiceWithValue } from "$lib/model/service.svelte";
     import { initializeService } from "$lib/api/service_specs";
     import { addZoneService, updateZoneService } from "$lib/api/zone";
+    import {
+        newServiceIdIn,
+        notifyServiceChange,
+        zoneWasForked,
+    } from "$lib/stores/zonefeedback";
     import PageTitle from "$lib/components/PageTitle.svelte";
     import ServiceEditor from "$lib/components/services/ServiceEditor.svelte";
     import { fqdn } from "$lib/dns";
@@ -115,13 +120,34 @@
         if (!service || !$thisZone) return;
 
         addServiceInProgress = true;
+        const isNew = !service._id;
         const action = service._id ? updateZoneService : addZoneService;
+        // The zone is replaced below, but telling what changed needs the one we
+        // started from.
+        const previousZone = $thisZone;
+        const svctype = service._svctype;
+        const dn = service._domain;
 
         action(data.domain, $thisZone.id, service).then(
             (z) => {
                 thisZone.set(z);
                 addServiceInProgress = false;
+                const serviceId = isNew ? newServiceIdIn(previousZone, z, dn) : service?._id;
+                const forked = zoneWasForked(previousZone, z);
                 refreshDomains().then(() => {
+                    // Confirm as we hand the user back to the zone, not before:
+                    // the highlight only lasts a couple of seconds, and it has
+                    // to still be running once the grid is on screen.
+                    notifyServiceChange(isNew ? "added" : "updated", {
+                        svctype,
+                        dn,
+                        serviceId,
+                        // Coming back lands at the top of the grid, so the card
+                        // has to be brought into view for the highlight to be
+                        // seen at all, whether it is a new one or not.
+                        scroll: true,
+                        forked,
+                    });
                     goBack(z.id);
                 });
             },

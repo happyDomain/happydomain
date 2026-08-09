@@ -48,6 +48,7 @@
     import { listScopedCheckers } from "$lib/api/checkers";
     import { getServiceSpec } from "$lib/api/service_specs";
     import { deleteZoneService, updateZoneService } from "$lib/api/zone";
+    import { notifyServiceChange, zoneWasForked } from "$lib/stores/zonefeedback";
     import ServiceBadges from "./[[historyid]]/ServiceBadges.svelte";
     import PropagationStatus from "$lib/components/services/PropagationStatus.svelte";
     import RecordLine from "$lib/components/services/RecordLine.svelte";
@@ -86,11 +87,19 @@
     function deleteService() {
         if (!service || !$thisZone) return;
         deleteInProgress = true;
+        const previousZone = $thisZone;
+        const svctype = service._svctype;
+        const dn = service._domain;
         deleteZoneService(domain, $thisZone.id, service).then(
             (z) => {
                 deleteInProgress = false;
                 isOpen = false;
                 service = {} as ServiceWithValue;
+                notifyServiceChange("deleted", {
+                    svctype,
+                    dn,
+                    forked: zoneWasForked(previousZone, z),
+                });
                 if (z.id !== selectedHistory) {
                     refreshDomains().then(() => invalidateAll());
                 } else {
@@ -133,9 +142,19 @@
     function saveTtl() {
         if (!service || !$thisZone) return;
         ttlSaveInProgress = true;
+        const previousZone = $thisZone;
+        const svctype = service._svctype;
+        const dn = service._domain;
+        const serviceId = service._id;
         updateZoneService(domain, $thisZone.id, service).then(
             (z) => {
                 thisZone.set(z);
+                notifyServiceChange("updated", {
+                    svctype,
+                    dn,
+                    serviceId,
+                    forked: zoneWasForked(previousZone, z),
+                });
                 setTimeout(() => {
                     ttlSaveInProgress = false;
                 }, 500);

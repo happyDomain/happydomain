@@ -27,6 +27,7 @@
     import { Badge, Button, Icon, Popover, Spinner } from "@sveltestrap/sveltestrap";
 
     import { deleteZoneService } from "$lib/api/zone";
+    import { notifyServiceChange, zoneWasForked } from "$lib/stores/zonefeedback";
     import { controls as ctrlNewAlias } from "$lib/components/modals/Alias.svelte";
     import { controls as ctrlRecord } from "$lib/components/modals/Record.svelte";
     import { controls as ctrlNewService } from "$lib/components/services/NewServicePath.svelte";
@@ -88,10 +89,17 @@
     let deleteServiceInProgress = $state(false);
     function deleteCNAME() {
         deleteServiceInProgress = true;
+        const previousZone = $thisZone;
+        const svctype = services[0]._svctype;
         deleteZoneService(origin, zoneId, services[0]).then(
             (z) => {
                 thisZone.set(z);
                 deleteServiceInProgress = false;
+                notifyServiceChange("deleted", {
+                    svctype,
+                    dn,
+                    forked: zoneWasForked(previousZone, z),
+                });
             },
             (err) => {
                 deleteServiceInProgress = false;

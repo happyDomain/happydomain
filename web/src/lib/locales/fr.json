@@ -533,7 +533,16 @@
         "upload": "Importer une zone",
         "import-text": "Depuis du texte",
         "import-file": "Depuis un fichier de zone",
-        "return-to": "Retour à la zone"
+        "return-to": "Retour à la zone",
+        "feedback": {
+            "service-added": "Service {{service}} ajouté",
+            "service-updated": "Service {{service}} mis à jour",
+            "service-deleted": "Service {{service}} supprimé",
+            "pending": "Publiez vos modifications pour les appliquer chez votre hébergeur.",
+            "derived": "Une copie modifiable de la zone a été créée pour vos modifications.",
+            "published": "Toutes les modifications ont été publiées",
+            "published-detail": "{{count}} modification(s) transmise(s) à votre hébergeur."
+        }
     },
     "compliance": {
         "title": "Conformité des enregistrements",

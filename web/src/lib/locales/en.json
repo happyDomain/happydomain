@@ -670,7 +670,16 @@
         "import-text": "Import from text",
         "import-file": "Import from file",
         "return-to": "Go to the zone",
-        "return-to-results": "Back to results"
+        "return-to-results": "Back to results",
+        "feedback": {
+            "service-added": "{{service}} service added",
+            "service-updated": "{{service}} service updated",
+            "service-deleted": "{{service}} service deleted",
+            "pending": "Publish your changes to apply them to your provider.",
+            "derived": "An editable copy of the zone was created for your changes.",
+            "published": "All changes published",
+            "published-detail": "{{count}} change(s) sent to your provider."
+        }
     },
     "checkers": {
         "run-check": {
