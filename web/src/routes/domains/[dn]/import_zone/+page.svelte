@@ -53,6 +53,7 @@
                                         : data.domain.id,
                                 ),
                             }),
+                            { replaceState: true },
                         );
                     },
                 );
