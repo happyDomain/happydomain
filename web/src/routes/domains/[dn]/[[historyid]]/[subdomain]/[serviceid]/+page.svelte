@@ -117,7 +117,7 @@
 
     function submitServiceForm(e: SubmitEvent) {
         e.preventDefault();
-        if (!service || !$thisZone) return;
+        if (!service || !$thisZone || addServiceInProgress) return;
 
         addServiceInProgress = true;
         const isNew = !service._id;
@@ -131,7 +131,9 @@
         action(data.domain, $thisZone.id, service).then(
             (z) => {
                 thisZone.set(z);
-                addServiceInProgress = false;
+                // Keep the button busy until the user is actually back on the
+                // zone: the domains refresh and the navigation are part of the
+                // wait, and releasing it here would let a second submit through.
                 const serviceId = isNew ? newServiceIdIn(previousZone, z, dn) : service?._id;
                 const forked = zoneWasForked(previousZone, z);
                 refreshDomains().then(() => {
@@ -229,7 +231,15 @@
                     {$t("service.update")}
                 </Button>
             {:else}
-                <Button form="addSvcForm" type="submit" color="primary">
+                <Button
+                    disabled={addServiceInProgress}
+                    form="addSvcForm"
+                    type="submit"
+                    color="primary"
+                >
+                    {#if addServiceInProgress}
+                        <Spinner size="sm" />
+                    {/if}
                     {$t("service.add")}
                 </Button>
             {/if}
