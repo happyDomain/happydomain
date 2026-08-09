@@ -104,23 +104,21 @@
     <TabContent>
         {#each innerSpecs as spec, i}
             <TabPane tabId={String(spec.id)} active={i == 0}>
-                {#snippet tab()}
-                    <span>
-                        {spec.label}
-                        {#if innerSpecs && value[spec.id] !== undefined && !spec.required}
-                            <button
-                                class="btn btn-link btn-sm pe-0 text-muted"
-                                type="button"
-                                onclick={() => {
-                                        value[spec.id] = undefined;
-                                        value = value;
-                               }}
-                            >
-                                <Icon name="trash" />
-                            </button>
-                        {/if}
-                    </span>
-                {/snippet}
+                <span slot="tab">
+                    {spec.label}
+                    {#if innerSpecs && value[spec.id] !== undefined && !spec.required}
+                        <button
+                            class="btn btn-link btn-sm pe-0 text-muted"
+                            type="button"
+                            onclick={() => {
+                                    value[spec.id] = undefined;
+                                    value = value;
+                           }}
+                        >
+                            <Icon name="trash" />
+                        </button>
+                    {/if}
+                </span>
                 {#if innerSpecs && value[spec.id] === undefined}
                     <div class="my-3 d-flex justify-content-center">
                         <Button

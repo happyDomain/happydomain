@@ -36,7 +36,7 @@
         readonly?: boolean;
         specs: Field;
         type: string;
-        value: Record<string, unknown>;
+        value: Record<string, unknown> | undefined;
     }
 
     let {
@@ -64,12 +64,14 @@
     });
 
     function renameKey(oldkey: string, newkey: string) {
+        if (!value) return;
         value[newkey] = value[oldkey];
         delete value[oldkey];
         value = value;
     }
 
     function deleteKey(key: string) {
+        if (!value) return;
         delete value[key];
         value = value;
     }
@@ -97,8 +99,8 @@
             {$t("common.no-thing", { thing: specs.label })}
         </div>
     {/if}
-    {#if !("" in value)}
-        <Button type="button" color="primary" on:click={() => (value[""] = {})}>
+    {#if edit && value && !("" in value)}
+        <Button type="button" color="primary" on:click={() => value && (value[""] = {})}>
             <Icon name="plus" />
             {$t("common.add-new-thing", { thing: specs.label })}
         </Button>
