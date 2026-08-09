@@ -86,6 +86,24 @@ describe("parseForSale", () => {
     it("reports content that is not a tag-value pair", () => {
         expect(parseForSale("v=FORSALE1;garbage").malformed).toBe(true);
     });
+
+    it("tolerates surrounding whitespace around the whole record", () => {
+        expect(parseForSale("  v=FORSALE1;fval=USD750  ")).toEqual({
+            tag: "fval",
+            value: "USD750",
+            invalidVersion: false,
+            malformed: false,
+        });
+    });
+
+    it("reports an empty tag before the =", () => {
+        expect(parseForSale("v=FORSALE1;=value")).toEqual({
+            tag: "",
+            value: "value",
+            invalidVersion: false,
+            malformed: false,
+        });
+    });
 });
 
 describe("stringifyForSale", () => {
@@ -119,9 +137,18 @@ describe("prices", () => {
         expect(parsePrice("750")).toEqual({ currency: "", amount: "750" });
     });
 
+    it("leaves a value with no leading capital letters entirely in the amount", () => {
+        // Lowercase letters are not a currency: isValidCurrency would reject them anyway.
+        expect(parsePrice("usd750")).toEqual({ currency: "", amount: "usd750" });
+    });
+
     it("round-trips", () => {
         const p = parsePrice("EUR1234.56");
         expect(stringifyPrice(p.currency, p.amount)).toBe("EUR1234.56");
+    });
+
+    it("stringifies an empty price back to an empty string", () => {
+        expect(stringifyPrice("", "")).toBe("");
     });
 
     it("validates the RFC shapes", () => {
@@ -227,6 +254,31 @@ describe("ForSaleService", () => {
 
         expect(svc.records).toHaveLength(1);
         expect(svc.records[0].Txt).toBe(FORSALE_VERSION);
+    });
+
+    it("appends a pair instead of replacing one when there is no bare record", () => {
+        const svc = new ForSaleService({
+            txt: [txtRecord("v=FORSALE1;fval=USD750")],
+        });
+
+        svc.add("ftxt", "Call for info.");
+
+        expect(svc.records.map((r) => r.Txt)).toEqual([
+            "v=FORSALE1;fval=USD750",
+            "v=FORSALE1;ftxt=Call for info.",
+        ]);
+    });
+
+    it("removes a middle record without touching the others", () => {
+        const svc = new ForSaleService(value());
+
+        svc.remove(1);
+
+        expect(svc.records.map((r) => r.Txt)).toEqual([
+            "v=FORSALE1;fval=USD750",
+            "v=FORSALE1;ftxt=Appelez-nous",
+            "v=FORSALE1;fxyz=future",
+        ]);
     });
 
     it("rewrites the value while keeping the tag", () => {

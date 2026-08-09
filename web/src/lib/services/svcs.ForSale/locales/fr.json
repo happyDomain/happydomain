@@ -9,6 +9,8 @@
             "add": "Ajouter :",
             "price-currency": "EUR",
             "price-amount": "750",
+            "currency-label": "Devise",
+            "amount-label": "Montant",
             "text-placeholder": "Contactez-nous pour toute information.",
             "uri-placeholder": "https://example.com/a-vendre",
             "code-placeholder": "EXCO-S2lscm95IHdhcyBoZXJl",

@@ -62,6 +62,18 @@ describe("For Sale compliance", () => {
         );
     });
 
+    it("accepts a record under a subdomain of the _for-sale node", () => {
+        expect(
+            ids(run([rr("v=FORSALE1;fval=USD750", 3600, "_for-sale.sub")])),
+        ).not.toContain("forsale.wrong-owner-name");
+    });
+
+    it("skips the owner-name check when the record carries no name", () => {
+        expect(ids(run([rr("v=FORSALE1;fval=USD750", 3600, "")]))).not.toContain(
+            "forsale.wrong-owner-name",
+        );
+    });
+
     it("flags a missing version tag", () => {
         expect(ids(run([rr("fval=USD750")]))).toContain("forsale.missing-version");
     });
@@ -125,6 +137,15 @@ describe("For Sale compliance", () => {
         expect(ids(run([rr("v=FORSALE1;fval=USD750", 86400)]))).toContain("forsale.ttl-too-high");
     });
 
+    // A TTL of 0 is falsy in JS: the validator treats it as "not set" and
+    // skips both the too-high and the inconsistent-TTL checks for it.
+    it("does not flag a record whose TTL is 0", () => {
+        expect(ids(run([rr("v=FORSALE1;fval=USD750", 0)]))).toEqual([]);
+        expect(
+            ids(run([rr("v=FORSALE1;fval=USD750", 0), rr("v=FORSALE1;ftxt=Hi", 3600)])),
+        ).not.toContain("forsale.inconsistent-ttl");
+    });
+
     it("warns when the RRset mixes TTLs", () => {
         expect(
             ids(run([rr("v=FORSALE1;fval=USD750", 3600), rr("v=FORSALE1;ftxt=Hi", 600)])),
@@ -137,6 +158,12 @@ describe("For Sale compliance", () => {
 
     it("returns no issue on an empty RRset", () => {
         expect(run([])).toEqual([]);
+    });
+
+    it("accepts a single record instead of an array, like the API may send", () => {
+        expect(
+            ids(getValidators("svcs.ForSale")!.sync!({ txt: rr("v=FORSALE1;fval=USD750") }, CTX)),
+        ).toEqual([]);
     });
 
     // Two records sharing a defect must stay two distinguishable issues,

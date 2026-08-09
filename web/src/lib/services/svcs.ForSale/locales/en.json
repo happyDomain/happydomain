@@ -9,6 +9,8 @@
             "add": "Add:",
             "price-currency": "USD",
             "price-amount": "750",
+            "currency-label": "Currency",
+            "amount-label": "Amount",
             "text-placeholder": "Call for info.",
             "uri-placeholder": "https://example.com/for-sale",
             "code-placeholder": "EXCO-S2lscm95IHdhcyBoZXJl",

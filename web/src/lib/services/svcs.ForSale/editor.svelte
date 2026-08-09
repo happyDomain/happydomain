@@ -89,9 +89,10 @@
     {@const tag = entry.pair.tag}
     {@const overflow =
         (tag === "ftxt" || tag === "fcod") && byteLength(entry.pair.value) > FORSALE_MAX_VALUE_LEN}
+    {@const kindId = `forsale-kind-${entry.index}`}
     <div class="mb-2">
         <InputGroup size="sm">
-            <InputGroupText class="forsale-kind">
+            <InputGroupText id={kindId} class="forsale-kind">
                 {#if tag && tag in ICONS}
                     <Icon name={ICONS[tag as ForSaleTag]} class="me-1" />
                     {$t(`resources.FORSALE.${tag}`)}
@@ -103,18 +104,28 @@
 
             {#if tag === "fval"}
                 {@const price = parsePrice(entry.pair.value)}
+                {@const currencyId = `forsale-currency-${entry.index}`}
+                {@const amountId = `forsale-amount-${entry.index}`}
+                <span id={currencyId} class="visually-hidden">
+                    {$t("resources.FORSALE.currency-label")}
+                </span>
                 <Input
                     style="max-width: 6rem"
                     list="forsale-currencies"
                     {readonly}
+                    aria-labelledby="{kindId} {currencyId}"
                     placeholder={$t("resources.FORSALE.price-currency")}
                     value={price.currency}
                     oninput={(e: Event) =>
                         updatePrice(entry.index, "currency", (e.target as HTMLInputElement).value)}
                 />
+                <span id={amountId} class="visually-hidden">
+                    {$t("resources.FORSALE.amount-label")}
+                </span>
                 <Input
                     {readonly}
                     inputmode="decimal"
+                    aria-labelledby="{kindId} {amountId}"
                     placeholder={$t("resources.FORSALE.price-amount")}
                     value={price.amount}
                     oninput={(e: Event) =>
@@ -124,6 +135,7 @@
                 <Input
                     {readonly}
                     invalid
+                    aria-labelledby={kindId}
                     value={entry.pair.value}
                     oninput={(e: Event) =>
                         val.setRaw(entry.index, (e.target as HTMLInputElement).value)}
@@ -132,6 +144,7 @@
                 <Input
                     {readonly}
                     invalid={overflow}
+                    aria-labelledby={kindId}
                     type={tag === "furi" ? "url" : "text"}
                     placeholder={tag === "furi"
                         ? $t("resources.FORSALE.uri-placeholder")
