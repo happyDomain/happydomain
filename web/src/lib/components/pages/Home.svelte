@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import { goto } from "$app/navigation";
+    import { replaceState } from "$app/navigation";
     import { page } from "$app/state";
     import { get } from "svelte/store";
     import { Col, Container, Row } from "@sveltestrap/sveltestrap";
@@ -93,7 +93,7 @@
             // Already a full path, taken from the address bar: it carries the base
             // path, which navigate() used to add a second time.
             // eslint-disable-next-line svelte/no-navigation-without-resolve
-            goto(newUrl, { replaceState: true, keepFocus: true, noScroll: true });
+            replaceState(newUrl, page.state);
         }
     });
 </script>
