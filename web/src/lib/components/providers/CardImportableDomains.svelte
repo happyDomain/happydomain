@@ -23,6 +23,7 @@
 
 <script lang="ts">
     import { escape } from "html-escaper";
+    import { SvelteSet } from "svelte/reactivity";
     import {
         Badge,
         Button,
@@ -97,7 +98,7 @@
         return domains !== undefined && domains.reduce((acc, d) => acc || d.id_provider == provider._id, false);
     }
 
-    let domainsInProgress = $state(new Set<string>());
+    let domainsInProgress = new SvelteSet<string>();
 
     async function importDomain(domainName: string, noToast: boolean) {
         domainsInProgress.add(domainName);
