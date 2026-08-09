@@ -61,8 +61,8 @@ async function customFetch(
     }
 
     if (response.status === 400) {
-        const json = await response.json();
-        if (json.error === "error in openapi3filter.SecurityRequirementsError: security requirements failed: invalid session") {
+        const json = await response.clone().json().catch(() => null);
+        if (json?.error === "error in openapi3filter.SecurityRequirementsError: security requirements failed: invalid session") {
             throw new NotAuthorizedError(json.error.substring(80));
         }
     }

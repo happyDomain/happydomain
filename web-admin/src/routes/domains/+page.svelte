@@ -44,7 +44,8 @@
     async function handleDeleteDomain(domainId: string, domainName: string) {
         if (confirm(`Are you sure you want to delete domain "${domainName}"?`)) {
             try {
-                await deleteDomainsByDomain({ path: { domain: domainId } });
+                const { error: err } = await deleteDomainsByDomain({ path: { domain: domainId } });
+                if (err) throw new Error((err as any)?.errmsg || String(err));
                 // Refresh the domains list
                 domainsQ = getDomains();
                 toasts.addToast({

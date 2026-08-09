@@ -61,6 +61,7 @@
                 path: { uid },
                 body: { password: "" },
             });
+            if (response.error) throw new Error((response.error as any)?.errmsg || String(response.error));
             generatedPassword = response.data?.password || "";
             await copyPassword();
         } catch (error) {

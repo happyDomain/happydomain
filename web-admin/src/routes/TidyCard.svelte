@@ -35,7 +35,8 @@
         isProcessing = true;
 
         try {
-            await postTidy();
+            const { error: err } = await postTidy();
+            if (err) throw new Error((err as any)?.errmsg || String(err));
 
             toasts.addToast({
                 type: "success",

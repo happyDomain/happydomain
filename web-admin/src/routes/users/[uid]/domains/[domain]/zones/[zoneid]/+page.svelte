@@ -67,9 +67,10 @@
         deleting = true;
 
         try {
-            await deleteUsersByUidDomainsByDomainZonesByZoneid({
+            const { error: err } = await deleteUsersByUidDomainsByDomainZonesByZoneid({
                 path: { uid: uid!, domain: domainId!, zoneid: zoneid! },
             });
+            if (err) throw new Error((err as any)?.errmsg || String(err));
 
             toasts.addToast({
                 message: `Zone has been deleted successfully`,
@@ -303,9 +304,9 @@
                 </Col>
             </Row>
         {:else}
-            <Alert color="warning">
-                <h4 class="alert-heading">No data available</h4>
-                <p>The zone response did not contain any data.</p>
+            <Alert color="danger">
+                <h4 class="alert-heading">Error loading zone</h4>
+                <p>{(zoneR?.error as any)?.errmsg || String(zoneR?.error ?? "The zone response did not contain any data.")}</p>
                 <hr />
                 <Button
                     type="button"

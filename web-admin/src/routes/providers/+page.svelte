@@ -44,7 +44,8 @@
     async function handleDeleteProvider(providerId: string, providerName: string) {
         if (confirm(`Are you sure you want to delete provider "${providerName}"?`)) {
             try {
-                await deleteProvidersByPid({ path: { pid: providerId } });
+                const { error: err } = await deleteProvidersByPid({ path: { pid: providerId } });
+                if (err) throw new Error((err as any)?.errmsg || String(err));
                 // Refresh the providers list
                 providersQ = getProviders();
                 toasts.addToast({

@@ -65,10 +65,11 @@
     async function saveOptions() {
         saving = true;
         try {
-            await putCheckersByCheckerIdOptions({
+            const { error: err } = await putCheckersByCheckerIdOptions({
                 path: { checkerId },
                 body: optionValues,
             });
+            if (err) throw new Error((err as any)?.errmsg || String(err));
             checkerOptionsQ = getCheckersByCheckerIdOptions({ path: { checkerId } });
             toasts.addToast({
                 message: `Checker options updated successfully`,
@@ -88,10 +89,11 @@
     async function cleanOrphanedOptions(adminOpts: HappydnsCheckerOptionDocumentation[]) {
         saving = true;
         try {
-            await putCheckersByCheckerIdOptions({
+            const { error: err } = await putCheckersByCheckerIdOptions({
                 path: { checkerId },
                 body: filterValidOptions(optionValues, adminOpts),
             });
+            if (err) throw new Error((err as any)?.errmsg || String(err));
             checkerOptionsQ = getCheckersByCheckerIdOptions({ path: { checkerId } });
             toasts.addToast({
                 message: `Orphaned options removed successfully`,
@@ -265,7 +267,17 @@
                                 </p>
                             </CardBody>
                         </Card>
-                    {:then _optionsR}
+                    {:then optionsR}
+                        {#if optionsR.error}
+                            <Card>
+                                <CardBody>
+                                    <Alert color="danger" class="mb-0">
+                                        <Icon name="exclamation-triangle-fill"></Icon>
+                                        Error loading options: {(optionsR.error as any)?.errmsg || String(optionsR.error)}
+                                    </Alert>
+                                </CardBody>
+                            </Card>
+                        {/if}
                         {@const adminOpts = checker.options?.adminOpts || []}
                         {@const readOnlyOptGroups = [
                             {
@@ -408,7 +420,7 @@
         {:else}
             <Alert color="danger">
                 <Icon name="exclamation-triangle-fill"></Icon>
-                Error: checker data not found
+                {(checkerR.error as any)?.errmsg || String(checkerR.error ?? "Error: checker data not found")}
             </Alert>
         {/if}
     {:catch error}

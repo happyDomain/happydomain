@@ -59,6 +59,7 @@
         actionLoading = 'validation_link';
         try {
             const response = await postAuthByUidValidationLink({ path: { uid } });
+            if (response.error) throw new Error((response.error as any)?.errmsg || String(response.error));
             if (response.data) {
                 await navigator.clipboard.writeText(response.data);
             }
@@ -80,7 +81,8 @@
     async function handleSendValidationEmail() {
         actionLoading = 'send_validation';
         try {
-            await postAuthByUidSendValidationEmail({ path: { uid } });
+            const { error: err } = await postAuthByUidSendValidationEmail({ path: { uid } });
+            if (err) throw new Error((err as any)?.errmsg || String(err));
             toasts.addToast({
                 message: 'Validation email sent successfully',
                 type: 'success',
@@ -101,7 +103,8 @@
 
         actionLoading = 'validate_email';
         try {
-            await postAuthByUidValidateEmail({ path: { uid } });
+            const { error: err } = await postAuthByUidValidateEmail({ path: { uid } });
+            if (err) throw new Error((err as any)?.errmsg || String(err));
             onRefresh();
             toasts.addToast({
                 message: 'Email marked as verified successfully',
@@ -123,13 +126,14 @@
 
         actionLoading = 'validate_email';
         try {
-            await putAuthByUid({
+            const { error: err } = await putAuthByUid({
                 path: { uid },
                 body: {
                     email: authUser.email,
                     emailVerification: undefined
                 }
             });
+            if (err) throw new Error((err as any)?.errmsg || String(err));
             onRefresh();
             toasts.addToast({
                 message: 'Email marked as unverified successfully',

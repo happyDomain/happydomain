@@ -74,6 +74,7 @@
 
         try {
             const body: any = {
+                id: user.id,
                 email: user.email,
                 created_at: user.created_at,
                 last_seen: user.last_seen,
@@ -87,6 +88,11 @@
             };
 
             const res = await putUsersByUid({ path: { uid }, body });
+
+            if (res.error) {
+                throw new Error((res.error as any)?.errmsg || String(res.error));
+            }
+
             const updated = (res?.data as HappydnsUser | undefined)?.quota;
             if (updated?.updated_at) updatedAt = updated.updated_at;
 

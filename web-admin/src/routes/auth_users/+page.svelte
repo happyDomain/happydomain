@@ -48,11 +48,12 @@
         }
 
         try {
-            await postAuthInvite({
+            const { error: err } = await postAuthInvite({
                 body: {
                     email: email,
                 },
             });
+            if (err) throw new Error((err as any)?.errmsg || String(err));
             // Refresh the auth users list
             authUsersQ = getAuth();
             toasts.addToast({
@@ -141,7 +142,8 @@
                                 <Button color="primary" outline size="sm" onclick={async () => {
                                     if (confirm(`Are you sure you want to delete auth user "${authUser.email}"?`)) {
                                         try {
-                                            await deleteAuthByUid({ path: { uid: authUser.id ?? '' } });
+                                            const { error: err } = await deleteAuthByUid({ path: { uid: authUser.id ?? '' } });
+                                            if (err) throw new Error((err as any)?.errmsg || String(err));
                                             // Refresh the auth users list
                                             authUsersQ = getAuth();
                                             toasts.addToast({

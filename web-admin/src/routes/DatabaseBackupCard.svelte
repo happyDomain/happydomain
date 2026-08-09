@@ -93,8 +93,10 @@
             }
 
             const response = await putBackupJson({ body: datajson });
+            if (response.error) {
+                throw new Error((response.error as any)?.errmsg || String(response.error));
+            }
 
-            console.log("Restore successful:", response);
             alert("Database restored successfully!");
         } catch (err) {
             console.error("Error:", err);

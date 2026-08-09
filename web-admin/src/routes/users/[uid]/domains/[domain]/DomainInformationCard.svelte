@@ -74,7 +74,7 @@
         errorMessage = '';
 
         try {
-            await putUsersByUidDomainsByDomain({
+            const { error: err } = await putUsersByUidDomainsByDomain({
                 path: { uid, domain: domainId },
                 body: {
                     domain: domainName,
@@ -83,6 +83,7 @@
                     id_provider: id_provider,
                 }
             });
+            if (err) throw new Error((err as any)?.errmsg || String(err));
 
             toasts.addToast({
                 message: `Domain "${domainName}" has been updated successfully`,

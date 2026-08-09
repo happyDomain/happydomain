@@ -44,7 +44,8 @@
     async function handleDeleteUser(userId: string, userEmail: string) {
         if (confirm(`Are you sure you want to delete user "${userEmail}"?`)) {
             try {
-                await deleteUsersByUid({ path: { uid: userId } });
+                const { error: err } = await deleteUsersByUid({ path: { uid: userId } });
+                if (err) throw new Error((err as any)?.errmsg || String(err));
                 // Refresh the users list
                 usersQ = getUsers();
                 toasts.addToast({

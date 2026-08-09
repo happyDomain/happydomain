@@ -53,11 +53,12 @@
         errorMessage = '';
 
         try {
-            await postAuth({
+            const { error: err } = await postAuth({
                 body: {
                     email: email,
                 }
             });
+            if (err) throw new Error((err as any)?.errmsg || String(err));
 
             toasts.addToast({
                 message: `Auth user "${email}" has been created successfully`,

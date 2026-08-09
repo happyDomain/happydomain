@@ -94,10 +94,11 @@
                 body.emailVerification = null;
             }
 
-            await putAuthByUid({
+            const { error: err } = await putAuthByUid({
                 path: { uid: authUser.id ?? '' },
                 body: body
             });
+            if (err) throw new Error((err as any)?.errmsg || String(err));
 
             toasts.addToast({
                 message: `Auth user "${email}" has been updated successfully`,

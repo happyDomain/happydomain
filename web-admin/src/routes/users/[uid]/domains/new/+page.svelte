@@ -56,7 +56,7 @@
         errorMessage = '';
 
         try {
-            await postDomains({
+            const { error: err } = await postDomains({
                 body: {
                     domain: domain,
                     group: group || undefined,
@@ -64,6 +64,7 @@
                     id_provider: id_provider,
                 }
             });
+            if (err) throw new Error((err as any)?.errmsg || String(err));
 
             toasts.addToast({
                 message: `Domain "${domain}" has been created successfully`,

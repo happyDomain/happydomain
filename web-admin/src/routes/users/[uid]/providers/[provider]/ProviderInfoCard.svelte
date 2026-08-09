@@ -80,10 +80,11 @@
                 _comment: comment,
             };
 
-            await putUsersByUidProvidersByPid({
+            const { error: err } = await putUsersByUidProvidersByPid({
                 path: { uid, pid: provider._id! },
                 body: body
             });
+            if (err) throw new Error((err as any)?.errmsg || String(err));
 
             toasts.addToast({
                 message: `Provider "${comment || provider._srctype}" has been updated successfully`,
@@ -108,9 +109,10 @@
         errorMessage = '';
 
         try {
-            await deleteUsersByUidProvidersByPid({
+            const { error: err } = await deleteUsersByUidProvidersByPid({
                 path: { uid, pid: provider._id! }
             });
+            if (err) throw new Error((err as any)?.errmsg || String(err));
 
             toasts.addToast({
                 message: `Provider "${comment || provider._srctype}" has been deleted successfully`,

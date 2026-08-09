@@ -74,8 +74,11 @@
 
         try {
             const body: any = {
+                id: user.id,
                 email: email,
                 created_at: fromDatetimeLocal(createdAt),
+                settings: user.settings,
+                quota: user.quota,
             };
 
             // Only include last_seen if it has a value
@@ -85,10 +88,14 @@
                 body.last_seen = null;
             }
 
-            await putUsersByUid({
+            const res = await putUsersByUid({
                 path: { uid },
                 body: body
             });
+
+            if (res.error) {
+                throw new Error((res.error as any)?.errmsg || String(res.error));
+            }
 
             toasts.addToast({
                 message: `User "${email}" has been updated successfully`,

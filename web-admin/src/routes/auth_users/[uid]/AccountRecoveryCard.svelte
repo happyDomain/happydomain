@@ -51,6 +51,7 @@
         actionLoading = 'recovery_link';
         try {
             const response = await postAuthByUidRecoverLink({ path: { uid } });
+            if (response.error) throw new Error((response.error as any)?.errmsg || String(response.error));
             if (response.data) {
                 await navigator.clipboard.writeText(response.data);
             }
@@ -72,7 +73,8 @@
     async function handleSendRecoveryEmail() {
         actionLoading = 'send_recovery';
         try {
-            await postAuthByUidSendRecoverEmail({ path: { uid } });
+            const { error: err } = await postAuthByUidSendRecoverEmail({ path: { uid } });
+            if (err) throw new Error((err as any)?.errmsg || String(err));
             toasts.addToast({
                 message: 'Recovery email sent successfully',
                 type: 'success',
