@@ -28,12 +28,17 @@
 
     import { Col, Container, Row } from "@sveltestrap/sveltestrap";
 
-    import { deleteDomain as APIDeleteDomain } from "$lib/api/domains";
+    import {
+        deleteDomain as APIDeleteDomain,
+        unshareDomain as APIUnshareDomain,
+    } from "$lib/api/domains";
     import type { Domain } from "$lib/model/domain";
     import type { ZoneMeta } from "$lib/model/zone";
-    import { domainLink, domains_idx, refreshDomains } from "$lib/stores/domains";
+    import { domainLink, domains_idx, isDomainOwner, refreshDomains } from "$lib/stores/domains";
+    import { userSession } from "$lib/stores/usersession";
     import ModalDiffZone from "./ModalDiffZone.svelte";
     import ModalDomainDelete, { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
+    import ModalDomainShare from "./ModalDomainShare.svelte";
     import ModalDomainWhois from "./ModalDomainWhois.svelte";
     import ModalUploadZone from "./ModalUploadZone.svelte";
     import NewSubdomainPath from "./NewSubdomainPath.svelte";
@@ -76,10 +81,18 @@
         }
     }
 
+    let isOwner = $derived(isDomainOwner($domains_idx[selectedDomain], $userSession.id));
+
     let deleteInProgress = $state(false);
     function detachDomain(): void {
         deleteInProgress = true;
-        APIDeleteDomain($domains_idx[selectedDomain].id).then(
+        const domain = $domains_idx[selectedDomain];
+        // An invited (non-owner) user detaching the domain only removes their
+        // own access; only the owner actually stops managing it for everyone.
+        const action = isOwner
+            ? APIDeleteDomain(domain.id)
+            : APIUnshareDomain(domain.id, $userSession.id);
+        action.then(
             () => {
                 refreshDomains().then(
                     () => {
@@ -162,6 +175,8 @@
 <ModalDomainDelete on:detachDomain={detachDomain} />
 
 <ModalDomainWhois domain={data.domain.domain} />
+
+<ModalDomainShare domain={data.domain} />
 
 <ModalDiffZone domain={data.domain} {selectedHistory} />
 

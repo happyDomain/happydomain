@@ -37,15 +37,17 @@
     import { isReverseZone } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { ZoneMeta } from "$lib/model/zone";
-    import { domains_idx, domainLink } from "$lib/stores/domains";
+    import { domains_idx, domainLink, isDomainOwner } from "$lib/stores/domains";
     import {
         retrieveZone as StoreRetrieveZone,
         sortedDomains,
         sortedDomainsWithIntermediate,
         thisZone,
     } from "$lib/stores/thiszone";
+    import { userSession } from "$lib/stores/usersession";
     import { t } from "$lib/translations";
-        import { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
+    import { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
+    import { controls as ctrlDomainShare } from "./ModalDomainShare.svelte";
     import { controls as ctrlDomainWhois } from "./ModalDomainWhois.svelte";
     import { controls as ctrlUploadZone } from "./ModalUploadZone.svelte";
     import { controls as ctrlNewSubdomain } from "./NewSubdomainPath.svelte";
@@ -59,6 +61,9 @@
     }
 
     let { origin, selectedDomain, selectedHistory, onretrieveZoneDone }: Props = $props();
+
+    let isOwner = $derived(isDomainOwner($domains_idx[selectedDomain], $userSession.id));
+    let canManageProvider = $derived($domains_idx[selectedDomain]?.can_manage_provider !== false);
 
     let retrievalInProgress = $state(false);
     async function retrieveZone() {
@@ -130,16 +135,18 @@
             <DropdownItem on:click={viewZone} disabled={!$sortedDomains}>
                 {$t("domains.actions.view")}
             </DropdownItem>
-            <DropdownItem on:click={retrieveZone}>
+            <DropdownItem on:click={retrieveZone} disabled={!canManageProvider}>
                 {$t("domains.actions.reimport")}
             </DropdownItem>
             <DropdownItem on:click={() => ctrlUploadZone.Open()}>
                 {$t("domains.actions.upload")}
             </DropdownItem>
             <DropdownItem divider />
-            <DropdownItem disabled title="Coming soon...">
-                {$t("domains.actions.share")}
-            </DropdownItem>
+            {#if isOwner}
+                <DropdownItem on:click={() => ctrlDomainShare.Open()}>
+                    {$t("domains.actions.share")}
+                </DropdownItem>
+            {/if}
             <DropdownItem on:click={() => ctrlDomainDelete.Open()}>
                 {$t("domains.stop")}
             </DropdownItem>

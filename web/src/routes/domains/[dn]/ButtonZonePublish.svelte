@@ -43,6 +43,10 @@
 
     let { class: className, domain, history }: Props = $props();
 
+    // Publishing needs the provider credentials: hide it for an invited user
+    // who was granted zone editing but not provider access.
+    let canManageProvider = $derived($domains_idx[domain.id]?.can_manage_provider !== false);
+
     async function getDomain(id: string): Promise<Domain> {
         return await APIGetDomain(id);
     }
@@ -56,7 +60,7 @@
     }
 </script>
 
-{#if $domains_idx[domain.id] && $thisZone}
+{#if $domains_idx[domain.id] && $thisZone && canManageProvider}
     <div class={["d-flex flex-column", className]}>
         {#if $domains_idx[domain.id].zone_history && history === $domains_idx[domain.id].zone_history[0]}
             {#key $zoneDiffVersion}

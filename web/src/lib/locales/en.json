@@ -86,13 +86,26 @@
             "propagate": "Publish my changes",
             "reimport": "Fetch current deployed zone",
             "rollback": "Roll back to this version",
-            "share": "Share the zone…",
+            "share": "Share the domain…",
             "upload": "Import a zone file",
             "view": "View my zone",
             "whois": "View registration data",
             "others": "More actions on {{domain}}",
             "label": "Actions",
             "menu-title": "Domain actions"
+        },
+        "share": {
+            "title": "Share the domain",
+            "description": "Invite another happyDomain user to collaborate on this domain. They will see it in their domain list and can edit it like you, except inviting others or removing the domain.",
+            "user-label": "User identifier or email address",
+            "user-placeholder": "someone@example.com",
+            "with-provider": "Also grant access to the provider (allows fetching and publishing the zone)",
+            "invite": "Invite",
+            "current": "People with access",
+            "none": "This domain is not shared with anyone yet.",
+            "revoke": "Revoke",
+            "provider-shared": "This user can also manage the provider (fetch and publish the zone).",
+            "provider-not-shared": "This user does not have access to the provider."
         },
         "alert": {
             "remove": "This action only removes {{domain}} from your happyDomain managed domains. All history and abstracted zones will be discarded. The domain {{domain}} remains fully intact at the provider. Are you sure you want to continue?"

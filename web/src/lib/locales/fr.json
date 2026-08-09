@@ -82,13 +82,26 @@
             "propagate": "Diffuser mes changements",
             "reimport": "Récupérer la zone actuelle",
             "rollback": "Revenir à cette version",
-            "share": "Partager la zone…",
+            "share": "Partager le domaine…",
             "upload": "Importer un fichier de zone",
             "view": "Voir ma zone",
             "whois": "Voir les infos d'enregistrement",
             "others": "Plus d'actions sur {{domain}}",
             "label": "Actions",
             "menu-title": "Actions sur le domaine"
+        },
+        "share": {
+            "title": "Partager le domaine",
+            "description": "Invitez un autre utilisateur happyDomain à collaborer sur ce domaine. Il la verra dans sa liste de domaines et pourra la modifier comme vous, sauf inviter d'autres personnes ou retirer le domaine.",
+            "user-label": "Identifiant ou adresse email de l'utilisateur",
+            "user-placeholder": "quelquun@example.com",
+            "with-provider": "Donner aussi accès au fournisseur (permet de récupérer et publier la zone)",
+            "invite": "Inviter",
+            "current": "Personnes ayant accès",
+            "none": "Ce domaine n'est partagé avec personne pour le moment.",
+            "revoke": "Révoquer",
+            "provider-shared": "Cet utilisateur peut aussi gérer le fournisseur (récupérer et publier la zone).",
+            "provider-not-shared": "Cet utilisateur n'a pas accès au fournisseur."
         },
         "alert": {
             "remove": "Cette action retirera définitivement le domaine {{domain}} de votre liste. L'historique et les zones abstraites seront supprimés. Cela ne supprimera ni n'affectera votre domaine auprès de votre fournisseur, ni ne modifiera ce qui est actuellement diffusé. Cela ne concerne seulement que ce que vous voyez dans happyDomain. Êtes-vous certain de vouloir continuer ?",

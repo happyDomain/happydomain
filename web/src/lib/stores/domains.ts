@@ -117,3 +117,10 @@ export function domainLink(dnid: string): string {
     }
     return dnid;
 }
+
+export function isDomainOwner(
+    domain: HappydnsDomainWithCheckStatus | undefined,
+    userId: string | undefined,
+): boolean {
+    return !userId || domain?.id_owner === userId;
+}
