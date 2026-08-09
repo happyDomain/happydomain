@@ -36,10 +36,12 @@
     interface Props {
         class?: ClassValue;
         items: Array<HappydnsDomainWithCheckStatus>;
+        /** Shared domains are hosted on a provider we have no access to. */
+        showProvider?: boolean;
         [key: string]: unknown;
     }
 
-    let { class: className, items, ...rest }: Props = $props();
+    let { class: className, items, showProvider = true, ...rest }: Props = $props();
 
     if (!$providersSpecs) refreshProvidersSpecs();
 
@@ -68,14 +70,16 @@
             <tr>
                 <th>{$t("common.domain")}</th>
                 <th>{$t("domaingroups.title")}</th>
-                <th>{$t("domains.view.provider")}</th>
+                {#if showProvider}
+                    <th>{$t("domains.view.provider")}</th>
+                {/if}
                 <th>Status</th>
                 <th></th>
             </tr>
         </thead>
         <tbody>
             {#each items as item (item.id)}
-                <DomainTableRow domain={item} ondelete={delDomain} />
+                <DomainTableRow domain={item} {showProvider} ondelete={delDomain} />
             {/each}
         </tbody>
     </Table>

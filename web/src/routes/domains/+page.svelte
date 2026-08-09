@@ -49,6 +49,7 @@
     import { domains, refreshDomains } from "$lib/stores/domains";
     import { providers } from "$lib/stores/providers";
     import { toasts } from "$lib/stores/toasts";
+    import { userSession } from "$lib/stores/usersession";
     import { t } from "$lib/translations";
 
     const newDomainName = page.url.searchParams.get("new");
@@ -63,6 +64,28 @@
     let selectedGroup = $state<string | null>(
         page.url.searchParams.has("group") ? page.url.searchParams.get("group") : null,
     );
+
+    const filteredDomains = $derived(
+        ($domains ?? []).filter(
+            (d) =>
+                d.domain.toLowerCase().indexOf(searchQuery.toLowerCase()) > -1 &&
+                (!selectedProviderId || d.id_provider === selectedProviderId) &&
+                (selectedGroup === null ||
+                    d.group === selectedGroup ||
+                    ((selectedGroup === "" || selectedGroup === "undefined") &&
+                        (d.group === "" || d.group === undefined))),
+        ),
+    );
+
+    // Domains reached through a share carry the provider of their owner, which
+    // we cannot inspect: no point showing a "Zone hosted on" column for them.
+    // Until the session is known, assume everything is ours rather than
+    // flashing the whole list into the shared table.
+    const isShared = $derived(
+        (d: { id_owner: string }) => Boolean($userSession.id) && d.id_owner !== $userSession.id,
+    );
+    const ownedDomains = $derived(filteredDomains.filter((d) => !isShared(d)));
+    const sharedDomains = $derived(filteredDomains.filter((d) => isShared(d)));
 
     const availableGroups = $derived(
         [...new Set(($domains ?? []).map((d) => d.group ?? ""))].sort(),
@@ -170,17 +193,20 @@
         </Col>
     </Row>
 
-    <div class="mt-5">
-        <DomainTable
-            items={($domains ?? []).filter(
-                (d) =>
-                    d.domain.toLowerCase().indexOf(searchQuery.toLowerCase()) > -1 &&
-                    (!selectedProviderId || d.id_provider === selectedProviderId) &&
-                    (selectedGroup === null ||
-                        d.group === selectedGroup ||
-                        ((selectedGroup === "" || selectedGroup === "undefined") &&
-                            (d.group === "" || d.group === undefined))),
-            )}
-        />
-    </div>
+    {#if sharedDomains.length === 0}
+        <div class="mt-5">
+            <DomainTable items={ownedDomains} />
+        </div>
+    {:else}
+        <div class="mt-5">
+            <h2 class="h5">{$t("domains.owned-title")}</h2>
+            <DomainTable items={ownedDomains} />
+        </div>
+
+        <div class="mt-5">
+            <h2 class="h5 mb-1">{$t("domains.shared-title")}</h2>
+            <p class="text-muted small">{$t("domains.shared-description")}</p>
+            <DomainTable items={sharedDomains} showProvider={false} />
+        </div>
+    {/if}
 </Container>
