@@ -161,9 +161,9 @@
     {$t("resources.CAA.intro")}
 </p>
 
-<div class="card mb-5">
+<div class="card mb-5" role="region" aria-labelledby="caa-summary-title">
     <div class="card-body">
-        <h5 class="card-title mb-3">{$t("resources.CAA.summary")}</h5>
+        <h5 class="card-title mb-3" id="caa-summary-title">{$t("resources.CAA.summary")}</h5>
         <ul class="list-unstyled mb-0">
             {#each CAA_ISSUE_TAGS as tag (tag)}
                 {@const mode = modeOf(tag)}
@@ -183,11 +183,11 @@
 
 {#each CAA_ISSUE_TAGS as tag (tag)}
     {@const mode = modeOf(tag)}
-    <section class="mb-5">
-        <h4 class="mb-2">{$t(`resources.CAA.kinds.${tag}.title`)}</h4>
+    <section class="mb-5" aria-labelledby="caa-{tag}-title">
+        <h4 class="mb-2" id="caa-{tag}-title">{$t(`resources.CAA.kinds.${tag}.title`)}</h4>
         <p class="text-muted mb-3">{$t(`resources.CAA.kinds.${tag}.help`)}</p>
 
-        <div class="btn-group" role="group">
+        <div class="btn-group" role="group" aria-label={$t(`resources.CAA.kinds.${tag}.title`)}>
             {#each MODES as m (m)}
                 <input
                     type="radio"

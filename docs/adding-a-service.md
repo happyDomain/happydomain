@@ -110,6 +110,7 @@ One folder, named after the service type:
 ```
 web/src/lib/services/svcs.ForSale/
     editor.svelte         # the editor, shown when the service is edited
+    editor.svelte.test.ts # mounts the editor, optional
     model.svelte.ts       # parsing and serializing the records
     model.test.ts
     compliance.ts         # RFC checks reported under the editor
@@ -125,6 +126,25 @@ its translations.
 
 Name the model `model.ts`, or `model.svelte.ts` when it uses runes. Tests sit
 next to the file they test.
+
+### Testing the editor
+
+`*.test.ts` runs in Node and tests plain functions. A test whose name ends with
+`.svelte.test.ts` runs in a simulated browser (jsdom) instead, and can mount a
+component. `npm run test` runs both.
+
+Such a test mounts the editor with
+[Testing Library](https://testing-library.com/docs/svelte-testing-library/intro),
+drives it the way a user would, and reads back the records the page would save.
+`svcs.CAAPolicy/editor.svelte.test.ts` is the example to copy. Two things to
+know before writing one:
+
+- Load the translations first, with `await loadTranslations("en", "/")`, or
+  every label reads back as its translation key.
+- Declare the edited value with `$state`, which those files may use. An editor
+  mutates its records in place, and a plain object handed to a component is
+  proxied on its way in: the proxy does not write back to the object the test
+  kept, so nothing would ever seem to change.
 
 ### What happens on its own
 
