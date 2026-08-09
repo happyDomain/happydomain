@@ -11,6 +11,8 @@
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
+import { getAdminToken } from "$lib/stores/adminsession";
+
 export type MetricSample = {
     name: string;
     labels: Record<string, string>;
@@ -65,7 +67,11 @@ export function parsePrometheusText(text: string): Metrics {
 }
 
 export async function fetchMetrics(): Promise<Metrics> {
-    const res = await fetch("/metrics", { headers: { Accept: "text/plain" } });
+    const headers: Record<string, string> = { Accept: "text/plain" };
+    const token = getAdminToken();
+    if (token) headers["Authorization"] = "Bearer " + token;
+
+    const res = await fetch("/metrics", { headers });
     if (!res.ok) {
         throw new Error(`Failed to fetch /metrics: ${res.status} ${res.statusText}`);
     }
