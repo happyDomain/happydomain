@@ -150,6 +150,15 @@ func (s *KVStorage) DeleteProvider(prvdId happydns.Identifier) error {
 		return err
 	}
 
+	// Best-effort cleanup of any sharing grants attached to this provider.
+	if grantees, err := s.ListProviderShares(prvdId); err == nil {
+		for _, granteeId := range grantees {
+			if delErr := s.DeleteProviderShare(prvdId, granteeId); delErr != nil {
+				log.Printf("DeleteProvider: failed to delete share for grantee %s: %v", granteeId.String(), delErr)
+			}
+		}
+	}
+
 	batch := s.db.NewBatch()
 	batch.Delete(providerOwnerKey(prvd.Owner, prvdId))
 	batch.Delete(providerPrimaryKey(prvdId))

@@ -80,3 +80,47 @@ func TestParseTwoIdKeyErrors(t *testing.T) {
 		})
 	}
 }
+
+// TestParseTwoIdKeyRoundTripsIndexKeyBuilders checks parseTwoIdKey against the
+// actual two-identifier index key builders that rely on it.
+func TestParseTwoIdKeyRoundTripsIndexKeyBuilders(t *testing.T) {
+	domainId, err := happydns.NewRandomIdentifier()
+	if err != nil {
+		t.Fatalf("NewRandomIdentifier: %v", err)
+	}
+	granteeId, err := happydns.NewRandomIdentifier()
+	if err != nil {
+		t.Fatalf("NewRandomIdentifier: %v", err)
+	}
+
+	shareKey := domainShareIndexKey(domainId, granteeId)
+	gotDomainId, gotGranteeId, err := parseTwoIdKey(shareKey, domainShareIndexPrefix)
+	if err != nil {
+		t.Fatalf("parseTwoIdKey(domainShareIndexKey(...)): unexpected error: %v", err)
+	}
+	if !gotDomainId.Equals(domainId) || !gotGranteeId.Equals(granteeId) {
+		t.Errorf("domain share key round trip = (%s, %s), want (%s, %s)", gotDomainId.String(), gotGranteeId.String(), domainId.String(), granteeId.String())
+	}
+
+	grantKey := domainGrantIndexKey(granteeId, domainId)
+	gotGranteeId, gotDomainId, err = parseTwoIdKey(grantKey, domainGrantIndexPrefix)
+	if err != nil {
+		t.Fatalf("parseTwoIdKey(domainGrantIndexKey(...)): unexpected error: %v", err)
+	}
+	if !gotGranteeId.Equals(granteeId) || !gotDomainId.Equals(domainId) {
+		t.Errorf("domain grant key round trip = (%s, %s), want (%s, %s)", gotGranteeId.String(), gotDomainId.String(), granteeId.String(), domainId.String())
+	}
+
+	providerId, err := happydns.NewRandomIdentifier()
+	if err != nil {
+		t.Fatalf("NewRandomIdentifier: %v", err)
+	}
+	providerShareKey := providerShareIndexKey(providerId, granteeId)
+	gotProviderId, gotGranteeId, err := parseTwoIdKey(providerShareKey, providerShareIndexPrefix)
+	if err != nil {
+		t.Fatalf("parseTwoIdKey(providerShareIndexKey(...)): unexpected error: %v", err)
+	}
+	if !gotProviderId.Equals(providerId) || !gotGranteeId.Equals(granteeId) {
+		t.Errorf("provider share key round trip = (%s, %s), want (%s, %s)", gotProviderId.String(), gotGranteeId.String(), providerId.String(), granteeId.String())
+	}
+}
