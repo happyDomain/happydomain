@@ -23,6 +23,7 @@ package usecase
 
 import (
 	"errors"
+	"fmt"
 	"log"
 
 	"git.happydns.org/happyDomain/model"
@@ -57,7 +58,44 @@ func (tu *tidyUpUsecase) TidyDomains(dropInvalid bool) error {
 		return err
 	}
 
-	return tu.store.TidyDomainIndexes()
+	if err := tu.store.TidyDomainIndexes(); err != nil {
+		return err
+	}
+
+	// Iterating drops orphan domains above via DropItem, which removes only the
+	// primary key and not the domain-sharing index entries. Reconcile those
+	// grants afterwards: a share is orphaned when either the shared domain or
+	// the grantee user no longer exists (dropped here, or when a user was
+	// deleted, which never touched the share indexes).
+	return tu.tidyDomainShares()
+}
+
+// tidyDomainShares drops domain-sharing grants that point to a domain or a
+// grantee user that no longer exists. Deleting a share removes both the share
+// and grant index entries.
+func (tu *tidyUpUsecase) tidyDomainShares() error {
+	bindings, err := tu.store.ListAllDomainShares()
+	if err != nil {
+		return err
+	}
+
+	for _, b := range bindings {
+		reason := ""
+		if _, err := tu.store.GetDomain(b.DomainId); errors.Is(err, happydns.ErrDomainNotFound) {
+			reason = fmt.Sprintf("domain %s not found", b.DomainId.String())
+		} else if _, err := tu.store.GetUser(b.GranteeId); errors.Is(err, happydns.ErrUserNotFound) {
+			reason = fmt.Sprintf("grantee %s not found", b.GranteeId.String())
+		}
+		if reason == "" {
+			continue
+		}
+
+		log.Printf("Deleting orphan domain share (%s): domain=%s grantee=%s\n", reason, b.DomainId.String(), b.GranteeId.String())
+		if err := tu.store.DeleteDomainShare(b.DomainId, b.GranteeId); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (tu *tidyUpUsecase) TidyDomainLogs(dropInvalid bool) error {

@@ -23,6 +23,7 @@ package usecase
 
 import (
 	"errors"
+	"fmt"
 	"log"
 
 	"git.happydns.org/happyDomain/model"
@@ -50,5 +51,41 @@ func (tu *tidyUpUsecase) TidyProviders(dropInvalid bool) error {
 		return err
 	}
 
-	return tu.store.TidyProviderIndexes()
+	if err := tu.store.TidyProviderIndexes(); err != nil {
+		return err
+	}
+
+	// Iterating drops orphan providers above via DropItem, which removes only
+	// the primary key and not the provider-sharing index entries. Reconcile
+	// those grants afterwards: a share is orphaned when either the shared
+	// provider or the grantee user no longer exists (dropped here, or when a
+	// user was deleted, which never touched the share index).
+	return tu.tidyProviderShares()
+}
+
+// tidyProviderShares drops provider-sharing grants that point to a provider or
+// a grantee user that no longer exists.
+func (tu *tidyUpUsecase) tidyProviderShares() error {
+	bindings, err := tu.store.ListAllProviderShares()
+	if err != nil {
+		return err
+	}
+
+	for _, b := range bindings {
+		reason := ""
+		if _, err := tu.store.GetProvider(b.ProviderId); errors.Is(err, happydns.ErrProviderNotFound) {
+			reason = fmt.Sprintf("provider %s not found", b.ProviderId.String())
+		} else if _, err := tu.store.GetUser(b.GranteeId); errors.Is(err, happydns.ErrUserNotFound) {
+			reason = fmt.Sprintf("grantee %s not found", b.GranteeId.String())
+		}
+		if reason == "" {
+			continue
+		}
+
+		log.Printf("Deleting orphan provider share (%s): provider=%s grantee=%s\n", reason, b.ProviderId.String(), b.GranteeId.String())
+		if err := tu.store.DeleteProviderShare(b.ProviderId, b.GranteeId); err != nil {
+			return err
+		}
+	}
+	return nil
 }
