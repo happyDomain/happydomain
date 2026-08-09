@@ -126,8 +126,9 @@
                 </InputGroup>
             </ListGroupItem>
         {/each}
-        <ListGroupItem tag="button" class="text-muted fst-italic" action onclick={addDirective}>
-            New directive
+        <ListGroupItem tag="button" class="text-primary fw-bold" action onclick={addDirective}>
+            <Icon name="plus-circle" />
+            Add directive
         </ListGroupItem>
     </ListGroup>
 </div>
