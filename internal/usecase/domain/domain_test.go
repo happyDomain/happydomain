@@ -582,7 +582,7 @@ func Test_DeleteDomain(t *testing.T) {
 	createdDomain := domains[0]
 
 	// Delete the domain
-	err = service.DeleteDomain(createdDomain.Id)
+	err = service.DeleteDomain(ctx, user, createdDomain.Id)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

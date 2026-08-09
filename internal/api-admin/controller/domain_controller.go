@@ -163,7 +163,7 @@ func (dc *DomainController) DeleteDomain(c *gin.Context) {
 		domainid = domains[0].Id
 	}
 
-	happydns.ApiResponse(c, true, dc.domainService.DeleteDomain(domainid))
+	happydns.ApiResponse(c, true, dc.adminService.AdminDeleteDomain(domainid))
 }
 
 func (dc *DomainController) searchUserDomain(filter func(*happydns.Domain) bool) *happydns.User {
@@ -300,7 +300,7 @@ func (dc *DomainController) ClearDomains(c *gin.Context) {
 		}
 
 		for _, dn := range domains {
-			if e := dc.domainService.DeleteDomain(dn.Id); e != nil {
+			if e := dc.domainService.DeleteDomain(c.Request.Context(), user, dn.Id); e != nil {
 				err = errors.Join(err, e)
 			}
 		}

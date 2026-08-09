@@ -39,9 +39,14 @@ type DomainUpdater interface {
 	Update(domainID happydns.Identifier, user *happydns.User, updateFn func(*happydns.Domain)) error
 }
 
-// ProviderGetter is an interface for getting providers.
+// ProviderGetter is an interface for getting providers for zone operations.
+// It authorizes the caller as the provider owner or as a user the provider was
+// shared with (see provider.Service.GetProviderForZone), so shared domains can
+// be retrieved, diffed and published by invited users. It takes the domain
+// rather than a bare provider ID so the provider it resolves is always the one
+// backing that (already access-checked) domain.
 type ProviderGetter interface {
-	GetUserProvider(ctx context.Context, user *happydns.User, providerID happydns.Identifier) (*happydns.Provider, error)
+	GetProviderForZone(ctx context.Context, user *happydns.User, domain *happydns.Domain) (*happydns.Provider, error)
 }
 
 // ZoneRetriever is an interface for retrieving zones from providers.

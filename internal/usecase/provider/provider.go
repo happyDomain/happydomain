@@ -141,6 +141,35 @@ func (s *Service) GetUserProvider(_ context.Context, user *happydns.User, provid
 	return ParseProvider(p)
 }
 
+// GetProviderForZone retrieves the provider backing domain for a zone
+// operation (retrieve/apply/diff), authorizing the caller either as the
+// provider's owner or as a user the provider has been shared with. Unlike
+// GetUserProvider (used by the owner-only /providers management API), this
+// deliberately honours sharing grants so an invited user with provider access
+// can operate on the zone, without exposing provider management.
+//
+// Taking the domain (rather than a bare providerID) ties the lookup to a
+// domain the caller already resolved through a domain-access check, so this
+// cannot be misused to fetch an unrelated provider.
+func (s *Service) GetProviderForZone(ctx context.Context, user *happydns.User, domain *happydns.Domain) (*happydns.Provider, error) {
+	p, err := s.store.GetProvider(domain.ProviderId)
+	if err != nil {
+		return nil, err
+	}
+
+	if !user.Id.Equals(p.ProviderMeta.Owner) {
+		shared, serr := s.store.IsProviderSharedWith(domain.ProviderId, user.Id)
+		if serr != nil {
+			return nil, serr
+		}
+		if !shared {
+			return nil, happydns.ErrProviderNotFound
+		}
+	}
+
+	return ParseProvider(p)
+}
+
 // GetUserProviderMeta retrieves provider metadata for the given user.
 func (s *Service) GetUserProviderMeta(_ context.Context, user *happydns.User, providerID happydns.Identifier) (*happydns.ProviderMeta, error) {
 	p, err := s.getUserProvider(user, providerID)

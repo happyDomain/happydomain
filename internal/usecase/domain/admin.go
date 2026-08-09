@@ -68,6 +68,16 @@ func (s *Service) AdminUpdateDomain(domain *happydns.Domain) error {
 	return s.store.UpdateDomain(domain)
 }
 
+// AdminDeleteDomain deletes a domain by ID without ownership verification.
+// Intended for administrative callers.
+func (s *Service) AdminDeleteDomain(domainID happydns.Identifier) error {
+	domain, err := s.store.GetDomain(domainID)
+	if err != nil {
+		return err
+	}
+	return s.deleteDomain(domain, true)
+}
+
 // ClearDomains removes every domain from the database. Intended for
 // administrative callers performing a full reset.
 func (s *Service) ClearDomains() error {

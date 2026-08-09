@@ -68,6 +68,54 @@ type DomainUpdateInput struct {
 	Group string `json:"group,omitempty"`
 }
 
+// DomainShareInput is the body used to share a Domain with another user.
+type DomainShareInput struct {
+	// User is the identifier or the email address of the account to invite.
+	User string `json:"user" binding:"required"`
+
+	// WithProvider also grants access to the Domain's Provider so the invited
+	// user can retrieve, diff and publish the zone (operations that need the
+	// provider credentials).
+	WithProvider bool `json:"with_provider,omitempty"`
+}
+
+// DomainShareUser is a slim view of a user the Domain is shared with, exposing
+// only what the owner needs to manage the sharing.
+type DomainShareUser struct {
+	Id    Identifier `json:"id" swaggertype:"string"`
+	Email string     `json:"email"`
+
+	// WithProvider reports whether this grantee also received access to the
+	// Domain's Provider (see DomainShareInput.WithProvider).
+	WithProvider bool `json:"with_provider,omitempty"`
+}
+
+// DomainShareRef identifies a Domain in the sharing views, where only the
+// identifier and the name are needed to point at it.
+type DomainShareRef struct {
+	Id         Identifier `json:"id" swaggertype:"string"`
+	DomainName string     `json:"domain"`
+}
+
+// ProviderShareUser is a user holding a grant on the Domain's Provider, along
+// with the domains of that Provider currently shared with them. Provider grants
+// are keyed by (Provider, grantee) only, with no domain component: revoking one
+// affects every domain listed here, which is what the owner needs to be told
+// before changing DomainShareInput.WithProvider.
+type ProviderShareUser struct {
+	Id      Identifier       `json:"id" swaggertype:"string"`
+	Email   string           `json:"email"`
+	Domains []DomainShareRef `json:"domains"`
+}
+
+// DomainShareStatus is everything the owner needs to manage the sharing of a
+// Domain: who it is shared with, and who holds a grant on its Provider (which
+// may include users invited through another domain of the same Provider).
+type DomainShareStatus struct {
+	Shares         []*DomainShareUser   `json:"shares"`
+	ProviderShares []*ProviderShareUser `json:"provider_shares"`
+}
+
 // DomainShareBinding is a single (Domain, grantee) sharing grant, as stored in
 // the sharing secondary indexes. It is used by maintenance passes that need to
 // enumerate every grant to detect orphans.
@@ -116,6 +164,12 @@ func (d *Domain) HasZone(zoneId Identifier) (found bool) {
 type DomainWithZoneMetadata struct {
 	*Domain
 	ZoneMeta map[string]*ZoneMeta `json:"zone_meta"`
+
+	// CanManageProvider reports whether the current user may run
+	// provider-backed zone operations (retrieve/apply/diff). It is true for the
+	// owner; for an invited user it depends on whether the provider was shared
+	// with them.
+	CanManageProvider bool `json:"can_manage_provider"`
 }
 
 type DomainWithCheckStatus struct {
@@ -123,6 +177,11 @@ type DomainWithCheckStatus struct {
 	// LastCheckStatus is the worst status across the most recent result of each
 	// checker that has run on this domain. Nil if no results exist yet.
 	LastCheckStatus *Status `json:"last_check_status,omitempty"`
+
+	// CanManageProvider reports whether the current user may run
+	// provider-backed zone operations (retrieve/apply/diff). See
+	// DomainWithZoneMetadata.CanManageProvider.
+	CanManageProvider bool `json:"can_manage_provider"`
 }
 
 type Subdomain string
@@ -137,12 +196,32 @@ type SchedulerDomainNotifier interface {
 
 type DomainUsecase interface {
 	CreateDomain(context.Context, *User, *DomainCreationInput) (*Domain, error)
-	DeleteDomain(Identifier) error
-	ExtendsDomainWithZoneMeta(*Domain) (*DomainWithZoneMetadata, error)
+	// DeleteDomain removes a domain; owner-only.
+	DeleteDomain(ctx context.Context, actor *User, domainID Identifier) error
+	ExtendsDomainWithZoneMeta(*User, *Domain) (*DomainWithZoneMetadata, error)
 	GetUserDomain(*User, Identifier) (*Domain, error)
 	GetUserDomainByFQDN(*User, string) ([]*Domain, error)
 	ListUserDomains(*User) ([]*Domain, error)
 	UpdateDomain(Identifier, *User, func(*Domain)) error
+
+	// CanManageProvider reports whether the user may run provider-backed zone
+	// operations (retrieve/apply/diff) on the domain.
+	CanManageProvider(*User, *Domain) bool
+	// NewDomainWithCheckStatus wraps a domain for the domain listing endpoint,
+	// resolving CanManageProvider itself; the caller only fills LastCheckStatus.
+	NewDomainWithCheckStatus(*User, *Domain) *DomainWithCheckStatus
+	// ShareDomain grants another user (resolved from an identifier or email)
+	// access to the domain; owner-only. withProvider is an explicit intent:
+	// when false, an existing grant on the domain's provider is revoked.
+	// Returns the resolved grantee along with the effective state of the
+	// grant, which may differ from the requested withProvider.
+	ShareDomain(ctx context.Context, actor *User, domainID Identifier, granteeRef string, withProvider bool) (*DomainShareUser, error)
+	// UnshareDomain revokes a grantee's access. Owner revokes anyone; a grantee
+	// may remove only their own access.
+	UnshareDomain(ctx context.Context, actor *User, domainID, granteeID Identifier) error
+	// GetDomainShareStatus returns the users the domain is shared with, and the
+	// users holding a grant on its provider; owner-only.
+	GetDomainShareStatus(actor *User, domainID Identifier) (*DomainShareStatus, error)
 }
 
 // AdminDomainUsecase exposes administrative domain operations that bypass
@@ -155,5 +234,6 @@ type AdminDomainUsecase interface {
 	GetDomainsByFQDN(*User, string) ([]*Domain, error)
 	AdminCreateDomain(*Domain) error
 	AdminUpdateDomain(*Domain) error
+	AdminDeleteDomain(Identifier) error
 	ClearDomains() error
 }

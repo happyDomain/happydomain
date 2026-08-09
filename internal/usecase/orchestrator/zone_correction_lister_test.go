@@ -38,7 +38,7 @@ type mockProviderGetter struct {
 	err      error
 }
 
-func (m *mockProviderGetter) GetUserProvider(_ context.Context, _ *happydns.User, _ happydns.Identifier) (*happydns.Provider, error) {
+func (m *mockProviderGetter) GetProviderForZone(_ context.Context, _ *happydns.User, _ *happydns.Domain) (*happydns.Provider, error) {
 	return m.provider, m.err
 }
 

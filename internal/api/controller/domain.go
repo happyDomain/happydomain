@@ -87,9 +87,19 @@ func (dc *DomainController) GetDomains(c *gin.Context) {
 
 	result := make([]*happydns.DomainWithCheckStatus, 0, len(domains))
 	for _, d := range domains {
-		entry := &happydns.DomainWithCheckStatus{Domain: d}
+		entry := dc.domainService.NewDomainWithCheckStatus(user, d)
 		if statusByDomain != nil {
 			entry.LastCheckStatus = statusByDomain[d.Id.String()]
+		}
+		if entry.LastCheckStatus == nil && dc.checkStatusUC != nil && !user.Id.Equals(d.Owner) {
+			// A domain shared with us has its executions indexed under its
+			// owner, out of reach of the per-user lookup above.
+			status, err := dc.checkStatusUC.GetWorstDomainStatus(d.Id)
+			if err != nil {
+				log.Printf("GetWorstDomainStatus: %s", err.Error())
+			} else {
+				entry.LastCheckStatus = status
+			}
 		}
 		result = append(result, entry)
 	}
@@ -153,7 +163,7 @@ func (dc *DomainController) AddDomain(c *gin.Context) {
 func (dc *DomainController) GetDomain(c *gin.Context) {
 	domain := c.MustGet("domain").(*happydns.Domain)
 
-	domainExtended, err := dc.domainService.ExtendsDomainWithZoneMeta(domain)
+	domainExtended, err := dc.domainService.ExtendsDomainWithZoneMeta(middleware.MyUser(c), domain)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
@@ -224,7 +234,19 @@ func (dc *DomainController) UpdateDomain(c *gin.Context) {
 //	@Router			/domains/{domainId} [delete]
 func (dc *DomainController) DelDomain(c *gin.Context) {
 	domain := c.MustGet("domain").(*happydns.Domain)
-	if err := dc.domainService.DeleteDomain(domain.Id); err != nil {
+
+	// Deleting a domain is owner-only: an invited (shared) user reaches this
+	// handler through DomainHandler, but must not be able to stop managing the
+	// domain for everyone. They remove their own access via the share API.
+	// Enforced by the usecase itself; the check here just yields a clearer
+	// error message than the generic "not found".
+	user := middleware.MyUser(c)
+	if user == nil || !user.Id.Equals(domain.Owner) {
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"errmsg": "Only the domain owner can stop managing this domain."})
+		return
+	}
+
+	if err := dc.domainService.DeleteDomain(c.Request.Context(), user, domain.Id); err != nil {
 		log.Printf("%s was unable to DeleteDomain: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": fmt.Sprintf("Unable to delete your domain: %s", err.Error())})
 		return

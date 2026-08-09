@@ -48,10 +48,10 @@ type stubDomainUsecase struct {
 func (s *stubDomainUsecase) CreateDomain(ctx context.Context, user *happydns.User, input *happydns.DomainCreationInput) (*happydns.Domain, error) {
 	return nil, fmt.Errorf("not implemented")
 }
-func (s *stubDomainUsecase) DeleteDomain(id happydns.Identifier) error {
+func (s *stubDomainUsecase) DeleteDomain(ctx context.Context, actor *happydns.User, id happydns.Identifier) error {
 	return fmt.Errorf("not implemented")
 }
-func (s *stubDomainUsecase) ExtendsDomainWithZoneMeta(d *happydns.Domain) (*happydns.DomainWithZoneMetadata, error) {
+func (s *stubDomainUsecase) ExtendsDomainWithZoneMeta(user *happydns.User, d *happydns.Domain) (*happydns.DomainWithZoneMetadata, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 func (s *stubDomainUsecase) GetUserDomain(user *happydns.User, id happydns.Identifier) (*happydns.Domain, error) {
@@ -68,6 +68,21 @@ func (s *stubDomainUsecase) ListUserDomains(user *happydns.User) ([]*happydns.Do
 }
 func (s *stubDomainUsecase) UpdateDomain(id happydns.Identifier, user *happydns.User, fn func(*happydns.Domain)) error {
 	return fmt.Errorf("not implemented")
+}
+func (s *stubDomainUsecase) CanManageProvider(user *happydns.User, domain *happydns.Domain) bool {
+	return true
+}
+func (s *stubDomainUsecase) NewDomainWithCheckStatus(user *happydns.User, domain *happydns.Domain) *happydns.DomainWithCheckStatus {
+	return &happydns.DomainWithCheckStatus{Domain: domain, CanManageProvider: s.CanManageProvider(user, domain)}
+}
+func (s *stubDomainUsecase) ShareDomain(ctx context.Context, actor *happydns.User, domainID happydns.Identifier, granteeRef string, withProvider bool) (*happydns.DomainShareUser, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+func (s *stubDomainUsecase) UnshareDomain(ctx context.Context, actor *happydns.User, domainID, granteeID happydns.Identifier) error {
+	return fmt.Errorf("not implemented")
+}
+func (s *stubDomainUsecase) GetDomainShareStatus(actor *happydns.User, domainID happydns.Identifier) (*happydns.DomainShareStatus, error) {
+	return nil, fmt.Errorf("not implemented")
 }
 
 // newDomainTestContext creates a gin context with a logged-in user and a recorder.

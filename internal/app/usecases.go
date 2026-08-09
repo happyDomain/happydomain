@@ -93,6 +93,7 @@ func (app *App) initUsecases() {
 		providerAdminService,
 		domainLogService,
 	)
+	domainService.SetSharingDeps(app.store, app.store)
 	app.usecases.domain = domainService
 	app.usecases.domainAdmin = domainService
 	app.usecases.zoneService = zoneServiceUC.NewZoneServiceUsecases(
