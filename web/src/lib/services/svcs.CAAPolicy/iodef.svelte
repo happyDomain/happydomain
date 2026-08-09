@@ -25,6 +25,8 @@
     import { createEventDispatcher } from "svelte";
 
     import { Button, Icon, Input } from "@sveltestrap/sveltestrap";
+
+    import { t } from "$lib/translations";
     import { parseCAAIodef, stringifyCAAIodef } from "./model.svelte";
 
     const dispatch = createEventDispatcher();
@@ -57,29 +59,44 @@
 
 <div class="d-flex gap-2 mb-2">
     <Input type="select" bind:value={val.kind}>
-        <option value="mailto">Mail</option>
-        <option value="http">Webhook</option>
+        <option value="mailto">{$t("resources.CAA.iodef-mail")}</option>
+        <option value="http">{$t("resources.CAA.iodef-webhook")}</option>
     </Input>
 
-    <Input type={val.kind == "mailto" ? "email" : "text"} {readonly} bind:value={val.url} />
+    <Input
+        type={val.kind == "mailto" ? "email" : "text"}
+        {readonly}
+        placeholder={val.kind == "mailto"
+            ? "security@example.com"
+            : "https://example.com/caa-report"}
+        bind:value={val.url}
+    />
 
     {#if !readonly}
         {#if !newone}
-            <Button type="button" color="danger" outline on:click={() => dispatch("delete-iodef")}>
+            <Button
+                type="button"
+                color="danger"
+                outline
+                title={$t("common.delete")}
+                on:click={() => dispatch("delete-iodef")}
+            >
                 <Icon name="trash" />
             </Button>
         {:else}
             <Button
-                color="success"
+                color="primary"
                 outline
                 type="button"
-                disabled={!value}
+                class="text-nowrap"
+                disabled={!val.url.trim()}
                 on:click={() => {
                     dispatch("add-iodef", value);
                     value = "";
                 }}
             >
-                <Icon name="plus" />
+                <Icon name="plus" class="me-1" />
+                {$t("resources.CAA.add-iodef")}
             </Button>
         {/if}
     {/if}

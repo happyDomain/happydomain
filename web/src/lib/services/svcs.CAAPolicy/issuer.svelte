@@ -90,23 +90,26 @@
             type="button"
             color="danger"
             outline
+            title={$t("common.delete")}
             on:click={() => dispatch("delete-issuer")}
         >
             <Icon name="trash" />
         </Button>
     {:else}
         <Button
-            color="success"
+            color="primary"
             tabindex={0}
             outline
             type="button"
+            class="text-nowrap"
             disabled={!value}
             on:click={() => {
                 dispatch("add-issuer", value);
                 value = "";
             }}
         >
-            <Icon name="plus" />
+            <Icon name="plus" class="me-1" />
+            {$t("resources.CAA.add-issuer")}
         </Button>
     {/if}
 </div>

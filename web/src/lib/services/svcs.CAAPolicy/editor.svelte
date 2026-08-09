@@ -33,6 +33,7 @@
     import {
         CAA_ISSUE_TAGS,
         CAAPolicy,
+        parseCAAIodef,
         type CAAIssueTag,
         type CAAMode,
         type CAATag,
@@ -76,7 +77,49 @@
 
     function setMode(tag: CAAIssueTag, mode: CAAMode): void {
         restricting[tag] = mode === "restricted";
+        pendingIssuer[tag] = "";
         val.setMode(tag, mode);
+    }
+
+    // What the user typed in an add row without pressing the add button. Losing
+    // it on save would be the worst outcome, and refusing to save until they
+    // press a button they consider already pressed the next worst: commit it.
+    // Every kind holds a string from the start: the add rows bind to it, and a
+    // binding cannot start undefined when the other end has a fallback value.
+    const pendingIssuer: Record<CAAIssueTag, string> = $state({
+        issue: "",
+        issuewild: "",
+        issuemail: "",
+        issuevmc: "",
+    });
+    let pendingIodef = $state("");
+
+    // Any element of the editor does, the submitted form is the one holding it.
+    let root: HTMLElement | undefined = $state();
+
+    function commitPending(): void {
+        for (const tag of CAA_ISSUE_TAGS) {
+            const issuer = pendingIssuer[tag].trim();
+            // The add row is only on screen for a restricted kind; anything left
+            // over from before a mode change is not the user's current intent.
+            if (issuer && modeOf(tag) === "restricted") {
+                val.add(tag, issuer);
+                pendingIssuer[tag] = "";
+            }
+        }
+
+        // A destination reads as "mailto:" as soon as the kind is picked, so an
+        // address is what tells an untouched row from a filled in one.
+        if (parseCAAIodef(pendingIodef).url.trim()) {
+            val.add("iodef", pendingIodef);
+            pendingIodef = "";
+        }
+    }
+
+    // The document listens in the capture phase, hence before the handler of the
+    // form itself: the records are complete by the time it reads them.
+    function onSubmit(e: Event): void {
+        if (root && e.target instanceof Node && e.target.contains(root)) commitPending();
     }
 
     // Wildcard certificates fall back on the regular issuance rule when nothing
@@ -112,7 +155,9 @@
     ];
 </script>
 
-<p class="mb-4">
+<svelte:document onsubmitcapture={onSubmit} />
+
+<p class="mb-4" bind:this={root}>
     {$t("resources.CAA.intro")}
 </p>
 
@@ -183,7 +228,11 @@
                 {/each}
                 {#if !readonly}
                     <li>
-                        <CAAIssuer newone on:add-issuer={(e) => val.add(tag, e.detail)} />
+                        <CAAIssuer
+                            newone
+                            bind:value={pendingIssuer[tag]}
+                            on:add-issuer={(e) => val.add(tag, e.detail)}
+                        />
                     </li>
                 {/if}
             </ul>
@@ -209,7 +258,11 @@
         />
     {/each}
     {#if !readonly}
-        <CAAIodef newone on:add-iodef={(e) => val.add("iodef", e.detail)} />
+        <CAAIodef
+            newone
+            bind:value={pendingIodef}
+            on:add-iodef={(e) => val.add("iodef", e.detail)}
+        />
     {/if}
 </section>
 
