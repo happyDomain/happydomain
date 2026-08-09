@@ -68,6 +68,14 @@ type DomainUpdateInput struct {
 	Group string `json:"group,omitempty"`
 }
 
+// DomainShareBinding is a single (Domain, grantee) sharing grant, as stored in
+// the sharing secondary indexes. It is used by maintenance passes that need to
+// enumerate every grant to detect orphans.
+type DomainShareBinding struct {
+	DomainId  Identifier
+	GranteeId Identifier
+}
+
 func NewDomain(user *User, name string, providerID Identifier) (*Domain, error) {
 	name = dns.Fqdn(strings.TrimSpace(name))
 

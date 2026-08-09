@@ -70,6 +70,10 @@ var operationOverrides = map[string]string{
 	"LastInsightsRun":         "get",
 	"CreateOrUpdateUser":      "update",
 	"ReplaceDiscoveryEntries": "update",
+	"AddDomainShare":          "create",
+	"IsDomainSharedWith":      "get",
+	"AddProviderShare":        "create",
+	"IsProviderSharedWith":    "get",
 }
 
 // skipMethods lists methods that should be passed through without instrumentation.

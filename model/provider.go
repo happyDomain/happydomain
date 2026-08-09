@@ -128,6 +128,14 @@ func (p *Provider) Meta() *ProviderMeta {
 	return &p.ProviderMeta
 }
 
+// ProviderShareBinding is a single (Provider, grantee) sharing grant, as stored
+// in the sharing secondary index. It is used by maintenance passes that need to
+// enumerate every grant to detect orphans.
+type ProviderShareBinding struct {
+	ProviderId Identifier
+	GranteeId  Identifier
+}
+
 type ProviderUsecase interface {
 	CreateProvider(context.Context, *User, *ProviderMessage) (*Provider, error)
 	CreateDomainOnProvider(context.Context, *Provider, string) error

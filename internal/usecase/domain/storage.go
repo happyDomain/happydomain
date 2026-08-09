@@ -59,4 +59,23 @@ type DomainStorage interface {
 
 	// ClearDomains deletes all Domains present in the database.
 	ClearDomains() error
+
+	// AddDomainShare grants the given user (grantee) access to the Domain.
+	AddDomainShare(domainid, granteeid happydns.Identifier) error
+
+	// DeleteDomainShare revokes a previously granted access to the Domain.
+	DeleteDomainShare(domainid, granteeid happydns.Identifier) error
+
+	// IsDomainSharedWith reports whether the Domain is shared with the grantee.
+	IsDomainSharedWith(domainid, granteeid happydns.Identifier) (bool, error)
+
+	// ListDomainShares lists the users the Domain is shared with.
+	ListDomainShares(domainid happydns.Identifier) ([]happydns.Identifier, error)
+
+	// ListSharedDomainIDs lists the Domains shared with the given user.
+	ListSharedDomainIDs(granteeid happydns.Identifier) ([]happydns.Identifier, error)
+
+	// ListAllDomainShares enumerates every (domain, grantee) sharing grant,
+	// used by maintenance passes to detect orphaned grants.
+	ListAllDomainShares() ([]happydns.DomainShareBinding, error)
 }

@@ -40,6 +40,16 @@ func observe(operation, entity string) func(err *error) {
 	}
 }
 
+func (s *instrumentedStorage) AddDomainShare(domainid happydns.Identifier, granteeid happydns.Identifier) (err error) {
+	defer observe("create", "domain")(&err)
+	return s.inner.AddDomainShare(domainid, granteeid)
+}
+
+func (s *instrumentedStorage) AddProviderShare(prvdid happydns.Identifier, granteeid happydns.Identifier) (err error) {
+	defer observe("create", "provider")(&err)
+	return s.inner.AddProviderShare(prvdid, granteeid)
+}
+
 func (s *instrumentedStorage) AuthUserExists(email string) (ret bool, err error) {
 	defer observe("get", "authuser")(&err)
 	return s.inner.AuthUserExists(email)
@@ -237,6 +247,11 @@ func (s *instrumentedStorage) DeleteDomainLog(domain *happydns.Domain, log *happ
 	return s.inner.DeleteDomainLog(domain, log)
 }
 
+func (s *instrumentedStorage) DeleteDomainShare(domainid happydns.Identifier, granteeid happydns.Identifier) (err error) {
+	defer observe("delete", "domain")(&err)
+	return s.inner.DeleteDomainShare(domainid, granteeid)
+}
+
 func (s *instrumentedStorage) DeleteEvaluation(evalID happydns.Identifier) (err error) {
 	defer observe("delete", "check_evaluation")(&err)
 	return s.inner.DeleteEvaluation(evalID)
@@ -265,6 +280,11 @@ func (s *instrumentedStorage) DeletePreference(prefId happydns.Identifier) (err 
 func (s *instrumentedStorage) DeleteProvider(prvdid happydns.Identifier) (err error) {
 	defer observe("delete", "provider")(&err)
 	return s.inner.DeleteProvider(prvdid)
+}
+
+func (s *instrumentedStorage) DeleteProviderShare(prvdid happydns.Identifier, granteeid happydns.Identifier) (err error) {
+	defer observe("delete", "provider")(&err)
+	return s.inner.DeleteProviderShare(prvdid, granteeid)
 }
 
 func (s *instrumentedStorage) DeleteRecordsOlderThan(before time.Time) (err error) {
@@ -412,6 +432,16 @@ func (s *instrumentedStorage) InsightsRun() (err error) {
 	return s.inner.InsightsRun()
 }
 
+func (s *instrumentedStorage) IsDomainSharedWith(domainid happydns.Identifier, granteeid happydns.Identifier) (ret bool, err error) {
+	defer observe("get", "domain")(&err)
+	return s.inner.IsDomainSharedWith(domainid, granteeid)
+}
+
+func (s *instrumentedStorage) IsProviderSharedWith(prvdid happydns.Identifier, granteeid happydns.Identifier) (ret bool, err error) {
+	defer observe("get", "provider")(&err)
+	return s.inner.IsProviderSharedWith(prvdid, granteeid)
+}
+
 func (s *instrumentedStorage) LastInsightsRun() (ret *time.Time, ret2 happydns.Identifier, err error) {
 	defer observe("get", "insight")(&err)
 	return s.inner.LastInsightsRun()
@@ -452,6 +482,11 @@ func (s *instrumentedStorage) ListAllDomainLogs() (ret happydns.Iterator[happydn
 	return s.inner.ListAllDomainLogs()
 }
 
+func (s *instrumentedStorage) ListAllDomainShares() (ret []happydns.DomainShareBinding, err error) {
+	defer observe("list", "domain")(&err)
+	return s.inner.ListAllDomainShares()
+}
+
 func (s *instrumentedStorage) ListAllDomains() (ret happydns.Iterator[happydns.Domain], err error) {
 	defer observe("list", "domain")(&err)
 	return s.inner.ListAllDomains()
@@ -465,6 +500,11 @@ func (s *instrumentedStorage) ListAllEvaluations() (ret happydns.Iterator[happyd
 func (s *instrumentedStorage) ListAllExecutions() (ret happydns.Iterator[happydns.Execution], err error) {
 	defer observe("list", "execution")(&err)
 	return s.inner.ListAllExecutions()
+}
+
+func (s *instrumentedStorage) ListAllProviderShares() (ret []happydns.ProviderShareBinding, err error) {
+	defer observe("list", "provider")(&err)
+	return s.inner.ListAllProviderShares()
 }
 
 func (s *instrumentedStorage) ListAllProviders() (ret happydns.Iterator[happydns.ProviderMessage], err error) {
@@ -542,6 +582,11 @@ func (s *instrumentedStorage) ListDomainLogs(domain *happydns.Domain) (ret []*ha
 	return s.inner.ListDomainLogs(domain)
 }
 
+func (s *instrumentedStorage) ListDomainShares(domainid happydns.Identifier) (ret []happydns.Identifier, err error) {
+	defer observe("list", "domain")(&err)
+	return s.inner.ListDomainShares(domainid)
+}
+
 func (s *instrumentedStorage) ListDomains(user *happydns.User) (ret []*happydns.Domain, err error) {
 	defer observe("list", "domain")(&err)
 	return s.inner.ListDomains(user)
@@ -582,6 +627,11 @@ func (s *instrumentedStorage) ListPreferencesByUser(userId happydns.Identifier) 
 	return s.inner.ListPreferencesByUser(userId)
 }
 
+func (s *instrumentedStorage) ListProviderShares(prvdid happydns.Identifier) (ret []happydns.Identifier, err error) {
+	defer observe("list", "provider")(&err)
+	return s.inner.ListProviderShares(prvdid)
+}
+
 func (s *instrumentedStorage) ListProviders(user *happydns.User) (ret happydns.ProviderMessages, err error) {
 	defer observe("list", "provider")(&err)
 	return s.inner.ListProviders(user)
@@ -590,6 +640,11 @@ func (s *instrumentedStorage) ListProviders(user *happydns.User) (ret happydns.P
 func (s *instrumentedStorage) ListRecordsByUser(userId happydns.Identifier, limit int) (ret []*happydns.NotificationRecord, err error) {
 	defer observe("list", "notification_record")(&err)
 	return s.inner.ListRecordsByUser(userId, limit)
+}
+
+func (s *instrumentedStorage) ListSharedDomainIDs(granteeid happydns.Identifier) (ret []happydns.Identifier, err error) {
+	defer observe("list", "domain")(&err)
+	return s.inner.ListSharedDomainIDs(granteeid)
 }
 
 func (s *instrumentedStorage) ListStatesByUser(userId happydns.Identifier) (ret []*happydns.NotificationState, err error) {

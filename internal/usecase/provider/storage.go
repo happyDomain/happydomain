@@ -52,4 +52,21 @@ type ProviderStorage interface {
 
 	// ClearProviders deletes all Providers present in the database.
 	ClearProviders() error
+
+	// AddProviderShare grants the given user (grantee) the right to run zone
+	// operations that need this Provider's credentials.
+	AddProviderShare(prvdid, granteeid happydns.Identifier) error
+
+	// DeleteProviderShare revokes a previously granted Provider access.
+	DeleteProviderShare(prvdid, granteeid happydns.Identifier) error
+
+	// IsProviderSharedWith reports whether the Provider is shared with the grantee.
+	IsProviderSharedWith(prvdid, granteeid happydns.Identifier) (bool, error)
+
+	// ListProviderShares lists the users the Provider is shared with.
+	ListProviderShares(prvdid happydns.Identifier) ([]happydns.Identifier, error)
+
+	// ListAllProviderShares enumerates every (provider, grantee) sharing grant,
+	// used by maintenance passes to detect orphaned grants.
+	ListAllProviderShares() ([]happydns.ProviderShareBinding, error)
 }

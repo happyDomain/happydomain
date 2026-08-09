@@ -232,6 +232,15 @@ func (s *KVStorage) DeleteDomain(zId happydns.Identifier) error {
 		}
 	}
 
+	// Best-effort cleanup of any sharing grants attached to this domain.
+	if grantees, err := s.ListDomainShares(zId); err == nil {
+		for _, granteeId := range grantees {
+			if delErr := s.DeleteDomainShare(zId, granteeId); delErr != nil {
+				log.Printf("DeleteDomain: failed to delete share for grantee %s: %v", granteeId.String(), delErr)
+			}
+		}
+	}
+
 	return s.db.Delete(fmt.Sprintf("%s%s", domainPrimaryPrefix, zId.String()))
 }
 
