@@ -28,15 +28,16 @@
 
     import ProviderLink from "$lib/components/providers/ProviderLink.svelte";
     import type { HappydnsDomainWithCheckStatus } from "$lib/api-base/types.gen";
-        import { t } from "$lib/translations";
+    import { t } from "$lib/translations";
     import { getStatusColor, getStatusIcon } from "$lib/utils/checkers";
 
     interface Props {
         domain: HappydnsDomainWithCheckStatus;
+        showProvider?: boolean;
         ondelete: (event: Event, domain: HappydnsDomainWithCheckStatus) => void;
     }
 
-    let { domain, ondelete }: Props = $props();
+    let { domain, showProvider = true, ondelete }: Props = $props();
 </script>
 
 <tr
@@ -45,9 +46,11 @@
 >
     <td class="fw-semibold">{domain.domain}</td>
     <td>{domain.group || ""}</td>
-    <td>
-        <ProviderLink id_provider={domain.id_provider} onclick={(e) => e.stopPropagation()} />
-    </td>
+    {#if showProvider}
+        <td>
+            <ProviderLink id_provider={domain.id_provider} onclick={(e) => e.stopPropagation()} />
+        </td>
+    {/if}
     <td>
         <a
             href={domainLinks().checks(encodeURIComponent(domain.domain))}
