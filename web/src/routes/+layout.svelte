@@ -29,6 +29,7 @@
     import "../app.scss";
 
     import Header from "$lib/components/Header.svelte";
+    import NavigationProgress from "$lib/components/NavigationProgress.svelte";
     import Toaster from "$lib/components/Toaster.svelte";
     import VoxPeople from "$lib/components/VoxPeople.svelte";
     import { appConfig } from "$lib/stores/config";
@@ -49,6 +50,10 @@
     } = $props();
 
     onMount(() => {
+        // Nothing is rendered until every load of the initial route resolves:
+        // reaching this point means the app is ready to take over the splash.
+        document.getElementById("app-splash")?.remove();
+
         window.onunhandledrejection = (e) => {
             if (e.reason.name == "NotAuthorizedError") {
                 goto(resolve("/login"));
@@ -80,6 +85,7 @@
         </small>
     </div>
 {/if}
+<NavigationProgress />
 <Header />
 
 <main class="flex-fill d-flex flex-column justify-content-center bg-light">

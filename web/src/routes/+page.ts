@@ -22,7 +22,7 @@
 import { redirect, type Load } from "@sveltejs/kit";
 import { get } from "svelte/store";
 
-import { refreshDomains } from "$lib/stores/domains";
+import { domains, refreshDomains } from "$lib/stores/domains";
 import { userSession } from "$lib/stores/usersession";
 import { config as tsConfig, locale } from "$lib/translations";
 
@@ -39,7 +39,13 @@ export const load: Load = async ({ parent }) => {
         redirect(302, "/" + initLocale);
     }
 
-    await refreshDomains();
+    // Block on the first load only: when domains are already known, refresh
+    // them in the background, the store will update the view when done.
+    if (!get(domains)) {
+        await refreshDomains();
+    } else {
+        refreshDomains();
+    }
 
     return {};
 };

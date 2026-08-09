@@ -23,8 +23,15 @@
 
 <script lang="ts">
     import { page } from "$app/state";
+    import { onMount } from "svelte";
 
     import { Col, Container, Row } from "@sveltestrap/sveltestrap";
+
+    onMount(() => {
+        // An error in the root layout load leaves this page rendered on its
+        // own: the splash has no other chance to be taken down.
+        document.getElementById("app-splash")?.remove();
+    });
 </script>
 
 <Container class="my-3">

@@ -13,12 +13,59 @@
     <meta property="og:title" content="happyDomain">
     <meta property="og:description" content="Finally a simple interface for domain names.">
     <meta property="og:image" content="https://www.happydomain.org/img/og.webp">
+    <style>
+      #app-splash,
+      #app-splash * {
+        box-sizing: border-box;
+      }
+      #app-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+        background-color: #f8f9fa;
+        animation: app-splash-appear 0.25s ease 0.3s both;
+      }
+      #app-splash img {
+        display: block;
+        width: 220px;
+        max-width: 60vw;
+        height: auto;
+        aspect-ratio: 101.22974 / 15.832778;
+      }
+      #app-splash .app-splash-spinner {
+        width: 32px;
+        height: 32px;
+        border: 3px solid rgba(28, 180, 135, 0.25);
+        border-top-color: #1cb487;
+        border-radius: 50%;
+        animation: app-splash-spin 0.8s linear infinite;
+      }
+      @keyframes app-splash-appear {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      @keyframes app-splash-spin {
+        to { transform: rotate(360deg); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #app-splash .app-splash-spinner { animation-duration: 2.4s; }
+      }
+    </style>
     %sveltekit.head%
   </head>
   <body>
     <noscript>
       <strong>We're sorry but happyDomain doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
     </noscript>
+    <div id="app-splash">
+      <img src="%sveltekit.assets%/img/happyDomain.svg" alt="happyDomain" />
+      <div class="app-splash-spinner"></div>
+    </div>
     <div class="d-flex flex-column flex-fill">%sveltekit.body%</div>
   </body>
 </html>
