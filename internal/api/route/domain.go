@@ -22,7 +22,11 @@
 package route
 
 import (
+	"net/http"
+	"time"
+
 	"github.com/gin-gonic/gin"
+	ratelimit "github.com/JGLTechnologies/gin-rate-limit"
 
 	"git.happydns.org/happyDomain/internal/api/controller"
 	"git.happydns.org/happyDomain/internal/api/middleware"
@@ -63,6 +67,31 @@ func DeclareDomainRoutes(
 	apiDomainsRoutes.GET("", dc.GetDomain)
 	apiDomainsRoutes.PUT("", dc.UpdateDomain)
 	apiDomainsRoutes.DELETE("", dc.DelDomain)
+
+	// Rate-limit invites per user: each call may reveal whether an arbitrary
+	// email is registered, and creates a share grant plus a notification.
+	shareRLStore := ratelimit.InMemoryStore(&ratelimit.InMemoryOptions{
+		Rate:  time.Minute,
+		Limit: 5,
+	})
+	shareRLMiddleware := ratelimit.RateLimiter(shareRLStore, &ratelimit.Options{
+		ErrorHandler: func(c *gin.Context, info ratelimit.Info) {
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, happydns.ErrorResponse{
+				Message: "Too many share invites. Please try again later.",
+			})
+		},
+		KeyFunc: func(c *gin.Context) string {
+			user := middleware.MyUser(c)
+			if user == nil {
+				return middleware.ClientKey(c)
+			}
+			return user.Id.String()
+		},
+	})
+
+	apiDomainsRoutes.GET("/share", dc.GetDomainShares)
+	apiDomainsRoutes.POST("/share", shareRLMiddleware, dc.ShareDomain)
+	apiDomainsRoutes.DELETE("/share/:userid", dc.DelDomainShare)
 
 	DeclareDomainInfoRoutes(apiDomainsRoutes.Group("/info"), domainInfoUC)
 	DeclareDomainLogRoutes(apiDomainsRoutes, domainLogUC)

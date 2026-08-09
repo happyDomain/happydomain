@@ -91,6 +91,7 @@ func (dc *DomainController) GetDomains(c *gin.Context) {
 		if statusByDomain != nil {
 			entry.LastCheckStatus = statusByDomain[d.Id.String()]
 		}
+		entry.CanManageProvider = dc.domainService.CanManageProvider(user, d)
 		result = append(result, entry)
 	}
 
@@ -159,6 +160,10 @@ func (dc *DomainController) GetDomain(c *gin.Context) {
 		return
 	}
 
+	if user := middleware.MyUser(c); user != nil {
+		domainExtended.CanManageProvider = dc.domainService.CanManageProvider(user, domain)
+	}
+
 	c.JSON(http.StatusOK, domainExtended)
 }
 
@@ -224,6 +229,15 @@ func (dc *DomainController) UpdateDomain(c *gin.Context) {
 //	@Router			/domains/{domainId} [delete]
 func (dc *DomainController) DelDomain(c *gin.Context) {
 	domain := c.MustGet("domain").(*happydns.Domain)
+
+	// Deleting a domain is owner-only: an invited (shared) user reaches this
+	// handler through DomainHandler, but must not be able to stop managing the
+	// domain for everyone. They remove their own access via the share API.
+	if user := middleware.MyUser(c); user == nil || !user.Id.Equals(domain.Owner) {
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"errmsg": "Only the domain owner can stop managing this domain."})
+		return
+	}
+
 	if err := dc.domainService.DeleteDomain(domain.Id); err != nil {
 		log.Printf("%s was unable to DeleteDomain: %s", c.ClientIP(), err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errmsg": fmt.Sprintf("Unable to delete your domain: %s", err.Error())})

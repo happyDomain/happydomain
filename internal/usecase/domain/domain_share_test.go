@@ -22,6 +22,7 @@
 package domain_test
 
 import (
+	"strings"
 	"testing"
 
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
@@ -135,6 +136,60 @@ func Test_ShareDomain_NotOwner(t *testing.T) {
 	// Unknown grantee reference is rejected.
 	if _, err := service.ShareDomain(owner, dom.Id, "nobody@example.com", false); err == nil {
 		t.Fatal("expected sharing with unknown user to fail")
+	}
+}
+
+func Test_ShareDomain_LogsProviderStatus(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	service, logAppender := setupTestService(db)
+	service.SetSharingDeps(db, db)
+
+	owner := createTestUser(t, db, "owner@example.com")
+	guest := createTestUser(t, db, "guest@example.com")
+
+	providerId := createTestProvider(t, db, owner, "Owner Provider")
+	domA, err := service.CreateDomain(ctx, owner, &happydns.DomainCreationInput{
+		DomainName: "a.example.com",
+		ProviderId: providerId,
+	})
+	if err != nil {
+		t.Fatalf("failed to create domain: %v", err)
+	}
+	domB, err := service.CreateDomain(ctx, owner, &happydns.DomainCreationInput{
+		DomainName: "b.example.com",
+		ProviderId: providerId,
+	})
+	if err != nil {
+		t.Fatalf("failed to create domain: %v", err)
+	}
+
+	// Case 1: sharing without provider access logs "provider not shared".
+	if _, err := service.ShareDomain(owner, domA.Id, "guest@example.com", false); err != nil {
+		t.Fatalf("ShareDomain failed: %v", err)
+	}
+	if n := len(logAppender.logs); n == 0 || !strings.Contains(logAppender.logs[n-1].Content, "provider not shared") {
+		t.Fatalf("expected a 'provider not shared' log, got %+v", logAppender.logs)
+	}
+
+	if err := service.UnshareDomain(owner, domA.Id, guest.Id); err != nil {
+		t.Fatalf("UnshareDomain failed: %v", err)
+	}
+
+	// Case 2: sharing with provider access, first time, logs "provider just shared".
+	if _, err := service.ShareDomain(owner, domA.Id, "guest@example.com", true); err != nil {
+		t.Fatalf("ShareDomain failed: %v", err)
+	}
+	if n := len(logAppender.logs); n == 0 || !strings.Contains(logAppender.logs[n-1].Content, "provider just shared") {
+		t.Fatalf("expected a 'provider just shared' log, got %+v", logAppender.logs)
+	}
+
+	// Case 3: sharing another domain on the same provider with the same
+	// grantee logs "provider already shared".
+	if _, err := service.ShareDomain(owner, domB.Id, "guest@example.com", true); err != nil {
+		t.Fatalf("ShareDomain failed: %v", err)
+	}
+	if n := len(logAppender.logs); n == 0 || !strings.Contains(logAppender.logs[n-1].Content, "provider already shared") {
+		t.Fatalf("expected a 'provider already shared' log, got %+v", logAppender.logs)
 	}
 }
 

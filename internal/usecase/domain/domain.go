@@ -305,17 +305,31 @@ func (s *Service) ShareDomain(actor *happydns.User, domainID happydns.Identifier
 		}
 	}
 
+	providerStatus := "provider not shared"
 	if withProvider && s.providerSharer != nil {
-		if err := s.providerSharer.AddProviderShare(domain.ProviderId, grantee.Id); err != nil {
+		alreadyShared, err := s.providerSharer.IsProviderSharedWith(domain.ProviderId, grantee.Id)
+		if err != nil {
 			return nil, happydns.InternalError{
-				Err:         fmt.Errorf("unable to AddProviderShare: %w", err),
-				UserMessage: "The domain was shared, but we were unable to share the provider. Please retry later.",
+				Err:         fmt.Errorf("unable to IsProviderSharedWith: %w", err),
+				UserMessage: "Sorry, we are currently unable to share your domain. Please retry later.",
 			}
+		}
+
+		if alreadyShared {
+			providerStatus = "provider already shared"
+		} else {
+			if err := s.providerSharer.AddProviderShare(domain.ProviderId, grantee.Id); err != nil {
+				return nil, happydns.InternalError{
+					Err:         fmt.Errorf("unable to AddProviderShare: %w", err),
+					UserMessage: "The domain was shared, but we were unable to share the provider. Please retry later.",
+				}
+			}
+			providerStatus = "provider just shared"
 		}
 	}
 
 	if s.domainLogAppender != nil {
-		s.domainLogAppender.AppendDomainLog(domain, happydns.NewDomainLog(actor, happydns.LOG_INFO, fmt.Sprintf("Domain name %s shared with user %s.", domain.DomainName, grantee.Id.String())))
+		s.domainLogAppender.AppendDomainLog(domain, happydns.NewDomainLog(actor, happydns.LOG_INFO, fmt.Sprintf("Domain name %s shared with user %s (%s).", domain.DomainName, grantee.Id.String(), providerStatus)))
 	}
 
 	return grantee, nil

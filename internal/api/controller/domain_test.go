@@ -69,6 +69,18 @@ func (s *stubDomainUsecase) ListUserDomains(user *happydns.User) ([]*happydns.Do
 func (s *stubDomainUsecase) UpdateDomain(id happydns.Identifier, user *happydns.User, fn func(*happydns.Domain)) error {
 	return fmt.Errorf("not implemented")
 }
+func (s *stubDomainUsecase) CanManageProvider(user *happydns.User, domain *happydns.Domain) bool {
+	return true
+}
+func (s *stubDomainUsecase) ShareDomain(actor *happydns.User, domainID happydns.Identifier, granteeRef string, withProvider bool) (*happydns.User, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+func (s *stubDomainUsecase) UnshareDomain(actor *happydns.User, domainID, granteeID happydns.Identifier) error {
+	return fmt.Errorf("not implemented")
+}
+func (s *stubDomainUsecase) ListDomainShares(actor *happydns.User, domainID happydns.Identifier) ([]*happydns.DomainShareUser, error) {
+	return nil, fmt.Errorf("not implemented")
+}
 
 // newDomainTestContext creates a gin context with a logged-in user and a recorder.
 func newDomainTestContext(user *happydns.User) (*httptest.ResponseRecorder, *gin.Context) {
