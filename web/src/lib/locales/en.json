@@ -89,7 +89,9 @@
             "upload": "Import a zone file",
             "view": "View my zone",
             "whois": "View registration data",
-            "others": "More actions on {{domain}}"
+            "others": "More actions on {{domain}}",
+            "label": "Actions",
+            "menu-title": "Domain actions"
         },
         "alert": {
             "remove": "This action only removes {{domain}} from your happyDomain managed domains. All history and abstracted zones will be discarded. The domain {{domain}} remains fully intact at the provider. Are you sure you want to continue?"

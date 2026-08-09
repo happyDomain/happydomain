@@ -87,11 +87,12 @@
         <Icon name="server" />
         {$t("domains.add-a-subdomain")}
     </Button>
-    <Dropdown>
+    <Dropdown class="flex-shrink-0">
         <DropdownToggle
             color="secondary"
             outline
             size="sm"
+            class="text-nowrap"
             aria-label={$t("domains.actions.others", {
                 domain: $domains_idx[selectedDomain].domain,
             })}
@@ -104,10 +105,14 @@
             {:else}
                 <Icon name="gear-fill" aria-hidden="true" />
             {/if}
+            {$t("domains.actions.label")}
         </DropdownToggle>
         <DropdownMenu style="z-index: 11;">
-            <DropdownItem header class="font-monospace">
-                {origin.domain}
+            <DropdownItem header>
+                {$t("domains.actions.menu-title")}
+                <span class="d-block font-monospace fw-normal text-muted text-truncate">
+                    {origin.domain}
+                </span>
             </DropdownItem>
             <DropdownItem href={`/domains/${domainLink(selectedDomain)}/history`}>
                 {$t("domains.actions.history")}
