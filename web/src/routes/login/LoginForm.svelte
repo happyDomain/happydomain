@@ -53,6 +53,14 @@
 
     let formElm: HTMLFormElement | undefined = $state();
 
+    // Where the OIDC provider sends the user back to. searchParams hands back
+    // the decoded value, so it has to be encoded again on its way out,
+    // otherwise a destination carrying a & or a # loses everything past it.
+    const oidcHref = $derived.by(() => {
+        const next = page.url.searchParams.get("next");
+        return "/auth/oidc" + (next ? "?next=" + encodeURIComponent(next) : "");
+    });
+
     function testLogin(e: SubmitEvent) {
         e.preventDefault();
 
@@ -150,6 +158,7 @@
     <FormGroup floating label={$t("email.address")}>
         <Input
             aria-describedby="emailHelpBlock"
+            aria-label={$t("email.address")}
             autocomplete="username"
             autofocus
             id="email-input"
@@ -164,6 +173,7 @@
     </FormGroup>
     <FormGroup floating label={$t("common.password")}>
         <Input
+            aria-label={$t("common.password")}
             autocomplete="current-password"
             id="password-input"
             placeholder={$t("common.password")}
@@ -195,7 +205,7 @@
         </Button>
         {#if $appConfig.oidc_configured}
             {#await getOidcProvider() then oidc}
-                <Button href={"/auth/oidc" + (page.url.searchParams.get("next") ? "?next=" + page.url.searchParams.get("next") : "")} outline color="dark">
+                <Button href={oidcHref} outline color="dark">
                     {#if oidc.provider == "google.com"}
                         <i class="bi bi-google me-2"></i>
                     {:else if oidc.provider == "gitlab.com" || oidc.provider == "framagit.org"}

@@ -94,6 +94,7 @@
     <FormGroup floating label={$t("email.address")}>
         <Input
             aria-describedby="emailHelpBlock"
+            aria-label={$t("email.address")}
             autocomplete="username"
             autofocus
             feedback={!emailState ? $t("errors.address-valid") : null}
@@ -115,6 +116,7 @@
     </div>
     <FormGroup floating label={$t("common.password")}>
         <Input
+            aria-label={$t("common.password")}
             autocomplete="new-password"
             feedback={!passwordState ? $t("errors.password-weak") : null}
             id="password-input"
@@ -129,6 +131,7 @@
     </FormGroup>
     <FormGroup floating label={$t("password.confirmation")}>
         <Input
+            aria-label={$t("password.confirmation")}
             feedback={!passwordConfirmState ? $t("errors.password-match") : null}
             id="passwordconfirm-input"
             placeholder={$t("password.confirmation")}
