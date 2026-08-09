@@ -110,6 +110,7 @@
                 "description": "!"
             },
             "nochange": "Il n'y a pas de changement à faire ! Cette zone est synchronisée avec le serveur.",
+            "nodiff": "Aucune différence.",
             "modifications": "{{count:eq; 0:pas de modifications; 1:{{count}} modification; default:{{count}} modifications}}",
             "others": "{{count:eq; 0:pas d'autres changements; 1:{{count}} autre changement; default:{{count}} autres changements}}",
             "prepare-info": "Le fournisseur exécutera {{nbDiffs}} correction(s) pour vos {{nbSelected}} modification(s) sélectionnée(s) :",
@@ -253,6 +254,7 @@
         "created-on": "Créé le",
         "diff": "Voir les changements",
         "expires-on": "Expire le",
+        "loading": "Chargement des informations de l'historique",
         "modified-on": "Dernière modification le",
         "published-on": "Publiée le",
         "see": "Voir la zone à ce moment",

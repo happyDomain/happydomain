@@ -106,25 +106,25 @@
             </Button>
             <p class="mt-2 mb-1 text-center">
                 {#await getDomain(domain.id)}
-                    Chargement des informations de l'historique
+                    {$t("history.loading")}
                 {:then domain}
                     {#if domain.zone_meta && domain.zone_meta[history]}
                         {@const history_meta = domain.zone_meta[history]}
                         <span class="d-block text-truncate">
                             {#if history_meta.published}
-                                Publiée le
+                                {$t("history.published-on")}
                                 {new Intl.DateTimeFormat(undefined, {
                                     dateStyle: "long",
                                     timeStyle: "long",
                                 }).format(new Date(history_meta.published))}
                             {:else if history_meta.commit_date}
-                                Enregistrée le
+                                {$t("history.committed-on")}
                                 {new Intl.DateTimeFormat(undefined, {
                                     dateStyle: "long",
                                     timeStyle: "long",
                                 }).format(new Date(history_meta.commit_date))}
                             {:else}
-                                Dernière modification le
+                                {$t("history.modified-on")}
                                 {new Intl.DateTimeFormat(undefined, {
                                     dateStyle: "long",
                                     timeStyle: "long",

@@ -25,6 +25,7 @@
     import { createEventDispatcher } from "svelte";
 
     import type { FullCorrection } from "$lib/model/correction";
+    import { t } from "$lib/translations";
 
     const dispatch = createEventDispatcher();
 
@@ -46,7 +47,7 @@
 </script>
 
 {#if zoneDiff.length == 0}
-    {#if nodiff}{@render nodiff()}{:else}Aucune différence.{/if}
+    {#if nodiff}{@render nodiff()}{:else}{$t("domains.apply.nodiff")}{/if}
 {:else}
     {#each zoneDiff as line (line.id)}
         <div
