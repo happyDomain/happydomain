@@ -101,26 +101,23 @@
 
     async function importDomain(domainName: string, noToast: boolean) {
         domainsInProgress.add(domainName);
-        addDomain(domainName, provider).then(
-            (mydomain) => {
-                domainsInProgress.delete(domainName);
-                if (!noToast) {
-                    toasts.addToast({
-                        title: $t("domains.attached-new"),
-                        message: $t("domains.added-success", { domain: mydomain.domain }),
-                        href: "/domains/" + mydomain.domain,
-                        type: "success",
-                        timeout: 5000,
-                    });
-                }
+        try {
+            const mydomain = await addDomain(domainName, provider);
 
-                if (!allImportInProgress) refreshDomains();
-            },
-            (error) => {
-                domainsInProgress.delete(domainName);
-                throw error;
-            },
-        );
+            if (!noToast) {
+                toasts.addToast({
+                    title: $t("domains.attached-new"),
+                    message: $t("domains.added-success", { domain: mydomain.domain }),
+                    href: "/domains/" + mydomain.domain,
+                    type: "success",
+                    timeout: 5000,
+                });
+            }
+
+            if (!allImportInProgress) refreshDomains();
+        } finally {
+            domainsInProgress.delete(domainName);
+        }
     }
 
     let allImportInProgress = $state(false);
@@ -139,15 +136,15 @@
 
     let createDomainInProgress = $state(false);
     async function createDomainOnProvider() {
+        const domainName = fqdn($filteredName, "");
+
         createDomainInProgress = true;
         try {
-            await createDomain(provider, fqdn($filteredName, ""));
-            await importDomain(fqdn($filteredName, ""), false);
+            await createDomain(provider, domainName);
+            await importDomain(domainName, false);
             refreshDomainList(provider);
+        } finally {
             createDomainInProgress = false;
-        } catch (err) {
-            createDomainInProgress = false;
-            throw err;
         }
     }
 </script>

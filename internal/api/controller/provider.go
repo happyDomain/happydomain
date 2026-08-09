@@ -270,7 +270,7 @@ func (pc *ProviderController) GetDomainsHostedByProvider(c *gin.Context) {
 //	@Failure		400	{object}	happydns.ErrorResponse	"Provider error"
 //	@Failure		401	{object}	happydns.ErrorResponse	"Authentication failure"
 //	@Failure		404	{object}	happydns.ErrorResponse	"Provider not found"
-//	@Router			/providers/{providerId}/domains/{fqdn} [get]
+//	@Router			/providers/{providerId}/domains/{fqdn} [post]
 func (pc *ProviderController) CreateDomainOnProvider(c *gin.Context) {
 	provider := c.MustGet("provider").(*happydns.Provider)
 

@@ -23,8 +23,8 @@ import {
     getProviders,
     getProvidersByProviderId,
     getProvidersByProviderIdDomains,
-    getProvidersByProviderIdDomainsByFqdn,
     postProviders,
+    postProvidersByProviderIdDomainsByFqdn,
     putProvidersByProviderId,
     deleteProvidersByProviderId,
 } from "$lib/api-base/sdk.gen";
@@ -53,7 +53,7 @@ export async function listImportableDomains(provider: Provider): Promise<Array<s
 
 export async function createDomain(provider: Provider, fqdn: string): Promise<boolean> {
     return unwrapEmptyResponse(
-        await getProvidersByProviderIdDomainsByFqdn({
+        await postProvidersByProviderIdDomainsByFqdn({
             path: { providerId: provider._id, fqdn },
         }),
     );
