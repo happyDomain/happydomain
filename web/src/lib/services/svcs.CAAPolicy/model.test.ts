@@ -80,9 +80,6 @@ describe("CAAPolicy", () => {
             const policy = new CAAPolicy(resource);
 
             expect(policy.records).toEqual([]);
-            expect(policy.DisallowIssue).toBe(false);
-            expect(policy.DisallowWildcardIssue).toBe(false);
-            expect(policy.DisallowMailIssue).toBe(false);
         });
 
         it("should initialize with existing CAA records", () => {
@@ -97,241 +94,228 @@ describe("CAAPolicy", () => {
             expect(policy.records).toHaveLength(2);
         });
 
-        it("should detect disallow issue from existing records", () => {
-            const caaRecords: dnsTypeCAA[] = [
-                newCAARecord("example.com", "issue", ";"),
-            ];
-            const resource: dnsResource = { caa: caaRecords };
-            const policy = new CAAPolicy(resource);
+        it("should accept a single record instead of an RRset", () => {
+            const record = newCAARecord("example.com", "issue", "letsencrypt.org");
+            const policy = new CAAPolicy({ caa: record });
 
-            expect(policy.DisallowIssue).toBe(true);
-            expect(policy.DisallowWildcardIssue).toBe(false);
-            expect(policy.DisallowMailIssue).toBe(false);
-        });
-
-        it("should detect multiple disallow flags", () => {
-            const caaRecords: dnsTypeCAA[] = [
-                newCAARecord("example.com", "issue", ";"),
-                newCAARecord("example.com", "issuewild", ";"),
-                newCAARecord("example.com", "issuemail", ";"),
-            ];
-            const resource: dnsResource = { caa: caaRecords };
-            const policy = new CAAPolicy(resource);
-
-            expect(policy.DisallowIssue).toBe(true);
-            expect(policy.DisallowWildcardIssue).toBe(true);
-            expect(policy.DisallowMailIssue).toBe(true);
+            expect(policy.records).toEqual([record]);
         });
     });
 
-    describe("hasDisallowIssue", () => {
-        it("should return true when a disallow record exists for the tag", () => {
-            const caaRecords: dnsTypeCAA[] = [
-                newCAARecord("example.com", "issue", ";"),
-            ];
-            const resource: dnsResource = { caa: caaRecords };
+    describe("entries", () => {
+        it("should return the records of the tag, with their index", () => {
+            const resource: dnsResource = {
+                caa: [
+                    newCAARecord("example.com", "issue", "letsencrypt.org"),
+                    newCAARecord("example.com", "issuewild", "digicert.com"),
+                    newCAARecord("example.com", "issue", "comodoca.com"),
+                ],
+            };
             const policy = new CAAPolicy(resource);
 
-            expect(policy.hasDisallowIssue("issue")).toBe(true);
+            const entries = policy.entries("issue");
+
+            expect(entries.map((e) => e.index)).toEqual([0, 2]);
+            expect(entries.map((e) => e.record.Value)).toEqual([
+                "letsencrypt.org",
+                "comodoca.com",
+            ]);
         });
 
-        it("should return false when no disallow record exists for the tag", () => {
-            const caaRecords: dnsTypeCAA[] = [
-                newCAARecord("example.com", "issue", "letsencrypt.org"),
-            ];
-            const resource: dnsResource = { caa: caaRecords };
+        it("should return an empty array when no record matches", () => {
+            const resource: dnsResource = {
+                caa: [newCAARecord("example.com", "issue", "letsencrypt.org")],
+            };
             const policy = new CAAPolicy(resource);
 
-            expect(policy.hasDisallowIssue("issue")).toBe(false);
+            expect(policy.entries("issuemail")).toEqual([]);
+        });
+    });
+
+    describe("issuers", () => {
+        it("should leave the deny marker out", () => {
+            const resource: dnsResource = {
+                caa: [
+                    newCAARecord("example.com", "issue", ";"),
+                    newCAARecord("example.com", "issue", "letsencrypt.org"),
+                ],
+            };
+            const policy = new CAAPolicy(resource);
+
+            const issuers = policy.issuers("issue");
+
+            expect(issuers).toHaveLength(1);
+            expect(issuers[0].record.Value).toBe("letsencrypt.org");
+        });
+    });
+
+    describe("isDenied", () => {
+        it("should return true when a deny record exists for the tag", () => {
+            const resource: dnsResource = { caa: [newCAARecord("example.com", "issue", ";")] };
+
+            expect(new CAAPolicy(resource).isDenied("issue")).toBe(true);
         });
 
-        it("should return false when checking different tag", () => {
-            const caaRecords: dnsTypeCAA[] = [
-                newCAARecord("example.com", "issue", ";"),
-            ];
-            const resource: dnsResource = { caa: caaRecords };
-            const policy = new CAAPolicy(resource);
+        it("should return false when an issuer is authorized", () => {
+            const resource: dnsResource = {
+                caa: [newCAARecord("example.com", "issue", "letsencrypt.org")],
+            };
 
-            expect(policy.hasDisallowIssue("issuewild")).toBe(false);
+            expect(new CAAPolicy(resource).isDenied("issue")).toBe(false);
+        });
+
+        it("should not confuse the tags", () => {
+            const resource: dnsResource = { caa: [newCAARecord("example.com", "issue", ";")] };
+
+            expect(new CAAPolicy(resource).isDenied("issuewild")).toBe(false);
         });
 
         it("should handle semicolon with whitespace", () => {
-            const caaRecords: dnsTypeCAA[] = [
-                newCAARecord("example.com", "issue", " ; "),
-            ];
-            const resource: dnsResource = { caa: caaRecords };
-            const policy = new CAAPolicy(resource);
+            const resource: dnsResource = { caa: [newCAARecord("example.com", "issue", " ; ")] };
 
-            expect(policy.hasDisallowIssue("issue")).toBe(true);
+            expect(new CAAPolicy(resource).isDenied("issue")).toBe(true);
         });
     });
 
-    describe("refreshDisallowIssue", () => {
-        it("should update all disallow flags based on current records", () => {
-            const resource: dnsResource = { caa: [] };
-            const policy = new CAAPolicy(resource);
-
-            // Initially all false
-            expect(policy.DisallowIssue).toBe(false);
-            expect(policy.DisallowWildcardIssue).toBe(false);
-            expect(policy.DisallowMailIssue).toBe(false);
-
-            // Add disallow records
-            policy.records.push(newCAARecord("example.com", "issue", ";"));
-            policy.records.push(newCAARecord("example.com", "issuewild", ";"));
-            policy.refreshDisallowIssue();
-
-            expect(policy.DisallowIssue).toBe(true);
-            expect(policy.DisallowWildcardIssue).toBe(true);
-            expect(policy.DisallowMailIssue).toBe(false);
+    describe("mode", () => {
+        it("should be any when nothing is published for the tag", () => {
+            expect(new CAAPolicy({ caa: [] }).mode("issue")).toBe("any");
         });
 
-        it("should update flags when records are removed", () => {
-            const caaRecords: dnsTypeCAA[] = [
-                newCAARecord("example.com", "issue", ";"),
-            ];
-            const resource: dnsResource = { caa: caaRecords };
+        it("should be restricted when issuers are listed", () => {
+            const resource: dnsResource = {
+                caa: [newCAARecord("example.com", "issue", "letsencrypt.org")],
+            };
+
+            expect(new CAAPolicy(resource).mode("issue")).toBe("restricted");
+        });
+
+        it("should be none when the deny marker is published", () => {
+            const resource: dnsResource = { caa: [newCAARecord("example.com", "issue", ";")] };
+
+            expect(new CAAPolicy(resource).mode("issue")).toBe("none");
+        });
+
+        it("should report each kind of certificate on its own", () => {
+            const resource: dnsResource = {
+                caa: [
+                    newCAARecord("example.com", "issue", "letsencrypt.org"),
+                    newCAARecord("example.com", "issuemail", ";"),
+                ],
+            };
             const policy = new CAAPolicy(resource);
 
-            expect(policy.DisallowIssue).toBe(true);
-
-            // Remove the disallow record
-            policy.records = [];
-            policy.refreshDisallowIssue();
-
-            expect(policy.DisallowIssue).toBe(false);
+            expect(policy.mode("issue")).toBe("restricted");
+            expect(policy.mode("issuewild")).toBe("any");
+            expect(policy.mode("issuemail")).toBe("none");
+            expect(policy.mode("issuevmc")).toBe("any");
         });
     });
 
-    describe("changeDisallowIssue", () => {
-        it("should add a disallow record when checked", () => {
-            const resource: dnsResource = { caa: [] };
-            const policy = new CAAPolicy(resource);
+    describe("setMode", () => {
+        it("should publish the deny marker for none", () => {
+            const policy = new CAAPolicy({ caa: [] }, "example.com");
 
-            const handler = policy.changeDisallowIssue("example.com", "issue");
-            const event = new Event("change");
-            Object.defineProperty(event, "target", {
-                value: { checked: true },
-                writable: false
-            });
-
-            handler(event);
+            policy.setMode("issue", "none");
 
             expect(policy.records).toHaveLength(1);
             expect(policy.records[0].Tag).toBe("issue");
             expect(policy.records[0].Value).toBe(";");
-            expect(policy.DisallowIssue).toBe(true);
+            expect(policy.records[0].Hdr.Name).toBe("example.com");
+            expect(policy.mode("issue")).toBe("none");
         });
 
-        it("should remove disallow records when unchecked", () => {
-            const caaRecords: dnsTypeCAA[] = [
-                newCAARecord("example.com", "issue", ";"),
-            ];
-            const resource: dnsResource = { caa: caaRecords };
-            const policy = new CAAPolicy(resource);
+        it("should replace the authorized issuers by the deny marker", () => {
+            const resource: dnsResource = {
+                caa: [
+                    newCAARecord("example.com", "issue", "letsencrypt.org"),
+                    newCAARecord("example.com", "issue", "comodoca.com"),
+                ],
+            };
+            const policy = new CAAPolicy(resource, "example.com");
 
-            expect(policy.DisallowIssue).toBe(true);
+            policy.setMode("issue", "none");
 
-            const handler = policy.changeDisallowIssue("example.com", "issue");
-            const event = new Event("change");
-            Object.defineProperty(event, "target", {
-                value: { checked: false },
-                writable: false
-            });
-
-            handler(event);
-
-            expect(policy.records).toHaveLength(0);
-            expect(policy.DisallowIssue).toBe(false);
-        });
-
-        it("should remove all disallow records for the tag when unchecked", () => {
-            const caaRecords: dnsTypeCAA[] = [
-                newCAARecord("example.com", "issue", ";"),
-                newCAARecord("example.com", "issue", "letsencrypt.org"),
-                newCAARecord("example.com", "issue", ";"), // Duplicate disallow
-            ];
-            const resource: dnsResource = { caa: caaRecords };
-            const policy = new CAAPolicy(resource);
-
-            const handler = policy.changeDisallowIssue("example.com", "issue");
-            const event = new Event("change");
-            Object.defineProperty(event, "target", {
-                value: { checked: false },
-                writable: false
-            });
-
-            handler(event);
-
-            // Should remove both disallow records but keep the issuer
             expect(policy.records).toHaveLength(1);
-            expect(policy.records[0].Value).toBe("letsencrypt.org");
+            expect(policy.records[0].Value).toBe(";");
         });
 
-        it("should not affect records of different tags", () => {
-            const caaRecords: dnsTypeCAA[] = [
-                newCAARecord("example.com", "issue", ";"),
-                newCAARecord("example.com", "issuewild", ";"),
-            ];
-            const resource: dnsResource = { caa: caaRecords };
-            const policy = new CAAPolicy(resource);
+        it("should remove every record of the tag for any", () => {
+            const resource: dnsResource = {
+                caa: [
+                    newCAARecord("example.com", "issue", ";"),
+                    newCAARecord("example.com", "issue", "letsencrypt.org"),
+                    newCAARecord("example.com", "issuewild", "digicert.com"),
+                ],
+            };
+            const policy = new CAAPolicy(resource, "example.com");
 
-            const handler = policy.changeDisallowIssue("example.com", "issue");
-            const event = new Event("change");
-            Object.defineProperty(event, "target", {
-                value: { checked: false },
-                writable: false
-            });
-
-            handler(event);
+            policy.setMode("issue", "any");
 
             expect(policy.records).toHaveLength(1);
             expect(policy.records[0].Tag).toBe("issuewild");
-            expect(policy.DisallowWildcardIssue).toBe(true);
+            expect(policy.mode("issue")).toBe("any");
+        });
+
+        it("should keep the listed issuers when restricting again", () => {
+            const resource: dnsResource = {
+                caa: [
+                    newCAARecord("example.com", "issue", ";"),
+                    newCAARecord("example.com", "issue", "letsencrypt.org"),
+                    newCAARecord("example.com", "issue", ";"),
+                ],
+            };
+            const policy = new CAAPolicy(resource, "example.com");
+
+            policy.setMode("issue", "restricted");
+
+            expect(policy.records).toHaveLength(1);
+            expect(policy.records[0].Value).toBe("letsencrypt.org");
+            expect(policy.mode("issue")).toBe("restricted");
+        });
+
+        it("should not touch the other tags", () => {
+            const resource: dnsResource = {
+                caa: [
+                    newCAARecord("example.com", "issue", ";"),
+                    newCAARecord("example.com", "issuewild", ";"),
+                ],
+            };
+            const policy = new CAAPolicy(resource, "example.com");
+
+            policy.setMode("issue", "any");
+
+            expect(policy.records).toHaveLength(1);
+            expect(policy.records[0].Tag).toBe("issuewild");
+            expect(policy.mode("issuewild")).toBe("none");
         });
     });
 
-    describe("getRecordsByTag", () => {
-        it("should return records matching the specified tag", () => {
-            const caaRecords: dnsTypeCAA[] = [
-                newCAARecord("example.com", "issue", "letsencrypt.org"),
-                newCAARecord("example.com", "issue", "comodoca.com"),
-                newCAARecord("example.com", "issuewild", "digicert.com"),
-            ];
-            const resource: dnsResource = { caa: caaRecords };
-            const policy = new CAAPolicy(resource);
+    describe("add", () => {
+        it("should append a record carrying the policy owner name", () => {
+            const policy = new CAAPolicy({ caa: [] }, "www.example.com");
 
-            const issueRecords = policy.getRecordsByTag("issue");
+            policy.add("issue", "letsencrypt.org");
 
-            expect(issueRecords).toHaveLength(2);
-            expect(issueRecords[0].Value).toBe("letsencrypt.org");
-            expect(issueRecords[1].Value).toBe("comodoca.com");
-        });
-
-        it("should return empty array when no records match", () => {
-            const caaRecords: dnsTypeCAA[] = [
-                newCAARecord("example.com", "issue", "letsencrypt.org"),
-            ];
-            const resource: dnsResource = { caa: caaRecords };
-            const policy = new CAAPolicy(resource);
-
-            const issuemailRecords = policy.getRecordsByTag("issuemail");
-
-            expect(issuemailRecords).toEqual([]);
+            expect(policy.records).toHaveLength(1);
+            expect(policy.records[0].Tag).toBe("issue");
+            expect(policy.records[0].Value).toBe("letsencrypt.org");
+            expect(policy.records[0].Hdr.Name).toBe("www.example.com");
         });
     });
 
-    describe("removeRecord", () => {
+    describe("remove", () => {
         it("should remove the record at the specified index", () => {
-            const caaRecords: dnsTypeCAA[] = [
-                newCAARecord("example.com", "issue", "letsencrypt.org"),
-                newCAARecord("example.com", "issue", "comodoca.com"),
-                newCAARecord("example.com", "issuewild", "digicert.com"),
-            ];
-            const resource: dnsResource = { caa: caaRecords };
+            const resource: dnsResource = {
+                caa: [
+                    newCAARecord("example.com", "issue", "letsencrypt.org"),
+                    newCAARecord("example.com", "issue", "comodoca.com"),
+                    newCAARecord("example.com", "issuewild", "digicert.com"),
+                ],
+            };
             const policy = new CAAPolicy(resource);
 
-            policy.removeRecord(1);
+            policy.remove(1);
 
             expect(policy.records).toHaveLength(2);
             expect(policy.records[0].Value).toBe("letsencrypt.org");
@@ -339,31 +323,18 @@ describe("CAAPolicy", () => {
         });
 
         it("should handle removing the first record", () => {
-            const caaRecords: dnsTypeCAA[] = [
-                newCAARecord("example.com", "issue", "letsencrypt.org"),
-                newCAARecord("example.com", "issue", "comodoca.com"),
-            ];
-            const resource: dnsResource = { caa: caaRecords };
+            const resource: dnsResource = {
+                caa: [
+                    newCAARecord("example.com", "issue", "letsencrypt.org"),
+                    newCAARecord("example.com", "issue", "comodoca.com"),
+                ],
+            };
             const policy = new CAAPolicy(resource);
 
-            policy.removeRecord(0);
+            policy.remove(0);
 
             expect(policy.records).toHaveLength(1);
             expect(policy.records[0].Value).toBe("comodoca.com");
-        });
-
-        it("should handle removing the last record", () => {
-            const caaRecords: dnsTypeCAA[] = [
-                newCAARecord("example.com", "issue", "letsencrypt.org"),
-                newCAARecord("example.com", "issue", "comodoca.com"),
-            ];
-            const resource: dnsResource = { caa: caaRecords };
-            const policy = new CAAPolicy(resource);
-
-            policy.removeRecord(1);
-
-            expect(policy.records).toHaveLength(1);
-            expect(policy.records[0].Value).toBe("letsencrypt.org");
         });
     });
 });

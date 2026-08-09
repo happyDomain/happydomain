@@ -1,28 +1,8 @@
 {
     "resources": {
         "CAA": {
-            "all-issuers-title": "Uheri 发行者 授权.",
-            "all-issuers-body": "Ere 参数 de, uheri 发行者 域名 jai 子域名 de 证书 be arame.",
-            "all-wild-issuers-body": "Ere 参数 de, uheri 发行者 域名 jai 子域名 de 通配符 证书 be arame.",
-            "auth-issuers": "授权 发行者",
             "incident-response": "事件 响应",
-            "incident-response-text": "安全 策略 违反 de, si 容易 be 联系?",
-            "mail-issuers": "S/MIME 证书 发行",
-            "mail-all-allowed-title": "S/MIME 证书 发行 de CA 限制 akū.",
-            "mail-all-allowed-body": "Uheri CA S/MIME 证书 be 发行. Si 限制 eici 禁止 be 设置. S/MIME 证书 邮件 签名 加密 de 用法. 用法 akū de, 禁止 be 设置.",
-            "no-issuers-hint": "Uheri 证书 发行 be 禁止",
-            "no-issuers-title": "授权 发行者 akū.",
-            "no-issuers-body": "Ere 参数 de, 证书 机构 子域名 de 证书 be arame ojorakū.",
-            "no-mail-hint": "S/MIME 证书 发行 be 禁止",
-            "no-mail-title": "S/MIME 证书 授权 发行者 akū.",
-            "no-mail-body": "Ere 参数 de, 证书 机构 域名 jai 子域名 de S/MIME 证书 be arame ojorakū.",
-            "no-wild-hint": "通配符 证书 发行 be 禁止",
-            "no-wild-title": "通配符 证书 授权 发行者 akū.",
-            "no-wild-body": "Ere 参数 de, 证书 机构 域名 jai 子域名 de 通配符 证书 be arame ojorakū. Ere 限制 be 超越:",
-            "title": "证书 授权",
-            "wild-issuers": "通配符 证书 发行",
-            "wild-same-title": "常规 证书 发行 i adali.",
-            "wild-same-body": "Ere 参数 de, 常规 证书 授权 发行者 域名 jai 子域名 de 通配符 证书 be arame."
+            "incident-response-text": "安全 策略 违反 de, si 容易 be 联系?"
         }
     }
 }

@@ -1,28 +1,61 @@
 {
     "resources": {
         "CAA": {
-            "all-issuers-title": "Tous les émetteurs sont autorisés.",
-            "all-issuers-body": "Avec ces paramètres, tous les émetteurs peuvent créer des certificats pour ce domaine et ce sous-domaine.",
-            "all-wild-issuers-body": "Avec ces paramètres, tous les émetteurs peuvent créer des certificats de type \"wildcard\" pour ce domaine et ce sous-domaine.",
-            "auth-issuers": "Émetteurs autorisés",
+            "intro": "Les enregistrements CAA désignent les autorités de certification autorisées à émettre des certificats pour ce domaine. Une autorité qui n'y figure pas doit refuser, ce qui limite les dégâts en cas d'erreur ou de compromission.",
+            "summary": "Ce que dit cette politique aujourd'hui",
+            "kinds": {
+                "issue": {
+                    "title": "Certificats TLS",
+                    "kind": "des certificats TLS",
+                    "help": "Les certificats qui sécurisent HTTPS, et tout autre service TLS de ce domaine et de ses sous-domaines."
+                },
+                "issuewild": {
+                    "title": "Certificats TLS génériques (wildcard)",
+                    "kind": "des certificats génériques",
+                    "help": "Un seul certificat couvrant tous les sous-domaines à la fois, par exemple *.example.com."
+                },
+                "issuemail": {
+                    "title": "Certificats S/MIME",
+                    "kind": "des certificats S/MIME",
+                    "help": "Utilisés pour signer et chiffrer les courriels envoyés depuis une adresse de ce domaine."
+                },
+                "issuevmc": {
+                    "title": "Certificats de marque vérifiée (VMC)",
+                    "kind": "des certificats de marque vérifiée",
+                    "help": "Utilisés pour afficher votre logo vérifié à côté de vos messages dans les boîtes mail."
+                }
+            },
+            "mode": {
+                "any": "N'importe quelle autorité",
+                "restricted": "Seulement les autorités choisies",
+                "none": "Personne",
+                "inherit": "Comme les certificats TLS"
+            },
+            "explain": {
+                "any": "N'importe quelle autorité de certification peut émettre {{kind}} pour ce domaine. C'est ce qui se passe lorsque rien n'est publié, et c'est le réglage le plus large.",
+                "restricted": "Seules les autorités listées ci-dessous peuvent émettre {{kind}} pour ce domaine. Toutes les autres doivent refuser.",
+                "none": "Aucune autorité ne peut émettre {{kind}} pour ce domaine. Choisissez ceci si vous êtes sûr de ne jamais en utiliser.",
+                "inherit": "Les certificats génériques suivent la règle choisie ci-dessus pour les certificats TLS. Ne définissez une règle ici que s'ils méritent d'être plus restreints."
+            },
+            "pick-one": "Aucune autorité choisie pour l'instant : tant que cette liste reste vide, n'importe laquelle peut émettre.",
+            "unnamed-issuer": "autorité sans nom",
+            "add-parameter": "Ajouter un paramètre",
             "incident-response": "Réponse aux incidents",
-            "incident-response-text": "Comment souhaitez-vous être contacté en cas de violation de la politique de sécurité actuelle ?",
-            "mail-issuers": "Délivrance de certificats S/MIME",
-            "mail-all-allowed-title": "Toutes les autorités de certification peuvent émettre des certiticats S/MIME sans restriction.",
-            "mail-all-allowed-body": "Toutes les autorités de certification peuvent émettre des certiticats S/MIME pour votre domaine. Vous devriez interdire ou restreindre à certaines autorités. Les certificats S/MIME sont utilisés par exemple pour signer et chiffrer les courriers électroniques. Si vous n'utilisez pas ce genre de certiticats, vous devriez interdire leur émission.",
-            "no-issuers-hint": "Interdire toute délivrance de certificat",
-            "no-issuers-title": "Aucun émetteur autorisé.",
-            "no-issuers-body": "Avec ces paramètres, aucun émetteur n'est autorisé à créer un certificat pour ce sous-domaine.",
-            "no-mail-hint": "Interdire l'émission de certiticat S/MIME",
-            "no-mail-title": "Aucune émetteur de certiticat S/MIME n'est autorisé.",
-            "no-mail-body": "Avec ces paramètres, aucun émetteur n'est autorisé à créer un certificat S/MIME pour ce sous-domaine.",
-            "no-wild-hint": "Interdire l'émission de certificats \"wildcard\"",
-            "no-wild-title": "Aucun émetteur de certificats \"wildcard\" n'est autorisé.",
-            "no-wild-body": "Avec ces paramètres, aucun émetteur n'est autorisé à créer un certificat \"wildcard\" pour ce domaine et ce sous-domaine. Mais cela peut être remplacé par les paramètres suivants :",
-            "title": "Émission de certificats",
-            "wild-issuers": "Délivrance de certificats \"wildcard\"",
-            "wild-same-title": "Identique à la délivrance d'un certificat ordinaire.",
-            "wild-same-body": "Avec ces paramètres, tous les émetteurs autorisés à délivrer des certificats peuvent également créer des certificats \"wildcard\" pour ce domaine et ce sous-domaine."
+            "incident-response-text": "Où une autorité de certification doit-elle signaler une tentative de violation de cette politique ?",
+            "contact-info": "Coordonnées",
+            "contact-info-text": "Publiées pour qu'une autorité de certification puisse vous joindre au sujet de vos certificats. Elles n'autorisent rien par elles-mêmes.",
+            "contactemail": "Adresse électronique",
+            "contactphone": "Numéro de téléphone",
+            "add-contactemail": "Ajouter une adresse électronique",
+            "add-contactphone": "Ajouter un numéro de téléphone"
+        }
+    },
+    "svcinfo": {
+        "svcs": {
+            "CAAPolicy": {
+                "name": "Autorisation des autorités de certification",
+                "description": "Indique aux autorités de certification si elles sont autorisées à émettre des certificats numériques pour un nom de domaine donné."
+            }
         }
     }
 }

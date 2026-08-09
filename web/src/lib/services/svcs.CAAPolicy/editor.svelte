@@ -22,14 +22,21 @@
 -->
 
 <script lang="ts">
-    import { Alert, Button, FormGroup, Icon, Input } from "@sveltestrap/sveltestrap";
+    import { Button, Icon, Input, type InputType } from "@sveltestrap/sveltestrap";
 
     import CAAIssuer from "./issuer.svelte";
     import CAAIodef from "./iodef.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { SvcsCAAPolicyBody } from "$lib/services_bodies";
     import { t } from "$lib/translations";
-    import { CAAPolicy, newCAARecord, type CAATag } from "./model.svelte";
+    import { rev_issuers } from "./issuers";
+    import {
+        CAA_ISSUE_TAGS,
+        CAAPolicy,
+        type CAAIssueTag,
+        type CAAMode,
+        type CAATag,
+    } from "./model.svelte";
 
     interface Props {
         dn: string;
@@ -38,371 +45,220 @@
         value: SvcsCAAPolicyBody;
     }
 
-    let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
+    let { dn, readonly = false, value = $bindable() }: Props = $props();
 
-    function addIssuer(tag: CAATag): (e: CustomEvent<string>) => void {
-        return (e: CustomEvent<string>) => {
-            if (!value["caa"]) value["caa"] = [];
-            if (!Array.isArray(value["caa"])) value["caa"] = [value["caa"]];
-            value["caa"].push(newCAARecord(dn, tag, e.detail));
-        };
+    // The RRset is the source of truth; normalize it once so the class below can
+    // splice it in place.
+    if (!value.caa) {
+        value.caa = [];
+    } else if (!Array.isArray(value.caa)) {
+        value.caa = [value.caa];
     }
 
-    let val = $derived(new CAAPolicy(value));
+    let val = $derived(new CAAPolicy(value, dn));
 
+    const MODES: Array<CAAMode> = ["any", "restricted", "none"];
+
+    const MODE_ICONS: Record<CAAMode, string> = {
+        any: "globe",
+        restricted: "shield-check",
+        none: "shield-slash",
+    };
+
+    // A kind of certificate the user just restricted holds no authority yet, so
+    // the records still read as "any": remember the choice until one is added.
+    const restricting: Partial<Record<CAAIssueTag, boolean>> = $state({});
+
+    function modeOf(tag: CAAIssueTag): CAAMode {
+        const mode = val.mode(tag);
+        return mode === "any" && restricting[tag] ? "restricted" : mode;
+    }
+
+    function setMode(tag: CAAIssueTag, mode: CAAMode): void {
+        restricting[tag] = mode === "restricted";
+        val.setMode(tag, mode);
+    }
+
+    // Wildcard certificates fall back on the regular issuance rule when nothing
+    // is published for them, which is not the same as allowing everyone.
+    function modeLabel(tag: CAAIssueTag, mode: CAAMode): string {
+        if (tag === "issuewild" && mode === "any") return $t("resources.CAA.mode.inherit");
+        return $t(`resources.CAA.mode.${mode}`);
+    }
+
+    function explain(tag: CAAIssueTag, mode: CAAMode): string {
+        if (tag === "issuewild" && mode === "any") return $t("resources.CAA.explain.inherit");
+        return $t(`resources.CAA.explain.${mode}`, { kind: $t(`resources.CAA.kinds.${tag}.kind`) });
+    }
+
+    /** The name the certificate authority is known under, when we know it. */
+    function issuerName(record: string): string {
+        const domain = record.split(";")[0].trim();
+        if (!domain) return $t("resources.CAA.unnamed-issuer");
+        return rev_issuers[domain] ?? domain;
+    }
+
+    /** One line telling what the policy does today for that kind of certificate. */
+    function summarize(tag: CAAIssueTag, mode: CAAMode): string {
+        if (mode !== "restricted") return modeLabel(tag, mode);
+        const issuers = val.issuers(tag);
+        if (!issuers.length) return $t("resources.CAA.mode.restricted");
+        return issuers.map((e) => issuerName(e.record.Value)).join(", ");
+    }
+
+    const CONTACTS: Array<{ tag: CAATag; type: InputType; placeholder: string }> = [
+        { tag: "contactemail", type: "email", placeholder: "contact@example.com" },
+        { tag: "contactphone", type: "tel", placeholder: "+1-555-0123" },
+    ];
 </script>
 
-<h4 class="mt-4">{$t("resources.CAA.title")}</h4>
-
-<FormGroup>
-    <Input
-        id="issuedisabled"
-        type="checkbox"
-        label={$t("resources.CAA.no-issuers-hint")}
-        checked={val.DisallowIssue}
-        on:change={val.changeDisallowIssue(dn, "issue")}
-    />
-</FormGroup>
-
-<h5>
-    {$t("resources.CAA.auth-issuers")}
-</h5>
-
-{#if !val.DisallowIssue}
-    <ul>
-        {#if val.records.filter((r) => r.Tag == "issue").length}
-            {#each val.records as issue, k}
-                {#if issue.Tag == "issue"}
-                    <li class="mb-3">
-                        <CAAIssuer
-                            {readonly}
-                            bind:flag={val.records[k].Flag}
-                            bind:tag={val.records[k].Tag}
-                            bind:value={val.records[k].Value}
-                            on:delete-issuer={() => {
-                                val.records.splice(k, 1);
-                            }}
-                        />
-                    </li>
-                {/if}
-            {/each}
-        {:else}
-            <Alert color="warning" fade={false}>
-                <strong>{$t("resources.CAA.all-issuers-title")}</strong>
-                {$t("resources.CAA.all-issuers-body")}
-            </Alert>
-        {/if}
-        {#if !readonly}
-            <li style:list-style="'+ '">
-                <CAAIssuer newone on:add-issuer={addIssuer("issue")} />
-            </li>
-        {/if}
-    </ul>
-{:else}
-    <Alert color="danger" fade={false}>
-        <strong>{$t("resources.CAA.no-issuers-title")}</strong>
-        {$t("resources.CAA.no-issuers-body")}
-    </Alert>
-{/if}
-
-<h4 class="mt-4">{$t("resources.CAA.wild-issuers")}</h4>
-
-<FormGroup>
-    <Input
-        id="wildcardissuedisabled"
-        type="checkbox"
-        label={$t("resources.CAA.no-wild-hint")}
-        checked={val.DisallowWildcardIssue}
-        on:change={val.changeDisallowIssue(dn, "issuewild")}
-    />
-</FormGroup>
-
-<h5>
-    {$t("resources.CAA.auth-issuers")}
-</h5>
-
-{#if !val.DisallowWildcardIssue}
-    <ul>
-        {#if val.records.filter((r) => r.Tag == "issuewild").length}
-            {#each val.records as issue, k}
-                {#if issue.Tag == "issuewild"}
-                    <li class="mb-3">
-                        <CAAIssuer
-                            {readonly}
-                            bind:flag={val.records[k].Flag}
-                            bind:tag={val.records[k].Tag}
-                            bind:value={val.records[k].Value}
-                            on:delete-issuer={() => {
-                                val.records.splice(k, 1);
-                            }}
-                        />
-                    </li>
-                {/if}
-            {/each}
-        {:else if val.DisallowIssue}
-            <Alert color="danger" fade={false}>
-                <strong>{$t("resources.CAA.no-issuers-title")}</strong>
-                {$t("resources.CAA.no-wild-body")}
-            </Alert>
-        {:else if val.records.filter((r) => r.Tag == "issue").length}
-            <Alert color="warning" fade={false}>
-                <strong>{$t("resources.CAA.wild-same-title")}</strong>
-                {$t("resources.CAA.wild-same-body")}
-            </Alert>
-        {:else}
-            <Alert color="warning" fade={false}>
-                <strong>{$t("resources.CAA.all-issuers-title")}</strong>
-                {$t("resources.CAA.all-wild-issuers-body")}
-            </Alert>
-        {/if}
-        {#if !readonly}
-            <li style:list-style="'+ '">
-                <CAAIssuer newone on:add-issuer={addIssuer("issuewild")} />
-            </li>
-        {/if}
-    </ul>
-{:else}
-    <Alert color="danger" fade={false}>
-        <strong>{$t("resources.CAA.no-wild-title")}</strong>
-        {$t("resources.CAA.no-wild-body")}
-    </Alert>
-{/if}
-
-<h4 class="mt-4">{$t("resources.CAA.mail-issuers")}</h4>
-
-<FormGroup>
-    <Input
-        id="mailissuedisabled"
-        type="checkbox"
-        label={$t("resources.CAA.no-mail-hint")}
-        checked={val.DisallowMailIssue}
-        on:change={val.changeDisallowIssue(dn, "issuemail")}
-    />
-</FormGroup>
-
-{#if !val.DisallowMailIssue && !val.records.filter((r) => r.Tag == "issuemail").length}
-    <Alert color="warning" fade={false}>
-        <strong>{$t("resources.CAA.mail-all-allowed-title")}</strong>
-        {$t("resources.CAA.mail-all-allowed-body")}
-    </Alert>
-{/if}
-
-<h5>
-    {$t("resources.CAA.auth-issuers")}
-</h5>
-
-{#if !val.DisallowMailIssue}
-    <ul>
-        {#if val.records.filter((r) => r.Tag == "issuemail").length}
-            {#each val.records as issue, k}
-                {#if issue.Tag == "issuemail"}
-                    <li class="mb-3">
-                        <CAAIssuer
-                            {readonly}
-                            bind:flag={val.records[k].Flag}
-                            bind:tag={val.records[k].Tag}
-                            bind:value={val.records[k].Value}
-                            on:delete-issuer={() => {
-                                val.records.splice(k, 1);
-                            }}
-                        />
-                    </li>
-                {/if}
-            {/each}
-        {/if}
-        {#if !readonly}
-            <li style:list-style="'+ '">
-                <CAAIssuer newone on:add-issuer={addIssuer("issuemail")} />
-            </li>
-        {/if}
-    </ul>
-{:else}
-    <Alert color="danger" fade={false}>
-        <strong>{$t("resources.CAA.no-mail-title")}</strong>
-        {$t("resources.CAA.no-mail-body")}
-    </Alert>
-{/if}
-
-<h4 class="mt-4">{$t("resources.CAA.vmc-issuers")}</h4>
-
-<FormGroup>
-    <Input
-        id="vmcissuedisabled"
-        type="checkbox"
-        label={$t("resources.CAA.no-vmc-hint")}
-        checked={val.DisallowVMCIssue}
-        on:change={val.changeDisallowIssue(dn, "issuevmc")}
-    />
-</FormGroup>
-
-{#if !val.DisallowVMCIssue && !val.records.filter((r) => r.Tag == "issuevmc").length}
-    <Alert color="warning" fade={false}>
-        <strong>{$t("resources.CAA.vmc-all-allowed-title")}</strong>
-        {$t("resources.CAA.vmc-all-allowed-body")}
-    </Alert>
-{/if}
-
-<h5>
-    {$t("resources.CAA.auth-issuers")}
-</h5>
-
-{#if !val.DisallowVMCIssue}
-    <ul>
-        {#if val.records.filter((r) => r.Tag == "issuevmc").length}
-            {#each val.records as issue, k}
-                {#if issue.Tag == "issuevmc"}
-                    <li class="mb-3">
-                        <CAAIssuer
-                            {readonly}
-                            bind:flag={val.records[k].Flag}
-                            bind:tag={val.records[k].Tag}
-                            bind:value={val.records[k].Value}
-                            on:delete-issuer={() => {
-                                val.records.splice(k, 1);
-                            }}
-                        />
-                    </li>
-                {/if}
-            {/each}
-        {/if}
-        {#if !readonly}
-            <li style:list-style="'+ '">
-                <CAAIssuer newone on:add-issuer={addIssuer("issuevmc")} />
-            </li>
-        {/if}
-    </ul>
-{:else}
-    <Alert color="danger" fade={false}>
-        <strong>{$t("resources.CAA.no-vmc-title")}</strong>
-        {$t("resources.CAA.no-vmc-body")}
-    </Alert>
-{/if}
-
-<h4 class="mt-4">{$t("resources.CAA.incident-response")}</h4>
-
-<p>
-    {$t("resources.CAA.incident-response-text")}
+<p class="mb-4">
+    {$t("resources.CAA.intro")}
 </p>
 
-{#if val.records.filter((r) => r.Tag == "iodef").length}
-    {#each val.records as issue, k}
-        {#if issue.Tag == "iodef"}
-            <CAAIodef
-                {readonly}
-                bind:flag={val.records[k].Flag}
-                bind:tag={val.records[k].Tag}
-                bind:value={val.records[k].Value}
-                on:delete-iodef={() => {
-                    val.records.splice(k, 1);
-                }}
-            />
+<div class="card mb-5">
+    <div class="card-body">
+        <h5 class="card-title mb-3">{$t("resources.CAA.summary")}</h5>
+        <ul class="list-unstyled mb-0">
+            {#each CAA_ISSUE_TAGS as tag (tag)}
+                {@const mode = modeOf(tag)}
+                <li class="d-flex flex-wrap column-gap-3 py-1">
+                    <span class="text-muted caa-summary-kind">
+                        {$t(`resources.CAA.kinds.${tag}.title`)}
+                    </span>
+                    <span class:text-success={mode !== "any"}>
+                        <Icon name={MODE_ICONS[mode]} />
+                        {summarize(tag, mode)}
+                    </span>
+                </li>
+            {/each}
+        </ul>
+    </div>
+</div>
+
+{#each CAA_ISSUE_TAGS as tag (tag)}
+    {@const mode = modeOf(tag)}
+    <section class="mb-5">
+        <h4 class="mb-2">{$t(`resources.CAA.kinds.${tag}.title`)}</h4>
+        <p class="text-muted mb-3">{$t(`resources.CAA.kinds.${tag}.help`)}</p>
+
+        <div class="btn-group" role="group">
+            {#each MODES as m (m)}
+                <input
+                    type="radio"
+                    class="btn-check"
+                    name="caa-{tag}"
+                    id="caa-{tag}-{m}"
+                    checked={mode === m}
+                    disabled={readonly}
+                    onchange={() => setMode(tag, m)}
+                />
+                <label class="btn btn-outline-primary" for="caa-{tag}-{m}">
+                    <Icon name={MODE_ICONS[m]} class="me-1" />
+                    {modeLabel(tag, m)}
+                </label>
+            {/each}
+        </div>
+
+        <p class="mt-3 mb-0">{explain(tag, mode)}</p>
+
+        {#if mode === "restricted"}
+            <ul class="list-unstyled ms-3 mt-3 mb-0">
+                {#each val.issuers(tag) as entry (entry.index)}
+                    <li class="mb-2">
+                        <CAAIssuer
+                            {readonly}
+                            bind:flag={val.records[entry.index].Flag}
+                            bind:tag={val.records[entry.index].Tag}
+                            bind:value={val.records[entry.index].Value}
+                            on:delete-issuer={() => {
+                                // Removing the last one empties the RRset for
+                                // that tag: keep the section open, so the user
+                                // sees they are back to allowing everyone.
+                                restricting[tag] = true;
+                                val.remove(entry.index);
+                            }}
+                        />
+                    </li>
+                {/each}
+                {#if !readonly}
+                    <li>
+                        <CAAIssuer newone on:add-issuer={(e) => val.add(tag, e.detail)} />
+                    </li>
+                {/if}
+            </ul>
+
+            {#if !val.issuers(tag).length}
+                <p class="text-warning-emphasis mt-3 mb-0">{$t("resources.CAA.pick-one")}</p>
+            {/if}
+        {/if}
+    </section>
+{/each}
+
+<section class="mb-5">
+    <h4 class="mb-2">{$t("resources.CAA.incident-response")}</h4>
+    <p class="text-muted mb-3">{$t("resources.CAA.incident-response-text")}</p>
+
+    {#each val.entries("iodef") as entry (entry.index)}
+        <CAAIodef
+            {readonly}
+            bind:flag={val.records[entry.index].Flag}
+            bind:tag={val.records[entry.index].Tag}
+            bind:value={val.records[entry.index].Value}
+            on:delete-iodef={() => val.remove(entry.index)}
+        />
+    {/each}
+    {#if !readonly}
+        <CAAIodef newone on:add-iodef={(e) => val.add("iodef", e.detail)} />
+    {/if}
+</section>
+
+<section>
+    <h4 class="mb-2">{$t("resources.CAA.contact-info")}</h4>
+    <p class="text-muted mb-3">{$t("resources.CAA.contact-info-text")}</p>
+
+    {#each CONTACTS as contact (contact.tag)}
+        <h5 class="mb-2">{$t(`resources.CAA.${contact.tag}`)}</h5>
+
+        {#each val.entries(contact.tag) as entry (entry.index)}
+            <div class="d-flex gap-2 mb-2">
+                <Input
+                    type={contact.type}
+                    {readonly}
+                    placeholder={contact.placeholder}
+                    bind:value={val.records[entry.index].Value}
+                />
+                {#if !readonly}
+                    <Button
+                        type="button"
+                        color="danger"
+                        outline
+                        title={$t("common.delete")}
+                        on:click={() => val.remove(entry.index)}
+                    >
+                        <Icon name="trash" />
+                    </Button>
+                {/if}
+            </div>
+        {/each}
+
+        {#if !readonly}
+            <Button
+                type="button"
+                color="primary"
+                outline
+                class="mb-4"
+                on:click={() => val.add(contact.tag, "")}
+            >
+                <Icon name="plus" class="me-1" />
+                {$t(`resources.CAA.add-${contact.tag}`)}
+            </Button>
         {/if}
     {/each}
-{/if}
-{#if !readonly}
-    <CAAIodef newone on:add-iodef={addIssuer("iodef")} />
-{/if}
+</section>
 
-<h4 class="mt-4">{$t("resources.CAA.contact-info")}</h4>
-
-<p>
-    {$t("resources.CAA.contact-info-text")}
-</p>
-
-<h5>{$t("resources.CAA.contact-email")}</h5>
-
-{#if val.records.filter((r) => r.Tag == "contactemail").length}
-    <ul>
-        {#each val.records as contact, k}
-            {#if contact.Tag == "contactemail"}
-                <li class="mb-2">
-                    <div class="d-flex align-items-center gap-2">
-                        <Input
-                            type="email"
-                            bind:value={val.records[k].Value}
-                            {readonly}
-                            placeholder="contact@example.com"
-                        />
-                        {#if !readonly}
-                            <Button
-                                type="button"
-                                size="sm"
-                                color="danger"
-                                on:click={() => {
-                                    val.records.splice(k, 1);
-                                }}
-                            >
-                                <Icon name="trash" />
-                            </Button>
-                        {/if}
-                    </div>
-                </li>
-            {/if}
-        {/each}
-    </ul>
-{/if}
-{#if !readonly}
-    <Button
-        type="button"
-        size="sm"
-        color="primary"
-        outline
-        on:click={() => {
-            if (!value["caa"]) value["caa"] = [];
-            if (!Array.isArray(value["caa"])) value["caa"] = [value["caa"]];
-            value["caa"].push(newCAARecord(dn, "contactemail", ""));
-        }}
-    >
-        <Icon name="plus" />
-        {$t("resources.CAA.add-contact-email")}
-    </Button>
-{/if}
-
-<h5 class="mt-3">{$t("resources.CAA.contact-phone")}</h5>
-
-{#if val.records.filter((r) => r.Tag == "contactphone").length}
-    <ul>
-        {#each val.records as contact, k}
-            {#if contact.Tag == "contactphone"}
-                <li class="mb-2">
-                    <div class="d-flex align-items-center gap-2">
-                        <Input
-                            type="tel"
-                            bind:value={val.records[k].Value}
-                            {readonly}
-                            placeholder="+1-555-0123"
-                        />
-                        {#if !readonly}
-                            <Button
-                                type="button"
-                                size="sm"
-                                color="danger"
-                                on:click={() => {
-                                    val.records.splice(k, 1);
-                                }}
-                            >
-                                <Icon name="trash" />
-                            </Button>
-                        {/if}
-                    </div>
-                </li>
-            {/if}
-        {/each}
-    </ul>
-{/if}
-{#if !readonly}
-    <Button
-        type="button"
-        size="sm"
-        color="primary"
-        outline
-        on:click={() => {
-            if (!value["caa"]) value["caa"] = [];
-            if (!Array.isArray(value["caa"])) value["caa"] = [value["caa"]];
-            value["caa"].push(newCAARecord(dn, "contactphone", ""));
-        }}
-    >
-        <Icon name="plus" />
-        {$t("resources.CAA.add-contact-phone")}
-    </Button>
-{/if}
+<style>
+    .caa-summary-kind {
+        min-width: 18rem;
+    }
+</style>

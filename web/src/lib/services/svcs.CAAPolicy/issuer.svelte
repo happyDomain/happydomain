@@ -76,7 +76,7 @@
 <div class="d-flex gap-2 mb-2">
     {#if (newone && val.IssuerDomainName == undefined) || (val.IssuerDomainName && rev_issuers[val.IssuerDomainName])}
         <Input type="select" name="select" {readonly} bind:value={val.IssuerDomainName}>
-            {#each Object.keys(issuers) as issuer}
+            {#each Object.keys(issuers) as issuer (issuer)}
                 <option value={issuers[issuer][0]}>{issuer}</option>
             {/each}
             <option value="">{$t("common.other")}</option>
@@ -113,7 +113,7 @@
 {#if !newone}
     <div class="d-flex align-items-center">
         {#if val.Parameters}
-            {#each val.Parameters as _parameter, k}
+            {#each val.Parameters as _parameter, k (k)}
                 <CAAIssuerParameter
                     edit={editable_parameters[k]}
                     bind:value={val.Parameters[k]}
@@ -128,7 +128,8 @@
             onclick={addParameter}
             onkeypress={addParameter}
         >
-            <Icon name="plus" /> Add parameter
+            <Icon name="plus" />
+            {$t("resources.CAA.add-parameter")}
         </span>
     </div>
 {/if}

@@ -1,28 +1,8 @@
 {
     "resources": {
         "CAA": {
-            "all-issuers-title": "Todos los emisores autorizados.",
-            "all-issuers-body": "Con estos parámetros, todos los emisores pueden crear certificados para este dominio y subdominio.",
-            "all-wild-issuers-body": "Con estos parámetros, todos los emisores pueden crear certificados comodín para este dominio y subdominio.",
-            "auth-issuers": "Emisores Autorizados",
             "incident-response": "Respuesta a Incidentes",
-            "incident-response-text": "¿Cómo desearías ser contactado en caso de violación de la política de seguridad actual?",
-            "mail-issuers": "Emisión de certificados S/MIME",
-            "mail-all-allowed-title": "No hay restricción de CA para la emisión de certificados S/MIME.",
-            "mail-all-allowed-body": "Todas las CA pueden emitir certificados S/MIME para tu dominio. Deberías deshabilitar o restringir a ciertas CA. Los certificados S/MIME se utilizan, por ejemplo, para firmar y cifrar comunicaciones de correo electrónico. Si no utilizas dichos certificados, deberías deshabilitar su emisión.",
-            "no-issuers-hint": "Deshabilitar cualquier emisión de certificados",
-            "no-issuers-title": "Ningún emisor autorizado.",
-            "no-issuers-body": "Con estos parámetros, ningún emisor está autorizado a crear certificados para este subdominio.",
-            "no-mail-hint": "Deshabilitar emisión de certificados S/MIME",
-            "no-mail-title": "Ningún emisor autorizado para certificados S/MIME.",
-            "no-mail-body": "Con estos parámetros, ningún emisor está autorizado a crear certificados S/MIME para este dominio y subdominio.",
-            "no-wild-hint": "Deshabilitar emisión de certificados comodín",
-            "no-wild-title": "Ningún emisor de comodín autorizado.",
-            "no-wild-body": "Con estos parámetros, ningún emisor está autorizado a crear certificados comodín para este dominio y subdominio. Pero esto puede ser anulado con la siguiente configuración:",
-            "title": "Emisión de certificados",
-            "wild-issuers": "Emisión de certificados comodín",
-            "wild-same-title": "Igual que la emisión de certificados regulares.",
-            "wild-same-body": "Con estos parámetros, todos los emisores autorizados para la emisión de certificados también pueden crear certificados comodín para este dominio y subdominio."
+            "incident-response-text": "¿Cómo desearías ser contactado en caso de violación de la política de seguridad actual?"
         }
     }
 }

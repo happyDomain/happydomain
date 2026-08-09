@@ -1,40 +1,53 @@
 {
     "resources": {
         "CAA": {
-            "all-issuers-title": "All issuers authorized.",
-            "all-issuers-body": "With those parameters, all issuer can create certificate for this domain and subdomain.",
-            "all-wild-issuers-body": "With those parameters, all issuer can create wildcard certificate for this domain and subdomain.",
-            "auth-issuers": "Authorized Issuers",
-            "incident-response": "Incident Response",
-            "incident-response-text": "How would you want to be contacted in case of violation of the current security policy?",
-            "mail-issuers": "S/MIME certificates issuance",
-            "mail-all-allowed-title": "No CA constraint for S/MIME certificates issuance.",
-            "mail-all-allowed-body": "All CA can emit S/MIME certificates for your domain. You should disallow or restrict to certain CA. S/MIME certificates are used for example to sign and encrypt e-mail communications. If you do not use such certificate, you should disallow their issuance.",
-            "no-issuers-hint": "Disallow any certificate issuance",
-            "no-issuers-title": "No issuer authorized.",
-            "no-issuers-body": "With those parameters, no issuer is allowed to create certificate for this subdomain.",
-            "no-mail-hint": "Disallow S/MIME certificate issuance",
-            "no-mail-title": "No issuer authorized for S/MIME certificate.",
-            "no-mail-body": "With those parameters, no issuer is authorized to create S/MIME certificate for this domain and subdomain.",
-            "no-wild-hint": "Disallow wildcard certificate issuance",
-            "no-wild-title": "No wildcard issuer authorized.",
-            "no-wild-body": "With those parameters, no issuer is authorized to create wildcard certificate for this domain and subdomain. But this can be override with the following settings:",
-            "title": "Certificates issuance",
-            "wild-issuers": "Wildcard certificates issuance",
-            "wild-same-title": "Same as regular certificate issuance.",
-            "wild-same-body": "With those parameters, all issuer authorized for certificate issuance can also create wildcard certificate for this domain and subdomain.",
-            "vmc-issuers": "Verified Mark Certificates (VMC) issuance",
-            "no-vmc-hint": "Disallow VMC certificate issuance",
-            "vmc-all-allowed-title": "No CA constraint for VMC certificates issuance.",
-            "vmc-all-allowed-body": "All CA can emit VMC certificates for your domain. VMC certificates are used to display verified logos in email clients. If you do not use such certificate, you should disallow their issuance.",
-            "no-vmc-title": "No issuer authorized for VMC certificate.",
-            "no-vmc-body": "With those parameters, no issuer is authorized to create VMC certificate for this domain and subdomain.",
-            "contact-info": "Contact Information",
-            "contact-info-text": "Provide contact details for certificate-related communications.",
-            "contact-email": "Contact Email",
-            "contact-phone": "Contact Phone",
-            "add-contact-email": "Add contact email",
-            "add-contact-phone": "Add contact phone"
+            "intro": "Certification Authority Authorization records name the certificate authorities allowed to issue certificates for this domain. An authority left out has to refuse, which limits the damage a mistake or a compromise can cause.",
+            "summary": "What this policy says today",
+            "kinds": {
+                "issue": {
+                    "title": "TLS certificates",
+                    "kind": "TLS certificates",
+                    "help": "The certificates securing HTTPS, and any other TLS service of this domain and its subdomains."
+                },
+                "issuewild": {
+                    "title": "Wildcard TLS certificates",
+                    "kind": "wildcard certificates",
+                    "help": "A single certificate covering every subdomain at once, such as *.example.com."
+                },
+                "issuemail": {
+                    "title": "S/MIME certificates",
+                    "kind": "S/MIME certificates",
+                    "help": "Used to sign and encrypt e-mails sent from an address of this domain."
+                },
+                "issuevmc": {
+                    "title": "Verified Mark certificates (VMC)",
+                    "kind": "Verified Mark certificates",
+                    "help": "Used to display your verified logo next to your messages in mailboxes."
+                }
+            },
+            "mode": {
+                "any": "Any authority",
+                "restricted": "Only chosen authorities",
+                "none": "Nobody",
+                "inherit": "Same as TLS certificates"
+            },
+            "explain": {
+                "any": "Any certificate authority may issue {{kind}} for this domain. This is what happens when nothing is published, and it is the widest setting.",
+                "restricted": "Only the authorities listed below may issue {{kind}} for this domain. Any other one has to refuse.",
+                "none": "No authority may issue {{kind}} for this domain. Choose this when you know you never use them.",
+                "inherit": "Wildcard certificates follow the rule chosen for TLS certificates above. Set a rule here only if they deserve a stricter one."
+            },
+            "pick-one": "No authority chosen yet: as long as this list stays empty, any of them may issue.",
+            "unnamed-issuer": "unnamed authority",
+            "add-parameter": "Add a parameter",
+            "incident-response": "Incident response",
+            "incident-response-text": "Where should a certificate authority report an attempt to violate this policy?",
+            "contact-info": "Contact information",
+            "contact-info-text": "Published so a certificate authority can reach you about your certificates. It authorizes nothing by itself.",
+            "contactemail": "E-mail address",
+            "contactphone": "Phone number",
+            "add-contactemail": "Add an e-mail address",
+            "add-contactphone": "Add a phone number"
         }
     },
     "svcinfo": {

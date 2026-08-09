@@ -23,6 +23,29 @@ import { getRrtype, newRR, type dnsResource, type dnsTypeCAA } from "$lib/dns_rr
 
 export type CAATag = "issue" | "issuewild" | "issuemail" | "issuevmc" | "iodef" | "contactemail" | "contactphone";
 
+/** The tags that name a kind of certificate, in the order the editor shows them. */
+export const CAA_ISSUE_TAGS = ["issue", "issuewild", "issuemail", "issuevmc"] as const;
+
+export type CAAIssueTag = (typeof CAA_ISSUE_TAGS)[number];
+
+/**
+ * What the policy currently says about one kind of certificate:
+ *  - "any": nothing is published, so every authority may issue. For issuewild,
+ *    this means the rule set for regular certificates applies instead.
+ *  - "restricted": only the listed authorities may issue.
+ *  - "none": the ";" pseudo-issuer forbids everyone.
+ */
+export type CAAMode = "any" | "restricted" | "none";
+
+/** A record of the RRset, keeping a link back to its index. */
+export interface CAAEntry {
+    index: number;
+    record: dnsTypeCAA;
+}
+
+/** The ";" value: a syntactically valid issuer name that no CA can match. */
+const DENY_ALL = ";";
+
 // CAA Issuer types
 export class CAAIssuer {
     IssuerDomainName = $state<string | undefined>(undefined);
@@ -61,66 +84,73 @@ export function newCAARecord(dn: string, tag: CAATag, value: string): dnsTypeCAA
     return rr;
 }
 
+/**
+ * Editable view over the CAA RRset. The records array is the source of truth:
+ * the editor mutates it in place, exactly like ForSaleService.
+ */
 export class CAAPolicy {
     records = $state<Array<dnsTypeCAA>>([]);
-    DisallowIssue = $state<boolean>(false);
-    DisallowWildcardIssue = $state<boolean>(false);
-    DisallowMailIssue = $state<boolean>(false);
-    DisallowVMCIssue = $state<boolean>(false);
+    dn: string;
 
-    constructor(records: dnsResource) {
+    constructor(records: dnsResource, dn: string = "") {
         if (records["caa"]) {
             this.records = Array.isArray(records["caa"]) ? records["caa"] : [records["caa"]];
         } else {
             this.records = [];
         }
-        this.DisallowIssue = false;
-        this.DisallowWildcardIssue = false;
-        this.DisallowMailIssue = false;
-        this.DisallowVMCIssue = false;
-        this.refreshDisallowIssue();
+        this.dn = dn;
     }
 
-    hasDisallowIssue(tag: CAATag): boolean {
-        for (const record of this.records) {
-            if (record.Tag == tag && record.Value.trim() == ";") {
-                return true;
-            }
+    /** Every record carrying that tag, deny marker included. */
+    entries(tag: CAATag): Array<CAAEntry> {
+        return this.records
+            .map((record, index) => ({ index, record }))
+            .filter((e) => e.record.Tag === tag);
+    }
+
+    /** The authorities the user picked, so the deny marker is left out. */
+    issuers(tag: CAATag): Array<CAAEntry> {
+        return this.entries(tag).filter((e) => e.record.Value.trim() !== DENY_ALL);
+    }
+
+    isDenied(tag: CAATag): boolean {
+        return this.entries(tag).some((e) => e.record.Value.trim() === DENY_ALL);
+    }
+
+    mode(tag: CAAIssueTag): CAAMode {
+        if (this.isDenied(tag)) return "none";
+        if (this.issuers(tag).length) return "restricted";
+        return "any";
+    }
+
+    /**
+     * Rewrite the records of a tag to express the requested mode. Switching to
+     * "restricted" keeps the authorities already listed, so the user can toggle
+     * a kind off and back on without losing their choices.
+     */
+    setMode(tag: CAAIssueTag, mode: CAAMode): void {
+        if (mode === "restricted") {
+            this.removeAll(this.entries(tag).filter((e) => e.record.Value.trim() === DENY_ALL));
+            return;
         }
-        return false;
+
+        this.removeAll(this.entries(tag));
+        if (mode === "none") this.add(tag, DENY_ALL);
     }
 
-    refreshDisallowIssue(): void {
-        this.DisallowIssue = this.hasDisallowIssue("issue");
-        this.DisallowWildcardIssue = this.hasDisallowIssue("issuewild");
-        this.DisallowMailIssue = this.hasDisallowIssue("issuemail");
-        this.DisallowVMCIssue = this.hasDisallowIssue("issuevmc");
+    add(tag: CAATag, value: string): void {
+        this.records.push(newCAARecord(this.dn, tag, value));
     }
 
-    changeDisallowIssue(dn: string, tag: CAATag): (e: Event) => void {
-        return (e: Event) => {
-            const target = e.target as HTMLInputElement;
-            if (target && target.checked) {
-                this.records.push(newCAARecord(dn, tag, ";"));
-                this.refreshDisallowIssue();
-            } else {
-                for (let i = this.records.length - 1; i >= 0; i--) {
-                    const r = this.records[i];
-                    if (r.Tag == tag && r.Value.trim() == ";") {
-                        this.records.splice(i, 1);
-                    }
-                }
-                this.refreshDisallowIssue();
-            }
-        };
-    }
-
-    getRecordsByTag(tag: CAATag): Array<dnsTypeCAA> {
-        return this.records.filter((r) => r.Tag === tag);
-    }
-
-    removeRecord(index: number): void {
+    remove(index: number): void {
         this.records.splice(index, 1);
+    }
+
+    /** Drop several records at once, from the last one, so indexes stay valid. */
+    private removeAll(entries: Array<CAAEntry>): void {
+        for (const entry of [...entries].reverse()) {
+            this.remove(entry.index);
+        }
     }
 }
 
