@@ -31,6 +31,7 @@ interface Params {
     action?: string;
     id?: string;
     domain?: string;
+    domains?: string;
     type?: string;
     happyDomain?: string;
     thing?: string;

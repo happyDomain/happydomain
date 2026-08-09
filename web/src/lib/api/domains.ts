@@ -26,8 +26,13 @@ import {
     putDomainsByDomainId,
     deleteDomainsByDomainId,
     getDomainsByDomainIdLogs,
+    getDomainsByDomainIdShare,
+    postDomainsByDomainIdShare,
+    deleteDomainsByDomainIdShareByUserId,
 } from "$lib/api-base/sdk.gen";
 import type {
+    HappydnsDomainShareStatus,
+    HappydnsDomainShareUser,
     HappydnsDomainUpdateInput,
     HappydnsDomainWithCheckStatus,
     HappydnsDomainWithZoneMetadata,
@@ -84,4 +89,33 @@ export async function getDomainLogs(id: string): Promise<Array<DomainLog>> {
             path: { domainId: id },
         }),
     ) as Array<DomainLog>;
+}
+
+export async function getDomainShareStatus(id: string): Promise<HappydnsDomainShareStatus> {
+    return unwrapSdkResponse(
+        await getDomainsByDomainIdShare({
+            path: { domainId: id },
+        }),
+    ) as HappydnsDomainShareStatus;
+}
+
+export async function shareDomain(
+    id: string,
+    user: string,
+    withProvider: boolean,
+): Promise<HappydnsDomainShareUser> {
+    return unwrapSdkResponse(
+        await postDomainsByDomainIdShare({
+            path: { domainId: id },
+            body: { user, with_provider: withProvider },
+        }),
+    ) as HappydnsDomainShareUser;
+}
+
+export async function unshareDomain(id: string, userId: string): Promise<boolean> {
+    return unwrapEmptyResponse(
+        await deleteDomainsByDomainIdShareByUserId({
+            path: { domainId: id, userId },
+        }),
+    );
 }
