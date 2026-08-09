@@ -43,7 +43,9 @@
         cachedHTMLReport,
         disableMetrics,
     } from "$lib/stores/checkers";
+    import { domains_idx, isDomainReadOnly } from "$lib/stores/domains";
     import { toasts } from "$lib/stores/toasts";
+    import { userSession } from "$lib/stores/usersession";
     import type { CheckerScope } from "$lib/api/checkers";
     import {
         triggerScopedCheck,
@@ -69,6 +71,10 @@
     }
 
     let { checkerId, execId, links, scope }: Props = $props();
+
+    // Executions belong to the domain owner: an invited user reads them, but
+    // neither relaunches nor deletes them.
+    let readonly = $derived(isDomainReadOnly($domains_idx, scope.domainId, $userSession.id));
 
     let isRelaunching = $state(false);
 
@@ -284,7 +290,7 @@
         color="primary"
         outline
         onclick={handleRelaunch}
-        disabled={!$currentExecution || isRelaunching}
+        disabled={readonly || !$currentExecution || isRelaunching}
     >
         {#if isRelaunching}
             <Spinner size="sm" />
@@ -297,7 +303,7 @@
         color="danger"
         outline
         onclick={handleDelete}
-        disabled={!$currentExecution?.id || isDeleting}
+        disabled={readonly || !$currentExecution?.id || isDeleting}
     >
         {#if isDeleting}
             <Spinner size="sm" />

@@ -89,6 +89,13 @@ func targetFromContext(c *gin.Context) happydns.CheckTarget {
 	if domain, exists := c.Get("domain"); exists {
 		d := domain.(*happydns.Domain)
 		target.DomainId = d.Id.String()
+		// Checks are scheduled and stored under the domain's owner (see the
+		// scheduler building its targets from domain.Owner). A user invited on
+		// a shared domain must therefore look into the owner's scope, or they
+		// would only ever see an empty, parallel namespace of their own.
+		if len(d.Owner) > 0 {
+			target.UserId = d.Owner.String()
+		}
 	}
 	if sid, exists := c.Get("serviceid"); exists {
 		id := sid.(happydns.Identifier)

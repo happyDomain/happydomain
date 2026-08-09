@@ -63,6 +63,8 @@
         onsave: () => Promise<void>;
         orphanedOpts?: string[];
         onclean?: () => void;
+        /** Show the options without letting the user change them. */
+        readonly?: boolean;
     }
 
     let {
@@ -75,6 +77,7 @@
         onsave,
         orphanedOpts = [],
         onclean,
+        readonly = false,
     }: Props = $props();
 
     // Filter out auto-fill fields (system-provided, never user-edited) and
@@ -128,7 +131,7 @@
         </CardBody>
     </Card>
 {:then _options}
-    {#if orphanedOpts.length > 0 && onclean}
+    {#if orphanedOpts.length > 0 && onclean && !readonly}
         <Alert color="warning" class="mb-3">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
@@ -154,7 +157,7 @@
                     form={"group-" + gid}
                     size="sm"
                     onclick={handleSave}
-                    disabled={saving}
+                    disabled={saving || readonly}
                 >
                     {#if saving}
                         <span class="spinner-border spinner-border-sm me-1"></span>
@@ -178,6 +181,7 @@
                             <div class="option-row mb-2">
                                 <ResourceInput
                                     edit
+                                    {readonly}
                                     index={"" + index}
                                     specs={optDoc}
                                     type={optDoc.type || "string"}
@@ -196,6 +200,7 @@
                                             color="link"
                                             size="sm"
                                             class="p-0"
+                                            disabled={readonly}
                                             onclick={() => {
                                                 const next = { ...optionValues };
                                                 delete next[optId];

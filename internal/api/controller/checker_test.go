@@ -236,13 +236,38 @@ func TestTargetFromContext_WithDomain(t *testing.T) {
 	c.Request = httptest.NewRequest("GET", "/", nil)
 
 	did, _ := happydns.NewRandomIdentifier()
-	domain := &happydns.Domain{Id: did}
+	uid, _ := happydns.NewRandomIdentifier()
+	domain := &happydns.Domain{Id: did, Owner: uid}
 	c.Set("domain", domain)
 
 	target := targetFromContext(c)
 
 	if target.DomainId != did.String() {
 		t.Errorf("expected DomainId %q, got %q", did.String(), target.DomainId)
+	}
+	if target.UserId != uid.String() {
+		t.Errorf("expected UserId %q, got %q", uid.String(), target.UserId)
+	}
+}
+
+// A user invited on a shared domain must read the checks in the owner's scope,
+// where the scheduler stored them, and not in a namespace of their own.
+func TestTargetFromContext_SharedDomainUsesOwner(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest("GET", "/", nil)
+
+	ownerID, _ := happydns.NewRandomIdentifier()
+	granteeID, _ := happydns.NewRandomIdentifier()
+	did, _ := happydns.NewRandomIdentifier()
+
+	c.Set("LoggedUser", &happydns.User{Id: granteeID})
+	c.Set("domain", &happydns.Domain{Id: did, Owner: ownerID})
+
+	target := targetFromContext(c)
+
+	if target.UserId != ownerID.String() {
+		t.Errorf("expected UserId %q (owner), got %q", ownerID.String(), target.UserId)
 	}
 }
 

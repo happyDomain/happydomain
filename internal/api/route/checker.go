@@ -25,17 +25,26 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api/controller"
+	"git.happydns.org/happyDomain/internal/api/middleware"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	"git.happydns.org/happyDomain/model"
 )
 
-// declareCheckerOptionsRoutes registers the options sub-routes on a checker group.
-func declareCheckerOptionsRoutes(checkerID *gin.RouterGroup, cc *controller.CheckerController) {
+// declareCheckerOptionsRoutes registers the options sub-routes on a checker
+// group. ownerOnly guards the routes that write options; it is nil on the
+// global /api/checkers group, where the options are the caller's own and no
+// domain is in the context.
+func declareCheckerOptionsRoutes(checkerID *gin.RouterGroup, cc *controller.CheckerController, ownerOnly gin.HandlerFunc) {
 	checkerID.GET("/options", cc.GetCheckerOptions)
-	checkerID.POST("/options", cc.AddCheckerOptions)
-	checkerID.PUT("/options", cc.ChangeCheckerOptions)
 	checkerID.GET("/options/:optname", cc.GetCheckerOption)
-	checkerID.PUT("/options/:optname", cc.SetCheckerOption)
+
+	writeOptions := checkerID.Group("")
+	if ownerOnly != nil {
+		writeOptions.Use(ownerOnly)
+	}
+	writeOptions.POST("/options", cc.AddCheckerOptions)
+	writeOptions.PUT("/options", cc.ChangeCheckerOptions)
+	writeOptions.PUT("/options/:optname", cc.SetCheckerOption)
 }
 
 // DeclareCheckerRoutes registers global checker routes under /api/checkers.
@@ -61,7 +70,7 @@ func DeclareCheckerRoutes(
 	checkerID.Use(cc.CheckerHandler)
 	checkerID.GET("", cc.GetChecker)
 
-	declareCheckerOptionsRoutes(checkerID, cc)
+	declareCheckerOptionsRoutes(checkerID, cc, nil)
 
 	return cc
 }
@@ -69,7 +78,15 @@ func DeclareCheckerRoutes(
 // DeclareScopedCheckerRoutes registers checker routes scoped to a domain or service.
 // Called for both /api/domains/:domain/checkers and .../services/:serviceid/checkers.
 // nc may be nil if the notification system is not configured.
+//
+// Both mount points sit behind middleware.DomainHandler, which lets in the
+// domain owner as well as the users the domain is shared with. Everything that
+// only reads is therefore open to both, while the routes that write are kept
+// behind middleware.DomainOwnerOnly: checks belong to the domain owner, and an
+// invited user must not reschedule, reconfigure or erase them.
 func DeclareScopedCheckerRoutes(scopedRouter *gin.RouterGroup, cc *controller.CheckerController, nc *controller.NotificationController) {
+	ownerOnly := middleware.DomainOwnerOnly()
+
 	checkers := scopedRouter.Group("/checkers")
 	checkers.GET("", cc.ListAvailableChecks)
 	checkers.GET("/metrics", cc.GetDomainMetrics)
@@ -77,17 +94,17 @@ func DeclareScopedCheckerRoutes(scopedRouter *gin.RouterGroup, cc *controller.Ch
 	checkerID := checkers.Group("/:checkerId")
 	checkerID.Use(cc.CheckerHandler)
 
-	declareCheckerOptionsRoutes(checkerID, cc)
+	declareCheckerOptionsRoutes(checkerID, cc, ownerOnly)
 
 	// Plans (schedules).
 	checkerID.GET("/plans", cc.ListCheckPlans)
-	checkerID.POST("/plans", cc.CreateCheckPlan)
+	checkerID.POST("/plans", ownerOnly, cc.CreateCheckPlan)
 
 	planID := checkerID.Group("/plans/:planId")
 	planID.Use(cc.PlanHandler)
 	planID.GET("", cc.GetCheckPlan)
-	planID.PUT("", cc.UpdateCheckPlan)
-	planID.DELETE("", cc.DeleteCheckPlan)
+	planID.PUT("", ownerOnly, cc.UpdateCheckPlan)
+	planID.DELETE("", ownerOnly, cc.DeleteCheckPlan)
 
 	// Per-checker metrics.
 	checkerID.GET("/metrics", cc.GetCheckerMetrics)
@@ -95,13 +112,13 @@ func DeclareScopedCheckerRoutes(scopedRouter *gin.RouterGroup, cc *controller.Ch
 	// Executions.
 	executions := checkerID.Group("/executions")
 	executions.GET("", cc.ListExecutions)
-	executions.POST("", cc.TriggerCheck)
-	executions.DELETE("", cc.DeleteCheckerExecutions)
+	executions.POST("", ownerOnly, cc.TriggerCheck)
+	executions.DELETE("", ownerOnly, cc.DeleteCheckerExecutions)
 
 	executionID := executions.Group("/:executionId")
 	executionID.Use(cc.ExecutionHandler)
 	executionID.GET("", cc.GetExecutionStatus)
-	executionID.DELETE("", cc.DeleteExecution)
+	executionID.DELETE("", ownerOnly, cc.DeleteExecution)
 
 	// Metrics (under execution).
 	executionID.GET("/metrics", cc.GetExecutionMetrics)
@@ -117,7 +134,7 @@ func DeclareScopedCheckerRoutes(scopedRouter *gin.RouterGroup, cc *controller.Ch
 
 	// Acknowledgement (requires notification system).
 	if nc != nil {
-		checkerID.POST("/acknowledge", nc.AcknowledgeIssue)
-		checkerID.DELETE("/acknowledge", nc.ClearAcknowledgement)
+		checkerID.POST("/acknowledge", ownerOnly, nc.AcknowledgeIssue)
+		checkerID.DELETE("/acknowledge", ownerOnly, nc.ClearAcknowledgement)
 	}
 }

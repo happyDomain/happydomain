@@ -308,6 +308,20 @@ func (u *CheckStatusUsecase) GetWorstDomainStatuses(userId happydns.Identifier) 
 	}), nil
 }
 
+// GetWorstDomainStatus returns the worst status of a single domain, whoever owns
+// its executions. It is meant for domains the caller does not own but has been
+// invited on: those executions are indexed under the owner, so the per-user
+// lookup of GetWorstDomainStatuses cannot find them.
+func (u *CheckStatusUsecase) GetWorstDomainStatus(domainId happydns.Identifier) (*happydns.Status, error) {
+	execs, err := u.execStore.ListExecutionsByDomain(domainId, worstStatusMaxExecs, nil)
+	if err != nil {
+		return nil, err
+	}
+	return worstStatuses(execs, func(e *happydns.Execution) string {
+		return e.Target.DomainId
+	})[domainId.String()], nil
+}
+
 // GetWorstServiceStatuses returns the worst check status for each service in the zone.
 // It fetches all executions for the domain in a single query, then aggregates
 // the worst status per service in memory.

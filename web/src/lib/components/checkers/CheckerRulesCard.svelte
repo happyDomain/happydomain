@@ -47,9 +47,11 @@
         onsaveplan?: () => Promise<void>;
         plan?: HappydnsCheckPlan | HappydnsCheckPlanWritable;
         precheckFailures?: Record<string, string>;
+        /** Show the rules without letting the user change them. */
+        readonly?: boolean;
     }
 
-    let { rules, optionValues = $bindable(), inheritedValues, saving, onsave, onsaveplan, plan = $bindable(), precheckFailures }: Props = $props();
+    let { rules, optionValues = $bindable(), inheritedValues, saving, onsave, onsaveplan, plan = $bindable(), precheckFailures, readonly = false }: Props = $props();
 
     async function handleSavePlan() {
         if (!onsaveplan) return;
@@ -127,6 +129,7 @@
                         class="form-check-input"
                         type="checkbox"
                         checked={allEnabled}
+                        disabled={readonly}
                         onchange={toggleAll}
                         id="toggle-all-rules"
                     />
@@ -141,7 +144,7 @@
                 color="success"
                 size="sm"
                 onclick={handleSave}
-                disabled={saving}
+                disabled={saving || readonly}
             >
                 {#if saving}
                     <span class="spinner-border spinner-border-sm me-1"></span>
@@ -167,7 +170,7 @@
                                 class="form-check-input"
                                 type="checkbox"
                                 checked={failure ? false : (plan.enabled?.[rule.name ?? ""] ?? false)}
-                                disabled={!!failure}
+                                disabled={readonly || !!failure}
                                 onchange={() => {
                                     if (rule.name && plan && !failure) {
                                         plan.enabled = {
@@ -202,6 +205,7 @@
                                 {#if optDoc.id}
                                     <ResourceInput
                                         edit
+                                        {readonly}
                                         index={"" + index}
                                         specs={optDoc}
                                         type={optDoc.type || "string"}
