@@ -66,11 +66,12 @@ var entityMap = map[string]string{
 
 // operationOverrides maps method names that don't follow the prefix convention.
 var operationOverrides = map[string]string{
-	"AuthUserExists":          "get",
-	"InsightsRun":             "run",
-	"LastInsightsRun":         "get",
-	"CreateOrUpdateUser":      "update",
-	"ReplaceDiscoveryEntries": "update",
+	"AuthUserExists":                "get",
+	"ExistsDomainAvailabilityWatch": "get",
+	"InsightsRun":                   "run",
+	"LastInsightsRun":               "get",
+	"CreateOrUpdateUser":            "update",
+	"ReplaceDiscoveryEntries":       "update",
 }
 
 // skipMethods lists methods that should be passed through without instrumentation.

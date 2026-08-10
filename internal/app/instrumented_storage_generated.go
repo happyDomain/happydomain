@@ -312,6 +312,11 @@ func (s *instrumentedStorage) DeleteZone(zoneid happydns.Identifier) (err error)
 	return s.inner.DeleteZone(zoneid)
 }
 
+func (s *instrumentedStorage) ExistsDomainAvailabilityWatch(owner happydns.Identifier, domainName string) (ret bool, err error) {
+	defer observe("ExistsDomainAvailabilityWatch", "get", "domain_availability_watch")(&err)
+	return s.inner.ExistsDomainAvailabilityWatch(owner, domainName)
+}
+
 func (s *instrumentedStorage) FindDomainsByName(fqdn string) (ret []*happydns.Domain, err error) {
 	defer observe("get", "domain")(&err)
 	return s.inner.FindDomainsByName(fqdn)

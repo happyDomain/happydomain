@@ -30,6 +30,7 @@ import (
 
 	checkerPkg "git.happydns.org/happyDomain/internal/dnschecker"
 	"git.happydns.org/happyDomain/internal/forms"
+	"git.happydns.org/happyDomain/internal/usecase/checktarget"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -150,8 +151,15 @@ type CheckerOptionsUsecase struct {
 	store          CheckerOptionsStorage
 	autoFillStore  CheckAutoFillStorage
 	discoveryStore DiscoveryEntryStorage
-	watchStore     WatchGetter
+	watchStore     checktarget.WatchGetter
 	adminOptions   map[string]happydns.CheckerOptions
+
+	// adminEndpointMu guards adminEndpointCache, which memoizes
+	// HasAdminEndpoint's admin-scope storage lookup so ListCheckerStatuses
+	// doesn't pay one storage read per rule-less checker on every request.
+	// It is invalidated on writes to the admin scope in SetCheckerOption.
+	adminEndpointMu    sync.RWMutex
+	adminEndpointCache map[string]bool
 }
 
 // NewCheckerOptionsUsecase creates a new CheckerOptionsUsecase.
@@ -171,7 +179,7 @@ func (u *CheckerOptionsUsecase) WithDiscoveryEntryStore(store DiscoveryEntryStor
 // WithWatchStore enables resolving a CheckTarget whose DomainId refers to a
 // domain availability watch (rather than a real Domain) during auto-fill, so
 // the availability checker receives the watched name. Passing nil is a no-op.
-func (u *CheckerOptionsUsecase) WithWatchStore(store WatchGetter) *CheckerOptionsUsecase {
+func (u *CheckerOptionsUsecase) WithWatchStore(store checktarget.WatchGetter) *CheckerOptionsUsecase {
 	u.watchStore = store
 	return u
 }
@@ -366,12 +374,29 @@ func (u *CheckerOptionsUsecase) HasAdminEndpoint(checkerName string) bool {
 	if ep, ok := u.adminOptions[checkerName]["endpoint"].(string); ok && ep != "" {
 		return true
 	}
+
+	u.adminEndpointMu.RLock()
+	if cached, ok := u.adminEndpointCache[checkerName]; ok {
+		u.adminEndpointMu.RUnlock()
+		return cached
+	}
+	u.adminEndpointMu.RUnlock()
+
 	admin, err := u.getScopedOptions(checkerName, nil, nil, nil)
 	if err != nil {
 		return false
 	}
 	ep, ok := admin["endpoint"].(string)
-	return ok && ep != ""
+	hasEndpoint := ok && ep != ""
+
+	u.adminEndpointMu.Lock()
+	if u.adminEndpointCache == nil {
+		u.adminEndpointCache = make(map[string]bool)
+	}
+	u.adminEndpointCache[checkerName] = hasEndpoint
+	u.adminEndpointMu.Unlock()
+
+	return hasEndpoint
 }
 
 // GetCheckerOption returns a single option value from the merged options.
@@ -580,6 +605,13 @@ func (u *CheckerOptionsUsecase) SetCheckerOption(
 	} else {
 		existing[optName] = value
 	}
+
+	if userId == nil && domainId == nil && serviceId == nil && optName == "endpoint" {
+		u.adminEndpointMu.Lock()
+		delete(u.adminEndpointCache, checkerName)
+		u.adminEndpointMu.Unlock()
+	}
+
 	return u.store.UpdateCheckerConfiguration(checkerName, userId, domainId, serviceId, existing)
 }
 
@@ -680,23 +712,18 @@ func (u *CheckerOptionsUsecase) buildAutoFillContext(
 		return ctx, nil
 	}
 
-	domain, err := u.autoFillStore.GetDomain(*domainId)
+	// The DomainId may refer to an availability watch rather than a real
+	// Domain; Resolve falls back to the watch store so the availability
+	// checker receives the watched name.
+	domain, domainName, err := checktarget.Resolve(*domainId, u.autoFillStore, u.watchStore)
 	if err != nil {
-		// The DomainId may refer to an availability watch rather than a real
-		// Domain. Fall back to the watch store so the availability checker
-		// receives the watched name. Only do so when the Domain genuinely
-		// does not exist; any other error (e.g. a transient storage failure)
-		// must be surfaced as-is.
-		if errors.Is(err, happydns.ErrDomainNotFound) && u.watchStore != nil {
-			if watch, werr := u.watchStore.GetDomainAvailabilityWatch(*domainId); werr == nil {
-				ctx[happydns.AutoFillDomainName] = watch.DomainName
-				return ctx, nil
-			}
-		}
 		return ctx, fmt.Errorf("loading domain for auto-fill: %w", err)
 	}
-
-	ctx[happydns.AutoFillDomainName] = domain.DomainName
+	ctx[happydns.AutoFillDomainName] = domainName
+	if domain == nil {
+		// Resolved to a watch: no zone/service data to load.
+		return ctx, nil
+	}
 
 	// Load the WIP zone ([0]) for auto-fill context, so the user can
 	// configure checkers for services they are currently working on.

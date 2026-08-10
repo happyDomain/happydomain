@@ -32,6 +32,10 @@ type DomainAvailabilityWatchStorage interface {
 	// ListDomainAvailabilityWatches retrieves all watches owned by the User.
 	ListDomainAvailabilityWatches(user *happydns.User) ([]*happydns.DomainAvailabilityWatch, error)
 
+	// ExistsDomainAvailabilityWatch reports whether owner already watches
+	// domainName, without listing and loading every watch they own.
+	ExistsDomainAvailabilityWatch(owner happydns.Identifier, domainName string) (bool, error)
+
 	// GetDomainAvailabilityWatch retrieves the watch with the given id.
 	GetDomainAvailabilityWatch(id happydns.Identifier) (*happydns.DomainAvailabilityWatch, error)
 

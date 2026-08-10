@@ -29,16 +29,26 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-// Secondary index for the availability-watch entity.
+// Secondary indexes for the availability-watch entity.
 //
-//	availwatch.owner|{ownerId}|{watchId} -> ""   reverse lookup by owner
+//	availwatch.owner|{ownerId}|{watchId}      -> ""   reverse lookup by owner
+//	availwatch.name|{ownerId}|{hash(name)}    -> ""   existence check by (owner, name)
+//
+// The name index reuses domain.go's hashFQDN/normalizeDomainName so a watch
+// is considered a duplicate of another with the same name regardless of
+// case, matching the FQDN index used for real domains.
 const (
 	availWatchPrimaryPrefix    = "availwatch-"
 	availWatchOwnerIndexPrefix = "availwatch.owner|"
+	availWatchNameIndexPrefix  = "availwatch.name|"
 )
 
 func availWatchOwnerIndexKey(ownerId, watchId happydns.Identifier) string {
 	return fmt.Sprintf("%s%s|%s", availWatchOwnerIndexPrefix, ownerId.String(), watchId.String())
+}
+
+func availWatchNameIndexKey(ownerId happydns.Identifier, domainName string) string {
+	return fmt.Sprintf("%s%s|%s", availWatchNameIndexPrefix, ownerId.String(), hashFQDN(domainName))
 }
 
 func (s *KVStorage) ListAllDomainAvailabilityWatches() (happydns.Iterator[happydns.DomainAvailabilityWatch], error) {
@@ -64,6 +74,13 @@ func (s *KVStorage) GetDomainAvailabilityWatch(id happydns.Identifier) (*happydn
 	return s.getDomainAvailabilityWatch(fmt.Sprintf("%s%s", availWatchPrimaryPrefix, id.String()))
 }
 
+// ExistsDomainAvailabilityWatch reports whether owner already has a watch on
+// domainName, via a single point lookup on the name index rather than
+// listing and comparing every watch the owner has.
+func (s *KVStorage) ExistsDomainAvailabilityWatch(owner happydns.Identifier, domainName string) (bool, error) {
+	return s.db.Has(availWatchNameIndexKey(owner, domainName))
+}
+
 func (s *KVStorage) CreateDomainAvailabilityWatch(w *happydns.DomainAvailabilityWatch) error {
 	key, id, err := s.db.FindIdentifierKey(availWatchPrimaryPrefix)
 	if err != nil {
@@ -74,7 +91,14 @@ func (s *KVStorage) CreateDomainAvailabilityWatch(w *happydns.DomainAvailability
 	if err := s.db.Put(key, w); err != nil {
 		return err
 	}
-	return s.db.Put(availWatchOwnerIndexKey(w.Owner, w.Id), "")
+	return s.putDomainAvailabilityWatchIndexes(w)
+}
+
+func (s *KVStorage) putDomainAvailabilityWatchIndexes(w *happydns.DomainAvailabilityWatch) error {
+	if err := s.db.Put(availWatchOwnerIndexKey(w.Owner, w.Id), ""); err != nil {
+		return err
+	}
+	return s.db.Put(availWatchNameIndexKey(w.Owner, w.DomainName), "")
 }
 
 func (s *KVStorage) UpdateDomainAvailabilityWatch(w *happydns.DomainAvailabilityWatch) error {
@@ -97,14 +121,22 @@ func (s *KVStorage) UpdateDomainAvailabilityWatch(w *happydns.DomainAvailability
 			log.Printf("UpdateDomainAvailabilityWatch: failed to delete stale owner index for owner %s: %v", old.Owner.String(), delErr)
 		}
 	}
+	if old != nil && (!old.Owner.Equals(w.Owner) || old.DomainName != w.DomainName) {
+		if delErr := s.db.Delete(availWatchNameIndexKey(old.Owner, old.DomainName)); delErr != nil {
+			log.Printf("UpdateDomainAvailabilityWatch: failed to delete stale name index for owner %s: %v", old.Owner.String(), delErr)
+		}
+	}
 
-	return s.db.Put(availWatchOwnerIndexKey(w.Owner, w.Id), "")
+	return s.putDomainAvailabilityWatchIndexes(w)
 }
 
 func (s *KVStorage) DeleteDomainAvailabilityWatch(id happydns.Identifier) error {
 	if w, err := s.GetDomainAvailabilityWatch(id); err == nil {
 		if delErr := s.db.Delete(availWatchOwnerIndexKey(w.Owner, w.Id)); delErr != nil {
 			log.Printf("DeleteDomainAvailabilityWatch: failed to delete owner index for owner %s: %v", w.Owner.String(), delErr)
+		}
+		if delErr := s.db.Delete(availWatchNameIndexKey(w.Owner, w.DomainName)); delErr != nil {
+			log.Printf("DeleteDomainAvailabilityWatch: failed to delete name index for owner %s: %v", w.Owner.String(), delErr)
 		}
 	}
 
@@ -113,6 +145,9 @@ func (s *KVStorage) DeleteDomainAvailabilityWatch(id happydns.Identifier) error 
 
 func (s *KVStorage) ClearDomainAvailabilityWatches() error {
 	if err := s.clearByPrefix(availWatchOwnerIndexPrefix); err != nil {
+		return err
+	}
+	if err := s.clearByPrefix(availWatchNameIndexPrefix); err != nil {
 		return err
 	}
 
