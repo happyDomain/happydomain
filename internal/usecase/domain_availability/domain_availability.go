@@ -24,7 +24,6 @@ package domain_availability
 import (
 	"context"
 	"fmt"
-	"strings"
 	"sync"
 
 	"git.happydns.org/happyDomain/model"
@@ -63,17 +62,15 @@ func (s *Service) CreateDomainAvailabilityWatch(ctx context.Context, user *happy
 	s.createMu.Lock()
 	defer s.createMu.Unlock()
 
-	existing, err := s.store.ListDomainAvailabilityWatches(user)
+	exists, err := s.store.ExistsDomainAvailabilityWatch(user.Id, watch.DomainName)
 	if err != nil {
 		return nil, happydns.InternalError{
-			Err:         fmt.Errorf("unable to ListDomainAvailabilityWatches: %w", err),
+			Err:         fmt.Errorf("unable to ExistsDomainAvailabilityWatch: %w", err),
 			UserMessage: "Sorry, we are unable to create your availability watch now.",
 		}
 	}
-	for _, w := range existing {
-		if strings.EqualFold(w.DomainName, watch.DomainName) {
-			return nil, happydns.ValidationError{Msg: "you are already watching this domain."}
-		}
+	if exists {
+		return nil, happydns.ValidationError{Msg: "you are already watching this domain."}
 	}
 
 	if err := s.store.CreateDomainAvailabilityWatch(watch); err != nil {

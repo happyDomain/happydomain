@@ -29,6 +29,7 @@ import (
 	"time"
 
 	notifPkg "git.happydns.org/happyDomain/internal/notifier"
+	"git.happydns.org/happyDomain/internal/usecase/checktarget"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -36,9 +37,9 @@ import (
 type Dispatcher struct {
 	stateStore  NotificationStateStorage
 	userStore   UserGetter
-	domainStore DomainGetter
+	domainStore checktarget.DomainGetter
 	zoneStore   ZoneGetter
-	watchStore  WatchGetter
+	watchStore  checktarget.WatchGetter
 
 	resolver *Resolver
 	pool     *Pool
@@ -54,7 +55,7 @@ type Dispatcher struct {
 func NewDispatcher(
 	stateStore NotificationStateStorage,
 	userStore UserGetter,
-	domainStore DomainGetter,
+	domainStore checktarget.DomainGetter,
 	zoneStore ZoneGetter,
 	resolver *Resolver,
 	pool *Pool,
@@ -79,7 +80,7 @@ func NewDispatcher(
 // WithWatchStore enables resolving a CheckTarget whose DomainId refers to a
 // domain availability watch (rather than a real Domain), so notifications carry
 // the watched name. Passing nil is a no-op.
-func (d *Dispatcher) WithWatchStore(store WatchGetter) *Dispatcher {
+func (d *Dispatcher) WithWatchStore(store checktarget.WatchGetter) *Dispatcher {
 	d.watchStore = store
 	return d
 }
@@ -178,10 +179,12 @@ func (d *Dispatcher) buildPayload(user *happydns.User, exec *happydns.Execution,
 	var domainName string
 	var serviceDomain string
 
+	// The DomainId may refer to an availability watch rather than a real
+	// Domain; Resolve falls back to the watch store for the watched name.
 	if did := happydns.TargetIdentifier(exec.Target.DomainId); did != nil {
-		if domain, err := d.domainStore.GetDomain(*did); err == nil {
-			domainName = domain.DomainName
-			if sid := happydns.TargetIdentifier(exec.Target.ServiceId); sid != nil && d.zoneStore != nil && len(domain.ZoneHistory) > 0 {
+		if domain, name, err := checktarget.Resolve(*did, d.domainStore, d.watchStore); err == nil {
+			domainName = name
+			if sid := happydns.TargetIdentifier(exec.Target.ServiceId); domain != nil && sid != nil && d.zoneStore != nil && len(domain.ZoneHistory) > 0 {
 				if zone, err := d.zoneStore.GetZone(domain.ZoneHistory[0]); err == nil {
 					for _, svcs := range zone.Services {
 						for _, svc := range svcs {
@@ -200,15 +203,6 @@ func (d *Dispatcher) buildPayload(user *happydns.User, exec *happydns.Execution,
 						}
 					}
 				}
-			}
-		}
-	}
-	if domainName == "" && d.watchStore != nil {
-		// The DomainId may refer to an availability watch rather than a real
-		// Domain. Fall back to the watch store for the watched name.
-		if did := happydns.TargetIdentifier(exec.Target.DomainId); did != nil {
-			if watch, err := d.watchStore.GetDomainAvailabilityWatch(*did); err == nil {
-				domainName = watch.DomainName
 			}
 		}
 	}
