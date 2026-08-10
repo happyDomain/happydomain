@@ -187,15 +187,21 @@ DBMS as Mysql/Mariadb are no more supported or planned.
 The binary will automatically look for some existing configuration files:
 
 * `./happydomain.conf` in the current directory;
-* `$XDG_CONFIG_HOME/happydomain/happydomain.conf`;
+* `$XDG_CONFIG_HOME/happydomain/happydomain.conf` (`$HOME/.config/happydomain/happydomain.conf` when `XDG_CONFIG_HOME` is not set; this location is skipped entirely when neither variable is defined, which is the case in the Docker image);
 * `/etc/happydomain.conf`.
 
 Only the first file found will be used.
 
-It is also possible to specify a custom path by adding it as argument to the command line:
+It is also possible to specify a custom path by adding it as argument to the command line (there is no `-config` flag):
 
 ```sh
 ./happyDomain /etc/happydomain/config
+```
+
+With Docker Compose, that argument is given through `command`:
+
+```yaml
+command: ["/etc/happydomain.conf"]
 ```
 
 #### Config file format

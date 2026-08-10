@@ -66,7 +66,7 @@ func ConsolidateConfig() (opts *happydns.Options, err error) {
 		configLocations = append(configLocations, path.Join(home, "happydomain", "happydomain.conf"))
 	}
 
-	configLocations = append(configLocations, path.Join("etc", "happydomain.conf"))
+	configLocations = append(configLocations, "/etc/happydomain.conf")
 
 	// If config file exists, read configuration from it
 	for _, filename := range configLocations {
