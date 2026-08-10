@@ -1,3 +1,5 @@
+name: happydomain
+
 services:
   unbound:
     image: alpinelinux/unbound
@@ -11,7 +13,7 @@ services:
 
     networks:
       default:
-        ipv4_address: 172.28.0.53
+        ipv4_address: ${HAPPYDOMAIN_DNS_IP:-172.28.0.53}
 
   happydomain:
     image: happydomain/happydomain
@@ -48,7 +50,7 @@ services:
       # HAPPYDOMAIN_RESOLVER_ALLOWED_TARGET: "172.28.0.53"
 
     dns:
-      - 172.28.0.53
+      - ${HAPPYDOMAIN_DNS_IP:-172.28.0.53}
     restart: unless-stopped
 
     volumes:
@@ -82,7 +84,7 @@ configs:
           do-tcp: yes
 
           access-control: 127.0.0.0/8 allow
-          access-control: 172.28.0.0/24 allow
+          access-control: ${HAPPYDOMAIN_SUBNET:-172.28.0.0/24} allow
 
           # Short cache for a testing resolver
           cache-max-ttl: 60
@@ -101,4 +103,4 @@ networks:
   default:
     ipam:
       config:
-        - subnet: 172.28.0.0/24
+        - subnet: ${HAPPYDOMAIN_SUBNET:-172.28.0.0/24}
