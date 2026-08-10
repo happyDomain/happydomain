@@ -44,7 +44,7 @@ Features
 * Keep an history of published changes
 * Contextual help
 * Multiple users with authentication or one user without authentication
-* Compatible with external authentication (OpenId Connect or through JWT tokens: Auth0, ...)
+* Compatible with external authentication ([OpenID Connect](https://help.happydomain.org/en/introduction/deploy/oidc) or through JWT tokens: Auth0, ...)
 
 **happyDomain is functional but still very much a work in progress: it's a carefully crafted proof of concept that evolves thanks to you!**
 
@@ -181,6 +181,20 @@ Configure the following options to connect happyDomain to your Oracle NoSQL Data
 #### DBMS
 
 DBMS as Mysql/Mariadb are no more supported or planned.
+
+### Accounts and data
+
+When you register on a happyDomain instance, the account is created and stored in **that instance's own database** (whichever storage engine it was configured with above). Nothing is ever sent to happydomain.org: the only exception is if you are actually using the project's own hosted instance at `app.happydomain.org`, which is just one deployment among the many that can run this software.
+
+By default, registration is open and a verification email is sent before the account can be used. The administrator of an instance can change this behavior with a few flags:
+
+* `-no-mail`: skip the email verification step (accounts are usable immediately); useful when no SMTP relay is configured.
+* `-disable-registration`: close public/API registration while keeping existing accounts (and accounts provisioned through `-external-auth` or OIDC) working.
+* `-no-auth`: drop the whole notion of accounts, everyone shares a single default account; handy for local/single-user or evaluation use.
+
+See the [configuration documentation](https://help.happydomain.org/en/introduction/deploy/config) for the full list of authentication-related options.
+
+**happyDomain never becomes your provider.** It only acts as a friendly interface on top of your existing setup, whether that is an actual DNS server or a hosting provider. Your data, the zone's content, genuinely lives with your provider (or authoritative server); happyDomain does not take it over or store a canonical copy of it.
 
 ### Persistent configuration
 
