@@ -24,36 +24,50 @@ package mailer
 import (
 	"crypto/tls"
 
-	gomail "github.com/go-mail/mail"
+	gomail "github.com/wneessen/go-mail"
 )
 
 // SMTPSendmail uses a SMTP server to send message
 type SMTPMailer struct {
-	Dialer gomail.Dialer
+	Client *gomail.Client
+	Host   string
 }
 
-func NewSMTPMailer(host string, port uint, username, password string) *SMTPMailer {
-	return &SMTPMailer{
-		Dialer: gomail.Dialer{
-			Host:     host,
-			Port:     int(port),
-			SSL:      port == 465,
-			Username: username,
-			Password: password,
-		},
+func NewSMTPMailer(host string, port uint, username, password string) (*SMTPMailer, error) {
+	opts := []gomail.Option{
+		gomail.WithPort(int(port)),
 	}
+
+	if port == 465 {
+		opts = append(opts, gomail.WithSSL())
+	}
+
+	if username != "" {
+		opts = append(opts,
+			gomail.WithSMTPAuth(gomail.SMTPAuthAutoDiscover),
+			gomail.WithUsername(username),
+			gomail.WithPassword(password),
+		)
+	}
+
+	client, err := gomail.NewClient(host, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return &SMTPMailer{Client: client, Host: host}, nil
 }
 
-func (t *SMTPMailer) WithTLSNoVerify() {
-	t.Dialer.TLSConfig = &tls.Config{
-		ServerName:         t.Dialer.Host,
+func (t *SMTPMailer) WithTLSNoVerify() error {
+	return t.Client.SetTLSConfig(&tls.Config{
+		ServerName:         t.Host,
 		InsecureSkipVerify: true,
-	}
+	})
 }
 
 // PrepareAndSend sends an e-mail to the given recipients using configured SMTP host.
-func (t *SMTPMailer) PrepareAndSend(m ...*gomail.Message) (err error) {
-	err = t.Dialer.DialAndSend(m...)
+func (t *SMTPMailer) PrepareAndSend(m ...*gomail.Msg) (err error) {
+	err = t.Client.DialAndSend(m...)
 
 	return
 }

@@ -22,51 +22,19 @@
 package mailer
 
 import (
-	"io"
-	"os"
-	"os/exec"
-
-	gomail "github.com/go-mail/mail"
+	gomail "github.com/wneessen/go-mail"
 )
-
-// sendmail contains the path to the sendmail command
-const sendmail = "/usr/sbin/sendmail"
 
 // SystemSendmail uses the sendmail command to send message
 type SystemSendmail struct{}
 
-func (t *SystemSendmail) Send(from string, to []string, msg io.WriterTo) error {
-	cmd := exec.Command(sendmail, "-t")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	pw, err := cmd.StdinPipe()
-	if err != nil {
-		return err
-	}
-
-	err = cmd.Start()
-	if err != nil {
-		return err
-	}
-
-	if _, err = msg.WriteTo(pw); err != nil {
-		return err
-	}
-
-	if err = pw.Close(); err != nil {
-		return err
-	}
-
-	if err = cmd.Wait(); err != nil {
-		return err
+// PrepareAndSend sends an e-mail to the given recipients using the sendmail command.
+func (t *SystemSendmail) PrepareAndSend(msgs ...*gomail.Msg) error {
+	for _, m := range msgs {
+		if err := m.WriteToSendmail(); err != nil {
+			return err
+		}
 	}
 
 	return nil
-}
-
-// PrepareAndSend sends an e-mail to the given recipients using the sendmail command.
-func (t *SystemSendmail) PrepareAndSend(m ...*gomail.Message) (err error) {
-	err = gomail.Send(t, m...)
-	return
 }

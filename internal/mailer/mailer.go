@@ -30,7 +30,7 @@ import (
 
 	"git.happydns.org/happyDomain/web"
 
-	gomail "github.com/go-mail/mail"
+	gomail "github.com/wneessen/go-mail"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
@@ -38,7 +38,21 @@ import (
 )
 
 type sendMethod interface {
-	PrepareAndSend(...*gomail.Message) error
+	PrepareAndSend(...*gomail.Msg) error
+}
+
+// templateWriteFunc adapts a text/template's Execute method to the
+// func(io.Writer) (int64, error) signature expected by go-mail's body
+// writers.
+func templateWriteFunc(tpl *template.Template, data any) func(io.Writer) (int64, error) {
+	return func(w io.Writer) (int64, error) {
+		var buf bytes.Buffer
+		if err := tpl.Execute(&buf, data); err != nil {
+			return 0, err
+		}
+		n, err := w.Write(buf.Bytes())
+		return int64(n), err
+	}
 }
 
 type Mailer struct {
@@ -51,10 +65,10 @@ type Mailer struct {
 // format in the text version. To perform sending, it relies on the SendMethod
 // global variable.
 func (r *Mailer) SendMail(to *mail.Address, subject, content string) (err error) {
-	m := gomail.NewMessage()
-	m.SetHeader("From", r.MailFrom.String())
-	m.SetHeader("To", to.String())
-	m.SetHeader("Subject", subject)
+	m := gomail.NewMsg()
+	m.FromMailAddress(r.MailFrom)
+	m.ToMailAddress(to)
+	m.Subject(subject)
 
 	toName := to.Name
 	if len(toName) == 0 {
@@ -76,9 +90,7 @@ func (r *Mailer) SendMail(to *mail.Address, subject, content string) (err error)
 		return err
 	}
 	txtData := tplData
-	m.SetBodyWriter("text/plain", func(w io.Writer) error {
-		return txtTpl.Execute(w, txtData)
-	})
+	m.SetBodyWriter(gomail.TypeTextPlain, templateWriteFunc(txtTpl, txtData))
 
 	// Convert text from Markdown to HTML
 	md := goldmark.New(
@@ -98,7 +110,9 @@ func (r *Mailer) SendMail(to *mail.Address, subject, content string) (err error)
 	}
 
 	if data, imgErr := web.GetEmbedFS().Open("build/img/happyDomain.png"); imgErr == nil {
-		m.EmbedReader("happydomain.png", data)
+		if err = m.EmbedReader("happydomain.png", data); err != nil {
+			return
+		}
 	}
 
 	htmlTpl, err := template.New("mailHTML").Parse(mailHTMLTpl)
@@ -107,9 +121,7 @@ func (r *Mailer) SendMail(to *mail.Address, subject, content string) (err error)
 	}
 	htmlData := maps.Clone(tplData)
 	htmlData["Content"] = buf.String()
-	m.AddAlternativeWriter("text/html", func(w io.Writer) error {
-		return htmlTpl.Execute(w, htmlData)
-	})
+	m.AddAlternativeWriter(gomail.TypeTextHTML, templateWriteFunc(htmlTpl, htmlData))
 
 	if err = r.SendMethod.PrepareAndSend(m); err != nil {
 		return

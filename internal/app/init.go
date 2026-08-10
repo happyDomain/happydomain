@@ -45,15 +45,21 @@ func (app *App) initCaptcha() {
 
 func (app *App) initMailer() {
 	if app.cfg.MailSMTPHost != "" {
-		m := &mailer.Mailer{
-			MailFrom:   &app.cfg.MailFrom,
-			SendMethod: mailer.NewSMTPMailer(app.cfg.MailSMTPHost, app.cfg.MailSMTPPort, app.cfg.MailSMTPUsername, app.cfg.MailSMTPPassword),
+		smtpMailer, err := mailer.NewSMTPMailer(app.cfg.MailSMTPHost, app.cfg.MailSMTPPort, app.cfg.MailSMTPUsername, app.cfg.MailSMTPPassword)
+		if err != nil {
+			log.Fatal("Could not initialize SMTP mailer: ", err)
 		}
 
 		if app.cfg.MailSMTPTLSSNoVerify {
-			m.SendMethod.(*mailer.SMTPMailer).WithTLSNoVerify()
+			if err := smtpMailer.WithTLSNoVerify(); err != nil {
+				log.Fatal("Could not initialize SMTP mailer: ", err)
+			}
 		}
-		app.mailer = m
+
+		app.mailer = &mailer.Mailer{
+			MailFrom:   &app.cfg.MailFrom,
+			SendMethod: smtpMailer,
+		}
 	} else if !app.cfg.NoMail {
 		app.mailer = &mailer.Mailer{
 			MailFrom:   &app.cfg.MailFrom,
