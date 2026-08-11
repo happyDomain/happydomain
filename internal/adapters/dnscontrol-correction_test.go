@@ -353,3 +353,53 @@ func TestNewDNSControlDomainConfigRecords(t *testing.T) {
 		t.Errorf("record %q is missing", name)
 	}
 }
+
+// TestDNSControlRRtoRC_RtypeWrapper checks the modern types (DS, RP, …) survive
+// a round trip through DNSControl: models.RecordConfig.ToRR() hands back the
+// rtype wrapper (*rtype.DS) rather than the canonical *dns.DS, and the
+// FromStruct converting it back refuses anything but the canonical type.
+func TestDNSControlRRtoRC_RtypeWrapper(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		rr   happydns.Record
+	}{
+		{
+			name: "DS",
+			rr: &dns.DS{
+				Hdr:        dns.RR_Header{Name: "sub.example.com.", Rrtype: dns.TypeDS, Class: dns.ClassINET, Ttl: 300},
+				KeyTag:     12345,
+				Algorithm:  13,
+				DigestType: 2,
+				Digest:     "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF",
+			},
+		},
+		{
+			name: "RP",
+			rr: &dns.RP{
+				Hdr:  dns.RR_Header{Name: "example.com.", Rrtype: dns.TypeRP, Class: dns.ClassINET, Ttl: 300},
+				Mbox: "admin.example.com.",
+				Txt:  "contact.example.com.",
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			rcs, err := adapter.DNSControlRRtoRC([]happydns.Record{tc.rr}, "example.com.")
+			if err != nil {
+				t.Fatalf("DNSControlRRtoRC: %v", err)
+			}
+
+			// The record DNSControl gives back is the rtype wrapper, not the
+			// canonical dns.RR we started from.
+			wrapped := rcs[0].ToRR()
+
+			rcs, err = adapter.DNSControlRRtoRC([]happydns.Record{wrapped}, "example.com.")
+			if err != nil {
+				t.Fatalf("DNSControlRRtoRC on the record returned by ToRR(): %v", err)
+			}
+
+			if got, expected := rcs[0].ToRR().String(), tc.rr.String(); got != expected {
+				t.Errorf("round trip altered the record: got %q, expected %q", got, expected)
+			}
+		})
+	}
+}
