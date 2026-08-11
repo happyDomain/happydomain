@@ -145,8 +145,19 @@ func DNSControlRRtoRC(rrs []happydns.Record, origin string) (dnscontrol.Records,
 		var rc dnscontrol.RecordConfig
 
 		if _, ok := rtypecontrol.Func[typeName]; ok {
+			// The FromStruct of the modern types (DS, RP, …) asserts on the
+			// canonical miekg record (*dns.DS), and rejects the rtype wrapper
+			// (*rtype.DS) DNSControl hands back from
+			// models.RecordConfig.ToRR(). Whichever way such a record reached
+			// us, dns.Copy gives back the canonical type: it calls the copy()
+			// method promoted from the embedded miekg record.
+			fields := happydns.Record(rr)
+			if dnsRR, isRR := rr.(dns.RR); isRR {
+				fields = dns.Copy(dnsRR)
+			}
+
 			dcn := domaintags.MakeDomainNameVarieties(originNoTrailingDot)
-			rcPtr, e := rtypecontrol.NewRecordConfigFromStruct(rr.Header().Name, rr.Header().Ttl, typeName, rr, dcn)
+			rcPtr, e := rtypecontrol.NewRecordConfigFromStruct(rr.Header().Name, rr.Header().Ttl, typeName, fields, dcn)
 			if e != nil {
 				return nil, e
 			}
