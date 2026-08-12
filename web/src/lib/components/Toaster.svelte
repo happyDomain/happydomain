@@ -23,9 +23,11 @@
 
 <script lang="ts">
     import { onMount } from "svelte";
-    import { Toast, ToastHeader } from "@sveltestrap/sveltestrap";
+    import { Icon, Toast, ToastHeader } from "@sveltestrap/sveltestrap";
 
+    import { openReportModal } from "$lib/stores/report";
     import { toasts } from "$lib/stores/toasts";
+    import { t } from "$lib/translations";
 
     let hidden = false;
 
@@ -75,6 +77,27 @@
             >
                 {toast.message}
             </div>
+            {#if toast.reportable}
+                <!-- Reporting is never easier than right here: the user still
+                     has the failure in front of them, and we already know what
+                     went wrong. -->
+                <div class="px-3 pb-2">
+                    <button
+                        type="button"
+                        class="btn btn-link btn-sm p-0 text-decoration-none"
+                        onclick={() => {
+                            const reported = toast.title
+                                ? `${toast.title}: ${toast.message}`
+                                : toast.message;
+                            toast.dismiss();
+                            openReportModal(reported);
+                        }}
+                    >
+                        <Icon name="bug" class="me-1" />
+                        {$t("report.report-this")}
+                    </button>
+                </div>
+            {/if}
         </Toast>
     {/each}
 </div>

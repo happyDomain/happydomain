@@ -36,6 +36,7 @@ interface Params {
     thing?: string;
     identify?: string;
     provider?: string;
+    forge?: string;
     "security-operations"?: string;
     "first-step"?: string;
     n?: number;

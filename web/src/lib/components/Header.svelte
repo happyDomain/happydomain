@@ -43,6 +43,7 @@
     import HelpButton from "$lib/components/Help.svelte";
     import Logo from "$lib/components/Logo.svelte";
     import { appConfig } from "$lib/stores/config";
+    import { openReportModal } from "$lib/stores/report";
     import { userSession, refreshUserSession } from "$lib/stores/usersession";
     import { toasts } from "$lib/stores/toasts";
     import { t, locales, locale } from "$lib/translations";
@@ -153,6 +154,10 @@
                     <DropdownItem active={page.route && page.route.id == "/me"} href="/me">
                         <Icon name="gear" class="me-2" />
                         {$t("menu.my-account")}
+                    </DropdownItem>
+                    <DropdownItem on:click={() => openReportModal()}>
+                        <Icon name="bug" class="me-2" />
+                        {$t("menu.report-problem")}
                     </DropdownItem>
                     {#if $userSession.email !== "_no_auth"}
                         <DropdownItem divider />

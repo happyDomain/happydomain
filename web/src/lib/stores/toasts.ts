@@ -21,6 +21,7 @@
 
 import { writable } from "svelte/store";
 import { Toast, type NewToast } from "$lib/model/toast";
+import { diagnostics } from "$lib/stores/diagnostics";
 
 function createToastsStore() {
     const { subscribe, update } = writable<Toast[]>([]);
@@ -37,6 +38,11 @@ function createToastsStore() {
     const addErrorToast = (o: NewToast) => {
         if (!o.title) o.title = "An error occured!";
         if (!o.type) o.type = "error";
+
+        // Only errors we didn't anticipate are worth remembering: expected
+        // errors (e.g. "could not resolve example.com") tend to carry a
+        // domain name, which diagnostics must never contain.
+        if (o.reportable) diagnostics.record(String(o.message ?? ""), o.title);
 
         return addToast(o);
     };

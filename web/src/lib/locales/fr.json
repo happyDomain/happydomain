@@ -288,7 +288,24 @@
         "signup": "S'inscrire",
         "signin": "S'identifier",
         "quick-menu": "Accès rapide",
-        "my-providers": "Les hébergeurs de mes domaines"
+        "my-providers": "Les hébergeurs de mes domaines",
+        "report-problem": "Signaler un problème"
+    },
+    "report": {
+        "title": "Signaler un problème",
+        "intro": "Dites-nous simplement ce que vous étiez en train de faire : les détails techniques seront ajoutés automatiquement à votre signalement, et nous reviendrons vers vous si besoin.",
+        "what-happened": "Que s'est-il passé ?",
+        "placeholder": "J'ai essayé d'ajouter mon domaine et la page est restée vide…",
+        "attached-details": "Détails joints à votre signalement",
+        "attached-details-desc": "Votre version, votre navigateur et les erreurs enregistrées par happyDomain. Aucun mot de passe, aucune clé d'API, aucun nom de domaine : vous pouvez les relire et les modifier.",
+        "collecting": "Collecte en cours…",
+        "copy": "Copier le signalement",
+        "copied": "Signalement copié !",
+        "copy-failed": "Impossible de copier automatiquement, le voici ci-dessous",
+        "open-issue": "Ouvrir un ticket sur {{forge}}",
+        "other-forge": "Une autre forge",
+        "by-email": "Nous envoyer un email",
+        "report-this": "Signaler ce problème"
     },
     "onboarding": {
         "steps": {

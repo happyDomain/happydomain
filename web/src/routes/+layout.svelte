@@ -30,10 +30,12 @@
 
     import Header from "$lib/components/Header.svelte";
     import NavigationProgress from "$lib/components/NavigationProgress.svelte";
+    import ReportProblem from "$lib/components/modals/ReportProblem.svelte";
     import Toaster from "$lib/components/Toaster.svelte";
     import VoxPeople from "$lib/components/VoxPeople.svelte";
     import { appConfig } from "$lib/stores/config";
     import { providers } from "$lib/stores/providers";
+    import { registerReportModal } from "$lib/stores/report";
     import { toasts } from "$lib/stores/toasts";
     import { locale, t } from "$lib/translations";
 
@@ -48,6 +50,12 @@
     }: {
         children?: import("svelte").Snippet;
     } = $props();
+
+    let reportModal: ReportProblem | undefined = $state();
+
+    $effect(() => {
+        if (reportModal) registerReportModal((prefill?: string) => reportModal?.open(prefill));
+    });
 
     onMount(() => {
         // Nothing is rendered until every load of the initial route resolves:
@@ -64,9 +72,12 @@
                     timeout: 10000,
                 });
             } else {
+                // Nothing caught this one: whatever it is, we didn't plan for
+                // it, so let the user hand it over to us.
                 toasts.addErrorToast({
                     message: e.reason.message,
                     timeout: 30000,
+                    reportable: true,
                 });
             }
         };
@@ -93,6 +104,7 @@
 </main>
 
 <Toaster />
+<ReportProblem bind:this={reportModal} />
 {#if !$appConfig.hide_feedback && MODE == "production"}
     <VoxPeople />
 {/if}
