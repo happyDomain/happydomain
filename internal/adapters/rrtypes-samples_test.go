@@ -35,8 +35,8 @@ const rrTypesOrigin = "example.com."
 // rrSamples holds one zone file line per record type miekg/dns is able to
 // build, the rdata apart: the label and the TTL are added by the test.
 //
-// The adapters run their conversions over this table, see
-// dnscontrol-rrtypes_test.go.
+// Both adapters run their conversions over this table, see
+// dnscontrol-rrtypes_test.go and libdns-rrtypes_test.go.
 var rrSamples = map[string]string{
 	"A":          "1.2.3.4",
 	"AAAA":       "2001:db8::1",
