@@ -131,6 +131,34 @@ func happyDNSRecordToLibdnsRR(record happydns.Record, zone string) libdns.RR {
 	}
 }
 
+// libdnsRecordKey returns the string identifying a record among the ones of a
+// zone, for matching a record read from a provider with the same record coming
+// back from the diff engine.
+//
+// It cannot be built on the libdns rdata: a provider spells it the way it
+// likes, and the two sides do not go through the same conversions. A provider
+// answering "10 mail" for an MX gives an absolute target once imported, and the
+// diff engine hands the record back in that form; a TXT is raw text on one side
+// (happydns.TXT) and quoted on the other (dns.TXT, rebuilt by DNSControl).
+// Keying on either spelling makes the lookup miss, and a deletion then loses the
+// concrete record the provider gave us, hence the identifier it needs to carry
+// out the deletion.
+//
+// So the key is taken from the canonical miekg form of the record, which both
+// sides reach: the zone file rdata, with names made absolute and character
+// strings quoted, whatever way the record arrived.
+func libdnsRecordKey(record happydns.Record, zone string) string {
+	rr := record
+	if cr, ok := record.(happydns.ConvertibleRecord); ok {
+		rr = cr.ToRR()
+	}
+
+	typStr := dns.TypeToString[rr.Header().Rrtype]
+	name := libdns.RelativeName(rr.Header().Name, zone)
+
+	return fmt.Sprintf("%s\t%s\t%s", name, typStr, extractRdata(rr.String(), typStr))
+}
+
 // decodeTXTData decodes TXT record data that may be in RFC1035 presentation
 // format (quoted, with escaping) or raw text. Some libdns providers (e.g.
 // PowerDNS) return quoted data like `"value"`, while others (e.g. libdns.TXT)
@@ -193,13 +221,4 @@ func libdnsRecordsToHappyDNS(recs []libdns.Record, zone string) ([]happydns.Reco
 		result = append(result, hdr)
 	}
 	return result, nil
-}
-
-// happyDNSRecordsToLibdns converts a slice of happydns Records to libdns RR values.
-func happyDNSRecordsToLibdns(rrs []happydns.Record, zone string) []libdns.RR {
-	result := make([]libdns.RR, len(rrs))
-	for i, rr := range rrs {
-		result[i] = happyDNSRecordToLibdnsRR(rr, zone)
-	}
-	return result
 }
