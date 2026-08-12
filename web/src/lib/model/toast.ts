@@ -30,6 +30,10 @@ export interface NewToast {
     href?: string;
     timeout?: number | undefined;
     onclick?: () => void;
+    // An error nobody anticipated, as opposed to the ones we raise ourselves
+    // when a provider refuses a change or a form is incomplete: only those are
+    // worth offering to report.
+    reportable?: boolean;
 }
 
 export class Toast implements NewToast {
@@ -43,8 +47,10 @@ export class Toast implements NewToast {
     startTime: number | undefined = undefined;
     dismissFunc: (id: string) => void;
     onclick: undefined | (() => void) = undefined;
+    reportable: boolean = false;
 
     constructor(obj: NewToast, dismiss: (id: string) => void) {
+        if (obj.reportable !== undefined) this.reportable = obj.reportable;
         if (obj.type !== undefined) this.type = obj.type;
         if (obj.title !== undefined) this.title = obj.title;
         if (obj.message !== undefined) this.message = obj.message;

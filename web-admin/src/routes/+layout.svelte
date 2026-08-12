@@ -39,7 +39,9 @@
     } from "@sveltestrap/sveltestrap";
 
     import Logo from "$lib/components/Logo.svelte";
+    import ReportProblem from "$lib/components/modals/ReportProblem.svelte";
     import Toaster from "$lib/components/Toaster.svelte";
+    import { registerReportModal } from "$lib/stores/report";
     import { toasts } from "$lib/stores/toasts";
 
 
@@ -48,11 +50,20 @@
     } = $props();
 
     window.onunhandledrejection = (e) => {
+        // Nothing caught this one: whatever it is, we didn't plan for it, so
+        // let the administrator hand it over to us.
         toasts.addErrorToast({
             message: e.reason.message,
             timeout: 30000,
+            reportable: true,
         });
     };
+
+    let reportModal: ReportProblem | undefined = $state();
+
+    $effect(() => {
+        if (reportModal) registerReportModal((reported?: string) => reportModal?.open(reported));
+    });
 
     let isOpen = $state(false);
 
@@ -111,3 +122,4 @@
 </main>
 
 <Toaster />
+<ReportProblem bind:this={reportModal} />

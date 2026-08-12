@@ -29,6 +29,7 @@ Table of Contents
 - [Configuration](#use-happydomain)
 - [Building from source](#building)
 - [Development environment](#development-environment)
+- [Reporting an issue](#reporting-an-issue)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -326,12 +327,26 @@ cd web; npm run dev
 With this setup, static assets integrated inside the go binary will not be used, instead it'll forward all requests for static assets to the node server, that do dynamic reload, etc.
 
 
+Reporting an issue
+------------------
+
+One sentence is enough, we'll come back to you if we need more.
+
+The quickest way is the **Report a problem** entry in happyDomain's user menu (it also appears on error messages): it collects your version, your browser and the errors happyDomain recorded, shows them to you, then opens a pre-filled issue on the forge of your choice. You only describe what you were doing.
+
+You can of course [open an issue](https://github.com/happyDomain/happydomain/issues) by hand, write to us at contact@happydomain.org if you have no account on a forge, or come and talk about it on [Matrix](https://matrix.to/#/#happyDNS:matrix.org).
+
+For security vulnerabilities only, don't open a public issue: follow [our security policy](./SECURITY.md) instead.
+
+If you want to dig further (server logs, browser console, reproducing on a bare instance), the [documentation](https://help.happydomain.org/en/reporting-issues/) walks through it, but we'll only ask for it when your report needs it.
+
+
 Contributing
 ------------
 
 Contributions are welcome! Here's how you can help:
 
-- **Report bugs:** Open an issue on your favorite forge: [GitHub](https://github.com/happyDomain/happydomain/issues), [Gitlab](https://gitlab.com/happyDomain/happydomain/-/issues), [Framagit](https://framagit.org/happyDomain/happydomain/-/issues), [Codeberg](https://codeberg.org/happyDomain/happyDomain/issues), we're highly responsive.
+- **Report bugs:** Open an issue on your favorite forge: [GitHub](https://github.com/happyDomain/happydomain/issues), [Gitlab](https://gitlab.com/happyDomain/happydomain/-/issues), [Framagit](https://framagit.org/happyDomain/happydomain/-/issues), [Codeberg](https://codeberg.org/happyDomain/happyDomain/issues), we're highly responsive. [Reporting an issue](#reporting-an-issue) lists what to include.
 - **Share feedback:** [Tell us what you think](https://feedback.happydomain.org/), your input guides the project.
 
 

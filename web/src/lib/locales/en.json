@@ -288,7 +288,24 @@
         "provider-features": "Supported providers",
         "signup": "Sign up",
         "signin": "Sign in",
-        "quick-menu": "Quick Access"
+        "quick-menu": "Quick Access",
+        "report-problem": "Report a problem"
+    },
+    "report": {
+        "title": "Report a problem",
+        "intro": "Just tell us what you were doing: the technical details will be automatically added to the report, and we'll come back to you if we need anything else.",
+        "what-happened": "What went wrong?",
+        "placeholder": "I tried to add my domain and the page stayed empty…",
+        "attached-details": "Details attached to your report",
+        "attached-details-desc": "Your version, your browser and the errors happyDomain recorded. No password, no API key, no domain name: you can review and edit them.",
+        "collecting": "Collecting…",
+        "copy": "Copy the report",
+        "copied": "Report copied!",
+        "copy-failed": "Could not copy automatically, here it is below",
+        "open-issue": "Open an issue on {{forge}}",
+        "other-forge": "Another forge",
+        "by-email": "Send us an email",
+        "report-this": "Report this problem"
     },
     "onboarding": {
         "steps": {
