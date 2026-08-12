@@ -188,24 +188,31 @@ func (p *LibdnsAdapterNSProvider) GetZoneCorrections(domain string, wantedRecord
 		return nil, 0, fmt.Errorf("unable to get current zone records: %w", err)
 	}
 
-	currentRecords, err := libdnsRecordsToHappyDNS(currentLibdnsRecs, zone)
-	if err != nil {
-		return nil, 0, fmt.Errorf("unable to convert current zone records: %w", err)
+	// Convert the provider records once, keeping both the happydns view (for
+	// the diff engine) and a lookup from record key → original libdns
+	// records, the concrete type the provider handed us, carrying whatever
+	// identifier it needs to delete the record later.
+	currentRecords := make([]happydns.Record, 0, len(currentLibdnsRecs))
+	libdnsRecordsByKey := make(map[string][]libdns.Record, len(currentLibdnsRecs))
+	for _, rec := range currentLibdnsRecs {
+		hdr, err := libdnsToHappyDNSRecord(rec, zone)
+		if err != nil {
+			return nil, 0, fmt.Errorf("converting libdns record %v: %w", rec.RR(), err)
+		}
+
+		key := libdnsRecordKey(hdr, zone)
+		libdnsRecordsByKey[key] = append(libdnsRecordsByKey[key], rec)
+
+		if IsPseudoTypeRecord(hdr) {
+			continue
+		}
+		currentRecords = append(currentRecords, hdr)
 	}
 
 	// Step 2: Compute diff using existing DNSControl diff engine.
 	diffs, nbDiffs, err := DNSControlDiffByRecord(currentRecords, wantedRecords, domain)
 	if err != nil {
 		return nil, nbDiffs, fmt.Errorf("unable to compute zone diff: %w", err)
-	}
-
-	// Build a lookup from happydns Record string → original libdns records (with ProviderData).
-	// This ensures delete operations use the provider's record IDs.
-	libdnsRecordsByKey := make(map[string][]libdns.Record)
-	for _, rec := range currentLibdnsRecs {
-		rr := rec.RR()
-		key := fmt.Sprintf("%s\t%s\t%s", rr.Name, rr.Type, rr.Data)
-		libdnsRecordsByKey[key] = append(libdnsRecordsByKey[key], rec)
 	}
 
 	// Step 3: Create corrections with executable F closures.
@@ -303,8 +310,7 @@ func (p *LibdnsAdapterNSProvider) resolveOriginalRecords(
 ) []libdns.Record {
 	result := make([]libdns.Record, 0, len(records))
 	for _, rec := range records {
-		rr := happyDNSRecordToLibdnsRR(rec, zone)
-		key := fmt.Sprintf("%s\t%s\t%s", rr.Name, rr.Type, rr.Data)
+		key := libdnsRecordKey(rec, zone)
 
 		if originals, ok := libdnsRecordsByKey[key]; ok && len(originals) > 0 {
 			// Use the original record and consume it from the map.
@@ -312,7 +318,7 @@ func (p *LibdnsAdapterNSProvider) resolveOriginalRecords(
 			libdnsRecordsByKey[key] = originals[1:]
 		} else {
 			// Fallback: use the converted RR (without ProviderData).
-			result = append(result, rr)
+			result = append(result, happyDNSRecordToLibdnsRR(rec, zone))
 		}
 	}
 	return result
