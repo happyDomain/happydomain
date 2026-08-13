@@ -2,7 +2,7 @@ module git.happydns.org/happyDomain
 
 go 1.26
 
-toolchain go1.26.5
+toolchain go1.26.6
 
 require (
 	git.happydns.org/checker-alias v0.3.3
