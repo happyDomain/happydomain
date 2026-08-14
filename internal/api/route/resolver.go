@@ -22,9 +22,14 @@
 package route
 
 import (
+	"net/http"
+	"time"
+
+	ratelimit "github.com/JGLTechnologies/gin-rate-limit"
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api/controller"
+	"git.happydns.org/happyDomain/internal/api/middleware"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -35,4 +40,30 @@ func DeclareResolverRoutes(router *gin.RouterGroup, resolverUC happydns.Resolver
 	router.POST("/resolver/spf-flatten", rc.FlattenSPF)
 	router.POST("/resolver/mta-sts-policy", rc.FetchMTASTSPolicy)
 	router.POST("/resolver/dmarc-report-auth", rc.CheckDMARCReportAuth)
+}
+
+// DeclareResolverAuthRoutes declares the resolver routes that need an account.
+//
+// The routes above only ever speak DNS or fetch a well-known HTTPS URL, so they
+// are open to anyone. Collecting SSH host keys opens a TCP connection to a host
+// and a port the caller picks: netguard already refuses everything that is not
+// globally routable, but an anonymous caller would still get a port prober out
+// of it. Hence an authenticated route, rate limited on top.
+func DeclareResolverAuthRoutes(router *gin.RouterGroup, resolverUC happydns.ResolverUsecase) {
+	rc := controller.NewResolverController(resolverUC)
+
+	store := ratelimit.InMemoryStore(&ratelimit.InMemoryOptions{
+		Rate:  time.Minute,
+		Limit: 10,
+	})
+	limiter := ratelimit.RateLimiter(store, &ratelimit.Options{
+		ErrorHandler: func(c *gin.Context, info ratelimit.Info) {
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, happydns.ErrorResponse{
+				Message: "Too many requests. Please try again later.",
+			})
+		},
+		KeyFunc: middleware.ClientKey,
+	})
+
+	router.POST("/resolver/ssh-hostkeys", limiter, rc.FetchSSHHostKeys)
 }

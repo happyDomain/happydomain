@@ -89,6 +89,60 @@ type ResolverUsecase interface {
 	FlattenSPF(SPFFlattenRequest) (*SPFFlattenResponse, error)
 	FetchMTASTSPolicy(MTASTSPolicyRequest) (*MTASTSPolicyResponse, error)
 	CheckDMARCReportAuth(DMARCReportAuthRequest) (*DMARCReportAuthResponse, error)
+	FetchSSHHostKeys(SSHHostKeysRequest) (*SSHHostKeysResponse, error)
+}
+
+// SSHHostKeysRequest asks the backend to collect the host keys an SSH server
+// offers, so the SSHFP records of a host can be filled in without copying
+// fingerprints by hand.
+type SSHHostKeysRequest struct {
+	// Host is the name or address of the SSH server to reach.
+	Host string `json:"host"`
+
+	// Port is the TCP port it listens on. Defaults to 22.
+	Port uint16 `json:"port,omitempty"`
+}
+
+// SSHHostKey is one host key an SSH server offered, described the way an SSHFP
+// record spells it out (RFC 4255 sec. 3.1).
+type SSHHostKey struct {
+	// Algorithm is the SSHFP algorithm number: 1 RSA, 2 DSA, 3 ECDSA,
+	// 4 Ed25519, 6 Ed448.
+	Algorithm uint8 `json:"algorithm"`
+
+	// AlgorithmName is the SSH name of the key type, as the server announced
+	// it (e.g. "ssh-ed25519", "ecdsa-sha2-nistp256").
+	AlgorithmName string `json:"algorithmName"`
+
+	// SHA256 is the SHA-256 fingerprint of the key, in lowercase hexadecimal.
+	// This is the SSHFP fingerprint of type 2.
+	SHA256 string `json:"sha256"`
+
+	// SHA1 is the SHA-1 fingerprint of the key, in lowercase hexadecimal.
+	// This is the SSHFP fingerprint of type 1, deprecated but still asked for
+	// by some deployments.
+	SHA1 string `json:"sha1"`
+}
+
+// SSHHostKeysResponse reports the host keys collected from an SSH server.
+type SSHHostKeysResponse struct {
+	// Host and Port echo the destination that was reached.
+	Host string `json:"host"`
+	Port uint16 `json:"port"`
+
+	// Status is the high-level outcome:
+	//   "ok"                at least one host key was collected
+	//   "blocked"           this happyDomain instance refuses that destination
+	//   "connect-error"     the server could not be reached
+	//   "handshake-error"   the server answered, but not as an SSH server
+	//   "timeout"           the exchange did not complete in time
+	Status string `json:"status"`
+
+	// ErrorMsg gives a short human-readable reason when Status != "ok".
+	ErrorMsg string `json:"errorMsg,omitempty"`
+
+	// Keys holds the host keys collected, one per key type offered.
+	Keys []SSHHostKey `json:"keys,omitempty"`
 }
 
 // DMARCReportAuthRequest asks the backend to check whether ExternalDomain
