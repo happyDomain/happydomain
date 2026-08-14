@@ -33,12 +33,15 @@ auto-configuration XML — that's the target of the `autoconfig.` and
 | Setting                              | CLI flag / env                                | Default               |
 | ------------------------------------ | --------------------------------------------- | --------------------- |
 | Public happyDomain URL               | `--externalurl` / `HAPPYDOMAIN_EXTERNAL_URL`  | `http://localhost:8081` |
-| Public host for autoconfig endpoints | `--mail-autoconfig-host` / `HAPPYDOMAIN_MAIL_AUTOCONFIG_HOST` | derived from `--externalurl` |
+| Public host for hosted services      | `--service-hosting-host` / `HAPPYDOMAIN_SERVICE_HOSTING_HOST` | derived from `--externalurl` |
 
-If `--mail-autoconfig-host` is left unset, happyDomain uses the host part of
-`--externalurl`. The same hostname must be reachable over HTTPS and able to
-get a valid certificate for `autoconfig.<user-domain>` and
-`autodiscover.<user-domain>` (see the Caddy section below).
+`--service-hosting-host` is shared with [MTA-STS](mta-sts.md). The former
+`--mail-autoconfig-host` is still honoured as a deprecated alias.
+
+If neither is set, happyDomain uses the host part of `--externalurl`. The same
+hostname must be reachable over HTTPS and able to get a valid certificate for
+`autoconfig.<user-domain>` and `autodiscover.<user-domain>` (see the Caddy
+section below).
 
 ## Endpoints exposed by happyDomain
 
@@ -54,9 +57,10 @@ not the proxy (see [reverse-proxy.md](reverse-proxy.md)).
 | GET/POST| `/autodiscover/autodiscover.xml`    | Same, lowercase variant                       |
 | GET     | `/api/caddy/ask`                    | Caddy on-demand TLS validation hook           |
 
-The Caddy hook only authorises certificates for `autoconfig.<X>` /
-`autodiscover.<X>` where `X` is a domain registered in happyDomain *and* has
-the Email Auto-configuration service configured.
+The Caddy hook is shared by every hosted service. For this one, it authorises
+certificates for `autoconfig.<X>` / `autodiscover.<X>` where `X` is a domain
+registered in happyDomain *and* has the Email Auto-configuration service
+configured. It also covers `mta-sts.<X>` for [MTA-STS](mta-sts.md).
 
 ## End-user flow
 
@@ -96,12 +100,12 @@ happydomain.example.com {
     reverse_proxy happydomain:8081
 }
 
-# Catch-all for autoconfig.<X> and autodiscover.<X>.
-# Caddy obtains a certificate on-demand for each new <X> only when the
-# /api/caddy/ask endpoint authorises it.
+# Catch-all for the hosted services: autoconfig.<X>, autodiscover.<X>, and
+# mta-sts.<X>. Caddy obtains a certificate on-demand for each new <X> only
+# when the /api/caddy/ask endpoint authorises it.
 https:// {
-    @autoconfig header_regexp Host ^(?:autoconfig|autodiscover)\.
-    handle @autoconfig {
+    @hosted header_regexp Host ^(?:autoconfig|autodiscover|mta-sts)\.
+    handle @hosted {
         reverse_proxy happydomain:8081
     }
 
@@ -123,7 +127,7 @@ services:
     image: happydomain/happydomain:latest
     environment:
       HAPPYDOMAIN_EXTERNAL_URL: https://happydomain.example.com
-      HAPPYDOMAIN_MAIL_AUTOCONFIG_HOST: happydomain.example.com
+      HAPPYDOMAIN_SERVICE_HOSTING_HOST: happydomain.example.com
     expose:
       - 8081
     volumes:
