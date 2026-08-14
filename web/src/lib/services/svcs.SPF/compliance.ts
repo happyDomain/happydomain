@@ -22,6 +22,8 @@
 import { flattenSPF } from "$lib/api/resolver";
 import { fqdn } from "$lib/dns";
 import {
+    isValidDnsName,
+    normalizeFqdn,
     registerValidators,
     type ComplianceContext,
     type ComplianceIssue,
@@ -106,6 +108,53 @@ function validateIpMechanism(term: ParsedTerm, index: number): ComplianceIssue[]
     }
 
     return issues;
+}
+
+// Mechanisms whose value is a domain the receiver will query.
+const DOMAIN_MECHANISMS = new Set<string>(["include", "exists", "a", "mx", "ptr"]);
+
+/**
+ * The domain an include, a redirect or any other domain-carrying term points
+ * at. A name that cannot be resolved is not a soft failure here: RFC 7208
+ * sec. 7.1 asks verifiers to answer permerror, which voids the whole policy.
+ */
+function validateDomainTarget(mechanism: string, target: string, index: number): ComplianceIssue[] {
+    // Macros are expanded at verification time, so what is written here is not
+    // a name yet. Their own syntax is checked apart.
+    if (target.includes("%")) return [];
+
+    const field = `f[${index}]`;
+    const docUrl = SPF_RFC_URL + "#section-7.1";
+    const domain = normalizeFqdn(target);
+    const labels = domain.split(".");
+
+    // A top label made only of digits is excluded by the grammar, where it
+    // would be indistinguishable from the address literal of an ip4 mechanism.
+    if (!isValidDnsName(domain) || /^[0-9]+$/.test(labels[labels.length - 1])) {
+        return [
+            {
+                id: "spf.invalid-target",
+                severity: "error",
+                params: { mechanism, domain: target },
+                field,
+                docUrl,
+            },
+        ];
+    }
+
+    if (labels.length < 2) {
+        return [
+            {
+                id: "spf.target-not-fqdn",
+                severity: "warning",
+                params: { mechanism, domain: target },
+                field,
+                docUrl,
+            },
+        ];
+    }
+
+    return [];
 }
 
 export function validateSPF(val: SPFValue, _ctx: ComplianceContext): ComplianceIssue[] {
@@ -249,6 +298,16 @@ export function validateSPF(val: SPFValue, _ctx: ComplianceContext): ComplianceI
             });
         } else if (!term.isModifier && (term.name === "ip4" || term.name === "ip6")) {
             issues.push(...validateIpMechanism(term, index));
+        } else if (!term.isModifier && DOMAIN_MECHANISMS.has(term.name) && term.value) {
+            // a and mx carry their dual-CIDR length in the same value; only the
+            // part before that slash is a name. A macro body may itself contain
+            // a slash as a delimiter, so only what follows the last "}" closing
+            // can be the prefix length.
+            const slash = term.value.indexOf("/", term.value.lastIndexOf("}") + 1);
+            const target = slash === -1 ? term.value : term.value.slice(0, slash);
+            if (target !== "") issues.push(...validateDomainTarget(term.name, target, index));
+        } else if (term.isModifier && term.name === "redirect" && term.value) {
+            issues.push(...validateDomainTarget(term.name, term.value, index));
         }
 
         const key = term.raw.toLowerCase();

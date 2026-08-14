@@ -180,6 +180,50 @@ describe("validateSPF", () => {
     });
 });
 
+describe("validateSPF: domain targets", () => {
+    it("accepts the names an SPF record usually points at", () => {
+        const record =
+            "v=spf1 include:_spf.google.com a:mail.example.com mx:example.co.uk " +
+            "exists:_h.example.com redirect=_spf.example.com";
+        expect(validateSPF(parseSPF(record), ctx)).toEqual([]);
+    });
+
+    it("accepts a target left absolute", () => {
+        expect(validateSPF(parseSPF("v=spf1 include:_spf.example.com. -all"), ctx)).toEqual([]);
+    });
+
+    it("flags a target that is not a domain name", () => {
+        expect(ids(validateSPF(parseSPF("v=spf1 include:not*a*domain -all"), ctx))).toContain(
+            "spf.invalid-target",
+        );
+        expect(ids(validateSPF(parseSPF("v=spf1 include:exa..mple.com -all"), ctx))).toContain(
+            "spf.invalid-target",
+        );
+        expect(ids(validateSPF(parseSPF("v=spf1 redirect=192.0.2.1"), ctx))).toContain(
+            "spf.invalid-target",
+        );
+    });
+
+    it("warns on a single label, resolved as a top-level domain", () => {
+        const issues = validateSPF(parseSPF("v=spf1 include:intranet -all"), ctx);
+        expect(ids(issues)).toContain("spf.target-not-fqdn");
+        expect(issues.find((i) => i.id === "spf.target-not-fqdn")?.field).toBe("f[0]");
+    });
+
+    it("checks the name of a dual-CIDR a or mx, not its prefix lengths", () => {
+        expect(validateSPF(parseSPF("v=spf1 a:mail.example.com/24 -all"), ctx)).toEqual([]);
+        expect(validateSPF(parseSPF("v=spf1 mx/24//64 -all"), ctx)).toEqual([]);
+        expect(ids(validateSPF(parseSPF("v=spf1 a:mail..example.com/24 -all"), ctx))).toContain(
+            "spf.invalid-target",
+        );
+    });
+
+    it("leaves a macro-carrying target to the macro checks", () => {
+        const record = "v=spf1 exists:%{i}._spf.example.com -all";
+        expect(ids(validateSPF(parseSPF(record), ctx))).not.toContain("spf.invalid-target");
+    });
+});
+
 describe("validateSPF: qualifiers", () => {
     it("accepts the four qualifiers on a mechanism", () => {
         const record = "v=spf1 +ip4:192.0.2.1 -ip4:198.51.100.1 ~a ?mx -all";

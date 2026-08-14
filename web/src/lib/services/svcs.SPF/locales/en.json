@@ -41,6 +41,14 @@
                 "title": "Approaching the SPF lookup limit ({{count}}/{{max}})",
                 "detail": "Counting include, a, mx, exists, ptr and redirect locally; recursion may push you above the 10-lookup hard limit."
             },
+            "invalid-target": {
+                "title": "'{{domain}}' is not a valid domain name",
+                "detail": "The {{mechanism}} term must point at a domain name made of letters, digits and hyphens, whose last label is not entirely numeric. Verifiers answer permerror on anything else, which voids the whole record."
+            },
+            "target-not-fqdn": {
+                "title": "'{{domain}}' is not a fully qualified name",
+                "detail": "The {{mechanism}} term is resolved as written, without appending the current domain: a single label points at a top-level domain. Write the complete name, e.g. {{domain}}.example.com."
+            },
             "invalid-qualifier": {
                 "title": "Invalid qualifier '{{qualifier}}' on {{term}}",
                 "detail": "A mechanism may only be prefixed by + (pass), - (fail), ~ (softfail) or ? (neutral). Any other character makes the record a permerror."
