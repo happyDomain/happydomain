@@ -8,6 +8,34 @@
             "dname-not-alone": {
                 "title": "A DNAME conflicts with the other records of \"{{subdomain}}\"",
                 "detail": "A DNAME redirects a whole subtree, it cannot coexist with a CNAME at the same name (RFC 6672 sec. 2.4)."
+            },
+            "special-cname-not-alone": {
+                "title": "A CNAME must be alone on \"{{subdomain}}\"",
+                "detail": "Another record already uses this service name. RFC 1034 sec. 3.6.2 forbids any other record next to a CNAME."
+            },
+            "cname-at-apex": {
+                "title": "A CNAME cannot sit at the apex of \"{{domain}}\"",
+                "detail": "The apex always carries the SOA and the NS records of the zone, so a CNAME can never be alone there. Use an ALIAS instead if your provider supports it."
+            },
+            "empty-target": {
+                "title": "The alias has no target",
+                "detail": "Fill in the domain name this alias should point to."
+            },
+            "invalid-target": {
+                "title": "Invalid target \"{{target}}\"",
+                "detail": "An alias target must be a valid hostname, as defined by RFC 1035."
+            },
+            "cname-loop": {
+                "title": "The alias points to itself (\"{{target}}\")",
+                "detail": "A record aliasing its own name never resolves: pick a different target."
+            },
+            "cname-chain": {
+                "title": "The target \"{{target}}\" is itself an alias",
+                "detail": "Chaining aliases makes every lookup slower, and some resolvers refuse to follow the chain. Point this record straight at the final name."
+            },
+            "dangling-target": {
+                "title": "The target \"{{target}}\" holds no record in this zone",
+                "detail": "The alias points inside this zone, to a name that publishes nothing. Check the spelling, or add the records this name should carry."
             }
         }
     },

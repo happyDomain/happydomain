@@ -22,14 +22,114 @@
 import {
     type ComplianceContext,
     type ComplianceIssue,
+    inZoneSubdomain,
+    isCnameOwner,
+    isValidDnsName,
+    isValidHostname,
+    normalizeFqdn,
+    originFqdn,
+    recordFqdn,
     registerValidators,
+    TYPE_CNAME,
 } from "$lib/services/compliance";
 
 const RFC1034 = "https://www.rfc-editor.org/rfc/rfc1034#section-3.6.2";
 const RFC6672 = "https://www.rfc-editor.org/rfc/rfc6672#section-2.4";
 
-const TYPE_CNAME = 5;
 const TYPE_DNAME = 39;
+
+/**
+ * The target lives directly on the record for CNAME and DNAME, and under Data
+ * for the pseudo-types (ALIAS, ANAME, R53_ALIAS, ...), which travel as a
+ * private use record. Same reading as svcs.Alias/editor.svelte.
+ */
+export function aliasTarget(record: Record<string, any> | undefined): string {
+    if (!record) return "";
+    const rdata = record.Data as { Target?: string } | undefined;
+    return ((rdata ? rdata.Target : (record.Target as string)) || "").trim();
+}
+
+interface CnameTargetOptions {
+    /** Path of the target inside the edited value, for inline highlighting. */
+    field: string;
+    follow?: boolean;
+    underscore?: boolean;
+}
+
+/**
+ * Checks a CNAME-like target: it has to be a resolvable name that is neither
+ * the owner itself, nor another alias, nor a name this zone leaves empty.
+ * Shared with svcs.SpecialCNAME, which publishes CNAMEs under _service._proto.
+ *
+ * `follow` tells whether the resolver walks the target as an alias of its own.
+ * It does for a CNAME and a DNAME; for the provider-resolved kinds (ALIAS,
+ * ANAME, R53_ALIAS, ...) the provider flattens the target into addresses, so
+ * neither the chain nor the emptiness of the target is a problem here.
+ *
+ * `underscore` opens the target to the attribute leaves of RFC 8552: a plain
+ * alias points at a host, a SubAlias usually points at another service name.
+ */
+export function cnameTargetIssues(
+    target: string,
+    ownerFqdn: string,
+    ctx: ComplianceContext,
+    { field, follow = true, underscore = false }: CnameTargetOptions,
+): ComplianceIssue[] {
+    const issues: ComplianceIssue[] = [];
+
+    if (target === "") {
+        issues.push({ id: "alias.empty-target", severity: "error", field });
+        return issues;
+    }
+
+    const norm = normalizeFqdn(target);
+    if (!(underscore ? isValidDnsName : isValidHostname)(norm)) {
+        issues.push({
+            id: "alias.invalid-target",
+            severity: "error",
+            params: { target },
+            field,
+        });
+        return issues;
+    }
+
+    if (norm === normalizeFqdn(ownerFqdn)) {
+        issues.push({
+            id: "alias.cname-loop",
+            severity: "error",
+            params: { target: norm },
+            field,
+            docUrl: RFC1034,
+        });
+        return issues;
+    }
+
+    if (!follow) return issues;
+
+    // Only in-zone targets can be inspected; the rest is up to the runtime
+    // checkers.
+    const sub = inZoneSubdomain(norm, originFqdn(ctx));
+    if (sub === null) return issues;
+
+    if (isCnameOwner(ctx, sub)) {
+        issues.push({
+            id: "alias.cname-chain",
+            severity: "warning",
+            params: { target: norm },
+            field,
+            docUrl: RFC1034,
+        });
+    } else if (ctx.findServices(sub).length === 0) {
+        issues.push({
+            id: "alias.dangling-target",
+            severity: "warning",
+            params: { target: norm },
+            field,
+        });
+    }
+
+    return issues;
+}
 
 /**
  * A CNAME must be the only record of its name (RFC 1034 sec. 3.6.2), and a DNAME
@@ -44,8 +144,22 @@ const TYPE_DNAME = 39;
 function aliasSync(raw: Record<string, any>, ctx: ComplianceContext): ComplianceIssue[] {
     const issues: ComplianceIssue[] = [];
 
-    const rrtype = raw?.record?.Hdr?.Rrtype;
-    if (rrtype !== TYPE_CNAME && rrtype !== TYPE_DNAME) return issues;
+    const record = raw?.record as Record<string, any> | undefined;
+    const rrtype = record?.Hdr?.Rrtype;
+    if (rrtype === undefined) return issues;
+
+    const follows = rrtype === TYPE_CNAME || rrtype === TYPE_DNAME;
+
+    // Target checks apply to every kind of alias: even a provider-resolved
+    // ALIAS needs a name that exists and is not itself.
+    issues.push(
+        ...cnameTargetIssues(aliasTarget(record), recordFqdn(record?.Hdr?.Name, ctx), ctx, {
+            field: "record",
+            follow: follows,
+        }),
+    );
+
+    if (!follows) return issues;
 
     const siblings = ctx.findServices(ctx.dn).filter((service) => {
         if (service._svctype !== "svcs.Alias") return true;
@@ -55,6 +169,20 @@ function aliasSync(raw: Record<string, any>, ctx: ComplianceContext): Compliance
     });
 
     if (rrtype === TYPE_CNAME) {
+        // The apex always carries the SOA and the NS of the zone, so a CNAME
+        // can never be alone there. This is exactly what the provider-resolved
+        // kinds are for.
+        const hdrName = record?.Hdr?.Name;
+        if (!ctx.dn && (!hdrName || hdrName === "@")) {
+            issues.push({
+                id: "alias.cname-at-apex",
+                severity: "error",
+                params: { domain: originFqdn(ctx) },
+                field: "record",
+                docUrl: RFC1034,
+            });
+        }
+
         // RFC 1034: nothing else may sit next to a CNAME.
         if (siblings.length > 0) {
             issues.push({

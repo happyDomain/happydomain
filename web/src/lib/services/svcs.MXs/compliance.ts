@@ -23,6 +23,13 @@ import {
     asArray,
     type ComplianceContext,
     type ComplianceIssue,
+    hasAddress,
+    inZoneSubdomain,
+    isCnameOwner,
+    isUint16,
+    isValidHostname,
+    normalizeFqdn,
+    originFqdn,
     registerValidators,
 } from "$lib/services/compliance";
 
@@ -32,32 +39,8 @@ interface MX {
     Hdr?: { Name?: string };
 }
 
-const HOSTNAME_LABEL_RE = /^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/;
 const RFC5321 = "https://www.rfc-editor.org/rfc/rfc5321#section-5.1";
 const RFC7505 = "https://www.rfc-editor.org/rfc/rfc7505";
-
-function normalizeFqdn(name: string): string {
-    return name.replace(/\.+$/, "").toLowerCase();
-}
-
-function isValidHostname(name: string): boolean {
-    if (!name || name.length > 253) return false;
-    const labels = name.split(".");
-    return labels.every((l) => HOSTNAME_LABEL_RE.test(l));
-}
-
-/**
- * Returns the in-zone subdomain (relative to origin) for a target FQDN,
- * or null when the target is outside the edited zone.
- */
-function inZoneSubdomain(target: string, originFqdn: string): string | null {
-    const t = normalizeFqdn(target);
-    const o = normalizeFqdn(originFqdn);
-    if (!o) return null;
-    if (t === o) return "";
-    if (t.endsWith("." + o)) return t.slice(0, -(o.length + 1));
-    return null;
-}
 
 function mxSync(raw: Record<string, any>, ctx: ComplianceContext): ComplianceIssue[] {
     const issues: ComplianceIssue[] = [];
@@ -65,10 +48,11 @@ function mxSync(raw: Record<string, any>, ctx: ComplianceContext): ComplianceIss
 
     if (records.length === 0) return issues;
 
-    const originFqdn: string = (ctx.origin as { domain?: string })?.domain ?? "";
+    const origin = originFqdn(ctx);
 
-    // RFC 7505 null MX: target ".", preference 0, MUST be the sole record.
-    const nullMxes = records.filter((r) => r.Mx?.trim() === "." || r.Mx?.trim() === "");
+    // RFC 7505 null MX: target ".", preference 0, MUST be the sole record. An
+    // empty target is not a null MX, it is a record left without a target.
+    const nullMxes = records.filter((r) => r.Mx?.trim() === ".");
     const hasNullMx = nullMxes.length > 0;
     if (hasNullMx && records.length > 1) {
         issues.push({
@@ -94,8 +78,17 @@ function mxSync(raw: Record<string, any>, ctx: ComplianceContext): ComplianceIss
         const target = (r.Mx ?? "").trim();
         const field = `mx[${idx}]`;
 
-        if (target === "" || target === ".") {
+        if (target === ".") {
             // null MX, validated above.
+            return;
+        }
+
+        if (target === "") {
+            issues.push({
+                id: "mx.empty-target",
+                severity: "error",
+                field,
+            });
             return;
         }
 
@@ -111,12 +104,7 @@ function mxSync(raw: Record<string, any>, ctx: ComplianceContext): ComplianceIss
         }
 
         // Preference is uint16 per RFC 1035.
-        if (
-            typeof r.Preference !== "number" ||
-            !Number.isInteger(r.Preference) ||
-            r.Preference < 0 ||
-            r.Preference > 65535
-        ) {
+        if (!isUint16(r.Preference)) {
             issues.push({
                 id: "mx.invalid-preference",
                 severity: "error",
@@ -139,19 +127,14 @@ function mxSync(raw: Record<string, any>, ctx: ComplianceContext): ComplianceIss
         }
 
         // Cross-zone checks when the target lives inside the edited zone.
-        const sub = inZoneSubdomain(norm, originFqdn);
+        const sub = inZoneSubdomain(norm, origin);
         if (sub === null) return;
 
         // RFC 5321 sec. 5.1: MX target must not be a CNAME. An ALIAS and its
         // kin are fine: the provider resolves them into addresses. So is a
         // DNAME, which redirects the subtree below its owner, not the owner
         // itself.
-        const aliases = ctx.findServices(sub, "svcs.Alias");
-        const cnames = aliases.filter((s) => {
-            const record = (s.Service as Record<string, any> | undefined)?.record;
-            return record?.Hdr?.Rrtype === 5;
-        });
-        if (cnames.length > 0) {
+        if (isCnameOwner(ctx, sub)) {
             issues.push({
                 id: "mx.target-is-cname",
                 severity: "error",
@@ -162,8 +145,7 @@ function mxSync(raw: Record<string, any>, ctx: ComplianceContext): ComplianceIss
         }
 
         // Heads-up when the in-zone target has no A/AAAA published.
-        const servers = ctx.findServices(sub, "abstract.Server");
-        if (servers.length === 0 && aliases.length === 0) {
+        if (!hasAddress(ctx, sub)) {
             issues.push({
                 id: "mx.target-no-address",
                 severity: "warning",
