@@ -111,6 +111,8 @@ export function asArray<T>(raw: unknown): T[] {
 /** RRtype of a CNAME, as carried in the Hdr of an alias record. */
 export const TYPE_CNAME = 5;
 
+// Underscores in the middle of a label resolve fine and show up in real records.
+const DNS_LABEL_RE = /^[A-Za-z0-9]([A-Za-z0-9_-]{0,61}[A-Za-z0-9])?$/;
 const HOSTNAME_LABEL_RE = /^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/;
 
 /** Case-insensitive hexadecimal string test, for fingerprints and digests. */
@@ -178,7 +180,7 @@ export function isValidHostname(name: string): boolean {
  */
 export function isValidDnsName(name: string): boolean {
     if (!name || name.length > 253) return false;
-    return name.split(".").every((l) => HOSTNAME_LABEL_RE.test(l.replace(/^_/, "")));
+    return name.split(".").every((l) => DNS_LABEL_RE.test(l.replace(/^_/, "")));
 }
 
 /**

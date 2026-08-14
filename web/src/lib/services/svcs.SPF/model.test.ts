@@ -180,6 +180,112 @@ describe("validateSPF", () => {
     });
 });
 
+describe("validateSPF: domain targets", () => {
+    it("accepts the names an SPF record usually points at", () => {
+        const record =
+            "v=spf1 include:_spf.google.com a:mail.example.com mx:example.co.uk " +
+            "exists:_h.example.com redirect=_spf.example.com";
+        expect(validateSPF(parseSPF(record), ctx)).toEqual([]);
+    });
+
+    it("accepts a target left absolute", () => {
+        expect(validateSPF(parseSPF("v=spf1 include:_spf.example.com. -all"), ctx)).toEqual([]);
+    });
+
+    it("flags a target that is not a domain name", () => {
+        expect(ids(validateSPF(parseSPF("v=spf1 include:not*a*domain -all"), ctx))).toContain(
+            "spf.invalid-target",
+        );
+        expect(ids(validateSPF(parseSPF("v=spf1 include:exa..mple.com -all"), ctx))).toContain(
+            "spf.invalid-target",
+        );
+        expect(ids(validateSPF(parseSPF("v=spf1 redirect=192.0.2.1"), ctx))).toContain(
+            "spf.invalid-target",
+        );
+    });
+
+    it("warns on a single label, resolved as a top-level domain", () => {
+        const issues = validateSPF(parseSPF("v=spf1 include:intranet -all"), ctx);
+        expect(ids(issues)).toContain("spf.target-not-fqdn");
+        expect(issues.find((i) => i.id === "spf.target-not-fqdn")?.field).toBe("f[0]");
+    });
+
+    it("checks the name of a dual-CIDR a or mx, not its prefix lengths", () => {
+        expect(validateSPF(parseSPF("v=spf1 a:mail.example.com/24 -all"), ctx)).toEqual([]);
+        expect(validateSPF(parseSPF("v=spf1 mx/24//64 -all"), ctx)).toEqual([]);
+        expect(ids(validateSPF(parseSPF("v=spf1 a:mail..example.com/24 -all"), ctx))).toContain(
+            "spf.invalid-target",
+        );
+    });
+
+    it("accepts a target built around a macro", () => {
+        for (const record of [
+            "v=spf1 exists:%{i}._spf.example.com -all",
+            "v=spf1 include:%{d} -all",
+            "v=spf1 redirect=%{d2}.example.com",
+        ]) {
+            const found = ids(validateSPF(parseSPF(record), ctx));
+            expect(found).not.toContain("spf.invalid-target");
+            expect(found).not.toContain("spf.target-not-fqdn");
+        }
+    });
+
+    it("still reads what surrounds a macro as a name", () => {
+        expect(ids(validateSPF(parseSPF("v=spf1 include:%{i}..example.com -all"), ctx))).toContain(
+            "spf.invalid-target",
+        );
+        expect(ids(validateSPF(parseSPF("v=spf1 include:%{d}.*bad -all"), ctx))).toContain(
+            "spf.invalid-target",
+        );
+    });
+
+    it("flags a numeric top label on any domain-carrying term", () => {
+        for (const record of ["v=spf1 include:foo.123 -all", "v=spf1 exists:a.b.4 -all"]) {
+            expect(ids(validateSPF(parseSPF(record), ctx))).toContain("spf.invalid-target");
+        }
+    });
+
+    it("flags labels and names over the DNS limits", () => {
+        const label = "a".repeat(64);
+        expect(
+            ids(validateSPF(parseSPF(`v=spf1 include:${label}.example.com -all`), ctx)),
+        ).toContain("spf.invalid-target");
+        const name = Array.from({ length: 5 }, () => "a".repeat(62)).join(".");
+        expect(ids(validateSPF(parseSPF(`v=spf1 include:${name} -all`), ctx))).toContain(
+            "spf.invalid-target",
+        );
+    });
+
+    it("warns on a single label even when it carries a trailing dot", () => {
+        expect(ids(validateSPF(parseSPF("v=spf1 include:intranet. -all"), ctx))).toContain(
+            "spf.target-not-fqdn",
+        );
+    });
+
+    it("leaves alone a mechanism with no domain, or only a prefix", () => {
+        for (const record of ["v=spf1 a mx ptr -all", "v=spf1 a:/24 -all", "v=spf1 a: -all"]) {
+            const found = ids(validateSPF(parseSPF(record), ctx));
+            expect(found).not.toContain("spf.invalid-target");
+            expect(found).not.toContain("spf.target-not-fqdn");
+        }
+    });
+
+    it("checks the target of a qualified mechanism and of ptr", () => {
+        expect(ids(validateSPF(parseSPF("v=spf1 -include:bad..name -all"), ctx))).toContain(
+            "spf.invalid-target",
+        );
+        expect(ids(validateSPF(parseSPF("v=spf1 ptr:bad..name -all"), ctx))).toContain(
+            "spf.invalid-target",
+        );
+    });
+
+    it("ignores a redirect= left empty", () => {
+        expect(ids(validateSPF(parseSPF("v=spf1 redirect="), ctx))).not.toContain(
+            "spf.invalid-target",
+        );
+    });
+});
+
 describe("validateSPF: qualifiers", () => {
     it("accepts the four qualifiers on a mechanism", () => {
         const record = "v=spf1 +ip4:192.0.2.1 -ip4:198.51.100.1 ~a ?mx -all";

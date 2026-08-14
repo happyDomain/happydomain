@@ -182,6 +182,11 @@ describe("validateSPF: ptr mechanism", () => {
 });
 
 describe("validateSPF: per-term checks", () => {
+    it("accepts an underscore inside a label of a target", () => {
+        const issues = validateSPF(parseSPF("v=spf1 include:foo_bar.example.com -all"), CTX);
+        expect(ids(issues)).not.toContain("spf.invalid-target");
+    });
+
     it("flags an empty term from a trailing separator", () => {
         // A stray trailing ";" survives parseSPF's split (only whitespace is
         // trimmed beforehand), landing as a genuine empty entry in val.f.

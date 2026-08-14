@@ -41,6 +41,14 @@
                 "title": "Limite SPF approchée ({{count}}/{{max}})",
                 "detail": "Comptage local de include, a, mx, exists, ptr et redirect ; la récursion peut faire dépasser la limite stricte de 10 requêtes."
             },
+            "invalid-target": {
+                "title": "« {{domain}} » n'est pas un nom de domaine valide",
+                "detail": "Le terme {{mechanism}} doit désigner un nom de domaine composé de lettres, de chiffres et de tirets, dont le dernier label n'est pas entièrement numérique. Les vérificateurs répondent permerror sur toute autre valeur, ce qui annule l'enregistrement entier."
+            },
+            "target-not-fqdn": {
+                "title": "« {{domain}} » n'est pas un nom pleinement qualifié",
+                "detail": "Le terme {{mechanism}} est résolu tel quel, sans ajout du domaine courant : un label seul désigne un domaine de premier niveau. Écrivez le nom complet, par ex. {{domain}}.example.com."
+            },
             "invalid-qualifier": {
                 "title": "Qualificateur « {{qualifier}} » invalide sur {{term}}",
                 "detail": "Un mécanisme ne peut être préfixé que par + (pass), - (fail), ~ (softfail) ou ? (neutral). Tout autre caractère transforme l'enregistrement en permerror."

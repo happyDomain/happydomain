@@ -29,7 +29,9 @@ Sync:
 - multiple `all` directive, multiple `redirect=`, unknown mechanism, lookup-mechanism without value (error)
 - invalid qualifier prefix, qualifier on a modifier (error)
 - `ip4`/`ip6` without address, address that is not a literal or belongs to the other family, prefix length out of range (error)
+- target that is not a domain name or whose top label is numeric, on `include`, `exists`, `a`, `mx`, `ptr` and `redirect=` (error)
 - `all` not last, `redirect` with `all`, no `all`/`redirect`, `ptr` deprecated, unknown modifier, empty term (warning)
+- single-label target (warning)
 - duplicate mechanism, record > 255 chars (info)
 
 Async (through new `spf-flatten` resolver route):
