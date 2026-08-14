@@ -41,6 +41,22 @@
                 "title": "Approaching the SPF lookup limit ({{count}}/{{max}})",
                 "detail": "Counting include, a, mx, exists, ptr and redirect locally; recursion may push you above the 10-lookup hard limit."
             },
+            "ip-missing-value": {
+                "title": "Mechanism '{{mechanism}}' requires an address",
+                "detail": "ip4 and ip6 must be followed by an address, optionally with a prefix length (e.g. ip4:192.0.2.0/24)."
+            },
+            "invalid-ip": {
+                "title": "'{{address}}' is not a valid {{expected}} address",
+                "detail": "The {{mechanism}} mechanism only accepts a literal address; receivers treat anything else as a permerror and ignore the whole record."
+            },
+            "ip-family-mismatch": {
+                "title": "{{mechanism}} carries an {{found}} address",
+                "detail": "'{{address}}' is an {{found}} address, while {{mechanism}} expects {{expected}}. Use ip4 for IPv4 and ip6 for IPv6."
+            },
+            "invalid-cidr": {
+                "title": "Invalid prefix length /{{prefix}} on {{mechanism}}",
+                "detail": "A {{mechanism}} prefix length must be a number between 0 and {{max}}."
+            },
             "mechanism-missing-value": {
                 "title": "Mechanism '{{mechanism}}' requires a value",
                 "detail": "include, exists and redirect must be followed by a domain name (e.g. include:_spf.example.com)."

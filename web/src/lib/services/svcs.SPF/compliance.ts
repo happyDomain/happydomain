@@ -30,9 +30,12 @@ import {
     KNOWN_MECHANISMS,
     KNOWN_MODIFIERS,
     countLocalLookups,
+    isIPv4,
+    isIPv6,
     parseSPF,
     parseTerm,
     stringifySPF,
+    type ParsedTerm,
     type SPFValue,
 } from "./model";
 
@@ -41,6 +44,69 @@ const SPF_LOOKUP_MAX = 10;
 const SPF_TXT_LENGTH_WARN = 255;
 
 const SPF_RFC_URL = "https://datatracker.ietf.org/doc/html/rfc7208";
+
+const CIDR_LENGTH_RE = /^(0|[1-9][0-9]{0,2})$/;
+
+/**
+ * An ip4/ip6 mechanism is the only one a receiver answers from the record
+ * alone: a typo there silently drops every message from the addresses it was
+ * meant to cover, without a DNS error anywhere to point at it.
+ */
+function validateIpMechanism(term: ParsedTerm, index: number): ComplianceIssue[] {
+    const issues: ComplianceIssue[] = [];
+    const field = `f[${index}]`;
+    const docUrl = SPF_RFC_URL + "#section-5.6";
+    const v6 = term.name === "ip6";
+
+    const value = (term.value ?? "").trim();
+    if (value === "") {
+        issues.push({
+            id: "spf.ip-missing-value",
+            severity: "error",
+            params: { mechanism: term.name },
+            field,
+            docUrl,
+        });
+        return issues;
+    }
+
+    const slash = value.indexOf("/");
+    const address = slash === -1 ? value : value.slice(0, slash);
+    const prefix = slash === -1 ? undefined : value.slice(slash + 1);
+
+    if (!(v6 ? isIPv6(address) : isIPv4(address))) {
+        // Telling apart "not an address" from "an address of the other family"
+        // matters: the second is a copy/paste away from being correct.
+        const swapped = v6 ? isIPv4(address) : isIPv6(address);
+        issues.push({
+            id: swapped ? "spf.ip-family-mismatch" : "spf.invalid-ip",
+            severity: "error",
+            params: {
+                mechanism: term.name,
+                address,
+                expected: v6 ? "IPv6" : "IPv4",
+                found: v6 ? "IPv4" : "IPv6",
+            },
+            field,
+            docUrl,
+        });
+    }
+
+    if (prefix !== undefined) {
+        const max = v6 ? 128 : 32;
+        if (!CIDR_LENGTH_RE.test(prefix) || Number(prefix) > max) {
+            issues.push({
+                id: "spf.invalid-cidr",
+                severity: "error",
+                params: { mechanism: term.name, prefix, max },
+                field,
+                docUrl,
+            });
+        }
+    }
+
+    return issues;
+}
 
 export function validateSPF(val: SPFValue, _ctx: ComplianceContext): ComplianceIssue[] {
     const issues: ComplianceIssue[] = [];
@@ -163,6 +229,8 @@ export function validateSPF(val: SPFValue, _ctx: ComplianceContext): ComplianceI
                 params: { mechanism: term.name },
                 field: `f[${index}]`,
             });
+        } else if (!term.isModifier && (term.name === "ip4" || term.name === "ip6")) {
+            issues.push(...validateIpMechanism(term, index));
         }
 
         const key = term.raw.toLowerCase();
@@ -246,7 +314,9 @@ export async function validateSPFRecursive(
         timeout: "spf.include-resolver-error",
         resolver: "spf.include-resolver-error",
     };
-    const walk = (node: { domain?: string; mechanism?: string; error?: string; children?: any[] } | undefined) => {
+    const walk = (
+        node: { domain?: string; mechanism?: string; error?: string; children?: any[] } | undefined,
+    ) => {
         if (!node) return;
         const err = node.error;
         if (err && err !== "budget" && err !== "depth") {
@@ -266,6 +336,5 @@ export async function validateSPFRecursive(
 
 registerValidators("svcs.SPF", {
     sync: (raw, ctx) => validateSPF(parseSPF(raw?.txt?.Txt ?? ""), ctx),
-    async: (raw, ctx, signal) =>
-        validateSPFRecursive(parseSPF(raw?.txt?.Txt ?? ""), ctx, signal),
+    async: (raw, ctx, signal) => validateSPFRecursive(parseSPF(raw?.txt?.Txt ?? ""), ctx, signal),
 });

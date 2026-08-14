@@ -72,6 +72,59 @@ export const KNOWN_MECHANISMS = new Set<string>([
 // them as warnings.
 export const KNOWN_MODIFIERS = new Set<string>(["redirect", "exp"]);
 
+const IPV4_RE = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+const IPV6_GROUP_RE = /^[0-9A-Fa-f]{1,4}$/;
+
+/**
+ * Dotted-quad, as SPF spells addresses (RFC 7208 sec. 5.6). Leading zeros are
+ * refused: resolvers disagree on whether they mean octal, so an address
+ * carrying them does not match the same hosts everywhere.
+ */
+export function isIPv4(s: string): boolean {
+    const m = IPV4_RE.exec(s);
+    if (!m) return false;
+    return m.slice(1).every((o) => (o.length === 1 || o[0] !== "0") && Number(o) <= 255);
+}
+
+/**
+ * The groups of one side of a "::", or null when one of them is not a group.
+ * An embedded IPv4 (::ffff:192.0.2.1) stands for the last two groups, and is
+ * only accepted at the very end of the address.
+ */
+function ipv6Groups(part: string, allowEmbeddedIPv4: boolean): string[] | null {
+    if (part === "") return [];
+
+    const items = part.split(":");
+    const groups: string[] = [];
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.includes(".")) {
+            if (!allowEmbeddedIPv4 || i !== items.length - 1 || !isIPv4(item)) return null;
+            groups.push("0", "0");
+            continue;
+        }
+        if (!IPV6_GROUP_RE.test(item)) return null;
+        groups.push(item);
+    }
+    return groups;
+}
+
+export function isIPv6(s: string): boolean {
+    const halves = s.split("::");
+    if (halves.length > 2) return false;
+
+    if (halves.length === 1) {
+        const groups = ipv6Groups(s, true);
+        return groups !== null && groups.length === 8;
+    }
+
+    const left = ipv6Groups(halves[0], false);
+    const right = ipv6Groups(halves[1], true);
+    if (left === null || right === null) return false;
+    // "::" stands for at least one omitted group, so both sides never total 8.
+    return left.length + right.length <= 7;
+}
+
 export interface ParsedTerm {
     raw: string;
     qualifier?: "+" | "-" | "~" | "?";
@@ -105,7 +158,11 @@ export function parseTerm(raw: string): ParsedTerm {
     let name = s;
     let value: string | undefined;
 
-    if (eqIdx !== -1 && (colonIdx === -1 || eqIdx < colonIdx) && (slashIdx === -1 || eqIdx < slashIdx)) {
+    if (
+        eqIdx !== -1 &&
+        (colonIdx === -1 || eqIdx < colonIdx) &&
+        (slashIdx === -1 || eqIdx < slashIdx)
+    ) {
         isModifier = qualifier === undefined;
         name = s.slice(0, eqIdx);
         value = s.slice(eqIdx + 1);

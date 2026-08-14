@@ -20,7 +20,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { describe, it, expect } from "vitest";
-import { countLocalLookups, parseSPF, stringifySPF } from "./model";
+import { countLocalLookups, isIPv4, isIPv6, parseSPF, stringifySPF } from "./model";
 import { validateSPF } from "./compliance";
 import type { ComplianceContext } from "$lib/services/compliance";
 import { makeDomain } from "$lib/test-utils/fixtures";
@@ -150,7 +150,9 @@ describe("validateSPF", () => {
     });
 
     it("delegates lookup-budget reporting to the recursive walk", () => {
-        const includes = Array.from({ length: 11 }, (_, i) => `include:i${i}.example.com`).join(" ");
+        const includes = Array.from({ length: 11 }, (_, i) => `include:i${i}.example.com`).join(
+            " ",
+        );
         const issues = validateSPF(parseSPF(`v=spf1 ${includes} -all`), ctx);
         expect(ids(issues)).not.toContain("spf.too-many-lookups");
         expect(ids(issues)).not.toContain("spf.many-lookups");
@@ -175,5 +177,117 @@ describe("validateSPF", () => {
         const issues = validateSPF(parseSPF("v=spf1 -all ip4:1.2.3.4"), ctx);
         const allNotLast = issues.find((i) => i.id === "spf.all-not-last");
         expect(allNotLast?.field).toBe("f[0]");
+    });
+});
+
+describe("isIPv4", () => {
+    it("accepts a dotted quad", () => {
+        expect(isIPv4("192.0.2.1")).toBe(true);
+        expect(isIPv4("0.0.0.0")).toBe(true);
+        expect(isIPv4("255.255.255.255")).toBe(true);
+    });
+
+    it("rejects out of range octets", () => {
+        expect(isIPv4("256.0.2.1")).toBe(false);
+        expect(isIPv4("192.0.2")).toBe(false);
+        expect(isIPv4("192.0.2.1.5")).toBe(false);
+    });
+
+    it("rejects leading zeros, read as octal by some resolvers", () => {
+        expect(isIPv4("192.000.2.1")).toBe(false);
+        expect(isIPv4("010.0.2.1")).toBe(false);
+    });
+
+    it("rejects anything that is not a literal", () => {
+        expect(isIPv4("example.com")).toBe(false);
+        expect(isIPv4("")).toBe(false);
+    });
+});
+
+describe("isIPv6", () => {
+    it("accepts full and compressed forms", () => {
+        expect(isIPv6("2001:db8:0:0:0:0:0:1")).toBe(true);
+        expect(isIPv6("2001:db8::1")).toBe(true);
+        expect(isIPv6("::1")).toBe(true);
+        expect(isIPv6("::")).toBe(true);
+        expect(isIPv6("2001:db8::")).toBe(true);
+    });
+
+    it("accepts an embedded IPv4 at the end", () => {
+        expect(isIPv6("::ffff:192.0.2.1")).toBe(true);
+        expect(isIPv6("64:ff9b::192.0.2.1")).toBe(true);
+        expect(isIPv6("192.0.2.1::1")).toBe(false);
+    });
+
+    it("rejects too many groups or too many ::", () => {
+        expect(isIPv6("2001:db8:0:0:0:0:0:0:1")).toBe(false);
+        expect(isIPv6("2001:db8::1::2")).toBe(false);
+        expect(isIPv6("2001:db8:0:0:0:0:1")).toBe(false);
+    });
+
+    it("rejects invalid groups", () => {
+        expect(isIPv6("2001:db8g::1")).toBe(false);
+        expect(isIPv6("2001:db800a::1")).toBe(false);
+        expect(isIPv6("192.0.2.1")).toBe(false);
+    });
+});
+
+describe("validateSPF: ip4 / ip6", () => {
+    it("accepts addresses with and without a prefix length", () => {
+        const record = "v=spf1 ip4:192.0.2.0/24 ip4:198.51.100.7 ip6:2001:db8::/32 ip6:::1 -all";
+        expect(validateSPF(parseSPF(record), ctx)).toEqual([]);
+    });
+
+    it("flags an address that is not a literal", () => {
+        const issues = validateSPF(parseSPF("v=spf1 ip4:example.com -all"), ctx);
+        expect(ids(issues)).toContain("spf.invalid-ip");
+    });
+
+    it("flags an address of the other family", () => {
+        expect(ids(validateSPF(parseSPF("v=spf1 ip4:2001:db8::1 -all"), ctx))).toContain(
+            "spf.ip-family-mismatch",
+        );
+        expect(ids(validateSPF(parseSPF("v=spf1 ip6:192.0.2.1 -all"), ctx))).toContain(
+            "spf.ip-family-mismatch",
+        );
+    });
+
+    it("flags a prefix length out of range for the family", () => {
+        expect(ids(validateSPF(parseSPF("v=spf1 ip4:192.0.2.0/33 -all"), ctx))).toContain(
+            "spf.invalid-cidr",
+        );
+        expect(ids(validateSPF(parseSPF("v=spf1 ip6:2001:db8::/129 -all"), ctx))).toContain(
+            "spf.invalid-cidr",
+        );
+        expect(ids(validateSPF(parseSPF("v=spf1 ip4:192.0.2.0/ -all"), ctx))).toContain(
+            "spf.invalid-cidr",
+        );
+        expect(ids(validateSPF(parseSPF("v=spf1 ip4:192.0.2.0/24bis -all"), ctx))).toContain(
+            "spf.invalid-cidr",
+        );
+    });
+
+    it("accepts an IPv6 prefix length longer than an IPv4 one", () => {
+        expect(validateSPF(parseSPF("v=spf1 ip6:2001:db8::/128 -all"), ctx)).toEqual([]);
+    });
+
+    it("flags a mechanism left without an address", () => {
+        expect(ids(validateSPF(parseSPF("v=spf1 ip4 -all"), ctx))).toContain(
+            "spf.ip-missing-value",
+        );
+        expect(ids(validateSPF(parseSPF("v=spf1 ip6: -all"), ctx))).toContain(
+            "spf.ip-missing-value",
+        );
+    });
+
+    it("reports the offending term", () => {
+        const issues = validateSPF(parseSPF("v=spf1 ip4:192.0.2.1 ip4:300.0.2.1 -all"), ctx);
+        expect(issues.find((i) => i.id === "spf.invalid-ip")?.field).toBe("f[1]");
+    });
+
+    it("keeps checking qualified mechanisms", () => {
+        expect(ids(validateSPF(parseSPF("v=spf1 -ip4:300.0.2.1 -all"), ctx))).toContain(
+            "spf.invalid-ip",
+        );
     });
 });
