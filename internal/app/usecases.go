@@ -34,6 +34,7 @@ import (
 	domainUC "git.happydns.org/happyDomain/internal/usecase/domain"
 	domainlogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
 	emailAutoconfigUC "git.happydns.org/happyDomain/internal/usecase/emailautoconfig"
+	mtastsUC "git.happydns.org/happyDomain/internal/usecase/mtasts"
 	notifUC "git.happydns.org/happyDomain/internal/usecase/notification"
 	"git.happydns.org/happyDomain/internal/usecase/orchestrator"
 	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
@@ -78,8 +79,8 @@ func (app *App) initUsecases() {
 	app.usecases.domainLog = domainLogService
 
 	// Service hosting: derive the target of the CNAMEs pointing at us
-	// (autoconfig., autodiscover.) from ServiceHostingHost, falling back to
-	// the deprecated MailAutoconfigHost, then to ExternalURL.Host.
+	// (autoconfig., autodiscover., mta-sts.) from ServiceHostingHost, falling
+	// back to the deprecated MailAutoconfigHost, then to ExternalURL.Host.
 	hostingHost := app.cfg.ServiceHostingHost
 	if hostingHost == "" {
 		hostingHost = app.cfg.MailAutoconfigHost
@@ -89,6 +90,7 @@ func (app *App) initUsecases() {
 	}
 	abstract.SetServiceHostingHost(hostingHost)
 	app.usecases.emailAutoconfig = emailAutoconfigUC.NewUsecase(app.store, zoneService.GetZoneUC)
+	app.usecases.mtasts = mtastsUC.NewUsecase(app.store, zoneService.GetZoneUC)
 
 	domainService := domainUC.NewService(
 		app.store,
