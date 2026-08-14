@@ -41,6 +41,14 @@
                 "title": "Limite SPF approchée ({{count}}/{{max}})",
                 "detail": "Comptage local de include, a, mx, exists, ptr et redirect ; la récursion peut faire dépasser la limite stricte de 10 requêtes."
             },
+            "invalid-dual-cidr": {
+                "title": "Longueurs de préfixe « {{cidr}} » malformées sur {{mechanism}}",
+                "detail": "Un mécanisme a ou mx accepte une longueur de préfixe IPv4 après une simple barre oblique et une IPv6 après une double, dans cet ordre : /24, //64 ou /24//64."
+            },
+            "dual-cidr-not-allowed": {
+                "title": "Le mécanisme {{mechanism}} n'accepte pas de longueur de préfixe",
+                "detail": "Seuls a et mx restreignent les adresses qu'ils résolvent par une longueur de préfixe. Ailleurs, la barre oblique fait partie du nom de domaine et le rend invalide."
+            },
             "invalid-macro": {
                 "title": "Macro « {{macro}} » malformée",
                 "detail": "Une macro s'écrit %{lettre}, éventuellement suivie d'un nombre de parties à conserver, d'un « r » pour les inverser et de délimiteurs (ex. %{ir}, %{d2}). Un signe pourcent littéral s'écrit %%."

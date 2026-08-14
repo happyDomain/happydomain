@@ -180,6 +180,99 @@ describe("validateSPF", () => {
     });
 });
 
+describe("validateSPF: dual-CIDR lengths", () => {
+    it("accepts the three shapes of a dual-CIDR", () => {
+        const record = "v=spf1 a/24 mx//64 a:mail.example.com/24//64 mx:example.com -all";
+        expect(validateSPF(parseSPF(record), ctx)).toEqual([]);
+    });
+
+    it("accepts the extreme prefix lengths", () => {
+        expect(validateSPF(parseSPF("v=spf1 a/0//0 mx/32//128 -all"), ctx)).toEqual([]);
+    });
+
+    it("flags a prefix length out of range", () => {
+        expect(ids(validateSPF(parseSPF("v=spf1 a/33 -all"), ctx))).toContain("spf.invalid-cidr");
+        expect(ids(validateSPF(parseSPF("v=spf1 mx//129 -all"), ctx))).toContain(
+            "spf.invalid-cidr",
+        );
+        expect(ids(validateSPF(parseSPF("v=spf1 a/24//129 -all"), ctx))).toContain(
+            "spf.invalid-cidr",
+        );
+    });
+
+    it("flags a malformed dual-CIDR", () => {
+        for (const value of ["a/", "a//", "a/24//", "a///64", "a/24/64", "a/abc", "a/24//64/8"]) {
+            expect(ids(validateSPF(parseSPF(`v=spf1 ${value} -all`), ctx))).toContain(
+                "spf.invalid-dual-cidr",
+            );
+        }
+    });
+
+    it("flags a prefix length on a mechanism that takes none", () => {
+        const issues = validateSPF(parseSPF("v=spf1 include:_spf.example.com/24 -all"), ctx);
+        expect(ids(issues)).toContain("spf.dual-cidr-not-allowed");
+        expect(ids(validateSPF(parseSPF("v=spf1 exists:e.example.com/24 -all"), ctx))).toContain(
+            "spf.dual-cidr-not-allowed",
+        );
+    });
+
+    it("flags a length with leading zeros or too many digits", () => {
+        for (const value of ["a/024", "mx//064", "a/99999"]) {
+            const found = ids(validateSPF(parseSPF(`v=spf1 ${value} -all`), ctx));
+            expect(found).toContain("spf.invalid-cidr");
+            expect(found).not.toContain("spf.invalid-dual-cidr");
+        }
+    });
+
+    it("flags a prefix length on ptr and a lone slash on include", () => {
+        expect(ids(validateSPF(parseSPF("v=spf1 ptr/24 -all"), ctx))).toContain(
+            "spf.dual-cidr-not-allowed",
+        );
+        expect(ids(validateSPF(parseSPF("v=spf1 include:foo.example.com/ -all"), ctx))).toContain(
+            "spf.dual-cidr-not-allowed",
+        );
+    });
+
+    it("keeps checking a qualified mechanism", () => {
+        expect(ids(validateSPF(parseSPF("v=spf1 -a/33 -all"), ctx))).toContain("spf.invalid-cidr");
+    });
+
+    it("reports the family bound that was exceeded", () => {
+        const v4 = validateSPF(parseSPF("v=spf1 a/33 -all"), ctx).find(
+            (i) => i.id === "spf.invalid-cidr",
+        );
+        expect(v4?.params).toEqual({ mechanism: "a", prefix: "33", max: 32 });
+        const v6 = validateSPF(parseSPF("v=spf1 mx//129 -all"), ctx).find(
+            (i) => i.id === "spf.invalid-cidr",
+        );
+        expect(v6?.params).toEqual({ mechanism: "mx", prefix: "129", max: 128 });
+    });
+
+    it("accepts a prefix right after a macro", () => {
+        for (const record of [
+            "v=spf1 a:%{d}.example.com/24 -all",
+            "v=spf1 mx:%{d}.example.com//64 -all",
+            "v=spf1 a:%{d}.example.com/24//64 -all",
+        ]) {
+            expect(validateSPF(parseSPF(record), ctx)).toEqual([]);
+        }
+        expect(ids(validateSPF(parseSPF("v=spf1 a:%{d}.example.com/33 -all"), ctx))).toContain(
+            "spf.invalid-cidr",
+        );
+    });
+
+    it("does not read a macro delimiter as a prefix length", () => {
+        for (const record of [
+            "v=spf1 a:%{i/}.example.com/24 -all",
+            "v=spf1 include:%{i/}.example.com -all",
+        ]) {
+            const found = ids(validateSPF(parseSPF(record), ctx));
+            expect(found).not.toContain("spf.invalid-dual-cidr");
+            expect(found).not.toContain("spf.dual-cidr-not-allowed");
+        }
+    });
+});
+
 describe("validateSPF: macros", () => {
     it("accepts the macros a domain-spec may carry", () => {
         const record =

@@ -182,6 +182,62 @@ function validateDomainTarget(mechanism: string, target: string, index: number):
     return [];
 }
 
+// "/24", "//64" or "/24//64", the two prefix lengths an a or mx mechanism
+// applies to the addresses it resolves.
+const DUAL_CIDR_RE = /^(?:\/([0-9]+))?(?:\/\/([0-9]+))?$/;
+
+/**
+ * The prefix lengths of an a or mx mechanism. Left unchecked, a stray slash
+ * widens or voids the set of hosts the mechanism authorizes, without any of
+ * the DNS lookups it performs failing.
+ */
+function validateDualCidr(term: ParsedTerm, index: number): ComplianceIssue[] {
+    const value = term.value ?? "";
+    const field = `f[${index}]`;
+    const docUrl = SPF_RFC_URL + "#section-5.3";
+
+    const [, cidr] = splitDomainSpec(value);
+    if (cidr === "") return [];
+
+    if (term.name !== "a" && term.name !== "mx") {
+        return [
+            {
+                id: "spf.dual-cidr-not-allowed",
+                severity: "error",
+                params: { mechanism: term.name },
+                field,
+                docUrl,
+            },
+        ];
+    }
+
+    // The shape is checked first, so that "not a dual-CIDR" and "a length out
+    // of range" are reported apart.
+    const lengths = DUAL_CIDR_RE.exec(cidr);
+    if (!lengths) {
+        return [
+            {
+                id: "spf.invalid-dual-cidr",
+                severity: "error",
+                params: { mechanism: term.name, cidr },
+                field,
+                docUrl,
+            },
+        ];
+    }
+
+    const issues: ComplianceIssue[] = [];
+    for (const [prefix, max] of [
+        [lengths[1], 32],
+        [lengths[2], 128],
+    ] as [string | undefined, number][]) {
+        if (prefix === undefined) continue;
+        issues.push(...checkPrefix(term.name, prefix, max, field, docUrl));
+    }
+
+    return issues;
+}
+
 // Terms whose value is a domain-spec, the only place a macro may appear.
 const MACRO_TERMS = new Set<string>([...DOMAIN_MECHANISMS, "redirect", "exp"]);
 
@@ -421,6 +477,7 @@ export function validateSPF(val: SPFValue, _ctx: ComplianceContext): ComplianceI
         } else if (!term.isModifier && DOMAIN_MECHANISMS.has(term.name) && term.value) {
             const [target] = splitDomainSpec(term.value);
             if (target !== "") issues.push(...validateDomainTarget(term.name, target, index));
+            issues.push(...validateDualCidr(term, index));
         } else if (term.isModifier && term.name === "redirect" && term.value) {
             issues.push(...validateDomainTarget(term.name, term.value, index));
         }

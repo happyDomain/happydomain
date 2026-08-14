@@ -31,6 +31,7 @@ Sync:
 - `ip4`/`ip6` without address, address that is not a literal or belongs to the other family, prefix length out of range (error)
 - target that is not a domain name or whose top label is numeric, on `include`, `exists`, `a`, `mx`, `ptr` and `redirect=` (error)
 - malformed macro, unknown macro letter, `c`/`r`/`t` outside an explanation (error)
+- malformed `a`/`mx` dual-CIDR, prefix length on a mechanism taking none (error)
 - `all` not last, `redirect` with `all`, no `all`/`redirect`, `ptr` deprecated, unknown modifier, empty term, single-label target, `%{p}` macro (warning)
 - duplicate mechanism, record > 255 chars (info)
 
