@@ -196,15 +196,17 @@ func (s *EmailAutoConfig) GetRecords(domain string, ttl uint32, origin string) (
 
 // emailautoconfig_analyze reconstructs an EmailAutoConfig from a zone import.
 // It only claims records when both the autoconfig. and autodiscover. CNAMEs
-// are present and point to the same target — that's the unambiguous signal
-// that this domain was previously published with the high-level service.
-// Otherwise it leaves the SRV records for rfc6186_analyze to pick up.
+// are present and point at this happyDomain instance — that's the
+// unambiguous signal that this domain was previously published with the
+// high-level service, as opposed to some unrelated third-party provider using
+// the same naming convention. Otherwise it leaves the SRV records for
+// rfc6186_analyze to pick up.
 func emailautoconfig_analyze(a *svc.Analyzer) error {
 	candidates := map[string]*dns.CNAME{}
 
 	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeCNAME, Prefix: "autoconfig."}) {
 		cname, ok := record.(*dns.CNAME)
-		if !ok {
+		if !ok || !hostingTargetMatches(cname.Target) {
 			continue
 		}
 		domain := strings.TrimPrefix(cname.Header().Name, "autoconfig.")
@@ -212,10 +214,10 @@ func emailautoconfig_analyze(a *svc.Analyzer) error {
 	}
 
 	for domain, autoconfigCNAME := range candidates {
-		// Find a matching autodiscover. CNAME with the same target.
+		// Find a matching autodiscover. CNAME pointing at the same instance.
 		var autodiscoverCNAME *dns.CNAME
 		for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeCNAME, Prefix: "autodiscover." + domain}) {
-			if cname, ok := record.(*dns.CNAME); ok && cname.Header().Name == "autodiscover."+domain && cname.Target == autoconfigCNAME.Target {
+			if cname, ok := record.(*dns.CNAME); ok && cname.Header().Name == "autodiscover."+domain && hostingTargetMatches(cname.Target) {
 				autodiscoverCNAME = cname
 				break
 			}

@@ -55,3 +55,15 @@ func GetServiceHostingHost() string {
 	}
 	return serviceHostingHost + "."
 }
+
+// hostingTargetMatches reports whether a CNAME target actually points at this
+// happyDomain instance. Analyzers must call this before claiming a CNAME as a
+// hosted-service signal: matching on name/shape alone would let a domain
+// using an unrelated third-party host under the same naming convention be
+// misclassified as happyDomain-hosted, even though happyDomain answers
+// nothing there. When no hosting host is configured, nothing can be
+// confirmed as ours, so no target matches.
+func hostingTargetMatches(target string) bool {
+	host := GetServiceHostingHost()
+	return host != "" && strings.EqualFold(strings.TrimSuffix(target, "."), strings.TrimSuffix(host, "."))
+}
