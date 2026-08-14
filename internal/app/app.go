@@ -57,6 +57,7 @@ type Usecases struct {
 	domainInfo       happydns.DomainInfoUsecase
 	domainLog        happydns.DomainLogUsecase
 	emailAutoconfig  happydns.EmailAutoconfigUsecase
+	mtasts           happydns.MTASTSUsecase
 	provider         happydns.ProviderUsecase
 	providerAdmin    happydns.ProviderUsecase
 	providerSpecs    happydns.ProviderSpecsUsecase
