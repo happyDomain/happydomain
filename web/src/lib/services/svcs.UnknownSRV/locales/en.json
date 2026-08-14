@@ -1,4 +1,52 @@
 {
+    "compliance": {
+        "srv": {
+            "invalid-owner": {
+                "title": "\"{{name}}\" is not a valid service name",
+                "detail": "RFC 2782 spells the owner of an SRV record _service._protocol, as in _sip._tcp. Software looking for the service will never find it under any other name."
+            },
+            "unavailable-with-others": {
+                "title": "A target of \".\" cannot coexist with a real one",
+                "detail": "RFC 2782 uses a target of \".\" to say the service is decidedly not available. Either remove it, or make it the only record of the set."
+            },
+            "invalid-target": {
+                "title": "Invalid target \"{{target}}\"",
+                "detail": "The target of an SRV record must be a valid host name, or \".\" to declare the service unavailable."
+            },
+            "invalid-priority": {
+                "title": "Priority \"{{value}}\" is out of range",
+                "detail": "The priority of an SRV record is a 16-bit unsigned integer (0..65535). The lowest one wins."
+            },
+            "invalid-weight": {
+                "title": "Weight \"{{value}}\" is out of range",
+                "detail": "The weight of an SRV record is a 16-bit unsigned integer (0..65535). It shares the load between the records of a same priority."
+            },
+            "invalid-port": {
+                "title": "Port \"{{value}}\" is out of range",
+                "detail": "A port number is a 16-bit unsigned integer (0..65535)."
+            },
+            "port-zero": {
+                "title": "Port 0 on a real target",
+                "detail": "Port 0 is not a port a service can listen on. Use the port of the service, or a target of \".\" to declare it unavailable."
+            },
+            "target-is-cname": {
+                "title": "Target \"{{target}}\" is an alias",
+                "detail": "RFC 2782 requires the target of an SRV record to be a host name, never a CNAME."
+            },
+            "target-no-address": {
+                "title": "Target \"{{target}}\" has no A/AAAA in this zone",
+                "detail": "Add a Server entry for this name, or check that the target FQDN is correct."
+            },
+            "duplicate": {
+                "title": "Duplicate target \"{{target}}\" on port {{port}}",
+                "detail": "The same host and port appear more than once. Keep only one record."
+            },
+            "zero-weight-mixed": {
+                "title": "A weight of 0 next to non-zero ones at priority {{priority}}",
+                "detail": "Within a priority level, the load is shared in proportion to the weights: a record weighing 0 is only ever picked when every other one at that level is unreachable. Give it a weight if you meant it to take a share of the traffic."
+            }
+        }
+    },
     "svcinfo": {
         "svcs": {
             "UnknownSRV": {
