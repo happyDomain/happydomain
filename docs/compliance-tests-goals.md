@@ -27,8 +27,15 @@ Validators come in two layers:
 Sync:
 - missing `v=` or wrong version (error)
 - multiple `all` directive, multiple `redirect=`, unknown mechanism, lookup-mechanism without value (error)
+- invalid qualifier prefix, qualifier on a modifier (error)
+- `ip4`/`ip6` without address, address that is not a literal or belongs to the other family, prefix length out of range (error)
+- target that is not a domain name or whose top label is numeric, on `include`, `exists`, `a`, `mx`, `ptr`, `redirect=` and `exp=` (error)
+- malformed macro, unknown macro letter, `c`/`r`/`t` outside an explanation (error)
+- malformed `a`/`mx` dual-CIDR, prefix length on a mechanism taking none (error)
+- `exp=` without value, multiple `exp=` (error)
 - `all` not last, `redirect` with `all`, no `all`/`redirect`, `ptr` deprecated, unknown modifier, empty term (warning)
-- duplicate mechanism, record > 255 chars (info)
+- single-label target, `%{p}` macro (warning)
+- duplicate mechanism, record > 255 chars, `exp=` on a record that never fails (info)
 
 Async (through new `spf-flatten` resolver route):
 - recursive lookup budget > 10, include loop (error)
