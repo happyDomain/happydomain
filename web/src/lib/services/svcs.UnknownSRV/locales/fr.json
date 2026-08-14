@@ -1,0 +1,50 @@
+{
+    "compliance": {
+        "srv": {
+            "invalid-owner": {
+                "title": "« {{name}} » n'est pas un nom de service valide",
+                "detail": "La RFC 2782 écrit le nom d'un enregistrement SRV sous la forme _service._protocole, comme _sip._tcp. Les logiciels cherchant ce service ne le trouveront sous aucun autre nom."
+            },
+            "unavailable-with-others": {
+                "title": "Une cible « . » ne peut pas cohabiter avec une cible réelle",
+                "detail": "La RFC 2782 utilise une cible « . » pour indiquer que le service n'est délibérément pas disponible. Retirez-la, ou faites-en le seul enregistrement de l'ensemble."
+            },
+            "invalid-target": {
+                "title": "Cible « {{target}} » invalide",
+                "detail": "La cible d'un enregistrement SRV doit être un nom d'hôte valide, ou « . » pour déclarer le service indisponible."
+            },
+            "invalid-priority": {
+                "title": "La priorité « {{value}} » est hors bornes",
+                "detail": "La priorité d'un enregistrement SRV est un entier non signé sur 16 bits (0 à 65535). La plus faible l'emporte."
+            },
+            "invalid-weight": {
+                "title": "Le poids « {{value}} » est hors bornes",
+                "detail": "Le poids d'un enregistrement SRV est un entier non signé sur 16 bits (0 à 65535). Il répartit la charge entre les enregistrements de même priorité."
+            },
+            "invalid-port": {
+                "title": "Le port « {{value}} » est hors bornes",
+                "detail": "Un numéro de port est un entier non signé sur 16 bits (0 à 65535)."
+            },
+            "port-zero": {
+                "title": "Port 0 sur une cible réelle",
+                "detail": "Le port 0 n'est pas un port sur lequel un service peut écouter. Indiquez le port du service, ou une cible « . » pour le déclarer indisponible."
+            },
+            "target-is-cname": {
+                "title": "La cible « {{target}} » est un alias",
+                "detail": "La RFC 2782 impose que la cible d'un enregistrement SRV soit un nom d'hôte, jamais un CNAME."
+            },
+            "target-no-address": {
+                "title": "La cible « {{target}} » n'a pas de A/AAAA dans cette zone",
+                "detail": "Ajoutez une entrée Serveur pour ce nom, ou vérifiez que le FQDN de la cible est correct."
+            },
+            "duplicate": {
+                "title": "Cible « {{target}} » en double sur le port {{port}}",
+                "detail": "Le même hôte et le même port apparaissent plusieurs fois. Ne gardez qu'un seul enregistrement."
+            },
+            "zero-weight-mixed": {
+                "title": "Un poids de 0 à côté de poids non nuls à la priorité {{priority}}",
+                "detail": "Au sein d'une priorité, la charge est répartie proportionnellement aux poids : un enregistrement de poids 0 n'est choisi que lorsque tous les autres de ce niveau sont injoignables. Donnez-lui un poids si vous vouliez qu'il prenne une part du trafic."
+            }
+        }
+    }
+}
