@@ -41,6 +41,14 @@
                 "title": "Approaching the SPF lookup limit ({{count}}/{{max}})",
                 "detail": "Counting include, a, mx, exists, ptr and redirect locally; recursion may push you above the 10-lookup hard limit."
             },
+            "invalid-qualifier": {
+                "title": "Invalid qualifier '{{qualifier}}' on {{term}}",
+                "detail": "A mechanism may only be prefixed by + (pass), - (fail), ~ (softfail) or ? (neutral). Any other character makes the record a permerror."
+            },
+            "qualifier-on-modifier": {
+                "title": "Qualifier '{{qualifier}}' on the {{modifier}}= modifier",
+                "detail": "Qualifiers apply to mechanisms only. Modifiers such as redirect= and exp= never carry one; drop the prefix."
+            },
             "ip-missing-value": {
                 "title": "Mechanism '{{mechanism}}' requires an address",
                 "detail": "ip4 and ip6 must be followed by an address, optionally with a prefix length (e.g. ip4:192.0.2.0/24)."

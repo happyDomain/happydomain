@@ -41,6 +41,14 @@
                 "title": "Limite SPF approchée ({{count}}/{{max}})",
                 "detail": "Comptage local de include, a, mx, exists, ptr et redirect ; la récursion peut faire dépasser la limite stricte de 10 requêtes."
             },
+            "invalid-qualifier": {
+                "title": "Qualificateur « {{qualifier}} » invalide sur {{term}}",
+                "detail": "Un mécanisme ne peut être préfixé que par + (pass), - (fail), ~ (softfail) ou ? (neutral). Tout autre caractère transforme l'enregistrement en permerror."
+            },
+            "qualifier-on-modifier": {
+                "title": "Qualificateur « {{qualifier}} » sur le modificateur {{modifier}}=",
+                "detail": "Les qualificateurs ne s'appliquent qu'aux mécanismes. Les modificateurs comme redirect= et exp= n'en portent jamais ; retirez le préfixe."
+            },
             "ip-missing-value": {
                 "title": "Le mécanisme « {{mechanism}} » requiert une adresse",
                 "detail": "ip4 et ip6 doivent être suivis d'une adresse, éventuellement accompagnée d'une longueur de préfixe (ex. ip4:192.0.2.0/24)."

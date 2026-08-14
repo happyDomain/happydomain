@@ -137,13 +137,27 @@ export interface ParsedTerm {
     isModifier: boolean;
     isAll: boolean;
     consumesLookup: boolean;
+    /**
+     * First character of the term, when it is neither the start of a name nor
+     * one of the four qualifiers. Set for e.g. "!all" or "*include:x".
+     */
+    badQualifier?: string;
+    /**
+     * A name=value term carrying a qualifier. Qualifiers belong to mechanisms
+     * only, so this is never a valid modifier.
+     */
+    qualifiedModifier?: boolean;
 }
 
 export function parseTerm(raw: string): ParsedTerm {
     let s = raw;
     let qualifier: ParsedTerm["qualifier"];
+    let badQualifier: string | undefined;
     if (s.length > 0 && (s[0] === "+" || s[0] === "-" || s[0] === "~" || s[0] === "?")) {
         qualifier = s[0] as ParsedTerm["qualifier"];
+        s = s.slice(1);
+    } else if (s.length > 0 && !/[A-Za-z0-9]/.test(s[0])) {
+        badQualifier = s[0];
         s = s.slice(1);
     }
 
@@ -155,6 +169,7 @@ export function parseTerm(raw: string): ParsedTerm {
     const slashIdx = s.indexOf("/");
 
     let isModifier = false;
+    let qualifiedModifier = false;
     let name = s;
     let value: string | undefined;
 
@@ -164,6 +179,7 @@ export function parseTerm(raw: string): ParsedTerm {
         (slashIdx === -1 || eqIdx < slashIdx)
     ) {
         isModifier = qualifier === undefined;
+        qualifiedModifier = !isModifier;
         name = s.slice(0, eqIdx);
         value = s.slice(eqIdx + 1);
     } else if (colonIdx !== -1) {
@@ -180,7 +196,17 @@ export function parseTerm(raw: string): ParsedTerm {
         (!isModifier && (LOOKUP_MECHANISMS as readonly string[]).includes(name)) ||
         (isModifier && name === "redirect");
 
-    return { raw, qualifier, name, value, isModifier, isAll, consumesLookup };
+    return {
+        raw,
+        qualifier,
+        name,
+        value,
+        isModifier,
+        isAll,
+        consumesLookup,
+        badQualifier,
+        qualifiedModifier,
+    };
 }
 
 export interface SPFLookupBudget {

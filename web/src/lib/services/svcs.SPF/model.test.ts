@@ -180,6 +180,40 @@ describe("validateSPF", () => {
     });
 });
 
+describe("validateSPF: qualifiers", () => {
+    it("accepts the four qualifiers on a mechanism", () => {
+        const record = "v=spf1 +ip4:192.0.2.1 -ip4:198.51.100.1 ~a ?mx -all";
+        expect(validateSPF(parseSPF(record), ctx)).toEqual([]);
+    });
+
+    it("flags a character that is not a qualifier", () => {
+        const issues = validateSPF(parseSPF("v=spf1 !ip4:192.0.2.1 -all"), ctx);
+        expect(ids(issues)).toContain("spf.invalid-qualifier");
+        const issue = issues.find((i) => i.id === "spf.invalid-qualifier");
+        expect(issue?.params).toMatchObject({ qualifier: "!", term: "!ip4:192.0.2.1" });
+        expect(issue?.field).toBe("f[0]");
+    });
+
+    it("does not report the stray character as an unknown mechanism too", () => {
+        const issues = validateSPF(parseSPF("v=spf1 *all"), ctx);
+        expect(ids(issues)).not.toContain("spf.unknown-mechanism");
+    });
+
+    it("flags a qualifier on a modifier", () => {
+        expect(ids(validateSPF(parseSPF("v=spf1 -redirect=foo.com"), ctx))).toContain(
+            "spf.qualifier-on-modifier",
+        );
+        expect(ids(validateSPF(parseSPF("v=spf1 ~exp=why.example.com -all"), ctx))).toContain(
+            "spf.qualifier-on-modifier",
+        );
+    });
+
+    it("leaves unqualified modifiers alone", () => {
+        const issues = validateSPF(parseSPF("v=spf1 redirect=foo.com"), ctx);
+        expect(ids(issues)).not.toContain("spf.qualifier-on-modifier");
+    });
+});
+
 describe("isIPv4", () => {
     it("accepts a dotted quad", () => {
         expect(isIPv4("192.0.2.1")).toBe(true);

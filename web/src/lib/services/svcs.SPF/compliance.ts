@@ -204,6 +204,24 @@ export function validateSPF(val: SPFValue, _ctx: ComplianceContext): ComplianceI
                 severity: "warning",
                 field: `f[${index}]`,
             });
+        } else if (term.badQualifier) {
+            // Only "+", "-", "~" and "?" prefix a mechanism. Anything else is a
+            // stray character that turns the whole record into a permerror.
+            issues.push({
+                id: "spf.invalid-qualifier",
+                severity: "error",
+                params: { qualifier: term.badQualifier, term: term.raw },
+                field: `f[${index}]`,
+                docUrl: SPF_RFC_URL + "#section-4.6.2",
+            });
+        } else if (term.qualifiedModifier && KNOWN_MODIFIERS.has(term.name)) {
+            issues.push({
+                id: "spf.qualifier-on-modifier",
+                severity: "error",
+                params: { qualifier: term.qualifier ?? "", modifier: term.name },
+                field: `f[${index}]`,
+                docUrl: SPF_RFC_URL + "#section-6",
+            });
         } else if (!term.isModifier && !KNOWN_MECHANISMS.has(term.name)) {
             issues.push({
                 id: "spf.unknown-mechanism",
