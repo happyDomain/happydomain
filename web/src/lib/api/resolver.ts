@@ -24,6 +24,7 @@ import {
     postResolverDmarcReportAuth,
     postResolverMtaStsPolicy,
     postResolverSpfFlatten,
+    postResolverSshHostkeys,
 } from "$lib/api-base/sdk.gen";
 import type {
     HappydnsDmarcReportAuthRequest,
@@ -33,6 +34,8 @@ import type {
     HappydnsResolverResponse,
     HappydnsSpfFlattenRequest,
     HappydnsSpfFlattenResponse,
+    HappydnsSshHostKeysRequest,
+    HappydnsSshHostKeysResponse,
 } from "$lib/api-base/types.gen";
 import type { ResolverForm } from "$lib/model/resolver";
 import { unwrapSdkResponse } from "./errors";
@@ -67,6 +70,18 @@ export async function fetchMTAStsPolicy(
             signal,
         }),
     ) as HappydnsMtastsPolicyResponse;
+}
+
+export async function fetchSSHHostKeys(
+    body: HappydnsSshHostKeysRequest,
+    signal?: AbortSignal,
+): Promise<HappydnsSshHostKeysResponse> {
+    return unwrapSdkResponse(
+        await postResolverSshHostkeys({
+            body,
+            signal,
+        }),
+    ) as HappydnsSshHostKeysResponse;
 }
 
 export async function checkDMARCReportAuth(
