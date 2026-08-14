@@ -73,9 +73,16 @@ type Options struct {
 	// ...), when it needs to use complete URL, not only relative parts.
 	ExternalURL url.URL
 
-	// MailAutoconfigHost is the public FQDN that the email auto-configuration
-	// service should target with autoconfig./autodiscover. CNAMEs. When empty,
-	// it falls back to ExternalURL.Host.
+	// ServiceHostingHost is the public FQDN that the services hosted by
+	// happyDomain should target with their CNAMEs: autoconfig./autodiscover.
+	// for the email auto-configuration, mta-sts. for the MTA-STS policy file.
+	// When empty, it falls back to MailAutoconfigHost, then to ExternalURL.Host.
+	ServiceHostingHost string
+
+	// MailAutoconfigHost is the former, email-only name of ServiceHostingHost.
+	//
+	// Deprecated: use ServiceHostingHost instead. Still honoured so existing
+	// deployments keep working.
 	MailAutoconfigHost string
 
 	// JWTSecretKey stores the private key to sign and verify JWT tokens.
