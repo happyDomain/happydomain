@@ -1,0 +1,51 @@
+{
+    "compliance": {
+        "mta_sts": {
+            "hosted-no-policy-host": {
+                "title": "The policy file is not published anywhere",
+                "detail": "MTA-STS needs the policy served over HTTPS at mta-sts.<domain>/.well-known/mta-sts.txt. Enable policy hosting, or publish the file from your own web server and use the plain MTA-STS service instead."
+            },
+            "hosted-wrong-policy-host": {
+                "title": "The policy host is not mta-sts.<domain> (found {{name}})",
+                "detail": "RFC 8461 fixes the policy host name: senders will only look for mta-sts.<domain>."
+            },
+            "hosted-mode-mismatch": {
+                "title": "The served policy is in mode {{served}}, not {{configured}}",
+                "detail": "{{url}} does not match what is configured here. The change may not have been applied to the zone yet, or DNS has not propagated."
+            },
+            "hosted-mx-mismatch": {
+                "title": "The served policy lists different MX hosts",
+                "detail": "{{url}} serves \"{{served}}\" where \"{{configured}}\" is configured here. The change may not have been applied to the zone yet, or DNS has not propagated."
+            }
+        }
+    },
+    "services": {
+        "mta-sts": {
+            "title": "MTA Strict Transport Security",
+            "intro": "Tells other mail servers to only deliver to your domain over authenticated TLS. Beyond the DNS record, the standard needs a policy file served over HTTPS: happyDomain can host it for you.",
+            "policy": "Policy",
+            "mode": "Mode",
+            "mode-testing": "Testing — report failures, still deliver",
+            "mode-enforce": "Enforce — refuse to deliver when TLS fails",
+            "mode-none": "None — withdraw the policy",
+            "max-age": "Max Age",
+            "max-age-desc": "How long (in seconds) senders cache this policy. One week is the recommended minimum; up to one year is allowed.",
+            "mx": "Authorized MX",
+            "mx-desc": "Host names allowed to receive mail for this domain, as found in your MX records. A leading *. matches exactly one label.",
+            "add-mx": "Add an MX host",
+            "hosting": "Policy hosting",
+            "host-policy": "Let happyDomain serve the policy file (mta-sts. CNAME)",
+            "host-policy-desc": "When enabled, happyDomain creates a CNAME for mta-sts.<your-domain> pointing to this happyDomain instance, which serves the policy below over HTTPS. Leave it off if you serve the file from your own web server.",
+            "preview": "Policy file",
+            "preview-empty": "Nothing will be served yet: testing and enforce policies need at least one authorized MX."
+        }
+    },
+    "svcinfo": {
+        "abstract": {
+            "MTASTS": {
+                "name": "MTA-STS (hosted policy)",
+                "description": "Require authenticated TLS for incoming mail, with the RFC 8461 policy file served by happyDomain."
+            }
+        }
+    }
+}
