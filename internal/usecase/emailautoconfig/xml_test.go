@@ -103,18 +103,3 @@ func TestRenderAutodiscoverXML(t *testing.T) {
 		}
 	}
 }
-
-func TestStripDiscoveryPrefix(t *testing.T) {
-	for _, tc := range []struct {
-		in, want string
-	}{
-		{"autoconfig.example.com", "example.com."},
-		{"autodiscover.example.com.", "example.com."},
-		{"example.com", "example.com."},
-		{"www.example.com", "www.example.com."},
-	} {
-		if got := stripDiscoveryPrefix(tc.in); got != tc.want {
-			t.Errorf("stripDiscoveryPrefix(%q) = %q, want %q", tc.in, got, tc.want)
-		}
-	}
-}

@@ -25,120 +25,63 @@
 package emailautoconfig
 
 import (
-	"errors"
 	"strings"
 
-	"github.com/miekg/dns"
-
+	"git.happydns.org/happyDomain/internal/usecase/hostedservice"
 	"git.happydns.org/happyDomain/services/abstract"
-	"git.happydns.org/happyDomain/model"
 )
 
-// DomainFinder looks up Domains by FQDN across all users.
-type DomainFinder interface {
-	FindDomainsByName(fqdn string) ([]*happydns.Domain, error)
-}
-
-// ZoneGetter retrieves a Zone by its identifier.
-type ZoneGetter interface {
-	Get(zoneID happydns.Identifier) (*happydns.Zone, error)
-}
+// discoveryPrefixes are the host names mail clients probe, and the only ones
+// happyDomain answers auto-configuration on.
+var discoveryPrefixes = []string{"autoconfig.", "autodiscover."}
 
 // Usecase implements happydns.EmailAutoconfigUsecase.
 type Usecase struct {
-	domains DomainFinder
-	zones   ZoneGetter
+	store hostedservice.Store
 }
 
 // NewUsecase constructs an Usecase wired to the given storage adapters.
-func NewUsecase(domains DomainFinder, zones ZoneGetter) *Usecase {
-	return &Usecase{domains: domains, zones: zones}
+func NewUsecase(domains hostedservice.DomainFinder, zones hostedservice.ZoneGetter) *Usecase {
+	return &Usecase{store: hostedservice.NewStore(domains, zones)}
 }
 
-// stripDiscoveryPrefix removes a leading "autoconfig." or "autodiscover."
-// from the given FQDN, returning the parent domain. If the prefix is absent,
-// the original FQDN is returned unchanged.
-func stripDiscoveryPrefix(fqdn string) string {
-	fqdn = dns.Fqdn(fqdn)
-	for _, prefix := range []string{"autoconfig.", "autodiscover."} {
-		if strings.HasPrefix(fqdn, prefix) {
-			return fqdn[len(prefix):]
-		}
-	}
-	return fqdn
-}
+// findService returns the EmailAutoConfig service of the domain behind the
+// given FQDN, whose autoconfig./autodiscover. prefix is stripped if present.
+func (uc *Usecase) findService(fqdn string) (*abstract.EmailAutoConfig, string, error) {
+	parent, _ := hostedservice.StripPrefix(fqdn, discoveryPrefixes...)
 
-// findService walks every owner of the given parent domain, loads the latest
-// zone, and returns the first EmailAutoConfig service found at the apex.
-//
-// Returns happydns.ErrNotFound if no domain matches or none has the service.
-func (uc *Usecase) findService(parentFQDN string) (*abstract.EmailAutoConfig, *happydns.Domain, error) {
-	domains, err := uc.domains.FindDomainsByName(parentFQDN)
+	svc, err := hostedservice.FindService[*abstract.EmailAutoConfig](uc.store, parent)
 	if err != nil {
-		return nil, nil, err
+		return nil, "", err
 	}
 
-	for _, d := range domains {
-		if len(d.ZoneHistory) == 0 {
-			continue
-		}
-		zone, err := uc.zones.Get(d.ZoneHistory[0])
-		if err != nil {
-			continue
-		}
-		for _, services := range zone.Services {
-			for _, s := range services {
-				if ec, ok := s.Service.(*abstract.EmailAutoConfig); ok {
-					return ec, d, nil
-				}
-			}
-		}
-	}
-
-	return nil, nil, happydns.ErrNotFound
+	return svc, strings.TrimSuffix(parent, "."), nil
 }
 
 // IsManaged reports whether happyDomain hosts the email auto-configuration
 // for the given FQDN. Used by the Caddy on-demand TLS ask endpoint.
 func (uc *Usecase) IsManaged(fqdn string) (bool, error) {
-	fqdn = dns.Fqdn(fqdn)
-	if !strings.HasPrefix(fqdn, "autoconfig.") && !strings.HasPrefix(fqdn, "autodiscover.") {
-		return false, nil
-	}
-
-	parent := stripDiscoveryPrefix(fqdn)
-	_, _, err := uc.findService(parent)
-	if err != nil {
-		if errors.Is(err, happydns.ErrNotFound) {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
+	return hostedservice.IsManaged[*abstract.EmailAutoConfig](uc.store, fqdn, discoveryPrefixes...)
 }
 
 // MozillaConfig renders the Thunderbird-style XML for the given FQDN.
 // emailAddress is optional and only used for the <emailProvider id=...>
 // attribute when the domain itself isn't enough.
 func (uc *Usecase) MozillaConfig(domainFQDN, emailAddress string) ([]byte, error) {
-	parent := stripDiscoveryPrefix(domainFQDN)
-	svc, _, err := uc.findService(parent)
+	svc, bareDomain, err := uc.findService(domainFQDN)
 	if err != nil {
 		return nil, err
 	}
 
-	bareDomain := strings.TrimSuffix(parent, ".")
 	return RenderMozillaXML(svc, bareDomain, emailAddress)
 }
 
 // AutodiscoverConfig renders the Outlook-style XML for the given FQDN.
 func (uc *Usecase) AutodiscoverConfig(domainFQDN, emailAddress string) ([]byte, error) {
-	parent := stripDiscoveryPrefix(domainFQDN)
-	svc, _, err := uc.findService(parent)
+	svc, bareDomain, err := uc.findService(domainFQDN)
 	if err != nil {
 		return nil, err
 	}
 
-	bareDomain := strings.TrimSuffix(parent, ".")
 	return RenderAutodiscoverXML(svc, bareDomain, emailAddress)
 }
