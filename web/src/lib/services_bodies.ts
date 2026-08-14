@@ -69,6 +69,14 @@ export interface AbstractLibravatarServerBody {
     srv: Array<dnsTypeSRV>;
 }
 
+export interface AbstractMTASTSBody {
+    mode?: string;
+    maxAge?: number;
+    mx?: Array<string>;
+    txt?: dnsTypeTXT;
+    policyCNAME?: dnsTypeCNAME;
+}
+
 export interface AbstractMatrixIMBody {
     records: Array<dnsTypeSRV>;
 }
@@ -216,6 +224,7 @@ export interface ServiceBodies {
     "abstract.KeybaseVerif": AbstractKeybaseVerifBody;
     "abstract.LDAP": AbstractLDAPBody;
     "abstract.LibravatarServer": AbstractLibravatarServerBody;
+    "abstract.MTASTS": AbstractMTASTSBody;
     "abstract.MatrixIM": AbstractMatrixIMBody;
     "abstract.NSOnlyOrigin": AbstractNSOnlyOriginBody;
     "abstract.OpenPGP": AbstractOpenPGPBody;

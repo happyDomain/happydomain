@@ -1,0 +1,50 @@
+{
+    "compliance": {
+        "mta_sts": {
+            "hosted-no-policy-host": {
+                "title": "Le fichier de politique n'est publié nulle part",
+                "detail": "MTA-STS nécessite que la politique soit servie en HTTPS sur mta-sts.<domaine>/.well-known/mta-sts.txt. Activez l'hébergement de la politique, ou publiez le fichier depuis votre propre serveur web et utilisez plutôt le service MTA-STS simple."
+            },
+            "hosted-wrong-policy-host": {
+                "title": "L'hôte de la politique n'est pas mta-sts.<domaine> (trouvé {{name}})",
+                "detail": "La RFC 8461 fixe le nom de l'hôte de la politique : les expéditeurs ne chercheront que mta-sts.<domaine>."
+            },
+            "hosted-mode-mismatch": {
+                "title": "La politique servie est en mode {{served}}, et non {{configured}}",
+                "detail": "{{url}} ne correspond pas à ce qui est configuré ici. La modification n'a peut-être pas encore été appliquée à la zone, ou le DNS n'a pas fini de se propager."
+            },
+            "hosted-mx-mismatch": {
+                "title": "La politique servie liste d'autres serveurs MX",
+                "detail": "{{url}} sert « {{served}} » alors que « {{configured}} » est configuré ici. La modification n'a peut-être pas encore été appliquée à la zone, ou le DNS n'a pas fini de se propager."
+            }
+        }
+    },
+    "services": {
+        "mta-sts": {
+            "title": "MTA Strict Transport Security",
+            "intro": "Demande aux autres serveurs de messagerie de ne délivrer vers votre domaine qu'en TLS authentifié. Au-delà de l'enregistrement DNS, la norme exige un fichier de politique servi en HTTPS : happyDomain peut l'héberger pour vous.",
+            "policy": "Politique",
+            "mode": "Mode",
+            "mode-testing": "Test — signaler les échecs, mais délivrer quand même",
+            "mode-enforce": "Strict — refuser de délivrer si TLS échoue",
+            "mode-none": "Aucun — retirer la politique",
+            "max-age": "Durée de validité",
+            "max-age-desc": "Durée (en secondes) pendant laquelle les expéditeurs gardent cette politique en cache. Une semaine est le minimum recommandé ; un an au maximum.",
+            "mx": "Serveurs MX autorisés",
+            "mx-desc": "Noms d'hôtes autorisés à recevoir le courrier de ce domaine, tels qu'ils figurent dans vos enregistrements MX. Un préfixe *. correspond à exactement un label.",
+            "add-mx": "Ajouter un serveur MX",
+            "hosting": "Hébergement de la politique",
+            "host-policy": "Laisser happyDomain servir le fichier de politique (CNAME mta-sts.)",
+            "host-policy-desc": "Une fois activé, happyDomain crée un CNAME pour mta-sts.<votre-domaine> pointant vers cette instance happyDomain, qui sert la politique ci-dessous en HTTPS. Laissez décoché si vous servez le fichier depuis votre propre serveur web.",
+            "preview": "Fichier de politique"
+        }
+    },
+    "svcinfo": {
+        "abstract": {
+            "MTASTS": {
+                "name": "MTA-STS (politique hébergée)",
+                "description": "Exiger du TLS authentifié pour le courrier entrant, avec le fichier de politique RFC 8461 servi par happyDomain."
+            }
+        }
+    }
+}
