@@ -41,6 +41,22 @@
                 "title": "Limite SPF approchée ({{count}}/{{max}})",
                 "detail": "Comptage local de include, a, mx, exists, ptr et redirect ; la récursion peut faire dépasser la limite stricte de 10 requêtes."
             },
+            "ip-missing-value": {
+                "title": "Le mécanisme « {{mechanism}} » requiert une adresse",
+                "detail": "ip4 et ip6 doivent être suivis d'une adresse, éventuellement accompagnée d'une longueur de préfixe (ex. ip4:192.0.2.0/24)."
+            },
+            "invalid-ip": {
+                "title": "« {{address}} » n'est pas une adresse {{expected}} valide",
+                "detail": "Le mécanisme {{mechanism}} n'accepte qu'une adresse littérale ; les destinataires considèrent toute autre valeur comme une permerror et ignorent l'enregistrement entier."
+            },
+            "ip-family-mismatch": {
+                "title": "{{mechanism}} contient une adresse {{found}}",
+                "detail": "« {{address}} » est une adresse {{found}}, alors que {{mechanism}} attend de l'{{expected}}. Utilisez ip4 pour l'IPv4 et ip6 pour l'IPv6."
+            },
+            "invalid-cidr": {
+                "title": "Longueur de préfixe /{{prefix}} invalide sur {{mechanism}}",
+                "detail": "Une longueur de préfixe {{mechanism}} doit être un nombre compris entre 0 et {{max}}."
+            },
             "mechanism-missing-value": {
                 "title": "Le mécanisme « {{mechanism}} » requiert une valeur",
                 "detail": "include, exists et redirect doivent être suivis d'un nom de domaine (ex. include:_spf.example.com)."

@@ -30,9 +30,12 @@ import {
     KNOWN_MECHANISMS,
     KNOWN_MODIFIERS,
     countLocalLookups,
+    isIPv4,
+    isIPv6,
     parseSPF,
     parseTerm,
     stringifySPF,
+    type ParsedTerm,
     type SPFValue,
 } from "./model";
 
@@ -41,6 +44,78 @@ const SPF_LOOKUP_MAX = 10;
 const SPF_TXT_LENGTH_WARN = 255;
 
 const SPF_RFC_URL = "https://datatracker.ietf.org/doc/html/rfc7208";
+
+const CIDR_LENGTH_RE = /^(0|[1-9][0-9]{0,2})$/;
+
+/** A prefix length is a decimal number without leading zeros, at most `max`. */
+function checkPrefix(
+    mechanism: string,
+    prefix: string,
+    max: number,
+    field: string,
+    docUrl: string,
+): ComplianceIssue[] {
+    if (CIDR_LENGTH_RE.test(prefix) && Number(prefix) <= max) return [];
+    return [
+        {
+            id: "spf.invalid-cidr",
+            severity: "error",
+            params: { mechanism, prefix, max },
+            field,
+            docUrl,
+        },
+    ];
+}
+
+/**
+ * An ip4/ip6 mechanism is the only one a receiver answers from the record
+ * alone, so a typo there has no DNS error to point at.
+ */
+function validateIpMechanism(term: ParsedTerm, index: number): ComplianceIssue[] {
+    const issues: ComplianceIssue[] = [];
+    const field = `f[${index}]`;
+    const docUrl = SPF_RFC_URL + "#section-5.6";
+    const v6 = term.name === "ip6";
+
+    const value = (term.value ?? "").trim();
+    if (value === "") {
+        issues.push({
+            id: "spf.ip-missing-value",
+            severity: "error",
+            params: { mechanism: term.name },
+            field,
+            docUrl,
+        });
+        return issues;
+    }
+
+    const slash = value.indexOf("/");
+    const address = slash === -1 ? value : value.slice(0, slash);
+    const prefix = slash === -1 ? undefined : value.slice(slash + 1);
+
+    if (!(v6 ? isIPv6(address) : isIPv4(address))) {
+        // ip4 and ip6 swapped is the common typo, worth its own message.
+        const swapped = v6 ? isIPv4(address) : isIPv6(address);
+        issues.push({
+            id: swapped ? "spf.ip-family-mismatch" : "spf.invalid-ip",
+            severity: "error",
+            params: {
+                mechanism: term.name,
+                address,
+                expected: v6 ? "IPv6" : "IPv4",
+                found: v6 ? "IPv4" : "IPv6",
+            },
+            field,
+            docUrl,
+        });
+    }
+
+    if (prefix !== undefined) {
+        issues.push(...checkPrefix(term.name, prefix, v6 ? 128 : 32, field, docUrl));
+    }
+
+    return issues;
+}
 
 export function validateSPF(val: SPFValue, _ctx: ComplianceContext): ComplianceIssue[] {
     const issues: ComplianceIssue[] = [];
@@ -163,6 +238,8 @@ export function validateSPF(val: SPFValue, _ctx: ComplianceContext): ComplianceI
                 params: { mechanism: term.name },
                 field: `f[${index}]`,
             });
+        } else if (!term.isModifier && (term.name === "ip4" || term.name === "ip6")) {
+            issues.push(...validateIpMechanism(term, index));
         }
 
         const key = term.raw.toLowerCase();

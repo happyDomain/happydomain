@@ -27,6 +27,7 @@ Validators come in two layers:
 Sync:
 - missing `v=` or wrong version (error)
 - multiple `all` directive, multiple `redirect=`, unknown mechanism, lookup-mechanism without value (error)
+- `ip4`/`ip6` without address, address that is not a literal or belongs to the other family, prefix length out of range (error)
 - `all` not last, `redirect` with `all`, no `all`/`redirect`, `ptr` deprecated, unknown modifier, empty term (warning)
 - duplicate mechanism, record > 255 chars (info)
 
