@@ -1,4 +1,23 @@
 {
+    "sshfp": {
+        "algorithm": "Algorithm",
+        "type": "Fingerprint type",
+        "fingerprint": "Fingerprint",
+        "retrieve": {
+            "description": "Read the host keys straight from the server, instead of copying the fingerprints by hand.",
+            "host": "SSH server",
+            "port": "Port",
+            "action": "Retrieve",
+            "added": "{{count}} fingerprint(s) added.",
+            "nothing-new": "Every fingerprint the server offers is already published here.",
+            "status": {
+                "blocked": "This happyDomain instance is not allowed to reach that address.",
+                "connect-error": "The SSH server could not be reached.",
+                "handshake-error": "The server answered, but not as an SSH server.",
+                "timeout": "The SSH server did not answer in time."
+            }
+        }
+    },
     "svcinfo": {
         "svcs": {
             "SSHFPs": {
