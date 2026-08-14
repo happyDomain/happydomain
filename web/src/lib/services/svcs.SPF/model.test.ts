@@ -180,6 +180,85 @@ describe("validateSPF", () => {
     });
 });
 
+describe("validateSPF: macros", () => {
+    it("accepts the macros a domain-spec may carry", () => {
+        const record =
+            "v=spf1 exists:%{i}._spf.example.com exists:%{ir}.%{v}._spf.example.com " +
+            "exists:%{s2r+-}.example.com include:%{d}.example.com " +
+            "exists:%{l}.%{o}.%{h}.example.com redirect=%{d2}.example.com";
+        expect(validateSPF(parseSPF(record), ctx)).toEqual([]);
+    });
+
+    it("accepts the literal escapes", () => {
+        expect(validateSPF(parseSPF("v=spf1 exists:a%%b%_c%-d.example.com -all"), ctx)).toEqual([]);
+    });
+
+    it("flags a percent sign that opens nothing", () => {
+        const issues = validateSPF(parseSPF("v=spf1 exists:100%.example.com -all"), ctx);
+        expect(ids(issues)).toContain("spf.invalid-macro");
+        expect(issues.find((i) => i.id === "spf.invalid-macro")?.params).toMatchObject({
+            macro: "%.",
+        });
+    });
+
+    it("flags an unterminated macro", () => {
+        expect(
+            ids(validateSPF(parseSPF("v=spf1 exists:%{i._spf.example.com -all"), ctx)),
+        ).toContain("spf.invalid-macro");
+    });
+
+    it("flags a malformed macro body", () => {
+        expect(ids(validateSPF(parseSPF("v=spf1 exists:%{}.example.com -all"), ctx))).toContain(
+            "spf.invalid-macro",
+        );
+        expect(ids(validateSPF(parseSPF("v=spf1 exists:%{i!}.example.com -all"), ctx))).toContain(
+            "spf.invalid-macro",
+        );
+        expect(ids(validateSPF(parseSPF("v=spf1 exists:%{ri}.example.com -all"), ctx))).toContain(
+            "spf.invalid-macro",
+        );
+    });
+
+    it("flags a part count that keeps nothing", () => {
+        expect(ids(validateSPF(parseSPF("v=spf1 exists:%{d0}.example.com -all"), ctx))).toContain(
+            "spf.invalid-macro",
+        );
+        expect(ids(validateSPF(parseSPF("v=spf1 exists:%{d02}.example.com -all"), ctx))).toContain(
+            "spf.invalid-macro",
+        );
+    });
+
+    it("flags an unknown macro letter", () => {
+        const issues = validateSPF(parseSPF("v=spf1 exists:%{z}.example.com -all"), ctx);
+        expect(ids(issues)).toContain("spf.unknown-macro-letter");
+        expect(issues.find((i) => i.id === "spf.unknown-macro-letter")?.params).toMatchObject({
+            letter: "z",
+        });
+    });
+
+    it("flags the letters reserved for explanations", () => {
+        for (const letter of ["c", "r", "t"]) {
+            const record = `v=spf1 exists:%{${letter}}.example.com -all`;
+            expect(ids(validateSPF(parseSPF(record), ctx))).toContain("spf.macro-explanation-only");
+        }
+    });
+
+    it("warns on the reverse lookup macro", () => {
+        expect(ids(validateSPF(parseSPF("v=spf1 exists:%{p}.example.com -all"), ctx))).toContain(
+            "spf.macro-ptr-discouraged",
+        );
+    });
+
+    it("accepts uppercase macros, which URL-escape their expansion", () => {
+        expect(validateSPF(parseSPF("v=spf1 exists:%{IR}.example.com -all"), ctx)).toEqual([]);
+    });
+
+    it("leaves a term that cannot carry a macro alone", () => {
+        const issues = validateSPF(parseSPF("v=spf1 ip4:%{i} -all"), ctx);
+        expect(ids(issues)).toEqual(["spf.invalid-ip"]);
+    });
+});
+
 describe("validateSPF: domain targets", () => {
     it("accepts the names an SPF record usually points at", () => {
         const record =

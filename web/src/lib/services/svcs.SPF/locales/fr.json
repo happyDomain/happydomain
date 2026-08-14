@@ -41,6 +41,22 @@
                 "title": "Limite SPF approchée ({{count}}/{{max}})",
                 "detail": "Comptage local de include, a, mx, exists, ptr et redirect ; la récursion peut faire dépasser la limite stricte de 10 requêtes."
             },
+            "invalid-macro": {
+                "title": "Macro « {{macro}} » malformée",
+                "detail": "Une macro s'écrit %{lettre}, éventuellement suivie d'un nombre de parties à conserver, d'un « r » pour les inverser et de délimiteurs (ex. %{ir}, %{d2}). Un signe pourcent littéral s'écrit %%."
+            },
+            "unknown-macro-letter": {
+                "title": "Lettre de macro « {{letter}} » inconnue dans {{macro}}",
+                "detail": "La RFC 7208 sec. 7.1 définit s (expéditeur), l (partie locale), o (domaine de l'expéditeur), d (domaine vérifié), i (adresse du client), p (nom du client), h (HELO) et v. Toute autre lettre transforme l'enregistrement en permerror."
+            },
+            "macro-explanation-only": {
+                "title": "La macro « {{macro}} » n'est disponible que dans une explication",
+                "detail": "Les lettres c, r et t décrivent la vérification elle-même et ne peuvent être utilisées que dans le texte désigné par un modificateur exp=, pas dans le domaine de {{mechanism}}."
+            },
+            "macro-ptr-discouraged": {
+                "title": "La macro « {{macro}} » repose sur une résolution inverse",
+                "detail": "%{p} force le vérificateur à résoudre l'adresse du client à l'envers, ce qui est lent, aisément falsifiable et déconseillé par la RFC 7208 sec. 7.3. Préférez %{i}."
+            },
             "invalid-target": {
                 "title": "« {{domain}} » n'est pas un nom de domaine valide",
                 "detail": "Le terme {{mechanism}} doit désigner un nom de domaine composé de lettres, de chiffres et de tirets, dont le dernier label n'est pas entièrement numérique. Les vérificateurs répondent permerror sur toute autre valeur, ce qui annule l'enregistrement entier."
