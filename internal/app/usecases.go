@@ -77,13 +77,17 @@ func (app *App) initUsecases() {
 	)
 	app.usecases.domainLog = domainLogService
 
-	// Email auto-configuration: derive the autoconfig CNAME target from
-	// MailAutoconfigHost (if set) or fall back to ExternalURL.Host.
-	autoconfigHost := app.cfg.MailAutoconfigHost
-	if autoconfigHost == "" {
-		autoconfigHost = app.cfg.ExternalURL.Hostname()
+	// Service hosting: derive the target of the CNAMEs pointing at us
+	// (autoconfig., autodiscover.) from ServiceHostingHost, falling back to
+	// the deprecated MailAutoconfigHost, then to ExternalURL.Host.
+	hostingHost := app.cfg.ServiceHostingHost
+	if hostingHost == "" {
+		hostingHost = app.cfg.MailAutoconfigHost
 	}
-	abstract.SetAutoconfigHost(autoconfigHost)
+	if hostingHost == "" {
+		hostingHost = app.cfg.ExternalURL.Hostname()
+	}
+	abstract.SetServiceHostingHost(hostingHost)
 	app.usecases.emailAutoconfig = emailAutoconfigUC.NewUsecase(app.store, zoneService.GetZoneUC)
 
 	domainService := domainUC.NewService(

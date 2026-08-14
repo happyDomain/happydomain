@@ -24,40 +24,12 @@ package abstract
 import (
 	"fmt"
 	"strings"
-	"sync"
 
 	"github.com/miekg/dns"
 
 	svc "git.happydns.org/happyDomain/internal/serviceanalyzer"
 	"git.happydns.org/happyDomain/model"
 )
-
-// autoconfigHostMu guards autoconfigHost. The host is set once at app
-// startup, but tests may rewrite it.
-var (
-	autoconfigHostMu sync.RWMutex
-	autoconfigHost   string
-)
-
-// SetAutoconfigHost configures the FQDN that autoconfig.<domain> and
-// autodiscover.<domain> CNAMEs should point to. Called by the app at startup
-// from the resolved Options.MailAutoconfigHost (or ExternalURL.Host).
-func SetAutoconfigHost(host string) {
-	autoconfigHostMu.Lock()
-	defer autoconfigHostMu.Unlock()
-	autoconfigHost = strings.TrimSuffix(host, ".")
-}
-
-// GetAutoconfigHost returns the configured autoconfig FQDN, with a trailing
-// dot. Empty string when no host is configured.
-func GetAutoconfigHost() string {
-	autoconfigHostMu.RLock()
-	defer autoconfigHostMu.RUnlock()
-	if autoconfigHost == "" {
-		return ""
-	}
-	return autoconfigHost + "."
-}
 
 // EmailAutoConfig publishes the three de-facto mail-client auto-configuration
 // standards in one shot:
