@@ -81,3 +81,73 @@ Sync:
 - wrong owner name, missing/invalid selector, invalid `v=`, missing `l=` (outside declination), `l=` or `a=` not HTTPS (error)
 - DMARC policy is `none` everywhere, no DMARC in zone, `l=` not `.svg`, `e=` not HTTPS (warning)
 - declination detected, missing VMC `a=`, `a=` not `.pem` (info)
+
+### For sale (`svcs.ForSale`)
+
+Sync:
+- wrong owner name, missing `v=FORSALE1;`, content that is not a tag-value pair, several pairs in one record, duplicated pair, empty or over-long value, invalid price, invalid URI (error)
+- unknown tag, unusual URI scheme, TTL above an hour, `_for-sale` records disagreeing on their TTL (warning)
+- the domain is announced for sale without any detail (info)
+
+### Aliases (`svcs.Alias`, `svcs.SpecialCNAME`)
+
+Sync:
+- CNAME at the apex, CNAME sharing its name with another record, DNAME conflicting with a CNAME at the same name (error)
+- empty target, syntactically invalid target, record aliasing its own name (error)
+- in-zone target that is itself an alias, in-zone target publishing nothing (warning)
+
+The target checks apply to every kind of alias, but only a CNAME and a DNAME
+are walked: the provider-resolved kinds (ALIAS, ANAME, R53_ALIAS, ...) are
+flattened into addresses, so neither the chain nor an empty target concerns
+them. `svcs.SpecialCNAME` shares those checks, with RFC 8552 underscore labels
+allowed in the target, and keys its coexistence rule on the `_service._proto`
+name it carries rather than on the subdomain it is attached to.
+
+### Delegation (`abstract.Delegation`)
+
+Sync, name servers:
+- no NS at all, empty or invalid target, target that is a CNAME (RFC 2181 sec. 10.3) (error)
+- target inside the delegated subtree with no glue published in the parent zone (error)
+- single name server, duplicate target, in-zone target outside the subtree with no A/AAAA (warning)
+
+Sync, DS records:
+- DS without any NS, unknown digest type, key tag out of the uint16 range, digest whose length or alphabet does not match its digest type (error)
+- SHA-1 digest, algorithm deprecated by RFC 8624, duplicate DS (warning)
+
+### SRV (`svcs.UnknownSRV` and the SRV-based abstract services)
+
+The checks live in `$lib/services/srv-compliance` and are registered by every
+service built on SRV records: `svcs.UnknownSRV`, `abstract.RFC6186`,
+`abstract.LibravatarServer`, `abstract.SIP`, `abstract.XMPP`, `abstract.LDAP`,
+`abstract.MatrixIM`, `abstract.CalDAV`, `abstract.CardDAV` and
+`abstract.Kerberos`, each naming the body fields to read. Records are grouped
+by owner name first, so two sets of a same service stay independent.
+
+Sync:
+- owner not spelled `_service._protocol`, target of `.` next to a real one, invalid target, priority/weight/port outside the uint16 range, port 0 on a real target, target that is a CNAME (error)
+- duplicate host and port, in-zone target with no A/AAAA (warning)
+- weight of 0 next to non-zero ones at the same priority (info)
+
+### PTR (`svcs.PTR`)
+
+Sync:
+- empty or invalid target, target that is a CNAME (error)
+- reverse name carrying other records, owner labels that cannot be read as an address in reverse (warning)
+- target left relative, PTR published outside of any reverse tree (info)
+
+### SSHFP (`svcs.SSHFPs`)
+
+Sync:
+- unknown key algorithm or fingerprint type, non-hexadecimal fingerprint, fingerprint whose length does not match its type, owner name that is a CNAME (error)
+- key published with SHA-1 only, DSA key, duplicate, owner with no A/AAAA in the zone (warning)
+- service publishing nothing yet (info)
+
+RFC 4255 sec. 5 only trusts these records under DNSSEC, but neither the zone
+nor the domain carries a signing state to key a message off, so nothing is
+raised about it.
+
+The editor also fills the fingerprints in from the server itself, through
+`POST /api/resolver/ssh-hostkeys`. Unlike the other resolver routes, that one
+is authenticated and rate limited: it opens a TCP connection to a host and a
+port the caller picks, which netguard restricts to globally routable addresses
+but which would still make a port prober out of an anonymous endpoint.
