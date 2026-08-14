@@ -22,33 +22,35 @@
 package route
 
 import (
+	"net/http"
+	"time"
+
 	"github.com/gin-gonic/gin"
 
-	"git.happydns.org/happyDomain/internal/api/controller"
+	ratelimit "github.com/JGLTechnologies/gin-rate-limit"
+
+	"git.happydns.org/happyDomain/internal/api/middleware"
 	happydns "git.happydns.org/happyDomain/model"
 )
 
-// DeclareEmailAutoconfigRoutes wires the public HTTP endpoints for mail-client
-// auto-configuration: the well-known XML paths dictated by the standards
-// (Mozilla and Microsoft).
-func DeclareEmailAutoconfigRoutes(baseRoutes *gin.RouterGroup, rl gin.HandlerFunc, uc happydns.EmailAutoconfigUsecase) {
-	if uc == nil {
-		return
-	}
+// perMinuteRateLimiter builds a per-client-IP limiter allowing limit requests
+// per minute.
+//
+// It keys on middleware.ClientKey, which honours -trusted-proxy: these
+// endpoints are meant to sit behind a reverse proxy, and without that the
+// whole Internet would share the proxy's budget.
+func perMinuteRateLimiter(limit uint) gin.HandlerFunc {
+	store := ratelimit.InMemoryStore(&ratelimit.InMemoryOptions{
+		Rate:  time.Minute,
+		Limit: limit,
+	})
 
-	ctrl := controller.NewEmailAutoconfigController(uc)
-
-	// Mozilla Autoconfig: clients fetch GET https://autoconfig.<domain>/mail/config-v1.1.xml
-	baseRoutes.GET("/mail/config-v1.1.xml", rl, ctrl.MozillaAutoconfig)
-
-	// Microsoft Autodiscover: Outlook hits both GET and POST, with two
-	// common spellings of the path.
-	for _, path := range []string{
-		"/Autodiscover/Autodiscover.xml",
-		"/autodiscover/autodiscover.xml",
-		"/AutoDiscover/AutoDiscover.xml",
-	} {
-		baseRoutes.GET(path, rl, ctrl.MSAutodiscover)
-		baseRoutes.POST(path, rl, ctrl.MSAutodiscover)
-	}
+	return ratelimit.RateLimiter(store, &ratelimit.Options{
+		ErrorHandler: func(c *gin.Context, info ratelimit.Info) {
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, happydns.ErrorResponse{
+				Message: "Too many requests. Please try again later.",
+			})
+		},
+		KeyFunc: middleware.ClientKey,
+	})
 }

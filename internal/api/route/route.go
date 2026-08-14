@@ -139,8 +139,14 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 	auc := DeclareAuthUserRoutes(apiRoutes, dep.AuthUser, lc)
 
 	DeclareDomainInfoRoutes(apiRoutes.Group("/domaininfo/:domain", perClientRateLimiter(10)), dep.DomainInfo)
-	DeclareEmailAutoconfigRoutes(baseRoutes, apiRoutes, dep.EmailAutoconfig)
 	DeclareFaviconRoutes(apiRoutes.Group("/favicon", perClientRateLimiter(60)), dep.FaviconService)
+
+	// The endpoints serving content for the domains happyDomain hosts are
+	// public and unauthenticated, so they share a single per-client budget.
+	hostingRL := perMinuteRateLimiter(30)
+	DeclareEmailAutoconfigRoutes(baseRoutes, hostingRL, dep.EmailAutoconfig)
+	DeclareCaddyRoutes(apiRoutes, hostingRL, dep.EmailAutoconfig)
+
 	DeclareProviderSpecsRoutes(apiRoutes, dep.ProviderSpecs)
 	DeclareRegistrationRoutes(apiRoutes, dep.AuthUser, dep.CaptchaVerifier)
 	DeclareResolverRoutes(apiRoutes, dep.Resolver)
