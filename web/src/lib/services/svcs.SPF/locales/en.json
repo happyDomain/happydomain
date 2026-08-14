@@ -41,6 +41,22 @@
                 "title": "Approaching the SPF lookup limit ({{count}}/{{max}})",
                 "detail": "Counting include, a, mx, exists, ptr and redirect locally; recursion may push you above the 10-lookup hard limit."
             },
+            "invalid-macro": {
+                "title": "Malformed macro '{{macro}}'",
+                "detail": "A macro is written %{letter}, optionally followed by a number of parts to keep, an 'r' to reverse them and delimiters (e.g. %{ir}, %{d2}). A literal percent sign is written %%."
+            },
+            "unknown-macro-letter": {
+                "title": "Unknown macro letter '{{letter}}' in {{macro}}",
+                "detail": "RFC 7208 sec. 7.1 defines s (sender), l (local part), o (sender domain), d (checked domain), i (client address), p (client name), h (HELO) and v. Anything else makes the record a permerror."
+            },
+            "macro-explanation-only": {
+                "title": "Macro '{{macro}}' is only available in an explanation",
+                "detail": "The letters c, r and t describe the check itself and may only be used in the text an exp= modifier points at, not in the domain of {{mechanism}}."
+            },
+            "macro-ptr-discouraged": {
+                "title": "Macro '{{macro}}' relies on a reverse lookup",
+                "detail": "%{p} makes the verifier resolve the client address backwards, which is slow, easily spoofed, and discouraged by RFC 7208 sec. 7.3. Prefer %{i}."
+            },
             "invalid-target": {
                 "title": "'{{domain}}' is not a valid domain name",
                 "detail": "The {{mechanism}} term must point at a domain name made of letters, digits and hyphens, whose last label is not entirely numeric. Verifiers answer permerror on anything else, which voids the whole record."

@@ -187,6 +187,12 @@ describe("validateSPF: per-term checks", () => {
         expect(ids(issues)).not.toContain("spf.invalid-target");
     });
 
+    it("reports a malformed macro in a target once, as a macro error", () => {
+        const issues = validateSPF(parseSPF("v=spf1 include:%{d -all"), CTX);
+        expect(ids(issues)).toContain("spf.invalid-macro");
+        expect(ids(issues)).not.toContain("spf.invalid-target");
+    });
+
     it("flags an empty term from a trailing separator", () => {
         // A stray trailing ";" survives parseSPF's split (only whitespace is
         // trimmed beforehand), landing as a genuine empty entry in val.f.

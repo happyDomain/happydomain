@@ -148,6 +148,10 @@ function validateDomainTarget(mechanism: string, target: string, index: number):
     const domain = normalizeFqdn(target).replace(/%\{[^}]*\}|%[%_-]/g, "m");
     const labels = domain.split(".");
 
+    // A "%" left after the replacement is a malformed macro, which
+    // validateMacroString reports with a better explanation than a bad name.
+    if (domain.includes("%")) return [];
+
     // A top label made only of digits is excluded by the grammar, where it
     // would be indistinguishable from the address literal of an ip4 mechanism.
     if (!isValidDnsName(domain) || (!hasMacro && /^[0-9]+$/.test(labels[labels.length - 1]))) {
@@ -176,6 +180,101 @@ function validateDomainTarget(mechanism: string, target: string, index: number):
     }
 
     return [];
+}
+
+// Terms whose value is a domain-spec, the only place a macro may appear.
+const MACRO_TERMS = new Set<string>([...DOMAIN_MECHANISMS, "redirect", "exp"]);
+
+// %{ letter transformers delimiters }, per RFC 7208 sec. 7.1.
+const MACRO_BODY_RE = /^([A-Za-z])([0-9]*)([rR]?)([-.+,/_=]*)$/;
+
+const MACRO_LETTERS = "slodiphcrtv";
+// c, r and t only make sense in the explanation text, never in a domain-spec.
+const EXPLANATION_ONLY_LETTERS = "crt";
+
+/**
+ * Macros are expanded by the verifier, so a malformed one is only ever seen by
+ * the remote side, as a permerror.
+ */
+function validateMacroString(mechanism: string, value: string, index: number): ComplianceIssue[] {
+    const issues: ComplianceIssue[] = [];
+    const field = `f[${index}]`;
+    const docUrl = SPF_RFC_URL + "#section-7.1";
+    const invalid = (macro: string) =>
+        issues.push({
+            id: "spf.invalid-macro",
+            severity: "error",
+            params: { mechanism, macro },
+            field,
+            docUrl,
+        });
+
+    for (let i = 0; i < value.length; i++) {
+        if (value[i] !== "%") continue;
+
+        const next = value[i + 1];
+        // %% %_ and %- stand for a literal percent, a space and a URL-escaped
+        // space; everything else must open a macro.
+        if (next === "%" || next === "_" || next === "-") {
+            i++;
+            continue;
+        }
+        if (next !== "{") {
+            invalid(value.slice(i, i + 2));
+            continue;
+        }
+
+        const close = value.indexOf("}", i);
+        if (close === -1) {
+            invalid(value.slice(i));
+            break;
+        }
+
+        const macro = value.slice(i, close + 1);
+        const body = MACRO_BODY_RE.exec(value.slice(i + 2, close));
+        i = close;
+
+        if (!body) {
+            invalid(macro);
+            continue;
+        }
+
+        // The optional digits say how many right-hand parts to keep, so zero
+        // parts, or a count written with a leading zero, means nothing.
+        if (body[2] !== "" && (Number(body[2]) === 0 || body[2][0] === "0")) {
+            invalid(macro);
+            continue;
+        }
+
+        const letter = body[1].toLowerCase();
+        if (!MACRO_LETTERS.includes(letter)) {
+            issues.push({
+                id: "spf.unknown-macro-letter",
+                severity: "error",
+                params: { mechanism, macro, letter: body[1] },
+                field,
+                docUrl,
+            });
+        } else if (EXPLANATION_ONLY_LETTERS.includes(letter)) {
+            issues.push({
+                id: "spf.macro-explanation-only",
+                severity: "error",
+                params: { mechanism, macro, letter },
+                field,
+                docUrl,
+            });
+        } else if (letter === "p") {
+            issues.push({
+                id: "spf.macro-ptr-discouraged",
+                severity: "warning",
+                params: { mechanism, macro },
+                field,
+                docUrl: SPF_RFC_URL + "#section-7.3",
+            });
+        }
+    }
+
+    return issues;
 }
 
 export function validateSPF(val: SPFValue, _ctx: ComplianceContext): ComplianceIssue[] {
@@ -324,6 +423,12 @@ export function validateSPF(val: SPFValue, _ctx: ComplianceContext): ComplianceI
             if (target !== "") issues.push(...validateDomainTarget(term.name, target, index));
         } else if (term.isModifier && term.name === "redirect" && term.value) {
             issues.push(...validateDomainTarget(term.name, term.value, index));
+        }
+
+        // Macros live inside the value the branches above left as opaque, so
+        // they are checked on their own rather than as part of the chain.
+        if (term.value?.includes("%") && MACRO_TERMS.has(term.name)) {
+            issues.push(...validateMacroString(term.name, term.value, index));
         }
 
         const key = term.raw.toLowerCase();
