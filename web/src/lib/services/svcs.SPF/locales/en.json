@@ -41,6 +41,18 @@
                 "title": "Approaching the SPF lookup limit ({{count}}/{{max}})",
                 "detail": "Counting include, a, mx, exists, ptr and redirect locally; recursion may push you above the 10-lookup hard limit."
             },
+            "exp-missing-value": {
+                "title": "The exp= modifier has no value",
+                "detail": "exp= must name the domain of a TXT record holding the explanation, e.g. exp=why.example.com. It is not the message itself."
+            },
+            "multiple-exp": {
+                "title": "Multiple exp= modifiers",
+                "detail": "Only one exp modifier is allowed per SPF record; a second one makes it a permerror."
+            },
+            "exp-without-fail": {
+                "title": "exp= on a record that never fails",
+                "detail": "The explanation is only sent back when a check fails, which needs a mechanism qualified with '-' (e.g. -all). As written, nobody will read it."
+            },
             "invalid-dual-cidr": {
                 "title": "Malformed prefix lengths '{{cidr}}' on {{mechanism}}",
                 "detail": "An a or mx mechanism takes an IPv4 prefix length after a single slash and an IPv6 one after a double slash, in that order: /24, //64 or /24//64."

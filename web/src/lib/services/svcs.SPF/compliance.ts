@@ -360,6 +360,7 @@ export function validateSPF(val: SPFValue, _ctx: ComplianceContext): ComplianceI
     const allTerms = terms.filter((t) => t.term.isAll);
     const redirectTerms = terms.filter((t) => t.term.isModifier && t.term.name === "redirect");
     const ptrTerms = terms.filter((t) => !t.term.isModifier && t.term.name === "ptr");
+    const expTerms = terms.filter((t) => t.term.isModifier && t.term.name === "exp");
 
     // 3. all mechanism rules
     if (allTerms.length === 0 && redirectTerms.length === 0) {
@@ -403,6 +404,29 @@ export function validateSPF(val: SPFValue, _ctx: ComplianceContext): ComplianceI
             severity: "error",
             field: `f[${redirectTerms[1].index}]`,
             docUrl: SPF_RFC_URL + "#section-6.1",
+        });
+    }
+
+    // 3b. exp modifier rules
+    if (expTerms.length > 1) {
+        issues.push({
+            id: "spf.multiple-exp",
+            severity: "error",
+            field: `f[${expTerms[1].index}]`,
+            docUrl: SPF_RFC_URL + "#section-6.2",
+        });
+    }
+    const canFail =
+        redirectTerms.length > 0 ||
+        terms.some((t) => !t.term.isModifier && t.term.qualifier === "-");
+    if (expTerms.length > 0 && !canFail) {
+        // An explanation is only sent on a fail. A redirect= may well end on
+        // one, so it is given the benefit of the doubt.
+        issues.push({
+            id: "spf.exp-without-fail",
+            severity: "info",
+            field: `f[${expTerms[0].index}]`,
+            docUrl: SPF_RFC_URL + "#section-6.2",
         });
     }
 
@@ -480,6 +504,18 @@ export function validateSPF(val: SPFValue, _ctx: ComplianceContext): ComplianceI
             issues.push(...validateDualCidr(term, index));
         } else if (term.isModifier && term.name === "redirect" && term.value) {
             issues.push(...validateDomainTarget(term.name, term.value, index));
+        } else if (term.isModifier && term.name === "exp") {
+            const target = (term.value ?? "").trim();
+            if (target === "") {
+                issues.push({
+                    id: "spf.exp-missing-value",
+                    severity: "error",
+                    field: `f[${index}]`,
+                    docUrl: SPF_RFC_URL + "#section-6.2",
+                });
+            } else {
+                issues.push(...validateDomainTarget(term.name, target, index));
+            }
         }
 
         // Macros live inside the value the branches above left as opaque, so

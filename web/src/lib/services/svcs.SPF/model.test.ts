@@ -180,6 +180,84 @@ describe("validateSPF", () => {
     });
 });
 
+describe("validateSPF: exp modifier", () => {
+    it("accepts a single exp pointing at a name", () => {
+        const record = "v=spf1 ip4:192.0.2.1 exp=why.example.com -all";
+        expect(validateSPF(parseSPF(record), ctx)).toEqual([]);
+    });
+
+    it("accepts an explanation name built with macros", () => {
+        const record = "v=spf1 exp=%{i}.why.example.com -all";
+        expect(validateSPF(parseSPF(record), ctx)).toEqual([]);
+    });
+
+    it("flags an exp left without a value", () => {
+        const issues = validateSPF(parseSPF("v=spf1 exp= -all"), ctx);
+        expect(ids(issues)).toContain("spf.exp-missing-value");
+        expect(issues.find((i) => i.id === "spf.exp-missing-value")?.field).toBe("f[0]");
+    });
+
+    it("flags an explanation that is not a domain name", () => {
+        const record = "v=spf1 exp=Sorry,%_you%_are%_not%_allowed -all";
+        expect(ids(validateSPF(parseSPF(record), ctx))).toContain("spf.invalid-target");
+    });
+
+    it("warns when the explanation is a single label", () => {
+        expect(ids(validateSPF(parseSPF("v=spf1 exp=why -all"), ctx))).toContain(
+            "spf.target-not-fqdn",
+        );
+    });
+
+    it("flags a second exp modifier", () => {
+        const record = "v=spf1 exp=a.example.com exp=b.example.com -all";
+        const issues = validateSPF(parseSPF(record), ctx);
+        expect(ids(issues)).toContain("spf.multiple-exp");
+        expect(issues.find((i) => i.id === "spf.multiple-exp")?.field).toBe("f[1]");
+    });
+
+    it("notes an explanation no check will ever read", () => {
+        expect(ids(validateSPF(parseSPF("v=spf1 exp=why.example.com ~all"), ctx))).toContain(
+            "spf.exp-without-fail",
+        );
+        expect(ids(validateSPF(parseSPF("v=spf1 exp=why.example.com -all"), ctx))).not.toContain(
+            "spf.exp-without-fail",
+        );
+        expect(
+            ids(validateSPF(parseSPF("v=spf1 -include:a.example.com exp=why.example.com"), ctx)),
+        ).not.toContain("spf.exp-without-fail");
+    });
+
+    it("does not call an exp useless when a redirect may end on a fail", () => {
+        const record = "v=spf1 exp=why.example.com redirect=_spf.example.com";
+        expect(ids(validateSPF(parseSPF(record), ctx))).not.toContain("spf.exp-without-fail");
+    });
+
+    it("flags every extra exp modifier once, at the second one", () => {
+        const record = "v=spf1 exp=a.example.com exp=b.example.com exp=c.example.com -all";
+        const found = validateSPF(parseSPF(record), ctx).filter((i) => i.id === "spf.multiple-exp");
+        expect(found).toHaveLength(1);
+        expect(found[0].field).toBe("f[1]");
+    });
+
+    it("reads a name with a trailing dot, upper case letters or a numeric top label", () => {
+        expect(validateSPF(parseSPF("v=spf1 exp=Why.Example.COM. -all"), ctx)).toEqual([]);
+        expect(ids(validateSPF(parseSPF("v=spf1 exp=why.example.123 -all"), ctx))).toContain(
+            "spf.invalid-target",
+        );
+    });
+
+    it("does not report a blank value twice", () => {
+        const found = ids(validateSPF(parseSPF("v=spf1 exp=  -all"), ctx));
+        expect(found).toContain("spf.exp-missing-value");
+        expect(found).not.toContain("spf.invalid-target");
+    });
+
+    it("does not also report a qualified exp as a qualifier problem on the name", () => {
+        const found = ids(validateSPF(parseSPF("v=spf1 -exp=why.example.com -all"), ctx));
+        expect(found.filter((id) => id === "spf.qualifier-on-modifier")).toHaveLength(1);
+    });
+});
+
 describe("validateSPF: dual-CIDR lengths", () => {
     it("accepts the three shapes of a dual-CIDR", () => {
         const record = "v=spf1 a/24 mx//64 a:mail.example.com/24//64 mx:example.com -all";
