@@ -180,6 +180,48 @@ describe("validateSPF", () => {
     });
 });
 
+describe("validateSPF: dual-CIDR lengths", () => {
+    it("accepts the three shapes of a dual-CIDR", () => {
+        const record = "v=spf1 a/24 mx//64 a:mail.example.com/24//64 mx:example.com -all";
+        expect(validateSPF(parseSPF(record), ctx)).toEqual([]);
+    });
+
+    it("accepts the extreme prefix lengths", () => {
+        expect(validateSPF(parseSPF("v=spf1 a/0//0 mx/32//128 -all"), ctx)).toEqual([]);
+    });
+
+    it("flags a prefix length out of range", () => {
+        expect(ids(validateSPF(parseSPF("v=spf1 a/33 -all"), ctx))).toContain("spf.invalid-cidr");
+        expect(ids(validateSPF(parseSPF("v=spf1 mx//129 -all"), ctx))).toContain(
+            "spf.invalid-cidr",
+        );
+        expect(ids(validateSPF(parseSPF("v=spf1 a/24//129 -all"), ctx))).toContain(
+            "spf.invalid-cidr",
+        );
+    });
+
+    it("flags a malformed dual-CIDR", () => {
+        for (const value of ["a/", "a//", "a/24//", "a///64", "a/24/64", "a/abc", "a/24//64/8"]) {
+            expect(ids(validateSPF(parseSPF(`v=spf1 ${value} -all`), ctx))).toContain(
+                "spf.invalid-dual-cidr",
+            );
+        }
+    });
+
+    it("flags a prefix length on a mechanism that takes none", () => {
+        const issues = validateSPF(parseSPF("v=spf1 include:_spf.example.com/24 -all"), ctx);
+        expect(ids(issues)).toContain("spf.dual-cidr-not-allowed");
+        expect(ids(validateSPF(parseSPF("v=spf1 exists:e.example.com/24 -all"), ctx))).toContain(
+            "spf.dual-cidr-not-allowed",
+        );
+    });
+
+    it("does not read a macro delimiter as a prefix length", () => {
+        const record = "v=spf1 a:%{i/}.example.com/24 -all";
+        expect(ids(validateSPF(parseSPF(record), ctx))).not.toContain("spf.invalid-dual-cidr");
+    });
+});
+
 describe("validateSPF: macros", () => {
     it("accepts the macros a domain-spec may carry", () => {
         const record =

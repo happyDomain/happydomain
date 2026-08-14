@@ -41,6 +41,14 @@
                 "title": "Approaching the SPF lookup limit ({{count}}/{{max}})",
                 "detail": "Counting include, a, mx, exists, ptr and redirect locally; recursion may push you above the 10-lookup hard limit."
             },
+            "invalid-dual-cidr": {
+                "title": "Malformed prefix lengths '{{cidr}}' on {{mechanism}}",
+                "detail": "An a or mx mechanism takes an IPv4 prefix length after a single slash and an IPv6 one after a double slash, in that order: /24, //64 or /24//64."
+            },
+            "dual-cidr-not-allowed": {
+                "title": "The {{mechanism}} mechanism takes no prefix length",
+                "detail": "Only a and mx narrow the addresses they resolve with a prefix length. Elsewhere, the slash is part of the domain name and makes it invalid."
+            },
             "invalid-macro": {
                 "title": "Malformed macro '{{macro}}'",
                 "detail": "A macro is written %{letter}, optionally followed by a number of parts to keep, an 'r' to reverse them and delimiters (e.g. %{ir}, %{d2}). A literal percent sign is written %%."
