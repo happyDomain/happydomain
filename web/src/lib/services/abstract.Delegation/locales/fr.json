@@ -1,0 +1,62 @@
+{
+    "compliance": {
+        "ns": {
+            "no-nameserver": {
+                "title": "La délégation n'a aucun serveur de noms",
+                "detail": "Une délégation sans enregistrement NS rend le sous-domaine injoignable. Ajoutez au moins un serveur de noms, idéalement deux."
+            },
+            "single-nameserver": {
+                "title": "« {{subdomain}} » n'est délégué qu'à un seul serveur de noms",
+                "detail": "La RFC 1034 demande au moins deux serveurs de noms, sur des machines distinctes : avec un seul, le sous-domaine disparaît dès que ce serveur tombe."
+            },
+            "invalid-target": {
+                "title": "Serveur de noms « {{target}} » invalide",
+                "detail": "Un serveur de noms doit être indiqué par un nom d'hôte valide, au sens de la RFC 1035."
+            },
+            "duplicate-target": {
+                "title": "Serveur de noms « {{target}} » en double",
+                "detail": "Le même serveur de noms est listé plusieurs fois. Ne gardez qu'un seul enregistrement."
+            },
+            "missing-glue": {
+                "title": "« {{target}} » a besoin d'un enregistrement de colle",
+                "detail": "Ce serveur de noms se trouve à l'intérieur de « {{subdomain}} », la zone qu'il sert : les résolveurs ne peuvent trouver son adresse qu'ici, dans la zone parente. Ajoutez une entrée Serveur portant ses A/AAAA, ou utilisez un serveur de noms situé hors du sous-domaine délégué."
+            },
+            "target-is-cname": {
+                "title": "Le serveur de noms « {{target}} » est un alias",
+                "detail": "La RFC 2181 § 10.3 impose que la cible d'un enregistrement NS soit un nom d'hôte, jamais un CNAME."
+            },
+            "target-no-address": {
+                "title": "Le serveur de noms « {{target}} » n'a pas de A/AAAA dans cette zone",
+                "detail": "Ajoutez une entrée Serveur pour ce nom, ou vérifiez que le FQDN du serveur de noms est correct."
+            },
+            "ds-without-ns": {
+                "title": "Un enregistrement DS sans aucun serveur de noms",
+                "detail": "Un DS indique aux résolveurs que la zone déléguée est signée. Sans les NS qui vont avec, tout le sous-arbre échoue à la validation au lieu de simplement disparaître."
+            },
+            "ds-invalid-keytag": {
+                "title": "L'identifiant de clé DS « {{keytag}} » est hors bornes",
+                "detail": "Un identifiant de clé est un entier non signé sur 16 bits (0 à 65535)."
+            },
+            "ds-unknown-digest-type": {
+                "title": "Type d'empreinte DS « {{digesttype}} » inconnu",
+                "detail": "Seuls SHA-1 (1), SHA-256 (2) et SHA-384 (4) sont définis. Recopiez l'enregistrement DS fourni par votre bureau d'enregistrement ou votre signeur."
+            },
+            "ds-digest-length": {
+                "title": "L'empreinte DS devrait faire {{expected}} caractères hexadécimaux, et non {{got}}",
+                "detail": "L'empreinte ne correspond pas au type déclaré : aucun résolveur ne pourra valider la délégation. Recopiez l'enregistrement DS depuis votre signeur."
+            },
+            "ds-sha1": {
+                "title": "Ce DS utilise une empreinte SHA-1",
+                "detail": "La RFC 8624 déconseille SHA-1. Publiez plutôt une empreinte SHA-256, et vérifiez si votre registre exige encore celle en SHA-1."
+            },
+            "ds-deprecated-algorithm": {
+                "title": "L'algorithme DS {{algorithm}} est obsolète",
+                "detail": "La RFC 8624 déconseille cet algorithme de signature. Faites tourner la clé de la zone déléguée vers ECDSAP256SHA256 (13) ou ED25519 (15)."
+            },
+            "ds-duplicate": {
+                "title": "Enregistrement DS en double pour l'identifiant de clé {{keytag}}",
+                "detail": "La même empreinte est publiée deux fois. Ne gardez qu'un seul enregistrement."
+            }
+        }
+    }
+}

@@ -1,4 +1,64 @@
 {
+    "compliance": {
+        "ns": {
+            "no-nameserver": {
+                "title": "The delegation has no name server",
+                "detail": "A delegation without NS record leaves the subdomain unreachable. Add at least one name server, two ideally."
+            },
+            "single-nameserver": {
+                "title": "\"{{subdomain}}\" is delegated to a single name server",
+                "detail": "RFC 1034 asks for at least two name servers, on separate machines: with only one, the subdomain disappears whenever that server is down."
+            },
+            "invalid-target": {
+                "title": "Invalid name server \"{{target}}\"",
+                "detail": "A name server must be given as a valid host name, as defined by RFC 1035."
+            },
+            "duplicate-target": {
+                "title": "Duplicate name server \"{{target}}\"",
+                "detail": "The same name server is listed more than once. Keep only one record."
+            },
+            "missing-glue": {
+                "title": "\"{{target}}\" needs a glue record",
+                "detail": "This name server lives inside \"{{subdomain}}\", the very zone it serves: resolvers can only find its address here, in the parent zone. Add a Server entry carrying its A/AAAA, or use a name server outside the delegated subdomain."
+            },
+            "target-is-cname": {
+                "title": "Name server \"{{target}}\" is an alias",
+                "detail": "RFC 2181 sec. 10.3 requires the target of an NS record to be a host name, never a CNAME."
+            },
+            "target-no-address": {
+                "title": "Name server \"{{target}}\" has no A/AAAA in this zone",
+                "detail": "Add a Server entry for this name, or check that the name server FQDN is correct."
+            },
+            "ds-without-ns": {
+                "title": "A DS record without any name server",
+                "detail": "A DS tells the resolvers the delegated zone is signed. Without the NS records to go with it, the whole subtree fails validation instead of simply disappearing."
+            },
+            "ds-invalid-keytag": {
+                "title": "DS key tag \"{{keytag}}\" is out of range",
+                "detail": "A key tag is a 16-bit unsigned integer (0..65535)."
+            },
+            "ds-unknown-digest-type": {
+                "title": "Unknown DS digest type \"{{digesttype}}\"",
+                "detail": "Only SHA-1 (1), SHA-256 (2) and SHA-384 (4) are defined. Copy the DS record your registrar or your signer gave you."
+            },
+            "ds-digest-length": {
+                "title": "The DS digest should be {{expected}} hexadecimal characters long, not {{got}}",
+                "detail": "The digest does not match the declared digest type, so no resolver will be able to validate the delegation. Copy the DS record again from your signer."
+            },
+            "ds-sha1": {
+                "title": "This DS uses a SHA-1 digest",
+                "detail": "RFC 8624 deprecates SHA-1. Publish a SHA-256 digest instead, and check whether your registry still requires the SHA-1 one."
+            },
+            "ds-deprecated-algorithm": {
+                "title": "DS algorithm {{algorithm}} is deprecated",
+                "detail": "RFC 8624 advises against this signing algorithm. Roll the key of the delegated zone over to ECDSAP256SHA256 (13) or ED25519 (15)."
+            },
+            "ds-duplicate": {
+                "title": "Duplicate DS record for key tag {{keytag}}",
+                "detail": "The same digest is published twice. Keep only one record."
+            }
+        }
+    },
     "svcinfo": {
         "abstract": {
             "Delegation": {
