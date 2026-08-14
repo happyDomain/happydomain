@@ -41,6 +41,18 @@
                 "title": "Limite SPF approchée ({{count}}/{{max}})",
                 "detail": "Comptage local de include, a, mx, exists, ptr et redirect ; la récursion peut faire dépasser la limite stricte de 10 requêtes."
             },
+            "exp-missing-value": {
+                "title": "Le modificateur exp= n'a pas de valeur",
+                "detail": "exp= doit désigner le domaine d'un enregistrement TXT contenant l'explication, par ex. exp=why.example.com. Ce n'est pas le message lui-même."
+            },
+            "multiple-exp": {
+                "title": "Plusieurs modificateurs exp=",
+                "detail": "Un seul modificateur exp est autorisé par enregistrement SPF ; un second le transforme en permerror."
+            },
+            "exp-without-fail": {
+                "title": "exp= sur un enregistrement qui n'échoue jamais",
+                "detail": "L'explication n'est renvoyée que lorsqu'une vérification échoue, ce qui nécessite un mécanisme qualifié par « - » (par ex. -all). En l'état, personne ne la lira."
+            },
             "invalid-dual-cidr": {
                 "title": "Longueurs de préfixe « {{cidr}} » malformées sur {{mechanism}}",
                 "detail": "Un mécanisme a ou mx accepte une longueur de préfixe IPv4 après une simple barre oblique et une IPv6 après une double, dans cet ordre : /24, //64 ou /24//64."

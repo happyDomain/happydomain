@@ -180,6 +180,54 @@ describe("validateSPF", () => {
     });
 });
 
+describe("validateSPF: exp modifier", () => {
+    it("accepts a single exp pointing at a name", () => {
+        const record = "v=spf1 ip4:192.0.2.1 exp=why.example.com -all";
+        expect(validateSPF(parseSPF(record), ctx)).toEqual([]);
+    });
+
+    it("accepts an explanation name built with macros", () => {
+        const record = "v=spf1 exp=%{i}.why.example.com -all";
+        expect(validateSPF(parseSPF(record), ctx)).toEqual([]);
+    });
+
+    it("flags an exp left without a value", () => {
+        const issues = validateSPF(parseSPF("v=spf1 exp= -all"), ctx);
+        expect(ids(issues)).toContain("spf.exp-missing-value");
+        expect(issues.find((i) => i.id === "spf.exp-missing-value")?.field).toBe("f[0]");
+    });
+
+    it("flags an explanation that is not a domain name", () => {
+        const record = "v=spf1 exp=Sorry,%_you%_are%_not%_allowed -all";
+        expect(ids(validateSPF(parseSPF(record), ctx))).toContain("spf.invalid-target");
+    });
+
+    it("warns when the explanation is a single label", () => {
+        expect(ids(validateSPF(parseSPF("v=spf1 exp=why -all"), ctx))).toContain(
+            "spf.target-not-fqdn",
+        );
+    });
+
+    it("flags a second exp modifier", () => {
+        const record = "v=spf1 exp=a.example.com exp=b.example.com -all";
+        const issues = validateSPF(parseSPF(record), ctx);
+        expect(ids(issues)).toContain("spf.multiple-exp");
+        expect(issues.find((i) => i.id === "spf.multiple-exp")?.field).toBe("f[1]");
+    });
+
+    it("notes an explanation no check will ever read", () => {
+        expect(ids(validateSPF(parseSPF("v=spf1 exp=why.example.com ~all"), ctx))).toContain(
+            "spf.exp-without-fail",
+        );
+        expect(ids(validateSPF(parseSPF("v=spf1 exp=why.example.com -all"), ctx))).not.toContain(
+            "spf.exp-without-fail",
+        );
+        expect(
+            ids(validateSPF(parseSPF("v=spf1 -include:a.example.com exp=why.example.com"), ctx)),
+        ).not.toContain("spf.exp-without-fail");
+    });
+});
+
 describe("validateSPF: dual-CIDR lengths", () => {
     it("accepts the three shapes of a dual-CIDR", () => {
         const record = "v=spf1 a/24 mx//64 a:mail.example.com/24//64 mx:example.com -all";

@@ -119,18 +119,19 @@ const DOMAIN_MECHANISMS = new Set<string>(["include", "exists", "a", "mx", "ptr"
  * sec. 7.1 asks verifiers to answer permerror, which voids the whole policy.
  */
 function validateDomainTarget(mechanism: string, target: string, index: number): ComplianceIssue[] {
-    // Macros are expanded at verification time, so what is written here is not
-    // a name yet. Their own syntax is checked apart.
-    if (target.includes("%")) return [];
-
     const field = `f[${index}]`;
     const docUrl = SPF_RFC_URL + "#section-7.1";
-    const domain = normalizeFqdn(target);
+
+    // What a macro expands to is only known to the verifier, so it stands in as
+    // an ordinary label character: everything written around it still has to
+    // read as a name. Macro syntax itself is checked apart.
+    const hasMacro = target.includes("%");
+    const domain = normalizeFqdn(target).replace(/%\{[^}]*\}|%[%_-]/g, "m");
     const labels = domain.split(".");
 
     // A top label made only of digits is excluded by the grammar, where it
     // would be indistinguishable from the address literal of an ip4 mechanism.
-    if (!isValidDnsName(domain) || /^[0-9]+$/.test(labels[labels.length - 1])) {
+    if (!isValidDnsName(domain) || (!hasMacro && /^[0-9]+$/.test(labels[labels.length - 1]))) {
         return [
             {
                 id: "spf.invalid-target",
@@ -142,7 +143,8 @@ function validateDomainTarget(mechanism: string, target: string, index: number):
         ];
     }
 
-    if (labels.length < 2) {
+    // A lone %{d} already expands to a complete name.
+    if (labels.length < 2 && !hasMacro) {
         return [
             {
                 id: "spf.target-not-fqdn",
@@ -346,6 +348,7 @@ export function validateSPF(val: SPFValue, _ctx: ComplianceContext): ComplianceI
     const allTerms = terms.filter((t) => t.term.isAll);
     const redirectTerms = terms.filter((t) => t.term.isModifier && t.term.name === "redirect");
     const ptrTerms = terms.filter((t) => !t.term.isModifier && t.term.name === "ptr");
+    const expTerms = terms.filter((t) => t.term.isModifier && t.term.name === "exp");
 
     // 3. all mechanism rules
     if (allTerms.length === 0 && redirectTerms.length === 0) {
@@ -392,7 +395,27 @@ export function validateSPF(val: SPFValue, _ctx: ComplianceContext): ComplianceI
         });
     }
 
-    // 4. ptr is deprecated
+    // 4. exp modifier rules
+    if (expTerms.length > 1) {
+        issues.push({
+            id: "spf.multiple-exp",
+            severity: "error",
+            field: `f[${expTerms[1].index}]`,
+            docUrl: SPF_RFC_URL + "#section-6.2",
+        });
+    }
+    if (expTerms.length > 0 && !terms.some((t) => t.term.qualifier === "-")) {
+        // An explanation is only ever published on a fail, so a record that
+        // never fails carries one nobody will read.
+        issues.push({
+            id: "spf.exp-without-fail",
+            severity: "info",
+            field: `f[${expTerms[0].index}]`,
+            docUrl: SPF_RFC_URL + "#section-6.2",
+        });
+    }
+
+    // 5. ptr is deprecated
     if (ptrTerms.length > 0) {
         issues.push({
             id: "spf.ptr-deprecated",
@@ -402,11 +425,11 @@ export function validateSPF(val: SPFValue, _ctx: ComplianceContext): ComplianceI
         });
     }
 
-    // 5. Lookup budget: handled authoritatively by the async recursive walk
+    // 6. Lookup budget: handled authoritatively by the async recursive walk
     // (validateSPFRecursive). Emitting a local warning here would duplicate
     // its result.
 
-    // 6. Per-term checks: empty terms, unknown names, missing values, duplicates.
+    // 7. Per-term checks: empty terms, unknown names, missing values, duplicates.
     const seen = new Set<string>();
     terms.forEach(({ index, term }) => {
         if (term.raw.trim() === "") {
@@ -471,6 +494,20 @@ export function validateSPF(val: SPFValue, _ctx: ComplianceContext): ComplianceI
             issues.push(...validateDualCidr(term, index));
         } else if (term.isModifier && term.name === "redirect" && term.value) {
             issues.push(...validateDomainTarget(term.name, term.value, index));
+        } else if (term.isModifier && term.name === "exp") {
+            // exp= names a TXT record holding the explanation sent back on a
+            // fail. It is a domain, not the message itself.
+            const target = (term.value ?? "").trim();
+            if (target === "") {
+                issues.push({
+                    id: "spf.exp-missing-value",
+                    severity: "error",
+                    field: `f[${index}]`,
+                    docUrl: SPF_RFC_URL + "#section-6.2",
+                });
+            } else {
+                issues.push(...validateDomainTarget(term.name, target, index));
+            }
         }
 
         // Macros live inside the value the branches above left as opaque, so
