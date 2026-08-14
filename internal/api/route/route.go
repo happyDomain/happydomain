@@ -22,12 +22,7 @@
 package route
 
 import (
-	"net/http"
-	"time"
-
 	"github.com/gin-gonic/gin"
-
-	ratelimit "github.com/JGLTechnologies/gin-rate-limit"
 
 	"git.happydns.org/happyDomain/internal/api/controller"
 	"git.happydns.org/happyDomain/internal/api/middleware"
@@ -102,25 +97,6 @@ type Dependencies struct {
 //	@name						Authorization
 //	@description				Description for what is this security definition being used
 
-// perClientRateLimiter builds a middleware allowing limit requests per minute
-// and per client, for the unauthenticated endpoints that make happyDomain reach
-// out to a destination the caller chose.
-func perClientRateLimiter(limit uint) gin.HandlerFunc {
-	store := ratelimit.InMemoryStore(&ratelimit.InMemoryOptions{
-		Rate:  time.Minute,
-		Limit: limit,
-	})
-
-	return ratelimit.RateLimiter(store, &ratelimit.Options{
-		ErrorHandler: func(c *gin.Context, info ratelimit.Info) {
-			c.AbortWithStatusJSON(http.StatusTooManyRequests, happydns.ErrorResponse{
-				Message: "Too many requests. Please try again later.",
-			})
-		},
-		KeyFunc: middleware.ClientKey,
-	})
-}
-
 func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependencies) {
 	baseRoutes := router.Group("")
 
@@ -139,8 +115,14 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 	auc := DeclareAuthUserRoutes(apiRoutes, dep.AuthUser, lc)
 
 	DeclareDomainInfoRoutes(apiRoutes.Group("/domaininfo/:domain", perClientRateLimiter(10)), dep.DomainInfo)
-	DeclareEmailAutoconfigRoutes(baseRoutes, apiRoutes, dep.EmailAutoconfig)
 	DeclareFaviconRoutes(apiRoutes.Group("/favicon", perClientRateLimiter(60)), dep.FaviconService)
+
+	// The endpoints serving content for the domains happyDomain hosts are
+	// public and unauthenticated, so they share a single per-client budget.
+	hostingRL := perClientRateLimiter(30)
+	DeclareEmailAutoconfigRoutes(baseRoutes, hostingRL, dep.EmailAutoconfig)
+	DeclareCaddyRoutes(apiRoutes, hostingRL, dep.EmailAutoconfig)
+
 	DeclareProviderSpecsRoutes(apiRoutes, dep.ProviderSpecs)
 	DeclareRegistrationRoutes(apiRoutes, dep.AuthUser, dep.CaptchaVerifier)
 	DeclareResolverRoutes(apiRoutes, dep.Resolver)

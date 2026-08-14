@@ -28,27 +28,15 @@ import (
 	happydns "git.happydns.org/happyDomain/model"
 )
 
-// DeclareEmailAutoconfigRoutes wires the public HTTP endpoints for mail-client
-// auto-configuration: the well-known XML paths dictated by the standards
-// (Mozilla and Microsoft).
-func DeclareEmailAutoconfigRoutes(baseRoutes *gin.RouterGroup, rl gin.HandlerFunc, uc happydns.EmailAutoconfigUsecase) {
-	if uc == nil {
+// DeclareCaddyRoutes wires the Caddy on-demand TLS validation hook, shared by
+// every service happyDomain hosts content for. The path is unchanged from when
+// it only served the email auto-configuration, so existing Caddyfiles keep
+// working.
+func DeclareCaddyRoutes(apiRoutes *gin.RouterGroup, rl gin.HandlerFunc, validators ...happydns.HostedDomainValidator) {
+	ctrl := controller.NewCaddyController(validators...)
+	if !ctrl.HasValidators() {
 		return
 	}
 
-	ctrl := controller.NewEmailAutoconfigController(uc)
-
-	// Mozilla Autoconfig: clients fetch GET https://autoconfig.<domain>/mail/config-v1.1.xml
-	baseRoutes.GET("/mail/config-v1.1.xml", rl, ctrl.MozillaAutoconfig)
-
-	// Microsoft Autodiscover: Outlook hits both GET and POST, with two
-	// common spellings of the path.
-	for _, path := range []string{
-		"/Autodiscover/Autodiscover.xml",
-		"/autodiscover/autodiscover.xml",
-		"/AutoDiscover/AutoDiscover.xml",
-	} {
-		baseRoutes.GET(path, rl, ctrl.MSAutodiscover)
-		baseRoutes.POST(path, rl, ctrl.MSAutodiscover)
-	}
+	apiRoutes.GET("/caddy/ask", rl, ctrl.Ask)
 }
