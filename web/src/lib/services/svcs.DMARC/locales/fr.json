@@ -5,6 +5,10 @@
                 "title": "L'enregistrement DMARC n'est pas sous _dmarc.{{name}}",
                 "detail": "Les enregistrements DMARC doivent être publiés sous _dmarc.<domaine>."
             },
+            "duplicate-record": {
+                "title": "{{count}} enregistrements DMARC publiés sur ce nom",
+                "detail": "La section 6.6.3 du RFC 7489 interrompt la découverte de politique lorsqu'un nom porte plusieurs enregistrements DMARC : aucune politique n'est appliquée, comme si rien n'était publié. Ne conservez qu'un seul enregistrement."
+            },
             "parse-error": {
                 "title": "Impossible d'analyser l'enregistrement DMARC",
                 "detail": "La valeur TXT ne ressemble pas à un enregistrement DMARC clé=valeur."

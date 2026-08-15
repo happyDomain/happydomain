@@ -109,6 +109,47 @@ describe("DMARC compliance: policy", () => {
     });
 });
 
+describe("DMARC compliance: one record per name", () => {
+    const at = (svctype: string, txt: string, name = "_dmarc.example.com.") =>
+        makeService(svctype, { txt: { Hdr: { Name: name }, Txt: txt } });
+
+    it("flags a second DMARC record on the same name", () => {
+        const zone = makeZone({
+            services: { _dmarc: [at("svcs.DMARC", "v=DMARC1;p=none")] },
+        });
+        const issues = runWithZone("v=DMARC1;p=reject", zone);
+        const dup = issues.find((i) => i.id === "dmarc.duplicate-record");
+        expect(dup?.params).toMatchObject({ count: 2 });
+    });
+    it("counts a raw TXT holding a DMARC record", () => {
+        const zone = makeZone({
+            services: { _dmarc: [at("svcs.TXT", "v=DMARC1;p=none")] },
+        });
+        const issues = runWithZone("v=DMARC1;p=reject", zone);
+        expect(ids(issues)).toContain("dmarc.duplicate-record");
+    });
+    it("leaves an unrelated TXT alone", () => {
+        const zone = makeZone({
+            services: { _dmarc: [at("svcs.TXT", "some-verification-token")] },
+        });
+        const issues = runWithZone("v=DMARC1;p=reject", zone);
+        expect(ids(issues)).not.toContain("dmarc.duplicate-record");
+    });
+    it("does not count a record published on another name", () => {
+        const zone = makeZone({
+            services: {
+                _dmarc: [at("svcs.DMARC", "v=DMARC1;p=none", "_dmarc.sub.example.com.")],
+            },
+        });
+        const issues = runWithZone("v=DMARC1;p=reject", zone);
+        expect(ids(issues)).not.toContain("dmarc.duplicate-record");
+    });
+    it("says nothing when the zone is unknown", () => {
+        const issues = run("v=DMARC1;p=reject");
+        expect(ids(issues)).not.toContain("dmarc.duplicate-record");
+    });
+});
+
 describe("DMARC compliance: subdomain policy inheritance", () => {
     const dmarc = (txt: string) =>
         makeService("svcs.DMARC", { txt: { Hdr: { Name: "_dmarc" }, Txt: txt } });

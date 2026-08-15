@@ -25,6 +25,7 @@ import {
     type ComplianceContext,
     type ComplianceIssue,
     isValidHostname,
+    normalizeFqdn,
     registerValidators,
 } from "$lib/services/compliance";
 import { parseDMARC, type DMARCValue } from "./model";
@@ -159,6 +160,43 @@ function externalDestinations(
     }
 
     return externals;
+}
+
+/**
+ * Counts the DMARC records sharing the owner name of the edited one. Policy
+ * discovery drops a name publishing several of them (RFC 7489 sec. 6.6.3), so
+ * a second record does not compete with the first: it disables DMARC on the
+ * whole domain. A raw TXT service holding a v=DMARC1 value counts just the
+ * same, receivers having no way to tell it apart.
+ */
+function duplicateRecordIssues(
+    raw: Record<string, any>,
+    ctx: ComplianceContext,
+): ComplianceIssue[] {
+    if (!ctx.zone) return [];
+
+    const owner = normalizeFqdn(String(raw?.txt?.Hdr?.Name ?? "").trim());
+    const duplicates = ctx.findServices(ctx.dn).filter((service) => {
+        const svctype = service._svctype;
+        if (svctype !== "svcs.DMARC" && svctype !== "svcs.TXT") return false;
+
+        const txt = (service.Service as Record<string, any> | undefined)?.txt;
+        if (!txt || txt === raw?.txt) return false;
+        if (normalizeFqdn(String(txt.Hdr?.Name ?? "").trim()) !== owner) return false;
+
+        const value = typeof txt.Txt === "string" ? txt.Txt.trim() : "";
+        return svctype === "svcs.DMARC" || /^v=dmarc1\b/i.test(value);
+    });
+
+    if (duplicates.length === 0) return [];
+    return [
+        {
+            id: "dmarc.duplicate-record",
+            severity: "error",
+            params: { count: duplicates.length + 1 },
+            docUrl: RFC + "#section-6.6.3",
+        },
+    ];
 }
 
 // Policies, from the most permissive to the most protective.
@@ -298,6 +336,8 @@ function dmarcSync(raw: Record<string, any>, ctx: ComplianceContext): Compliance
             docUrl: RFC + "#section-6.1",
         });
     }
+
+    issues.push(...duplicateRecordIssues(raw, ctx));
 
     if (!txtValue.trim()) return issues;
 

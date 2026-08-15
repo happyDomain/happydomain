@@ -5,6 +5,10 @@
                 "title": "DMARC record is not at _dmarc.{{name}}",
                 "detail": "DMARC records must be published at _dmarc.<domain>."
             },
+            "duplicate-record": {
+                "title": "{{count}} DMARC records published on this name",
+                "detail": "RFC 7489 sec. 6.6.3 stops policy discovery when a name carries several DMARC records: no policy is applied at all, as if nothing had been published. Keep a single record."
+            },
             "parse-error": {
                 "title": "Could not parse the DMARC record",
                 "detail": "The TXT value does not look like a key=value DMARC record."
