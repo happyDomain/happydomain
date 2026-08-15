@@ -375,6 +375,8 @@ github.com/h2non/parth v0.0.0-20190131123155-b4df798d6542 h1:2VTzZjLZBgl62/EtslC
 github.com/h2non/parth v0.0.0-20190131123155-b4df798d6542/go.mod h1:Ow0tF8D4Kplbc8s8sSb3V2oUCygFHVp8gC3Dn6U4MNI=
 github.com/happyDomain/dnscontrol/v4 v4.46.100 h1:D2xfbh5hwFLn3PEsBVZA1g2VpQFYzeQ+B1/r3p6txbI=
 github.com/happyDomain/dnscontrol/v4 v4.46.100/go.mod h1:Cjfb2SZIslsezGtrqaW02c7VaNW49Y/f8zG6oA3wzc8=
+github.com/happyDomain/dnscontrol/v4 v4.46.101 h1:oHfqdQ5wy4urOrSCA0U2OGDCeW6VKQMUyuLl5TSW/no=
+github.com/happyDomain/dnscontrol/v4 v4.46.101/go.mod h1:Cjfb2SZIslsezGtrqaW02c7VaNW49Y/f8zG6oA3wzc8=
 github.com/hashicorp/go-cleanhttp v0.5.2 h1:035FKYIWjmULyFRBKPs8TBQoi0x6d9G4xc9neXJWAZQ=
 github.com/hashicorp/go-cleanhttp v0.5.2/go.mod h1:kO/YDlP8L1346E6Sodw+PrpBSV4/SoxCXGY6BqNFT48=
 github.com/hashicorp/go-hclog v1.6.3 h1:Qr2kF+eVWjTiYmU7Y31tYlP1h0q/X3Nl3tPGdaB11/k=
