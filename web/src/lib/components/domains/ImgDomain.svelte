@@ -23,39 +23,33 @@
 
 <script lang="ts">
     import ImgWithFallback from "$lib/components/ImgWithFallback.svelte";
-    import { providers_idx, providersSpecs } from "$lib/stores/providers";
 
     interface Props {
-        id_provider?: string | undefined;
-        ptype?: string | undefined;
+        domain: string;
         style?: string;
         [key: string]: unknown;
     }
 
     let {
-        id_provider = undefined,
-        ptype = undefined,
+        domain,
         style = "width: 2.5em; height: 2.5em; object-fit: scale-down",
         ...rest
     }: Props = $props();
 
-    // The provider type this instance stands for, whether it was given
-    // directly or has to be read from the provider the user configured.
-    let type = $derived(
-        ptype || (id_provider ? $providers_idx?.[id_provider]?._srctype : undefined),
-    );
+    // Strip trailing dot from FQDN for favicon lookup
+    let cleanDomain = $derived(domain.replace(/\.$/, ""));
 
-    // The name reads better than the type on a monogram: "OVH" rather than
-    // "OVHAPI". It is only there once the specs have been loaded.
-    let label = $derived((type && $providersSpecs?.[type]?.name) || type || "");
+    // The www. prefix says nothing about the site, so drop it from the
+    // monogram fallback's label; the favicon lookup itself still uses the
+    // FQDN as given.
+    let label = $derived((cleanDomain || domain).replace(/^www\./i, ""));
 </script>
 
 <ImgWithFallback
-    src={type ? "/api/providers/_specs/" + type + "/icon.png" : undefined}
-    errorKey={type}
-    alt={type}
-    title={type}
+    src={cleanDomain ? "/api/favicon/" + encodeURIComponent(cleanDomain) : undefined}
+    errorKey={cleanDomain}
     {label}
+    loading="lazy"
     {style}
     {...rest}
 />

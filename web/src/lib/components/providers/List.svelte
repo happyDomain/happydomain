@@ -45,7 +45,7 @@
     import HListGroup from "$lib/components/ListGroup.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { Provider } from "$lib/model/provider";
-        import { domains, refreshDomains } from "$lib/stores/domains";
+    import { domains, refreshDomains } from "$lib/stores/domains";
     import {
         providers,
         providersSpecs,
@@ -157,6 +157,7 @@
 {:else}
     <HListGroup
         button
+        classItem="py-1"
         {items}
         {flush}
         {...rest}
@@ -173,12 +174,9 @@
         {/snippet}
         {#snippet children({ item })}
             <div class="d-flex flex-fill justify-content-between" style="max-width: 100%">
-                <div class="d-flex" style="min-width: 0">
+                <div class="d-flex align-items-center gap-2" style="min-width: 0">
                     <div class="text-center" style="width: 50px;">
-                        <ImgProvider
-                            ptype={item._srctype}
-                            style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em"
-                        />
+                        <ImgProvider ptype={item._srctype} />
                     </div>
                     {#if item._comment}
                         <div class="text-truncate" title={item._comment}>

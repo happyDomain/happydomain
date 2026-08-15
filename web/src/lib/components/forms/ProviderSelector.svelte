@@ -99,14 +99,11 @@
         <ListGroupItem
             active={value === ptype}
             tag="button"
-            class="d-flex"
+            class="d-flex ps-1 gap-1 py-1"
             on:click={() => selectProvider(provider, ptype)}
         >
             <div class="align-self-center text-center" style="min-width:50px;width:50px;">
-                <ImgProvider
-                    {ptype}
-                    style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em"
-                />
+                <ImgProvider {ptype} />
             </div>
             <div class="align-self-center" style="line-height: 1.1">
                 <strong>{provider.name}</strong> &ndash;

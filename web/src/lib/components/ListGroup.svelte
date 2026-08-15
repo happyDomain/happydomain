@@ -29,18 +29,20 @@
     const dispatch = createEventDispatcher();
 
     interface Props {
+        classItem?: string;
         items?: Array<any>;
         isLoading?: boolean;
         button?: boolean;
         isActive?: (item: any) => boolean;
         links?: boolean;
-        loading?: import('svelte').Snippet;
-        empty?: import('svelte').Snippet;
-        children?: import('svelte').Snippet<[any]>;
-        [key: string]: unknown
+        loading?: import("svelte").Snippet;
+        empty?: import("svelte").Snippet;
+        children?: import("svelte").Snippet<[any]>;
+        [key: string]: unknown;
     }
 
     let {
+        classItem = "",
         items = [],
         isLoading = false,
         button = false,
@@ -67,11 +69,11 @@
             <ListGroupItem
                 active={isActive(item)}
                 tag={button ? "button" : undefined}
-                class="d-flex justify-content-between align-items-center"
+                class="d-flex justify-content-between align-items-center {classItem}"
                 href={links ? item.href : undefined}
                 on:click={() => dispatch("click", item)}
             >
-                {@render children?.({ item, })}
+                {@render children?.({ item })}
             </ListGroupItem>
         {/each}
     {/if}

@@ -37,7 +37,7 @@
     } from "$lib/components/modals/NewProvider.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { Provider } from "$lib/model/provider";
-        import { domains, refreshDomains } from "$lib/stores/domains";
+    import { domains, refreshDomains } from "$lib/stores/domains";
     import {
         providers,
         providersSpecs,
@@ -148,11 +148,11 @@
                     style="cursor: pointer"
                     onclick={() => goto(providerLinks().provider(encodeURIComponent(item._id)))}
                 >
-                    <td>
+                    <td class="py-0" style="vertical-align: middle;">
                         <div class="d-flex align-items-center gap-2">
                             <ImgProvider
                                 ptype={item._srctype}
-                                style="max-width: 2em; max-height: 2em; object-fit: contain;"
+                                style="width: 2em; height: 2em; object-fit: contain;"
                             />
                             {#if item._comment}
                                 <span title={item._comment}>{item._comment}</span>
@@ -173,7 +173,7 @@
                             {domain_in_providers[item._id] ?? 0}
                         </a>
                     </td>
-                    <td class="text-end">
+                    <td class="py-1 text-end">
                         <ButtonGroup size="sm">
                             <Button
                                 color="outline-secondary"
