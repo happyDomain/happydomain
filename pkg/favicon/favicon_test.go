@@ -170,7 +170,7 @@ func parseSample(t *testing.T, page, baseURL string) []iconCandidate {
 		t.Fatalf("parsing base: %s", err)
 	}
 
-	candidates := parseIconLinks(strings.NewReader(page), base)
+	candidates, _ := parseIconLinks(strings.NewReader(page), base)
 	rankCandidates(candidates)
 
 	return candidates
@@ -224,7 +224,7 @@ func TestParseIconLinksReachesEOFWithoutHeadClose(t *testing.T) {
 	page := `<html><head><link rel="icon" href="/a.png">`
 	base, _ := url.Parse("https://example.com/")
 
-	candidates := parseIconLinks(strings.NewReader(page), base)
+	candidates, _ := parseIconLinks(strings.NewReader(page), base)
 	if len(candidates) != 1 || candidates[0].url != "https://example.com/a.png" {
 		t.Errorf("candidates = %v, want the one icon collected before EOF", candidates)
 	}
@@ -236,7 +236,7 @@ func TestParseIconLinksStopsAtBodyWithoutHeadClose(t *testing.T) {
 	page := `<html><head><link rel="icon" href="/a.png"><body><link rel="icon" href="/late.png"></body></html>`
 	base, _ := url.Parse("https://example.com/")
 
-	candidates := parseIconLinks(strings.NewReader(page), base)
+	candidates, _ := parseIconLinks(strings.NewReader(page), base)
 	if len(candidates) != 1 || candidates[0].url != "https://example.com/a.png" {
 		t.Errorf("candidates = %v, want only the icon declared before <body>", candidates)
 	}
@@ -361,7 +361,7 @@ func TestDiscoverAlwaysEndsWithWellKnown(t *testing.T) {
 	defer srv.Close()
 
 	site, _ := url.Parse(srv.URL + "/some/page?a=b")
-	candidates := newDirectSource(srv.Client()).discover(site)
+	candidates := newDirectSource(srv.Client()).discover(site, time.Now().Add(maxFetchBudget))
 
 	if len(candidates) != 1 || candidates[0].url != srv.URL+"/favicon.ico" {
 		t.Errorf("candidates = %v, want only the well-known path", candidates)
@@ -522,10 +522,166 @@ func TestDirectSourceIgnoresRedirectOutsideOrganization(t *testing.T) {
 	client.Transport = hostRedirectTransport{addr: srv.Listener.Addr().String(), base: client.Transport}
 
 	site, _ := url.Parse("http://example.org/")
-	candidates := newDirectSource(client).discover(site)
+	candidates := newDirectSource(client).discover(site, time.Now().Add(maxFetchBudget))
 
 	if len(candidates) != 1 || candidates[0].url != "http://example.org/favicon.ico" {
 		t.Errorf("candidates = %v, want only the well-known path: the cross-domain redirect must not be followed", candidates)
+	}
+}
+
+func TestDirectSourceFollowsMetaRefresh(t *testing.T) {
+	// Mirrors a real site: / declares no icon and only bounces to /en/ with
+	// a <meta http-equiv="refresh">, not an HTTP redirect, the way a browser
+	// tab would still show the icon declared on the page it lands on.
+	var asked []string
+
+	mux := http.NewServeMux()
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		asked = append(asked, r.URL.Path)
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<html><head><meta http-equiv="refresh" content="0; url=/en/"></head></html>`))
+	})
+	mux.HandleFunc("/en/", func(w http.ResponseWriter, r *http.Request) {
+		asked = append(asked, r.URL.Path)
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<html><head><link rel="icon" type="image/png" sizes="32x32" href="/here.png"></head></html>`))
+	})
+	mux.HandleFunc("/here.png", func(w http.ResponseWriter, r *http.Request) {
+		asked = append(asked, r.URL.Path)
+		w.Header().Set("Content-Type", "image/png")
+		w.Write(pngBody)
+	})
+
+	site, _ := url.Parse(srv.URL)
+	body, contentType, err := newDirectSource(srv.Client()).FetchIcon(site)
+	if err != nil {
+		t.Fatalf("FetchIcon: %s", err)
+	}
+	if contentType != "image/png" || len(body) != len(pngBody) {
+		t.Errorf("got %d bytes of %q, want the PNG from the page reached via meta refresh", len(body), contentType)
+	}
+
+	want := []string{"/", "/en/", "/here.png"}
+	if strings.Join(asked, " ") != strings.Join(want, " ") {
+		t.Errorf("requested %v, want %v", asked, want)
+	}
+}
+
+func TestDirectSourceIgnoresMetaRefreshOutsideOrganization(t *testing.T) {
+	mux := http.NewServeMux()
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Host == "example.org" {
+			w.Header().Set("Content-Type", "text/html")
+			w.Write([]byte(`<html><head><meta http-equiv="refresh" content="0; url=http://evil.example.net/"></head></html>`))
+			return
+		}
+		// Reached only if the refresh was wrongly followed.
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<html><head><link rel="icon" type="image/png" sizes="32x32" href="/here.png"></head></html>`))
+	})
+	mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/x-icon")
+		w.Write(pngBody)
+	})
+
+	client := srv.Client()
+	client.Transport = hostRedirectTransport{addr: srv.Listener.Addr().String(), base: client.Transport}
+
+	site, _ := url.Parse("http://example.org/")
+	candidates := newDirectSource(client).discover(site, time.Now().Add(maxFetchBudget))
+
+	if len(candidates) != 1 || candidates[0].url != "http://example.org/favicon.ico" {
+		t.Errorf("candidates = %v, want only the well-known path: the cross-domain meta refresh must not be followed", candidates)
+	}
+}
+
+func TestParseMetaRefresh(t *testing.T) {
+	base, _ := url.Parse("https://example.com/en/")
+
+	tests := []struct {
+		content string
+		want    string // "" means ok should be false
+	}{
+		{"0; url=/fr/", "https://example.com/fr/"},
+		{"5; URL='/fr/'", "https://example.com/fr/"},
+		{`0;url="/fr/"`, "https://example.com/fr/"},
+		{"0;url=https://other.example.com/", "https://other.example.com/"},
+		{"no semicolon here", ""},
+		{"0; not-a-url=/fr/", ""},
+		{"0; url=", ""},
+		{"0; url=%zz", ""},
+	}
+
+	for _, tt := range tests {
+		got, ok := parseMetaRefresh(tt.content, base)
+		if tt.want == "" {
+			if ok {
+				t.Errorf("parseMetaRefresh(%q) = %v, true, want false", tt.content, got)
+			}
+			continue
+		}
+
+		if !ok || got.String() != tt.want {
+			t.Errorf("parseMetaRefresh(%q) = %v, %v, want %q, true", tt.content, got, ok, tt.want)
+		}
+	}
+}
+
+func TestFetchIconFailsWhenBudgetExpiresBeforeFirstCandidate(t *testing.T) {
+	old := maxFetchBudget
+	maxFetchBudget = 30 * time.Millisecond
+	defer func() { maxFetchBudget = old }()
+
+	mux := http.NewServeMux()
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(50 * time.Millisecond)
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<html><head><link rel="icon" href="/here.png"></head></html>`))
+	})
+
+	site, _ := url.Parse(srv.URL)
+	if _, _, err := newDirectSource(srv.Client()).FetchIcon(site); err == nil {
+		t.Errorf("FetchIcon = nil error, want the budget-exceeded error")
+	}
+}
+
+func TestDiscoverStopsFollowingMetaRefreshWhenBudgetExpires(t *testing.T) {
+	old := maxFetchBudget
+	maxFetchBudget = 60 * time.Millisecond
+	defer func() { maxFetchBudget = old }()
+
+	var hops int
+
+	mux := http.NewServeMux()
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	// Every hop bounces to the next one and sleeps long enough that, after a
+	// couple of hops, the budget runs out before discover starts another one.
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		hops++
+		time.Sleep(40 * time.Millisecond)
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<html><head><meta http-equiv="refresh" content="0; url=/"></head></html>`))
+	})
+
+	site, _ := url.Parse(srv.URL)
+	candidates := newDirectSource(srv.Client()).discover(site, time.Now().Add(maxFetchBudget))
+
+	if len(candidates) != 1 || candidates[0].url != srv.URL+"/favicon.ico" {
+		t.Errorf("candidates = %v, want only the well-known path", candidates)
+	}
+	if hops >= maxMetaRefreshHops+1 {
+		t.Errorf("hops = %d, want discover to stop early once the budget ran out", hops)
 	}
 }
 

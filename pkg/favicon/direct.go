@@ -31,6 +31,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"golang.org/x/net/html"
 	"golang.org/x/net/publicsuffix"
@@ -53,6 +54,13 @@ const (
 	// (address safety, which the shared dialer keeps enforcing regardless).
 	maxPageRedirects = 5
 
+	// maxMetaRefreshHops bounds how many <meta http-equiv="refresh"> pages
+	// discover follows looking for one that declares an icon. Sites that
+	// gate their homepage behind a refresh to a language path (rather than
+	// an HTTP redirect, which fetchPage already follows) are what this
+	// exists for; it stays small because each hop is a full page fetch.
+	maxMetaRefreshHops = 3
+
 	// targetSize is the width we would like, in pixels: the interface displays
 	// icons around 16 to 32 CSS pixels, so 64 covers a high-density screen
 	// without dragging in the 512px icon meant for a phone home screen.
@@ -62,6 +70,16 @@ const (
 	// gives an operator something to allow or to refuse knowingly.
 	userAgent = "happyDomain-favicon/1 (+https://happydomain.org/)"
 )
+
+// maxFetchBudget bounds the wall-clock time FetchIcon spends across all of its
+// page fetches (meta-refresh hops) and icon downloads combined. Each
+// individual request is already capped at fetchTimeout, but the two loops
+// that make up a lookup can chain several of them; without an overall budget
+// the worst case is their product, not their sum of one.
+//
+// A var rather than a const so tests can shrink it instead of taking ten real
+// seconds to exercise the budget running out.
+var maxFetchBudget = 10 * time.Second
 
 // iconRels are the link relations that designate an icon of the site.
 //
@@ -104,13 +122,20 @@ func (ds *directSource) Name() string {
 }
 
 func (ds *directSource) FetchIcon(site *url.URL) ([]byte, string, error) {
+	deadline := time.Now().Add(maxFetchBudget)
+
 	// discover always returns at least the well-known /favicon.ico path, so
 	// candidates is never empty here.
-	candidates := ds.discover(site)
+	candidates := ds.discover(site, deadline)
 
 	errs := make([]error, 0, len(candidates))
 
 	for _, candidate := range candidates {
+		if time.Now().After(deadline) {
+			errs = append(errs, fmt.Errorf("fetch budget exceeded before trying %s", candidate.url))
+			break
+		}
+
 		// The icon URL comes out of the remote page, so it is as untrusted as
 		// the page itself. downloadIcon rejects anything that is not an
 		// http(s) URL before the guarded client gets a chance to make sense
@@ -142,12 +167,37 @@ type iconCandidate struct {
 //
 // A page that cannot be fetched or parsed is not fatal: /favicon.ico alone
 // covers a fair number of sites, and costs one request.
-func (ds *directSource) discover(site *url.URL) []iconCandidate {
+func (ds *directSource) discover(site *url.URL, deadline time.Time) []iconCandidate {
 	var candidates []iconCandidate
 
-	if body, base, err := ds.fetchPage(site); err == nil {
-		candidates = parseIconLinks(body, base)
+	// A page that declares no icon but points elsewhere with a meta refresh
+	// (rather than an HTTP redirect, which fetchPage already follows) is
+	// common enough for homepages that just select a language: the icon
+	// lives on the page it points to, not on the stub itself.
+	current := site
+	for hop := 0; hop <= maxMetaRefreshHops; hop++ {
+		if hop > 0 && time.Now().After(deadline) {
+			break
+		}
+
+		body, base, err := ds.fetchPage(current)
+		if err != nil {
+			break
+		}
+
+		found, refresh := parseIconLinks(body, base)
 		body.Close()
+
+		if len(found) > 0 {
+			candidates = found
+			break
+		}
+
+		if refresh == nil || !sameOrganizationalDomain(site, refresh) {
+			break
+		}
+
+		current = refresh
 	}
 
 	rankCandidates(candidates)
@@ -246,17 +296,21 @@ func sameOrganizationalDomain(a, b *url.URL) bool {
 	return aOrg == bOrg
 }
 
-// parseIconLinks reads the icon links of a document. It stops at the end of the
-// head, since everything it looks for lives there.
-func parseIconLinks(r io.Reader, base *url.URL) []iconCandidate {
+// parseIconLinks reads the icon links of a document. It stops at the end of
+// the head, since everything it looks for lives there. It also reports a
+// <meta http-equiv="refresh"> target, for the caller to follow when the page
+// declares no icon of its own: a stub page that only redirects has nothing
+// else worth looking at.
+func parseIconLinks(r io.Reader, base *url.URL) ([]iconCandidate, *url.URL) {
 	var candidates []iconCandidate
+	var metaRefresh *url.URL
 
 	tokenizer := html.NewTokenizer(r)
 
 	for {
 		switch tokenizer.Next() {
 		case html.ErrorToken:
-			return candidates
+			return candidates, metaRefresh
 
 		case html.StartTagToken, html.SelfClosingTagToken:
 			name, hasAttr := tokenizer.TagName()
@@ -278,16 +332,54 @@ func parseIconLinks(r io.Reader, base *url.URL) []iconCandidate {
 					}
 				}
 
+			case "meta":
+				if hasAttr && metaRefresh == nil {
+					a := attrs(tokenizer)
+					if strings.EqualFold(strings.TrimSpace(a["http-equiv"]), "refresh") {
+						if target, ok := parseMetaRefresh(a["content"], base); ok {
+							metaRefresh = target
+						}
+					}
+				}
+
 			case "body":
-				return candidates
+				return candidates, metaRefresh
 			}
 
 		case html.EndTagToken:
 			if name, _ := tokenizer.TagName(); string(name) == "head" {
-				return candidates
+				return candidates, metaRefresh
 			}
 		}
 	}
+}
+
+// parseMetaRefresh reads a meta refresh's content attribute, "0;
+// url=https://example.com/en/" or "5; URL='/en/'", and resolves the URL part
+// against base. The delay before it is unused: a page that redirects at all
+// is treated the same whether it does so immediately or after a pause.
+func parseMetaRefresh(content string, base *url.URL) (*url.URL, bool) {
+	_, rest, ok := strings.Cut(content, ";")
+	if !ok {
+		return nil, false
+	}
+
+	rest = strings.TrimSpace(rest)
+	if !strings.HasPrefix(strings.ToLower(rest), "url=") {
+		return nil, false
+	}
+
+	href := strings.Trim(rest[len("url="):], `'" `)
+	if href == "" {
+		return nil, false
+	}
+
+	target, err := base.Parse(href)
+	if err != nil {
+		return nil, false
+	}
+
+	return target, true
 }
 
 func attrs(tokenizer *html.Tokenizer) map[string]string {
