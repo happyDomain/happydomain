@@ -1,6 +1,6 @@
 <!--
      This file is part of the happyDomain (R) project.
-     Copyright (c) 2022-2024 happyDomain
+     Copyright (c) 2022-2025 happyDomain
      Authors: Pierre-Olivier Mercier, et al.
 
      This program is offered under a commercial and under the AGPL license.
@@ -22,7 +22,8 @@
 -->
 
 <script lang="ts">
-    import { providers_idx } from "$lib/stores/providers";
+    import ImgMonogram from "$lib/components/ImgMonogram.svelte";
+    import { providers_idx, providersSpecs } from "$lib/stores/providers";
 
     interface Props {
         id_provider?: string | undefined;
@@ -37,24 +38,32 @@
         style = "max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em",
         ...rest
     }: Props = $props();
+
+    // The provider type this instance stands for, whether it was given
+    // directly or has to be read from the provider the user configured.
+    let type = $derived(ptype || (id_provider ? $providers_idx?.[id_provider]?._srctype : undefined));
+
+    // Remember which type failed rather than a bare flag: the component is
+    // reused as lists are filtered, so a flag set once would hide the icon of
+    // every provider rendered afterwards.
+    let erroredType = $state<string | undefined>(undefined);
+
+    // The name reads better than the type on a monogram: "OVH" rather than
+    // "OVHAPI". It is only there once the specs have been loaded.
+    let label = $derived((type && $providersSpecs?.[type]?.name) || type || "");
 </script>
 
-{#if ptype}
+{#if type && erroredType !== type}
     <img
-        src={"/api/providers/_specs/" + ptype + "/icon.png"}
-        alt={ptype}
-        title={ptype}
+        src={"/api/providers/_specs/" + type + "/icon.png"}
+        alt={type}
+        title={type}
         {style}
         {...rest}
+        onerror={() => (erroredType = type)}
     />
-{:else if id_provider && $providers_idx && $providers_idx[id_provider]}
-    <img
-        src={"/api/providers/_specs/" + $providers_idx[id_provider]._srctype + "/icon.png"}
-        alt={$providers_idx[id_provider]._srctype}
-        title={$providers_idx[id_provider]._srctype}
-        {style}
-        {...rest}
-    />
+{:else if type}
+    <ImgMonogram {label} {style} {...rest} />
 {:else}
     <span {style} {...rest}></span>
 {/if}
