@@ -9,6 +9,18 @@
                 "title": "Sélecteur invalide « {{selector}} »",
                 "detail": "Les sélecteurs ne doivent contenir que des lettres, chiffres, tirets ou soulignés."
             },
+            "selector-label-too-long": {
+                "title": "Label de sélecteur trop long ({{length}} octets)",
+                "detail": "Un label DNS « {{label}} » ne peut pas dépasser 63 octets."
+            },
+            "selector-name-too-long": {
+                "title": "Nom d'enregistrement trop long ({{length}} octets)",
+                "detail": "<sélecteur>._domainkey.<domaine> doit rester sous 253 octets pour être résolvable."
+            },
+            "selector-non-ldh": {
+                "title": "Label de sélecteur inhabituel « {{label}} »",
+                "detail": "La RFC 6376 §3.1 attend des lettres, chiffres et tirets internes. Un souligné ou un tiret en début ou fin peut gêner certains vérificateurs."
+            },
             "parse-error": {
                 "title": "Impossible d'analyser l'enregistrement DKIM",
                 "detail": "La valeur TXT ne ressemble pas à un enregistrement DKIM clé=valeur."

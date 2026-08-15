@@ -9,6 +9,18 @@
                 "title": "Invalid selector \"{{selector}}\"",
                 "detail": "Selectors must contain only letters, digits, hyphens or underscores."
             },
+            "selector-label-too-long": {
+                "title": "Selector label too long ({{length}} octets)",
+                "detail": "A DNS label \"{{label}}\" cannot exceed 63 octets."
+            },
+            "selector-name-too-long": {
+                "title": "Record name too long ({{length}} octets)",
+                "detail": "<selector>._domainkey.<domain> must stay under 253 octets to be resolvable."
+            },
+            "selector-non-ldh": {
+                "title": "Unusual selector label \"{{label}}\"",
+                "detail": "RFC 6376 §3.1 expects letters, digits and inner hyphens. Underscores or a leading/trailing hyphen may trip some verifiers."
+            },
             "parse-error": {
                 "title": "Could not parse the DKIM record",
                 "detail": "The TXT value does not look like a key=value DKIM record."
