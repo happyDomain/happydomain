@@ -64,7 +64,28 @@ describe("DKIM compliance: selector", () => {
     });
     it("accepts dotted selectors (RFC 6376 sec. 3.1)", () => {
         const issues = run("foo.bar._domainkey", `v=DKIM1;p=${KEY_2048}`);
-        expect(ids(issues)).not.toContain("dkim.invalid-selector");
+        expect(ids(issues)).toEqual([]);
+    });
+    it("flags an empty label", () => {
+        const issues = run("foo..bar._domainkey", `v=DKIM1;p=${KEY_2048}`);
+        expect(ids(issues)).toContain("dkim.invalid-selector");
+    });
+    it("flags a label longer than 63 octets", () => {
+        const issues = run(`${"a".repeat(64)}._domainkey`, `v=DKIM1;p=${KEY_2048}`);
+        expect(ids(issues)).toContain("dkim.selector-label-too-long");
+    });
+    it("flags an owner name longer than 253 octets", () => {
+        const selector = Array.from({ length: 4 }, () => "a".repeat(60)).join(".");
+        const issues = run(`${selector}._domainkey`, `v=DKIM1;p=${KEY_2048}`);
+        expect(ids(issues)).toContain("dkim.selector-name-too-long");
+    });
+    it("warns on a selector label outside the LDH grammar", () => {
+        const issues = run("_mail._domainkey", `v=DKIM1;p=${KEY_2048}`);
+        expect(ids(issues)).toContain("dkim.selector-non-ldh");
+    });
+    it("warns on a selector label ending with a hyphen", () => {
+        const issues = run("mail-._domainkey", `v=DKIM1;p=${KEY_2048}`);
+        expect(ids(issues)).toContain("dkim.selector-non-ldh");
     });
 });
 

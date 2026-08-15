@@ -47,6 +47,8 @@ Async (through new `spf-flatten` resolver route):
 Sync:
 - missing/invalid selector, parse error, wrong `v=`, missing `p=`, invalid base64, weak RSA key (< 1024) (error)
 - Ed25519 key not 32 octets long, key that contradicts the announced `k=` (error)
+- selector label over 63 octets, `<selector>._domainkey.<domain>` over 253 octets (error)
+- selector label outside the LDH grammar of RFC 6376 sec. 3.1 (warning)
 - revoked key (`p=` empty), Ed25519 key wrapped in a SubjectPublicKeyInfo, short RSA key (< 2048), deprecated hash `sha1`, unknown key type/hash/`t=` flag (warning)
 - testing mode `t=y`, unknown service type, deprecated `g=` (info)
 

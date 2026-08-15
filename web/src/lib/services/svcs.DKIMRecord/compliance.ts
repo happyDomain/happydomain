@@ -22,6 +22,8 @@
 import {
     type ComplianceContext,
     type ComplianceIssue,
+    isValidHostname,
+    recordFqdn,
     registerValidators,
 } from "$lib/services/compliance";
 import { parseDKIM, type DKIMValue } from "./model.svelte";
@@ -31,8 +33,78 @@ const KNOWN_HASH_ALGS = new Set(["sha1", "sha256"]);
 const DEPRECATED_HASH_ALGS = new Set(["sha1"]);
 const KNOWN_SERVICE_TYPES = new Set(["email", "*"]);
 const KNOWN_FLAGS = new Set(["y", "s"]);
-const SELECTOR_LABEL_RE = /^[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]+)*$/;
+const SELECTOR_LABEL_RE = /^[A-Za-z0-9_-]+$/;
 const BASE64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
+
+const RFC6376_SELECTOR = "https://www.rfc-editor.org/rfc/rfc6376#section-3.1";
+// RFC 1035 sec. 2.3.4: 63 octets per label, 255 for the whole name once the
+// length octets and the root are counted, hence 253 characters written down.
+const MAX_LABEL_LENGTH = 63;
+const MAX_NAME_LENGTH = 253;
+
+/**
+ * Checks the DNS name structure of a selector. RFC 6376 sec. 3.1 defines it as
+ * one or more RFC 5321 sub-domains, so a dotted selector is fine but the usual
+ * DNS length limits apply, and a label is expected to be letters, digits and
+ * hyphens only.
+ */
+function selectorIssues(
+    selector: string,
+    hdrName: string,
+    ctx: ComplianceContext,
+): ComplianceIssue[] {
+    const issues: ComplianceIssue[] = [];
+    const labels = selector.split(".");
+
+    // An empty label ("foo..bar") or a character outside the LDH-plus-underscore
+    // set makes the whole name unusable: report it once and stop there.
+    if (labels.some((label) => !SELECTOR_LABEL_RE.test(label))) {
+        return [
+            {
+                id: "dkim.invalid-selector",
+                severity: "error",
+                params: { selector },
+                field: "selector",
+                docUrl: RFC6376_SELECTOR,
+            },
+        ];
+    }
+
+    for (const label of labels) {
+        if (label.length > MAX_LABEL_LENGTH) {
+            issues.push({
+                id: "dkim.selector-label-too-long",
+                severity: "error",
+                params: { label, length: label.length },
+                field: "selector",
+                docUrl: "https://www.rfc-editor.org/rfc/rfc1035#section-2.3.4",
+            });
+        } else if (!isValidHostname(label)) {
+            // Underscores and leading or trailing hyphens still resolve, but
+            // they are outside the sub-domain grammar the RFC points at.
+            issues.push({
+                id: "dkim.selector-non-ldh",
+                severity: "warning",
+                params: { label },
+                field: "selector",
+                docUrl: RFC6376_SELECTOR,
+            });
+        }
+    }
+
+    const owner = recordFqdn(hdrName, ctx);
+    if (owner.length > MAX_NAME_LENGTH) {
+        issues.push({
+            id: "dkim.selector-name-too-long",
+            severity: "error",
+            params: { length: owner.length },
+            field: "selector",
+            docUrl: "https://www.rfc-editor.org/rfc/rfc1035#section-2.3.4",
+        });
+    }
+
+    return issues;
+}
 
 // RFC 8463 sec. 3: an Ed25519 public key is 256 bits, published as the base64
 // encoding of the 32 raw octets.
@@ -94,7 +166,7 @@ function ed25519KeyIssues(bytes: Uint8Array | null): ComplianceIssue[] {
     ];
 }
 
-function dkimSync(raw: Record<string, any>, _ctx: ComplianceContext): ComplianceIssue[] {
+function dkimSync(raw: Record<string, any>, ctx: ComplianceContext): ComplianceIssue[] {
     const issues: ComplianceIssue[] = [];
     const txt = raw?.txt;
     if (!txt) return issues;
@@ -111,16 +183,10 @@ function dkimSync(raw: Record<string, any>, _ctx: ComplianceContext): Compliance
             id: "dkim.missing-selector",
             severity: "error",
             field: "selector",
-            docUrl: "https://www.rfc-editor.org/rfc/rfc6376#section-3.1",
+            docUrl: RFC6376_SELECTOR,
         });
-    } else if (!SELECTOR_LABEL_RE.test(selector)) {
-        issues.push({
-            id: "dkim.invalid-selector",
-            severity: "error",
-            params: { selector },
-            field: "selector",
-            docUrl: "https://www.rfc-editor.org/rfc/rfc6376#section-3.1",
-        });
+    } else {
+        issues.push(...selectorIssues(selector, name, ctx));
     }
 
     if (!txtValue.trim()) {
