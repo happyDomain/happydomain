@@ -31,6 +31,7 @@ import (
 	"strings"
 
 	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/pkg/favicon"
 )
 
 // stringSlice is a flag.Value that accumulates string values across repeated
@@ -51,31 +52,28 @@ func (s *stringSlice) Set(value string) error {
 	return nil
 }
 
-// ipList is a flag.Value that accumulates IP addresses and CIDR blocks. It
-// accepts both repeated flags and a single comma separated value, as an
-// environment variable can only be given once. Entries are validated and
-// canonicalized eagerly, so a typo fails at startup instead of silently
-// widening or disabling the check the list feeds.
+// entryList is a flag.Value that accumulates validated string entries, in the
+// order given. It accepts both repeated flags and a single comma separated
+// value, as an environment variable can only be given once. Each entry is
+// passed through validate, which checks it and returns the canonical form to
+// store, so a typo fails at startup instead of silently widening or disabling
+// whatever the list feeds.
 //
 // The keyword `none` empties the list. Because the config file, the
 // environment and the command line all feed this same flag.Value, a
 // lower-precedence source can otherwise only ever be widened: `none` is what
-// makes such a list narrowable from the command line.
-//
-// Three lists use it: the trusted reverse proxies, and the two outbound
-// destination allow-lists.
-type ipList struct {
+// makes such a list narrowable from the command line. It sets Values to a
+// non-nil empty slice rather than nil, so callers that apply a default only
+// when the list is nil can still tell "explicitly emptied" apart from
+// "never set".
+type entryList struct {
 	stringSlice
 
-	// what names one entry, for the error messages ("trusted proxy").
-	what string
-
-	// legacyLocalHint, when set, is the explanation returned for the `local`
-	// keyword instead of letting it fail as an unparseable address.
-	legacyLocalHint string
+	// validate checks and canonicalizes one entry.
+	validate func(item string) (string, error)
 }
 
-func (p *ipList) Set(value string) error {
+func (p *entryList) Set(value string) error {
 	for item := range strings.SplitSeq(value, ",") {
 		item = strings.TrimSpace(item)
 		if item == "" {
@@ -83,15 +81,11 @@ func (p *ipList) Set(value string) error {
 		}
 
 		if strings.EqualFold(item, "none") {
-			*p.Values = nil
+			*p.Values = []string{}
 			continue
 		}
 
-		if p.legacyLocalHint != "" && strings.EqualFold(item, "local") {
-			return fmt.Errorf("%q is no longer accepted: %s", item, p.legacyLocalHint)
-		}
-
-		entry, err := canonicalIPEntry(item, p.what)
+		entry, err := p.validate(item)
 		if err != nil {
 			return err
 		}
@@ -144,27 +138,36 @@ func canonicalIPEntry(item, what string) (string, error) {
 	return addr.String(), nil
 }
 
-// legacyLocalProxyHint explains why the `local` keyword disappeared from
-// -trusted-proxy. It used to expand to loopback plus every private range, which
-// trusts the whole network the proxy sits on rather than the proxy: on a
-// container bridge or a LAN, any neighbour reaching the port directly could
-// then pick the address it was throttled under.
-const legacyLocalProxyHint = "it trusted every private range, so any host on the same network could forge X-Forwarded-For. Give the exact address of your proxy instead (eg. the container IP, or 127.0.0.1 for a proxy on the same host)"
-
 // proxyList builds the flag.Value behind -trusted-proxy.
-func proxyList(values *[]string) *ipList {
-	return &ipList{
-		stringSlice:     stringSlice{values},
-		what:            "trusted proxy",
-		legacyLocalHint: legacyLocalProxyHint,
+func proxyList(values *[]string) *entryList {
+	return &entryList{
+		stringSlice: stringSlice{values},
+		validate: func(item string) (string, error) {
+			return canonicalIPEntry(item, "trusted proxy")
+		},
 	}
 }
 
 // targetList builds the flag.Value behind the two outbound allow-lists.
-func targetList(values *[]string, what string) *ipList {
-	return &ipList{
+func targetList(values *[]string, what string) *entryList {
+	return &entryList{
 		stringSlice: stringSlice{values},
-		what:        what,
+		validate: func(item string) (string, error) {
+			return canonicalIPEntry(item, what)
+		},
+	}
+}
+
+// faviconSourceList builds the flag.Value behind -favicon-source. Names are
+// validated here so that a typo stops happyDomain at startup: left to the
+// first request, an unknown source would show up as icons missing, which
+// looks exactly like a network problem.
+func faviconSourceList(values *[]string) *entryList {
+	return &entryList{
+		stringSlice: stringSlice{values},
+		validate: func(item string) (string, error) {
+			return item, favicon.ValidateSourceName(item)
+		},
 	}
 }
 

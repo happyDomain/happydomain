@@ -33,6 +33,7 @@ import (
 	"strings"
 
 	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/pkg/favicon"
 )
 
 // ConsolidateConfig fills an Options struct by reading configuration from
@@ -154,6 +155,14 @@ func ConsolidateConfig() (opts *happydns.Options, err error) {
 	}
 	if len(opts.ResolverAllowedTargets) > 0 {
 		log.Printf("The resolver tool may query public addresses, plus: %s\n", strings.Join(opts.ResolverAllowedTargets, ", "))
+	}
+
+	// FaviconSources defaults to DefaultSourceList, but only once flags, the
+	// environment and the config file all had a chance to set it: a
+	// pre-filled default could otherwise only ever be appended to, never
+	// overridden with a single, unrelated source.
+	if opts.FaviconSources == nil {
+		opts.FaviconSources = favicon.DefaultSourceList
 	}
 
 	err = ExtendsConfigWithOIDC(opts)

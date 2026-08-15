@@ -114,6 +114,12 @@ type Options struct {
 	// the router hosting your zones.
 	OutboundAllowedTargets []string
 
+	// FaviconSources lists, in order of preference, where the icons shown next
+	// to domains and providers are obtained from. The next entry is tried
+	// whenever one fails; empty disables the feature. See docs/favicons.md for
+	// the accepted entries and their tradeoffs.
+	FaviconSources []string
+
 	// ResolverAllowedTargets is the same list for the DNS server a user picks
 	// in the resolver tool. It is separate from OutboundAllowedTargets because
 	// the resolver endpoints need no account at all, and because pointing the

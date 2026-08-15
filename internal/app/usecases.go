@@ -22,7 +22,11 @@
 package app
 
 import (
+	"log"
+	"strings"
+
 	checkerPkg "git.happydns.org/happyDomain/internal/dnschecker"
+	"git.happydns.org/happyDomain/pkg/favicon"
 	notifPkg "git.happydns.org/happyDomain/internal/notifier"
 	"git.happydns.org/happyDomain/internal/usecase"
 	authuserUC "git.happydns.org/happyDomain/internal/usecase/authuser"
@@ -59,6 +63,7 @@ func (app *App) initUsecases() {
 	zoneService := zoneUC.NewZoneUsecases(app.store, serviceService)
 
 	app.usecases.backup = backupUC.NewUsecase(app.store)
+	app.initFaviconService()
 	app.usecases.providerSpecs = usecase.NewProviderSpecsUsecase()
 	app.usecases.provider = providerService
 	app.usecases.providerAdmin = providerAdminService
@@ -198,5 +203,23 @@ func (app *App) initUsecases() {
 	)
 	if cb, ok := app.usecases.checkerEngine.(checkerUC.ExecutionCallbackSetter); ok {
 		cb.SetExecutionCallback(app.usecases.notificationDispatcher.OnExecutionComplete)
+	}
+}
+
+// initFaviconService builds the icon fetching chain from the configuration. As
+// with the outbound allow-lists, an unusable list stops happyDomain here rather
+// than turning into icons that silently never load.
+func (app *App) initFaviconService() {
+	faviconService, err := favicon.NewFaviconService(app.guards.Outbound.HTTPClient(favicon.FetchTimeout), app.cfg.FaviconSources)
+	if err != nil {
+		log.Fatalf("Invalid -favicon-source: %s", err)
+	}
+
+	app.faviconService = faviconService
+
+	if faviconService == nil {
+		log.Printf("Favicon sources: none (no icon will be fetched)")
+	} else {
+		log.Printf("Favicon sources: %s", strings.Join(faviconService.Sources(), ", "))
 	}
 }

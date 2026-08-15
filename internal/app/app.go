@@ -44,6 +44,7 @@ import (
 	notifPkg "git.happydns.org/happyDomain/internal/notifier"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/pkg/favicon"
 )
 
 type Usecases struct {
@@ -87,6 +88,7 @@ type App struct {
 	captchaVerifier happydns.CaptchaVerifier
 	cfg             *happydns.Options
 	guards          outboundGuards
+	faviconService  *favicon.FaviconService
 	failureTracker  *captcha.FailureTracker
 	insights        *insightsCollector
 	mailer          happydns.Mailer
