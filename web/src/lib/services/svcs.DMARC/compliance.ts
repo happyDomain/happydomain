@@ -161,6 +161,87 @@ function externalDestinations(
     return externals;
 }
 
+// Policies, from the most permissive to the most protective.
+const POLICY_RANK: Record<string, number> = { none: 0, quarantine: 1, reject: 2 };
+
+/** Reads the DMARC record a service carries, or null when it says nothing. */
+function serviceDMARC(service: ServiceWithValue): DMARCValue | null {
+    const txt = (service.Service as Record<string, any> | undefined)?.txt;
+    const value = typeof txt?.Txt === "string" ? txt.Txt.trim() : "";
+    if (!value) return null;
+    try {
+        return parseDMARC(value);
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Models how a policy is inherited, both inside a record (p= against sp=) and
+ * between the record of a subdomain and the one of the zone apex: policy
+ * discovery stops at the first _dmarc name it finds, so a record published on a
+ * subdomain shadows the sp= of its parent instead of adding to it.
+ */
+function inheritanceIssues(val: DMARCValue, ctx: ComplianceContext): ComplianceIssue[] {
+    const issues: ComplianceIssue[] = [];
+    const policy = val.p ?? "";
+    if (!POLICY_VALUES.has(policy)) return issues;
+
+    const sp = val.sp ?? "";
+    const onApex = /^_dmarc$/i.test(ctx.dn ?? "");
+
+    if (sp) {
+        if (POLICY_RANK[sp] < POLICY_RANK[policy]) {
+            issues.push({
+                id: "dmarc.sp-weaker-than-p",
+                severity: "warning",
+                params: { policy, sp },
+                field: "sp",
+                docUrl: RFC + "#section-6.3",
+            });
+        } else if (sp === policy) {
+            issues.push({
+                id: "dmarc.sp-same-as-p",
+                severity: "info",
+                params: { policy },
+                field: "sp",
+                docUrl: RFC + "#section-6.3",
+            });
+        }
+        if (!onApex) {
+            issues.push({
+                id: "dmarc.sp-on-subdomain",
+                severity: "info",
+                params: { name: (ctx.dn ?? "").replace(/^_dmarc\./i, "") },
+                field: "sp",
+                docUrl: RFC + "#section-6.3",
+            });
+        }
+    }
+
+    // A record on a subdomain takes over the policy its parent had set for it.
+    if (!onApex && ctx.zone) {
+        for (const service of ctx.findServices("_dmarc", "svcs.DMARC")) {
+            const parent = serviceDMARC(service);
+            if (!parent) continue;
+            const inherited = parent.sp || parent.p || "";
+            if (!POLICY_VALUES.has(inherited)) continue;
+            if (POLICY_RANK[policy] < POLICY_RANK[inherited]) {
+                issues.push({
+                    id: "dmarc.subdomain-weakens-parent",
+                    severity: "warning",
+                    params: { policy, inherited },
+                    field: "p",
+                    docUrl: RFC + "#section-6.6.3",
+                });
+            }
+            break;
+        }
+    }
+
+    return issues;
+}
+
 /**
  * Tells whether the DKIM selectors of the zone can actually sign anything: a
  * selector whose key is revoked (empty p=) or still in testing mode (t=y) is
@@ -279,6 +360,8 @@ function dmarcSync(raw: Record<string, any>, ctx: ComplianceContext): Compliance
             params: { policy: val.sp },
             field: "sp",
         });
+    } else {
+        issues.push(...inheritanceIssues(val, ctx));
     }
 
     // adkim / aspf alignment.

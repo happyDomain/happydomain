@@ -61,6 +61,8 @@ Sync:
 - invalid `fo`, unknown `rf`, empty URI, no alignment source (`p=none`), `adkim=s` without DKIM in zone (warning)
 - report URI in plain http, pointing at an address literal or at a single-label host (warning)
 - zone relying on SPF only (no DKIM selector), every DKIM selector of the zone revoked or in testing mode (warning)
+- `sp=` weaker than `p=`, subdomain record weakening the policy it inherits from the apex (warning)
+- `sp=` restating `p=`, `sp=` published on a subdomain record (info)
 - `p=none`, `pct<100`, external reporting destination detected, whatever the URI scheme (info)
 
 A destination is external when its host falls outside the Organizational Domain
