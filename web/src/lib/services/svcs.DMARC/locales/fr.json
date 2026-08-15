@@ -69,6 +69,26 @@
                 "title": "URI mailto malformée dans {{tag}} : « {{uri}} »",
                 "detail": "Format attendu : mailto:utilisateur@exemple.fr (un suffixe !taille est autorisé)."
             },
+            "invalid-http-uri": {
+                "title": "URI {{tag}} malformée : « {{uri}} »",
+                "detail": "Une URL complète est attendue, par exemple https://rapports.exemple.fr/dmarc (un suffixe !taille est autorisé)."
+            },
+            "report-uri-insecure": {
+                "title": "Les rapports sont envoyés à {{host}} en http simple",
+                "detail": "Les rapports circulent en clair : ils peuvent être lus ou modifiés en chemin. Préférez une URL https://."
+            },
+            "report-host-ip-literal": {
+                "title": "{{tag}} pointe vers l'adresse littérale {{host}}",
+                "detail": "Aucun certificat ne correspond à une adresse, et la section 7.1 du RFC 7489 n'a plus de domaine à interroger pour l'autorisation de rapport. Utilisez un nom d'hôte."
+            },
+            "invalid-report-host": {
+                "title": "« {{host}} » n'est pas un nom d'hôte valide",
+                "detail": "La destination {{tag}} ne se résoudra jamais : vérifiez la partie hôte de l'URL."
+            },
+            "report-host-single-label": {
+                "title": "{{tag}} pointe vers l'hôte {{host}}, sans domaine",
+                "detail": "Un nom sans point ne se résout que dans un domaine de recherche local, pas depuis les serveurs qui vous envoient les rapports."
+            },
             "no-alignment-source": {
                 "title": "Aucun enregistrement DKIM ni SPF dans cette zone",
                 "detail": "DMARC requiert au moins un mécanisme aligné. Sans DKIM ni SPF, aucun message ne peut passer DMARC."

@@ -69,6 +69,26 @@
                 "title": "Malformed mailto URI in {{tag}}: \"{{uri}}\"",
                 "detail": "Expected mailto:user@example.com (an optional !size suffix is allowed)."
             },
+            "invalid-http-uri": {
+                "title": "Malformed {{tag}} URI: \"{{uri}}\"",
+                "detail": "Expected a complete URL, like https://reports.example.com/dmarc (an optional !size suffix is allowed)."
+            },
+            "report-uri-insecure": {
+                "title": "Reports are sent to {{host}} over plain http",
+                "detail": "The reports travel in clear and can be read or altered on the way. Use an https:// URL."
+            },
+            "report-host-ip-literal": {
+                "title": "{{tag}} points at the address literal {{host}}",
+                "detail": "No certificate matches an address, and RFC 7489 sec. 7.1 has no domain left to ask for a reporting authorization. Use a host name."
+            },
+            "invalid-report-host": {
+                "title": "\"{{host}}\" is not a valid host name",
+                "detail": "The {{tag}} destination will never resolve: check the host part of the URL."
+            },
+            "report-host-single-label": {
+                "title": "{{tag}} points at the single-label host {{host}}",
+                "detail": "A name without a dot only resolves inside a local search domain, not from the receivers sending you the reports."
+            },
             "no-alignment-source": {
                 "title": "No DKIM or SPF record found in this zone",
                 "detail": "DMARC needs at least one aligned mechanism. Without a DKIM or SPF record, no message can pass DMARC."

@@ -171,6 +171,42 @@ describe("DMARC compliance: rua / ruf", () => {
     });
 });
 
+describe("DMARC compliance: http(s) report URI", () => {
+    it("accepts an https URI with a !size suffix", () => {
+        const issues = run("v=DMARC1;p=reject;rua=https://reports.example.com/dmarc!10m");
+        expect(ids(issues)).toEqual([]);
+    });
+    it("flags an http URI that does not parse", () => {
+        const issues = run("v=DMARC1;p=reject;rua=https://");
+        expect(ids(issues)).toContain("dmarc.invalid-http-uri");
+    });
+    it("warns on a plain http destination", () => {
+        const issues = run("v=DMARC1;p=reject;rua=http://reports.example.com/dmarc");
+        expect(ids(issues)).toContain("dmarc.report-uri-insecure");
+    });
+    it("warns on an IPv4 literal host", () => {
+        const issues = run("v=DMARC1;p=reject;rua=https://192.0.2.1/dmarc");
+        expect(ids(issues)).toContain("dmarc.report-host-ip-literal");
+    });
+    it("warns on an IPv6 literal host", () => {
+        const issues = run("v=DMARC1;p=reject;rua=https://[2001:db8::1]/dmarc");
+        expect(ids(issues)).toContain("dmarc.report-host-ip-literal");
+    });
+    it("flags a host that is not a valid name", () => {
+        const issues = run("v=DMARC1;p=reject;rua=https://-reports-.example.com/dmarc");
+        expect(ids(issues)).toContain("dmarc.invalid-report-host");
+    });
+    it("warns on a single-label host", () => {
+        const issues = run("v=DMARC1;p=reject;rua=https://localhost/dmarc");
+        expect(ids(issues)).toContain("dmarc.report-host-single-label");
+    });
+    it("checks ruf destinations too", () => {
+        const issues = run("v=DMARC1;p=reject;ruf=http://localhost/dmarc");
+        expect(ids(issues)).toContain("dmarc.report-uri-insecure");
+        expect(ids(issues)).toContain("dmarc.report-host-single-label");
+    });
+});
+
 describe("DMARC compliance: cross-checks with DKIM / SPF", () => {
     it("does not flag cross-checks when zone is unknown", () => {
         const issues = run("v=DMARC1;p=reject;adkim=s");
