@@ -134,6 +134,35 @@ function hasEd25519SpkiPrefix(bytes: Uint8Array): boolean {
     return ED25519_SPKI_PREFIX.every((b, i) => bytes[i] === b);
 }
 
+// The smallest key any DKIM signer publishes, an Ed25519 one, is 32 octets:
+// anything shorter is a leftover of the record being filled in.
+const MIN_KEY_LENGTH = ED25519_KEY_LENGTH;
+// "AAAAAA…", "xxxxxx…": a payload made of a single character, padding aside.
+const REPEATED_CHAR_RE = /^(.)\1*={0,2}$/;
+
+/**
+ * A revocation is spelled "p=" (RFC 6376 §3.6.1) and is deliberate; a payload
+ * too short to hold a key, or made of one repeated character, is a leftover
+ * of the record being filled in.
+ */
+function placeholderKeyIssue(payload: string, bytes: Uint8Array | null): ComplianceIssue | null {
+    // A payload that does not decode (a stray padding, most often) still says
+    // how many octets it was meant to carry: 3 for every 4 base64 characters.
+    const length = bytes
+        ? bytes.length
+        : Math.floor((payload.replace(/=+$/, "").length * 3) / 4);
+    const looksLikePlaceholder = REPEATED_CHAR_RE.test(payload) || length < MIN_KEY_LENGTH;
+    if (!looksLikePlaceholder) return null;
+
+    return {
+        id: "dkim.placeholder-key",
+        severity: "error",
+        params: { value: payload.length > 24 ? payload.slice(0, 24) + "…" : payload },
+        field: "p",
+        docUrl: "https://www.rfc-editor.org/rfc/rfc6376#section-3.6.1",
+    };
+}
+
 /**
  * Checks the shape of an Ed25519 public key (RFC 8463 sec. 3). The curve is
  * fixed, so the octet count is the whole verification: 32 raw octets, or the
@@ -262,11 +291,12 @@ function dkimSync(raw: Record<string, any>, ctx: ComplianceContext): ComplianceI
         });
     }
 
-    // p= is mandatory. parseKeyValueTxt drops empty values, so check the raw
-    // string to tell "no p tag" from "p=" (the latter being a key revocation
-    // per RFC 6376 §3.6.1).
-    const hasPTag = /(?:^|;)\s*p\s*=/i.test(txtValue);
-    if (!hasPTag) {
+    // p= is mandatory. parseKeyValueTxt drops empty values, so read the raw
+    // string to tell "no p tag" from "p=", the latter being a key revocation
+    // per RFC 6376 §3.6.1. Whitespace around a tag value is insignificant
+    // (RFC 6376 §3.2), so "p=   " revokes the key just the same.
+    const pTag = /(?:^|;)\s*p\s*=([^;]*)/i.exec(txtValue);
+    if (!pTag) {
         issues.push({
             id: "dkim.missing-key",
             severity: "error",
@@ -291,7 +321,10 @@ function dkimSync(raw: Record<string, any>, ctx: ComplianceContext): ComplianceI
         const bytes = decodeBase64(payload);
         const keyType = val.k ?? "rsa";
 
-        if (keyType === "ed25519") {
+        const placeholder = placeholderKeyIssue(payload, bytes);
+        if (placeholder) {
+            issues.push(placeholder);
+        } else if (keyType === "ed25519") {
             issues.push(...ed25519KeyIssues(bytes));
         } else if (keyType === "rsa" && bytes && bytes.length === ED25519_KEY_LENGTH) {
             // 32 octets is an Ed25519 key, never an RSA one: the k= tag and the

@@ -51,10 +51,17 @@ function ids(issues: ComplianceIssue[]): string[] {
     return issues.map((i) => i.id);
 }
 
-// Synthetic base64 payloads sized to match the heuristic thresholds.
-const KEY_2048 = "A".repeat(360);
-const KEY_1024 = "A".repeat(220);
-const KEY_TINY = "A".repeat(100);
+// Synthetic base64 payloads sized to match the heuristic thresholds. They are
+// deliberately not a repeated character, which the placeholder check catches.
+const KEY_2048 =
+    "G+fWdGWBsp9cr8o6xKKlAtxA/AILuDPGN2GFjCQAcV+kIyBcCUQBDB52U+y71L7QmoU1nV9q4S2D6CsJ328F6HCKkfxW3AHrxoZCR18TtKg3RDomxmLTH3ykEUo672s3rvnNSBb6F9PxKK5hQeyLX+2QJaHG7On+6T3PV6JDCayuIx0SlBNtbI/BoIIMO/qQLvjLhW1/OXsUlZGmP7AYZ9aqDfo9wOg6O5TWbnOGgZqXC4C0ADVda6lRPcxShr5fPm84ZN8c+f4NAyDSPKCO60/iZCQ7s01X0Lv3vF8bejdEBlSwZMcgkpa3Q12jMBSjqwcAk5xF2FRf+kN1wN/+zvUKr2+aWg7u1uMaqDy2";
+const KEY_1024 =
+    "MhVUD0sfyKGxcZtMbsEXKCs1WTOUuwMyj8THdkSjAV4IKhoXq/JANB+sloIcwy5ySNIV5oHoQz2rrBxhJOVoArW0F/q6AKMm4iYRHFrZvNThXV7p/djxnlL5PtzB31bJf9DRHF/7SOXE56pnUei9HncUf9dlMHAvYlDG1L/iZCQ7s01XVZYI6rU58qM2u2isF4GJVRh/cD1McMAyTuEvDn/Fq5zy";
+const KEY_TINY =
+    "TD99kvd1USWfbyakNOrGsmIE35xeuJlTQVmlfdUhDyXDsfy3zaRqqFgNRgfgorOjDIQDrwbuFQ/CcX6h87OlwfipkD2tYndEjWN4";
+
+// 32 raw octets, as RFC 8463 sec. 3 asks for.
+const ED_RAW = "11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURo=";
 
 describe("DKIM compliance: happy paths", () => {
     it("accepts a clean RSA-2048-sized record", () => {
@@ -160,6 +167,52 @@ describe("DKIM compliance: version & key", () => {
         expect(ids(issues)).toContain("dkim.revoked-key");
         expect(ids(issues)).not.toContain("dkim.missing-key");
     });
+    it("treats a whitespace-only key as a revocation", () => {
+        const issues = run("s._domainkey", "v=DKIM1;p=   ;t=y");
+        expect(ids(issues)).toContain("dkim.revoked-key");
+        expect(ids(issues)).not.toContain("dkim.missing-key");
+    });
+    it("flags the placeholder key of the editor", () => {
+        const issues = run("s._domainkey", "v=DKIM1;p=a0b1c2d3e4f5==");
+        expect(ids(issues)).toContain("dkim.placeholder-key");
+    });
+    it("flags a payload made of a single repeated character", () => {
+        const issues = run("s._domainkey", `v=DKIM1;p=${"A".repeat(360)}`);
+        expect(ids(issues)).toContain("dkim.placeholder-key");
+        expect(ids(issues)).not.toContain("dkim.short-rsa-key");
+    });
+    it("takes an ed25519 key shorter than 32 octets for a placeholder", () => {
+        const issues = run("ed._domainkey", `v=DKIM1;k=ed25519;p=${ED_RAW.slice(0, 24)}`);
+        expect(ids(issues)).toEqual(["dkim.placeholder-key"]);
+    });
+    it("draws the placeholder limit between 31 and 32 octets", () => {
+        const thirtyOne = "11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHUQ==";
+        expect(ids(run("s._domainkey", `v=DKIM1;k=rsa;p=${thirtyOne}`))).toContain(
+            "dkim.placeholder-key",
+        );
+        expect(ids(run("s._domainkey", `v=DKIM1;k=rsa;p=${ED_RAW}`))).not.toContain(
+            "dkim.placeholder-key",
+        );
+    });
+    it("estimates the size of a payload that does not decode", () => {
+        // Five characters cannot be base64, yet they are plainly too few for a key.
+        const issues = run("s._domainkey", "v=DKIM1;p=abcde");
+        expect(ids(issues)).toContain("dkim.placeholder-key");
+    });
+    it("takes a padded repeated character for a placeholder", () => {
+        const issues = run("s._domainkey", "v=DKIM1;p=AAAA==");
+        expect(ids(issues)).toContain("dkim.placeholder-key");
+    });
+    it("quotes the start of a long placeholder", () => {
+        const issue = run("s._domainkey", `v=DKIM1;p=${"A".repeat(360)}`).find(
+            (i) => i.id === "dkim.placeholder-key",
+        );
+        expect(issue?.params).toEqual({ value: "A".repeat(24) + "…" });
+    });
+    it("does not take a real key for a placeholder", () => {
+        const issues = run("s._domainkey", `v=DKIM1;p=${KEY_2048}`);
+        expect(ids(issues)).not.toContain("dkim.placeholder-key");
+    });
     it("flags non-base64 key payload", () => {
         const issues = run("s._domainkey", "v=DKIM1;p=!!!not-base64!!!");
         expect(ids(issues)).toContain("dkim.invalid-base64");
@@ -263,8 +316,6 @@ describe("DKIM compliance: selectors sharing a name", () => {
 });
 
 describe("DKIM compliance: ed25519 key", () => {
-    // 32 raw octets, as RFC 8463 sec. 3 asks for.
-    const ED_RAW = "11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURo=";
     // The same key wrapped in a SubjectPublicKeyInfo (44 octets).
     const ED_SPKI = "MCowBQYDK2VwAyEA11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURo=";
 
@@ -276,8 +327,10 @@ describe("DKIM compliance: ed25519 key", () => {
         const issues = run("ed._domainkey", `v=DKIM1;k=ed25519;p=${ED_SPKI}`);
         expect(ids(issues)).toContain("dkim.ed25519-spki-key");
     });
-    it("flags a truncated key", () => {
-        const issues = run("ed._domainkey", `v=DKIM1;k=ed25519;p=${ED_RAW.slice(0, 24)}`);
+    it("flags a key that is not 32 octets long", () => {
+        // The same key with 8 octets of junk appended.
+        const ED_40 = "11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURoqKioqKioqKg==";
+        const issues = run("ed._domainkey", `v=DKIM1;k=ed25519;p=${ED_40}`);
         expect(ids(issues)).toContain("dkim.invalid-ed25519-key-length");
     });
     it("flags an RSA-sized payload announced as ed25519", () => {
@@ -285,10 +338,11 @@ describe("DKIM compliance: ed25519 key", () => {
         expect(ids(issues)).toContain("dkim.invalid-ed25519-key-length");
     });
     it("reports the length of a key that is not 32 octets", () => {
-        const issue = run("ed._domainkey", `v=DKIM1;k=ed25519;p=${ED_RAW.slice(0, 24)}`).find(
+        const ED_40 = "11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURoqKioqKioqKg==";
+        const issue = run("ed._domainkey", `v=DKIM1;k=ed25519;p=${ED_40}`).find(
             (i) => i.id === "dkim.invalid-ed25519-key-length",
         );
-        expect(issue?.params).toEqual({ length: 18 });
+        expect(issue?.params).toEqual({ length: 40 });
     });
     it("flags 44 octets that do not start with the SubjectPublicKeyInfo prefix", () => {
         const issues = run("ed._domainkey", `v=DKIM1;k=ed25519;p=${"ABCD".repeat(14)}ABC=`);
