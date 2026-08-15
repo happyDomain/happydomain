@@ -44,9 +44,10 @@
         origin: Domain;
         type: string;
         value: Record<string, any>;
+        serviceId?: string;
     }
 
-    let { dn, origin, type, value }: Props = $props();
+    let { dn, origin, type, value, serviceId }: Props = $props();
 
     const ASYNC_DEBOUNCE_MS = 400;
 
@@ -59,7 +60,7 @@
     let registered = $derived(validators !== undefined);
     let hasAsync = $derived(Boolean(validators?.async));
 
-    let ctx = $derived(buildContext(dn, origin, $thisZone));
+    let ctx = $derived(buildContext(dn, origin, $thisZone, serviceId));
 
     let syncIssues = $derived.by<ComplianceIssue[]>(() => {
         if (!registered) return [];

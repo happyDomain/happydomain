@@ -203,6 +203,7 @@
                         dn={service._domain}
                         origin={data.domain}
                         type={service._svctype}
+                        serviceId={service._id}
                         bind:value={service.Service}
                     />
                 {/key}

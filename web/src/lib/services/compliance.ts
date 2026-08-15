@@ -54,6 +54,8 @@ export interface ComplianceContext {
     origin: Domain;
     /** Current zone state, when known. */
     zone: Zone | null;
+    /** Id of the zone service being edited, when it already exists in the zone. */
+    editedServiceId?: string;
     /**
      * Look up sibling services in the zone.
      * @param subdomain Subdomain (relative to origin) to search in. Empty string for apex.
@@ -249,11 +251,17 @@ export function hasAddress(ctx: ComplianceContext, subdomain: string): boolean {
     );
 }
 
-export function buildContext(dn: string, origin: Domain, zone: Zone | null): ComplianceContext {
+export function buildContext(
+    dn: string,
+    origin: Domain,
+    zone: Zone | null,
+    editedServiceId?: string,
+): ComplianceContext {
     return {
         dn,
         origin,
         zone,
+        editedServiceId,
         findServices(subdomain, type) {
             if (!zone) return [];
             const services = zone.services?.[subdomain] ?? [];

@@ -34,9 +34,10 @@
         origin: Domain;
         type: string;
         value: ServiceBody;
+        serviceId?: string;
     }
 
-    let { dn, origin, type, value = $bindable({}) }: Props = $props();
+    let { dn, origin, type, value = $bindable({}), serviceId }: Props = $props();
 
     // Every editor takes these props, but the body it expects depends on the
     // service type, which is only known here as a string: the pairing of a
@@ -87,7 +88,7 @@
             bind:value={value}
         />
     {/key}
-    <EditorCompliance {dn} {origin} {type} {value} />
+    <EditorCompliance {dn} {origin} {type} {value} {serviceId} />
 {:catch error}
     <div class="alert alert-warning">
         <p>Failed to load editor for type: {type}</p>

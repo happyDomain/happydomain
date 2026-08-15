@@ -17,6 +17,10 @@
                 "title": "Nom d'enregistrement trop long ({{length}} octets)",
                 "detail": "<sélecteur>._domainkey.<domaine> doit rester sous 253 octets pour être résolvable."
             },
+            "duplicate-selector": {
+                "title": "{{count}} enregistrements partagent le sélecteur « {{selector}} »",
+                "detail": "La RFC 6376 §3.6.2.2 autorise le vérificateur à en choisir un au hasard. Utilisez plutôt un second sélecteur pour changer de clé."
+            },
             "selector-non-ldh": {
                 "title": "Label de sélecteur inhabituel « {{label}} »",
                 "detail": "La RFC 6376 §3.1 attend des lettres, chiffres et tirets internes. Un souligné ou un tiret en début ou fin peut gêner certains vérificateurs."
