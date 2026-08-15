@@ -37,6 +37,18 @@
                 "title": "Clé RSA plus courte que recommandé",
                 "detail": "Utilisez des clés RSA d'au moins 2048 bits (RFC 8301 §3.2)."
             },
+            "ed25519-spki-key": {
+                "title": "Clé Ed25519 encapsulée dans un SubjectPublicKeyInfo",
+                "detail": "La RFC 8463 §3 attend les 32 octets bruts de la clé ; certains vérificateurs rejettent une clé encapsulée."
+            },
+            "invalid-ed25519-key-length": {
+                "title": "Longueur de clé Ed25519 invalide ({{length}} octets)",
+                "detail": "Une clé publique Ed25519 fait 32 octets (RFC 8463 §3)."
+            },
+            "key-type-mismatch": {
+                "title": "La clé ne correspond pas à k={{type}}",
+                "detail": "Cette clé fait 32 octets : c'est une clé {{expected}}. Corrigez le tag k= ou publiez la bonne clé."
+            },
             "unknown-key-type": {
                 "title": "Type de clé inconnu « {{type}} »",
                 "detail": "La RFC 6376 définit « rsa » ; la RFC 8463 ajoute « ed25519 »."

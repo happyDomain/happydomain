@@ -46,7 +46,8 @@ Async (through new `spf-flatten` resolver route):
 
 Sync:
 - missing/invalid selector, parse error, wrong `v=`, missing `p=`, invalid base64, weak RSA key (< 1024) (error)
-- revoked key (`p=` empty), short RSA key (< 2048), deprecated hash `sha1`, unknown key type/hash/`t=` flag (warning)
+- Ed25519 key not 32 octets long, key that contradicts the announced `k=` (error)
+- revoked key (`p=` empty), Ed25519 key wrapped in a SubjectPublicKeyInfo, short RSA key (< 2048), deprecated hash `sha1`, unknown key type/hash/`t=` flag (warning)
 - testing mode `t=y`, unknown service type, deprecated `g=` (info)
 
 ### DMARC (`svcs.DMARC`)

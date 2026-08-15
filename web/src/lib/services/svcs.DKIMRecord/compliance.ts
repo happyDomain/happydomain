@@ -34,6 +34,66 @@ const KNOWN_FLAGS = new Set(["y", "s"]);
 const SELECTOR_LABEL_RE = /^[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]+)*$/;
 const BASE64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
 
+// RFC 8463 sec. 3: an Ed25519 public key is 256 bits, published as the base64
+// encoding of the 32 raw octets.
+const ED25519_KEY_LENGTH = 32;
+// The same key wrapped in a SubjectPublicKeyInfo is 44 octets, always prefixed
+// by this fixed header (SEQUENCE, AlgorithmIdentifier id-Ed25519 1.3.101.112,
+// then the BIT STRING holding the 32 octets).
+const ED25519_SPKI_PREFIX = [
+    0x30, 0x2a, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, 0x03, 0x21, 0x00,
+];
+const ED25519_SPKI_LENGTH = ED25519_SPKI_PREFIX.length + ED25519_KEY_LENGTH;
+
+/** Decodes a base64 payload, returning null when it is not decodable. */
+function decodeBase64(payload: string): Uint8Array | null {
+    try {
+        const binary = atob(payload);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        return bytes;
+    } catch {
+        return null;
+    }
+}
+
+function hasEd25519SpkiPrefix(bytes: Uint8Array): boolean {
+    return ED25519_SPKI_PREFIX.every((b, i) => bytes[i] === b);
+}
+
+/**
+ * Checks the shape of an Ed25519 public key (RFC 8463 sec. 3). The curve is
+ * fixed, so the octet count is the whole verification: 32 raw octets, or the
+ * 44 octets of a SubjectPublicKeyInfo that some tools emit instead.
+ */
+function ed25519KeyIssues(bytes: Uint8Array | null): ComplianceIssue[] {
+    // An undecodable payload is already reported as invalid base64.
+    if (!bytes) return [];
+
+    if (bytes.length === ED25519_KEY_LENGTH) return [];
+
+    if (bytes.length === ED25519_SPKI_LENGTH && hasEd25519SpkiPrefix(bytes)) {
+        return [
+            {
+                id: "dkim.ed25519-spki-key",
+                severity: "warning",
+                field: "p",
+                docUrl: "https://www.rfc-editor.org/rfc/rfc8463#section-3",
+            },
+        ];
+    }
+
+    return [
+        {
+            id: "dkim.invalid-ed25519-key-length",
+            severity: "error",
+            params: { length: bytes.length },
+            field: "p",
+            docUrl: "https://www.rfc-editor.org/rfc/rfc8463#section-3",
+        },
+    ];
+}
+
 function dkimSync(raw: Record<string, any>, _ctx: ComplianceContext): ComplianceIssue[] {
     const issues: ComplianceIssue[] = [];
     const txt = raw?.txt;
@@ -116,13 +176,29 @@ function dkimSync(raw: Record<string, any>, _ctx: ComplianceContext): Compliance
             field: "p",
         });
     } else {
-        // Approximate RSA modulus size from the base64 payload length. The
-        // payload encodes a SubjectPublicKeyInfo, so a 1024-bit key sits in
-        // the 200-330 char range and a 2048-bit key around 360-400 chars.
-        // RFC 8301 forbids RSA keys shorter than 1024 bits, recommends 2048.
+        const payload = val.p.replace(/\s+/g, "");
+        const bytes = decodeBase64(payload);
         const keyType = val.k ?? "rsa";
-        if (keyType === "rsa") {
-            const len = val.p.replace(/\s+/g, "").replace(/=+$/, "").length;
+
+        if (keyType === "ed25519") {
+            issues.push(...ed25519KeyIssues(bytes));
+        } else if (keyType === "rsa" && bytes && bytes.length === ED25519_KEY_LENGTH) {
+            // 32 octets is an Ed25519 key, never an RSA one: the k= tag and the
+            // key disagree. Reporting a weak RSA key here would send the user
+            // regenerating a key that is perfectly fine.
+            issues.push({
+                id: "dkim.key-type-mismatch",
+                severity: "error",
+                params: { type: keyType, expected: "ed25519" },
+                field: "p",
+                docUrl: "https://www.rfc-editor.org/rfc/rfc8463#section-3",
+            });
+        } else if (keyType === "rsa") {
+            // Approximate RSA modulus size from the base64 payload length. The
+            // payload encodes a SubjectPublicKeyInfo, so a 1024-bit key sits in
+            // the 200-330 char range and a 2048-bit key around 360-400 chars.
+            // RFC 8301 forbids RSA keys shorter than 1024 bits, recommends 2048.
+            const len = payload.replace(/=+$/, "").length;
             if (len < 200) {
                 issues.push({
                     id: "dkim.weak-rsa-key",

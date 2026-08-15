@@ -37,6 +37,18 @@
                 "title": "RSA key shorter than recommended",
                 "detail": "Use 2048-bit (or longer) RSA keys per RFC 8301 §3.2."
             },
+            "ed25519-spki-key": {
+                "title": "Ed25519 key wrapped in a SubjectPublicKeyInfo",
+                "detail": "RFC 8463 §3 expects the 32 raw octets of the key; some verifiers reject a wrapped key."
+            },
+            "invalid-ed25519-key-length": {
+                "title": "Invalid Ed25519 key length ({{length}} octets)",
+                "detail": "An Ed25519 public key is 32 octets long (RFC 8463 §3)."
+            },
+            "key-type-mismatch": {
+                "title": "The key does not match k={{type}}",
+                "detail": "This key is 32 octets long: it is an {{expected}} key. Fix the k= tag or publish the right key."
+            },
             "unknown-key-type": {
                 "title": "Unknown key type \"{{type}}\"",
                 "detail": "RFC 6376 defines \"rsa\"; RFC 8463 adds \"ed25519\"."
