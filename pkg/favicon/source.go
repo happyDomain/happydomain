@@ -22,11 +22,30 @@
 package favicon
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
 )
+
+// validateURLShape checks that rawURL is an http or https URL with a host. It
+// applies no policy: reachability and address safety are the caller's
+// responsibility (in happyDomain, an *http.Client dialing through
+// internal/netguard), so this package can be used without pulling that in.
+func validateURLShape(rawURL string) (*url.URL, error) {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return nil, fmt.Errorf("invalid URL: %w", err)
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return nil, fmt.Errorf("unsupported scheme %q (only http and https are allowed)", u.Scheme)
+	}
+	if u.Hostname() == "" {
+		return nil, errors.New("URL has no host")
+	}
+	return u, nil
+}
 
 // A Source knows one way of turning a site into an icon. They are tried in the
 // order the operator listed them, so that an instance can prefer asking the
@@ -48,11 +67,16 @@ type Source interface {
 
 // Known source names.
 const (
-	SourceDirect      = "direct"
-	SourceDuckDuckGo  = "duckduckgo"
-	SourceGoogle      = "google"
-	DefaultSourceList = SourceDirect
+	SourceDirect     = "direct"
+	SourceDuckDuckGo = "duckduckgo"
+	SourceGoogle     = "google"
 )
+
+// DefaultSourceList is the source chain used when no -favicon-source is
+// configured: direct alone leaves the sites that block scraping outright
+// without an icon, and duckduckgo alone misses whatever it has not crawled,
+// so a public instance wants both.
+var DefaultSourceList = []string{SourceDirect, SourceDuckDuckGo}
 
 // templatePlaceholder is what a custom source URL uses to mark where the host
 // goes.
@@ -90,11 +114,48 @@ func ValidateSourceName(name string) error {
 	return err
 }
 
-// buildSource is filled in as each source gets implemented.
 func buildSource(name string, client *http.Client) (Source, error) {
-	if strings.EqualFold(name, SourceDirect) {
+	switch strings.ToLower(name) {
+	case SourceDirect:
 		return newDirectSource(client), nil
+
+	case SourceDuckDuckGo:
+		// Serves what it has already crawled, so it never reaches the site
+		// itself, and answers 404 (with a placeholder body we refuse along
+		// with the status) for the domains it does not know, which includes
+		// most personal and freshly registered ones.
+		return newTemplateSource(SourceDuckDuckGo, "https://icons.duckduckgo.com/ip3/"+templatePlaceholder+".ico", client), nil
+
+	case SourceGoogle:
+		// Answers 200 with a generic globe for domains it does not know, so it
+		// can never fail and anything listed after it is dead weight. Only
+		// useful as the last entry of a chain.
+		return newTemplateSource(SourceGoogle, "https://www.google.com/s2/favicons?sz=64&domain="+templatePlaceholder, client), nil
+	}
+
+	// Anything else must be a URL template, so that an operator can point at a
+	// self-hosted icon proxy rather than choosing between the two we know.
+	if strings.Contains(name, templatePlaceholder) {
+		// Substitute a placeholder domain and check the result is a well-formed
+		// http(s) URL now, rather than let a bad scheme or typo pass silently
+		// here only to fail on every request later.
+		if _, err := validateURLShape(strings.ReplaceAll(name, templatePlaceholder, "example.com")); err != nil {
+			return nil, fmt.Errorf("invalid favicon source template %q: %w", name, err)
+		}
+
+		return newTemplateSource(templateSourceName(name), name, client), nil
 	}
 
 	return nil, fmt.Errorf("unknown favicon source %q: expected %s, %s, %s, or a URL template containing %s", name, SourceDirect, SourceDuckDuckGo, SourceGoogle, templatePlaceholder)
+}
+
+// templateSourceName names a custom source after its host, which is what makes
+// an error message about it readable.
+func templateSourceName(template string) string {
+	u, err := url.Parse(strings.ReplaceAll(template, templatePlaceholder, "example.com"))
+	if err != nil || u.Host == "" {
+		return "custom"
+	}
+
+	return u.Host
 }

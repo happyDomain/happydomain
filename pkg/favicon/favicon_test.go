@@ -31,6 +31,47 @@ import (
 	"time"
 )
 
+func TestValidateSourceName(t *testing.T) {
+	for _, name := range []string{"direct", "DuckDuckGo", "google", "https://icons.example.org/{domain}.png"} {
+		if err := ValidateSourceName(name); err != nil {
+			t.Errorf("ValidateSourceName(%q) = %s, want nil", name, err)
+		}
+	}
+
+	for _, name := range []string{"duckduckgone", "https://icons.example.org/fixed.png", ""} {
+		if err := ValidateSourceName(name); err == nil {
+			t.Errorf("ValidateSourceName(%q) = nil, want an error", name)
+		}
+	}
+}
+
+func TestNewFaviconServiceEmpty(t *testing.T) {
+	// No source means the feature is off, and the caller distinguishes that
+	// from a working service by the nil.
+	fs, err := NewFaviconService(nil, nil)
+	if err != nil {
+		t.Fatalf("NewFaviconService(nil, nil) = %s, want nil", err)
+	}
+	if fs != nil {
+		t.Errorf("NewFaviconService(nil, nil) returned a service, want nil")
+	}
+
+	if _, _, err := fs.Fetch("https://example.com", time.Minute); err == nil {
+		t.Errorf("Fetch on a disabled service = nil, want an error")
+	}
+}
+
+func TestSourcesOrderIsKept(t *testing.T) {
+	fs, err := NewFaviconService(nil, []string{"duckduckgo", "direct"})
+	if err != nil {
+		t.Fatalf("NewFaviconService: %s", err)
+	}
+
+	if got := strings.Join(fs.Sources(), ","); got != "duckduckgo,direct" {
+		t.Errorf("Sources() = %q, want \"duckduckgo,direct\"", got)
+	}
+}
+
 // pngBody is the smallest thing http.DetectContentType calls a PNG.
 var pngBody = append([]byte("\x89PNG\r\n\x1a\n"), bytes.Repeat([]byte{0}, 32)...)
 
@@ -145,6 +186,221 @@ func TestCacheEvictionDropsOnlyExpiredEntries(t *testing.T) {
 	}
 	if c.bytes != 20 {
 		t.Errorf("bytes = %d, want 20: the expired entry should have been swept, not left counted", c.bytes)
+	}
+}
+
+func TestTemplateSourceInterpolatesHostOnly(t *testing.T) {
+	var asked []string
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		asked = append(asked, r.URL.RequestURI())
+		w.Header().Set("Content-Type", "image/png")
+		w.Write(pngBody)
+	}))
+	defer srv.Close()
+
+	source := newTemplateSource("test", srv.URL+"/ip3/"+templatePlaceholder+".ico", srv.Client())
+
+	site, _ := url.Parse("https://www.example.com:443/some/path?q=1")
+	body, contentType, err := source.FetchIcon(site)
+	if err != nil {
+		t.Fatalf("FetchIcon: %s", err)
+	}
+	if contentType != "image/png" {
+		t.Errorf("content type = %q, want image/png", contentType)
+	}
+	if len(body) != len(pngBody) {
+		t.Errorf("body = %d bytes, want %d", len(body), len(pngBody))
+	}
+
+	// Only the host reaches the template: the path and the query of the site
+	// must not leak into the request made to the icon service.
+	if len(asked) != 1 || asked[0] != "/ip3/www.example.com.ico" {
+		t.Errorf("requested %v, want [/ip3/www.example.com.ico]", asked)
+	}
+}
+
+func TestTemplateSourceRefusesUnusualHost(t *testing.T) {
+	source := newTemplateSource("test", "https://icons.example.org/"+templatePlaceholder+".ico", http.DefaultClient)
+
+	site := &url.URL{Scheme: "https", Host: "example.com/../../evil"}
+	if _, _, err := source.FetchIcon(site); err == nil {
+		t.Errorf("FetchIcon on a host with a path = nil, want an error")
+	}
+}
+
+func TestDownloadIconRejections(t *testing.T) {
+	tests := []struct {
+		name        string
+		contentType string
+		status      int
+		body        []byte
+	}{
+		{"not found", "image/png", http.StatusNotFound, pngBody},
+		{"empty body", "image/png", http.StatusOK, nil},
+		{"too large", "image/png", http.StatusOK, bytes.Repeat([]byte{'a'}, maxIconSize+1)},
+		{"html", "text/html", http.StatusOK, []byte("<script>alert(1)</script>")},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", tt.contentType)
+				w.WriteHeader(tt.status)
+				w.Write(tt.body)
+			}))
+			defer srv.Close()
+
+			if _, _, err := downloadIcon(srv.Client(), srv.URL+"/icon.png"); err == nil {
+				t.Errorf("downloadIcon accepted a %s response", tt.name)
+			}
+		})
+	}
+}
+
+func TestDownloadIconAcceptsMaxSize(t *testing.T) {
+	body := append(pngBody, bytes.Repeat([]byte{'a'}, maxIconSize-len(pngBody))...)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/png")
+		w.Write(body)
+	}))
+	defer srv.Close()
+
+	got, _, err := downloadIcon(srv.Client(), srv.URL+"/icon.png")
+	if err != nil {
+		t.Fatalf("downloadIcon on an icon of exactly maxIconSize: %s", err)
+	}
+	if len(got) != maxIconSize {
+		t.Errorf("got %d bytes, want %d", len(got), maxIconSize)
+	}
+}
+
+func TestChainFallsBackOnFailure(t *testing.T) {
+	failing := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer failing.Close()
+
+	working := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/png")
+		w.Write(pngBody)
+	}))
+	defer working.Close()
+
+	fs := &FaviconService{
+		cache: newMemCache(),
+		sources: []Source{
+			newTemplateSource("failing", failing.URL+"/"+templatePlaceholder, failing.Client()),
+			newTemplateSource("working", working.URL+"/"+templatePlaceholder, working.Client()),
+		},
+	}
+
+	body, _, err := fs.Fetch("https://example.com", time.Minute)
+	if err != nil {
+		t.Fatalf("Fetch: %s", err)
+	}
+	if len(body) != len(pngBody) {
+		t.Errorf("body = %d bytes, want %d", len(body), len(pngBody))
+	}
+}
+
+func TestChainReportsEverySourceOnFailure(t *testing.T) {
+	fs := &FaviconService{
+		cache: newMemCache(),
+		sources: []Source{
+			newTemplateSource("first", "https://127.0.0.1:1/"+templatePlaceholder, http.DefaultClient),
+			newTemplateSource("second", "https://127.0.0.1:1/"+templatePlaceholder, http.DefaultClient),
+		},
+	}
+
+	_, _, err := fs.Fetch("https://example.com", time.Minute)
+	if err == nil {
+		t.Fatalf("Fetch = nil, want an error")
+	}
+	for _, name := range []string{"first", "second"} {
+		if !strings.Contains(err.Error(), name) {
+			t.Errorf("error %q does not mention source %q", err, name)
+		}
+	}
+}
+
+func TestCacheAccountsForBytes(t *testing.T) {
+	c := newMemCache()
+
+	entry := func(size int) *cacheEntry {
+		return &cacheEntry{bytes: make([]byte, size), expiresAt: time.Now().Add(time.Hour)}
+	}
+
+	c.store("a", entry(100))
+	c.store("b", entry(50))
+	if c.bytes != 150 {
+		t.Errorf("bytes = %d, want 150", c.bytes)
+	}
+
+	// Replacing an entry must not count it twice.
+	c.store("a", entry(10))
+	if c.bytes != 60 {
+		t.Errorf("bytes after replacement = %d, want 60", c.bytes)
+	}
+
+	// An expired entry that is looked up is dropped, weight included.
+	c.store("c", &cacheEntry{bytes: make([]byte, 20), expiresAt: time.Now().Add(-time.Second)})
+	if _, ok := c.lookup("c"); ok {
+		t.Errorf("lookup returned an expired entry")
+	}
+	if c.bytes != 60 {
+		t.Errorf("bytes after expiry = %d, want 60", c.bytes)
+	}
+}
+
+func TestCacheStaysUnderMaxBytes(t *testing.T) {
+	c := newMemCache()
+
+	for i := range 4 * maxCacheBytes / maxIconSize {
+		c.store(string(rune('a'+i%26))+string(rune('a'+i/26)), &cacheEntry{
+			bytes:     make([]byte, maxIconSize),
+			expiresAt: time.Now().Add(time.Hour),
+		})
+
+		if c.bytes > maxCacheBytes {
+			t.Fatalf("bytes = %d after %d entries, over the %d limit", c.bytes, i+1, maxCacheBytes)
+		}
+	}
+}
+
+func TestNegativeResultIsCached(t *testing.T) {
+	var hits int
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits++
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer srv.Close()
+
+	fs := &FaviconService{
+		cache:   newMemCache(),
+		sources: []Source{newTemplateSource("test", srv.URL+"/"+templatePlaceholder, srv.Client())},
+	}
+
+	for range 3 {
+		if _, _, err := fs.Fetch("https://example.com", time.Minute); err == nil {
+			t.Fatalf("Fetch = nil, want an error")
+		}
+	}
+
+	if hits != 1 {
+		t.Errorf("the source was asked %d times, want 1: failures must be remembered", hits)
+	}
+}
+
+func TestFetchDomainRefusesNonHost(t *testing.T) {
+	fs := &FaviconService{cache: newMemCache()}
+
+	for _, domain := range []string{"", "example.com/path", "user@example.com", "example.com:8080", "127.0.0.1 "} {
+		if _, _, err := fs.FetchDomain(domain); err == nil {
+			t.Errorf("FetchDomain(%q) = nil, want an error", domain)
+		}
 	}
 }
 
@@ -741,5 +997,56 @@ func TestBuildSourcesSkipsBlankAndRejectsUnknown(t *testing.T) {
 
 	if _, err := buildSources([]string{"not-a-real-source"}, nil); err == nil {
 		t.Errorf("buildSources with an unknown name = nil error, want an error")
+	}
+}
+
+func TestValidateURLShape(t *testing.T) {
+	for _, raw := range []string{"https://example.com", "http://example.com/path"} {
+		if _, err := validateURLShape(raw); err != nil {
+			t.Errorf("validateURLShape(%q) = %s, want nil", raw, err)
+		}
+	}
+
+	for _, raw := range []string{
+		"ftp://example.com",
+		"https:///no-host",
+		"://bad",
+		"mailto:foo@example.com",
+	} {
+		if _, err := validateURLShape(raw); err == nil {
+			t.Errorf("validateURLShape(%q) = nil, want an error", raw)
+		}
+	}
+}
+
+func TestTemplateSourceName(t *testing.T) {
+	tests := []struct {
+		template string
+		want     string
+	}{
+		{"https://icons.example.org/" + templatePlaceholder + ".ico", "icons.example.org"},
+		{"not a url at all: " + templatePlaceholder, "custom"},
+		{"/relative/" + templatePlaceholder, "custom"},
+	}
+
+	for _, tt := range tests {
+		if got := templateSourceName(tt.template); got != tt.want {
+			t.Errorf("templateSourceName(%q) = %q, want %q", tt.template, got, tt.want)
+		}
+	}
+}
+
+func TestBuildSourceRejectsBadTemplate(t *testing.T) {
+	if _, err := buildSource("ftp://icons.example.org/"+templatePlaceholder, nil); err == nil {
+		t.Errorf("buildSource with a non-http(s) template = nil error, want an error")
+	}
+}
+
+func TestTemplateSourceRejectsEmptyHost(t *testing.T) {
+	source := newTemplateSource("test", "https://icons.example.org/"+templatePlaceholder+".ico", http.DefaultClient)
+
+	site := &url.URL{Scheme: "https"}
+	if _, _, err := source.FetchIcon(site); err == nil {
+		t.Errorf("FetchIcon on a site with no host = nil error, want an error")
 	}
 }
