@@ -171,6 +171,86 @@ describe("DMARC compliance: rua / ruf", () => {
     });
 });
 
+describe("DMARC compliance: http(s) report URI", () => {
+    it("accepts an https URI with a !size suffix", () => {
+        const issues = run("v=DMARC1;p=reject;rua=https://reports.example.com/dmarc!10m");
+        expect(ids(issues)).toEqual([]);
+    });
+    it("flags an http URI that does not parse", () => {
+        const issues = run("v=DMARC1;p=reject;rua=https://");
+        expect(ids(issues)).toContain("dmarc.invalid-http-uri");
+    });
+    it("warns on a plain http destination", () => {
+        const issues = run("v=DMARC1;p=reject;rua=http://reports.example.com/dmarc");
+        expect(ids(issues)).toContain("dmarc.report-uri-insecure");
+    });
+    it("warns on an IPv4 literal host", () => {
+        const issues = run("v=DMARC1;p=reject;rua=https://192.0.2.1/dmarc");
+        expect(ids(issues)).toContain("dmarc.report-host-ip-literal");
+    });
+    it("warns on an IPv6 literal host", () => {
+        const issues = run("v=DMARC1;p=reject;rua=https://[2001:db8::1]/dmarc");
+        expect(ids(issues)).toContain("dmarc.report-host-ip-literal");
+    });
+    it("flags a host that is not a valid name", () => {
+        const issues = run("v=DMARC1;p=reject;rua=https://-reports-.example.com/dmarc");
+        expect(ids(issues)).toContain("dmarc.invalid-report-host");
+    });
+    it("warns on a single-label host", () => {
+        const issues = run("v=DMARC1;p=reject;rua=https://localhost/dmarc");
+        expect(ids(issues)).toContain("dmarc.report-host-single-label");
+    });
+    it("accepts a !size suffix in any unit and case", () => {
+        for (const size of ["!10m", "!10M", "!5k", "!2g", "!1T", "!10"]) {
+            const issues = run(`v=DMARC1;p=reject;rua=https://reports.example.com/dmarc${size}`);
+            expect(ids(issues)).toEqual([]);
+        }
+    });
+    it("keeps checking a plain http URI that carries a !size suffix", () => {
+        const issues = run("v=DMARC1;p=reject;rua=http://reports.example.com/dmarc!10m");
+        expect(ids(issues)).toEqual(["dmarc.report-uri-insecure"]);
+    });
+    it("reports nothing else about a plain http URI with a valid host", () => {
+        const issues = run("v=DMARC1;p=reject;rua=http://reports.example.com/dmarc");
+        expect(ids(issues)).toEqual(["dmarc.report-uri-insecure"]);
+    });
+    it("reports an insecure address literal once for each problem", () => {
+        const issues = run("v=DMARC1;p=reject;rua=http://192.0.2.1/dmarc");
+        expect(ids(issues)).toEqual(
+            expect.arrayContaining(["dmarc.report-uri-insecure", "dmarc.report-host-ip-literal"]),
+        );
+    });
+    it("flags a dotted quad out of range as a URI that does not parse", () => {
+        const issues = run("v=DMARC1;p=reject;rua=https://256.1.1.1/dmarc");
+        expect(ids(issues)).toContain("dmarc.invalid-http-uri");
+    });
+    it("flags an unterminated IPv6 literal as a URI that does not parse", () => {
+        const issues = run("v=DMARC1;p=reject;rua=https://[::1/dmarc");
+        expect(ids(issues)).toContain("dmarc.invalid-http-uri");
+    });
+    it("reads the host past a user name and a port", () => {
+        const issues = run("v=DMARC1;p=reject;rua=https://user:pw@reports.example.com:8443/dmarc");
+        expect(ids(issues)).toEqual([]);
+    });
+    it("lower cases the host and accepts a trailing dot", () => {
+        expect(ids(run("v=DMARC1;p=reject;rua=https://Reports.EXAMPLE.com/dmarc"))).toEqual([]);
+        expect(ids(run("v=DMARC1;p=reject;rua=https://reports.example.com./dmarc"))).toEqual([]);
+    });
+    it("accepts a punycode host", () => {
+        const issues = run("v=DMARC1;p=reject;rua=https://xn--rapports-d1a.example.com/dmarc");
+        expect(ids(issues)).toEqual([]);
+    });
+    it("still turns away a scheme that is neither mailto nor http(s)", () => {
+        const issues = run("v=DMARC1;p=reject;rua=ftp://reports.example.com/dmarc");
+        expect(ids(issues)).toContain("dmarc.invalid-uri-scheme");
+    });
+    it("checks ruf destinations too", () => {
+        const issues = run("v=DMARC1;p=reject;ruf=http://localhost/dmarc");
+        expect(ids(issues)).toContain("dmarc.report-uri-insecure");
+        expect(ids(issues)).toContain("dmarc.report-host-single-label");
+    });
+});
+
 describe("DMARC compliance: cross-checks with DKIM / SPF", () => {
     it("counts a CNAME delegated DKIM selector as a DKIM record", () => {
         const zone = makeZone({

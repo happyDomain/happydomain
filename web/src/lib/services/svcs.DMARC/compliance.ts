@@ -24,6 +24,7 @@ import { fqdn } from "$lib/dns";
 import {
     type ComplianceContext,
     type ComplianceIssue,
+    isValidHostname,
     registerValidators,
 } from "$lib/services/compliance";
 import { parseDMARC, type DMARCValue } from "./model";
@@ -53,6 +54,41 @@ function protectedDomainOf(ctx: ComplianceContext): string {
     const origin = ctx.origin?.domain ?? "";
     const protectedFqdn = fqdn(sub || "@", origin);
     return protectedFqdn.replace(/\.$/, "").toLowerCase();
+}
+
+// A dmarc-uri carries an optional size limit: "!" followed by a count and an
+// optional unit (RFC 7489 sec. 6.4). It is not part of the URI itself.
+const SIZE_SUFFIX_RE = /!\d+[kmgt]?$/i;
+
+function stripSizeLimit(uri: string): string {
+    return uri.trim().replace(SIZE_SUFFIX_RE, "");
+}
+
+/**
+ * Reads the destination out of an http(s) report URI. Returns null when the
+ * URI does not parse or carries no host, since neither leaves anything to
+ * check further.
+ */
+function httpTarget(uri: string): { host: string; secure: boolean } | null {
+    let url: URL;
+    try {
+        url = new URL(stripSizeLimit(uri));
+    } catch {
+        return null;
+    }
+    if (!url.hostname) return null;
+    // A trailing dot spells the name absolute, which is no different here.
+    return {
+        host: url.hostname.toLowerCase().replace(/\.$/, ""),
+        secure: url.protocol === "https:",
+    };
+}
+
+const IPV4_RE = /^\d{1,3}(\.\d{1,3}){3}$/;
+
+/** A host given as an address literal, which names no domain to authorize. */
+export function isAddressLiteral(host: string): boolean {
+    return host.startsWith("[") || IPV4_RE.test(host);
 }
 
 // mailtoTarget extracts the destination domain from a "mailto:" URI, dropping
@@ -287,6 +323,57 @@ function dmarcSync(raw: Record<string, any>, ctx: ComplianceContext): Compliance
                 field: tag,
                 docUrl: RFC + "#section-6.2",
             });
+            return;
+        }
+        if (isHttp(u)) {
+            const target = httpTarget(u);
+            if (!target) {
+                issues.push({
+                    id: "dmarc.invalid-http-uri",
+                    severity: "error",
+                    params: { tag, uri: u },
+                    field: tag,
+                    docUrl: RFC + "#section-6.2",
+                });
+                return;
+            }
+            if (!target.secure) {
+                issues.push({
+                    id: "dmarc.report-uri-insecure",
+                    severity: "warning",
+                    params: { tag, host: target.host },
+                    field: tag,
+                });
+            }
+            // No certificate matches an address, and sec. 7.1 has no domain left
+            // to ask for an authorization.
+            if (isAddressLiteral(target.host)) {
+                issues.push({
+                    id: "dmarc.report-host-ip-literal",
+                    severity: "warning",
+                    params: { tag, host: target.host },
+                    field: tag,
+                    docUrl: RFC + "#section-7.1",
+                });
+                return;
+            }
+            if (!isValidHostname(target.host)) {
+                issues.push({
+                    id: "dmarc.invalid-report-host",
+                    severity: "error",
+                    params: { tag, host: target.host },
+                    field: tag,
+                });
+                return;
+            }
+            if (!target.host.includes(".")) {
+                issues.push({
+                    id: "dmarc.report-host-single-label",
+                    severity: "warning",
+                    params: { tag, host: target.host },
+                    field: tag,
+                });
+            }
             return;
         }
         if (isMailto(u)) {
