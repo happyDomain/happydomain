@@ -316,6 +316,55 @@ describe("DMARC compliance: http(s) report URI", () => {
     });
 });
 
+describe("DMARC compliance: tags receivers ignore", () => {
+    it("says nothing about a record made of known tags", () => {
+        const issues = run("v=DMARC1;p=reject;adkim=s;fo=1;ri=3600;pct=100");
+        expect(ids(issues)).toEqual([]);
+    });
+    it("warns on an unknown tag", () => {
+        const issues = run("v=DMARC1;p=reject;widget=bar");
+        const unknown = issues.find((i) => i.id === "dmarc.unknown-tag");
+        expect(unknown?.params).toMatchObject({ tag: "widget" });
+    });
+    it("suggests the tag a typo was aiming at", () => {
+        const issues = run("v=DMARC1;p=reject;adkin=s");
+        const unknown = issues.find((i) => i.id === "dmarc.unknown-tag-suggestion");
+        expect(unknown?.params).toMatchObject({ tag: "adkin", suggestion: "adkim" });
+    });
+    it("accepts a known tag spelled in upper case", () => {
+        const issues = run("v=DMARC1;p=reject;RUA=mailto:d@example.com");
+        expect(ids(issues)).not.toContain("dmarc.unknown-tag");
+        expect(ids(issues)).not.toContain("dmarc.unknown-tag-suggestion");
+    });
+    it("infos on a tag defined by later work on DMARC", () => {
+        const issues = run("v=DMARC1;p=reject;np=reject");
+        const later = issues.find((i) => i.id === "dmarc.later-tag");
+        expect(later?.params).toMatchObject({ tag: "np" });
+    });
+    it("warns on a repeated tag", () => {
+        const issues = run("v=DMARC1;p=reject;p=none");
+        expect(ids(issues)).toContain("dmarc.duplicate-tag");
+    });
+    it("warns on a chunk carrying no value", () => {
+        const issues = run("v=DMARC1;p=reject;junk");
+        const malformed = issues.find((i) => i.id === "dmarc.malformed-pair");
+        expect(malformed?.params).toMatchObject({ pair: "junk" });
+    });
+    it("warns on a tag left empty", () => {
+        const issues = run("v=DMARC1;p=reject;pct=");
+        expect(ids(issues)).toContain("dmarc.empty-tag-value");
+    });
+    it("leaves an empty p= to the missing-policy report", () => {
+        const issues = run("v=DMARC1;p=");
+        expect(ids(issues)).toContain("dmarc.missing-policy");
+        expect(ids(issues)).not.toContain("dmarc.empty-tag-value");
+    });
+    it("tolerates a trailing semicolon", () => {
+        const issues = run("v=DMARC1;p=reject;");
+        expect(ids(issues)).toEqual([]);
+    });
+});
+
 describe("DMARC compliance: cross-checks with DKIM / SPF", () => {
     it("does not flag cross-checks when zone is unknown", () => {
         const issues = run("v=DMARC1;p=reject;adkim=s");

@@ -162,6 +162,139 @@ function externalDestinations(
     return externals;
 }
 
+// The tags RFC 7489 sec. 6.4 defines, and the ones later work on DMARC adds:
+// a receiver following RFC 7489 ignores the latter, but they are deliberate.
+const KNOWN_TAGS = new Set([
+    "v",
+    "p",
+    "sp",
+    "adkim",
+    "aspf",
+    "fo",
+    "rf",
+    "ri",
+    "rua",
+    "ruf",
+    "pct",
+]);
+const LATER_TAGS = new Set(["np", "psd", "t"]);
+
+/**
+ * Splits a record the way sec. 6.4 spells it out, keeping what
+ * parseKeyValueTxt drops on the floor: the case of a tag, the pairs left
+ * empty, the chunks carrying no "=" at all and the tags repeated twice.
+ */
+function dmarcTags(txt: string): { key: string; value: string; separated: boolean }[] {
+    return txt
+        .trim()
+        .replace(/^"|"$/g, "")
+        .split(";")
+        .map((pair) => pair.trim())
+        .filter((pair) => pair !== "")
+        .map((pair) => {
+            const sep = pair.indexOf("=");
+            if (sep < 0) return { key: pair, value: "", separated: false };
+            return {
+                key: pair.slice(0, sep).trim(),
+                value: pair.slice(sep + 1).trim(),
+                separated: true,
+            };
+        });
+}
+
+/** Tells whether one edit turns a into b, to guess the tag that was meant. */
+function isNeighbour(a: string, b: string): boolean {
+    if (Math.abs(a.length - b.length) > 1) return false;
+    if (a === b) return false;
+
+    let i = 0;
+    let j = 0;
+    let edits = 0;
+    while (i < a.length && j < b.length) {
+        if (a[i] === b[j]) {
+            i++;
+            j++;
+            continue;
+        }
+        if (++edits > 1) return false;
+        if (a.length > b.length) i++;
+        else if (a.length < b.length) j++;
+        else {
+            i++;
+            j++;
+        }
+    }
+    return edits + (a.length - i) + (b.length - j) <= 1;
+}
+
+/**
+ * Reports the tags a receiver will drop. Unknown tags MUST be ignored (sec.
+ * 6.3), so none of this is an error: the record stays valid, it just does less
+ * than it reads like it does, which a typo makes easy to miss.
+ */
+function tagIssues(txtValue: string): ComplianceIssue[] {
+    const issues: ComplianceIssue[] = [];
+    const seen = new Set<string>();
+
+    for (const { key, value, separated } of dmarcTags(txtValue)) {
+        if (!separated) {
+            issues.push({
+                id: "dmarc.malformed-pair",
+                severity: "warning",
+                params: { pair: key },
+                docUrl: RFC + "#section-6.4",
+            });
+            continue;
+        }
+
+        const tag = key.toLowerCase();
+        if (seen.has(tag)) {
+            issues.push({
+                id: "dmarc.duplicate-tag",
+                severity: "warning",
+                params: { tag },
+                field: tag,
+                docUrl: RFC + "#section-6.4",
+            });
+        }
+        seen.add(tag);
+
+        if (KNOWN_TAGS.has(tag)) {
+            // v= and p= have their own missing-* reports, no need to say it twice.
+            if (!value && tag !== "v" && tag !== "p") {
+                issues.push({
+                    id: "dmarc.empty-tag-value",
+                    severity: "warning",
+                    params: { tag },
+                    field: tag,
+                    docUrl: RFC + "#section-6.4",
+                });
+            }
+            continue;
+        }
+
+        if (LATER_TAGS.has(tag)) {
+            issues.push({
+                id: "dmarc.later-tag",
+                severity: "info",
+                params: { tag },
+                docUrl: RFC + "#section-6.3",
+            });
+            continue;
+        }
+
+        const suggestion = [...KNOWN_TAGS].find((known) => isNeighbour(tag, known)) ?? "";
+        issues.push({
+            id: suggestion ? "dmarc.unknown-tag-suggestion" : "dmarc.unknown-tag",
+            severity: "warning",
+            params: suggestion ? { tag: key, suggestion } : { tag: key },
+            docUrl: RFC + "#section-6.3",
+        });
+    }
+
+    return issues;
+}
+
 /**
  * Counts the DMARC records sharing the owner name of the edited one. Policy
  * discovery drops a name publishing several of them (RFC 7489 sec. 6.6.3), so
@@ -348,6 +481,8 @@ function dmarcSync(raw: Record<string, any>, ctx: ComplianceContext): Compliance
         issues.push({ id: "dmarc.parse-error", severity: "error", field: "txt" });
         return issues;
     }
+
+    issues.push(...tagIssues(txtValue));
 
     // v=DMARC1 must be present and first (RFC 7489 sec. 6.3).
     if (!val.v) {

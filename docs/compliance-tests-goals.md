@@ -61,10 +61,16 @@ Sync:
 - `rua`/`ruf` http(s) URI that does not parse or whose host is not a valid name (error)
 - invalid `fo`, unknown `rf`, empty URI, no alignment source (`p=none`), `adkim=s` without DKIM in zone (warning)
 - report URI in plain http, pointing at an address literal or at a single-label host (warning)
+- unknown tag (with a suggestion when it reads like a typo), repeated tag, chunk that is not a `tag=value` pair, tag left empty (warning)
+- tag defined by the ongoing work on DMARC (`np`, `psd`, `t`) (info)
 - zone relying on SPF only (no DKIM selector), every DKIM selector of the zone revoked or in testing mode (warning)
 - `sp=` weaker than `p=`, subdomain record weakening the policy it inherits from the apex (warning)
 - `sp=` restating `p=`, `sp=` published on a subdomain record (info)
 - `p=none`, `pct<100`, external reporting destination detected, whatever the URI scheme (info)
+
+Nothing in the tag review is an error: sec. 6.3 has receivers ignore the tags
+they do not know, so an unknown tag leaves a valid record which quietly does
+less than it reads like it does.
 
 A destination is external when its host falls outside the Organizational Domain
 of the protected domain (RFC 7489 sec. 7.1). No public suffix list is shipped to

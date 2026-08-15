@@ -109,6 +109,30 @@
                 "title": "{{tag}} pointe vers l'hôte {{host}}, sans domaine",
                 "detail": "Un nom sans point ne se résout que dans un domaine de recherche local, pas depuis les serveurs qui vous envoient les rapports."
             },
+            "unknown-tag": {
+                "title": "La balise « {{tag}} » ne fait pas partie de DMARC",
+                "detail": "Les destinataires ignorent les balises qu'ils ne connaissent pas (RFC 7489 sec. 6.3) : celle-ci ne change donc rien. Retirez-la ou vérifiez son orthographe."
+            },
+            "unknown-tag-suggestion": {
+                "title": "La balise « {{tag}} » ne fait pas partie de DMARC : vouliez-vous écrire {{suggestion}}= ?",
+                "detail": "Les destinataires ignorent les balises qu'ils ne connaissent pas : ce que vous vouliez configurer n'est pas appliqué du tout."
+            },
+            "later-tag": {
+                "title": "La balise {{tag}}= n'est pas définie par la RFC 7489",
+                "detail": "Elle provient des travaux en cours sur DMARC : les destinataires implémentant la RFC 7489 l'ignorent, ceux suivant la nouvelle spécification la prennent en compte."
+            },
+            "duplicate-tag": {
+                "title": "La balise {{tag}}= apparaît plusieurs fois",
+                "detail": "Laquelle l'emporte n'est pas spécifié. N'en gardez qu'une seule pour que l'enregistrement dise la même chose à tous les destinataires."
+            },
+            "malformed-pair": {
+                "title": "« {{pair}} » n'est pas une paire balise=valeur",
+                "detail": "Un enregistrement DMARC est une liste de paires balise=valeur séparées par des points-virgules (RFC 7489 sec. 6.4)."
+            },
+            "empty-tag-value": {
+                "title": "La balise {{tag}}= ne porte aucune valeur",
+                "detail": "Une balise vide est ignorée, avec ce qu'elle devait régler. Donnez-lui une valeur ou retirez-la."
+            },
             "no-alignment-source": {
                 "title": "Aucun enregistrement DKIM ni SPF dans cette zone",
                 "detail": "DMARC requiert au moins un mécanisme aligné. Sans DKIM ni SPF, aucun message ne peut passer DMARC."

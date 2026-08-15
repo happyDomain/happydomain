@@ -109,6 +109,30 @@
                 "title": "{{tag}} points at the single-label host {{host}}",
                 "detail": "A name without a dot only resolves inside a local search domain, not from the receivers sending you the reports."
             },
+            "unknown-tag": {
+                "title": "Tag \"{{tag}}\" is not part of DMARC",
+                "detail": "Receivers ignore the tags they do not know (RFC 7489 sec. 6.3), so this one changes nothing: remove it, or check its spelling."
+            },
+            "unknown-tag-suggestion": {
+                "title": "Tag \"{{tag}}\" is not part of DMARC, did you mean {{suggestion}}=?",
+                "detail": "Receivers ignore the tags they do not know, so what you meant to configure is not applied at all."
+            },
+            "later-tag": {
+                "title": "Tag {{tag}}= is not defined by RFC 7489",
+                "detail": "It comes from the ongoing work on DMARC: receivers implementing RFC 7489 ignore it, the ones following the newer specification honour it."
+            },
+            "duplicate-tag": {
+                "title": "Tag {{tag}}= appears several times",
+                "detail": "Which one wins is not specified. Keep a single occurrence so the record says the same thing to every receiver."
+            },
+            "malformed-pair": {
+                "title": "\"{{pair}}\" is not a tag=value pair",
+                "detail": "A DMARC record is a list of tag=value pairs separated by semicolons (RFC 7489 sec. 6.4)."
+            },
+            "empty-tag-value": {
+                "title": "Tag {{tag}}= carries no value",
+                "detail": "An empty tag is dropped along with what it was meant to set. Give it a value or remove it."
+            },
             "no-alignment-source": {
                 "title": "No DKIM or SPF record found in this zone",
                 "detail": "DMARC needs at least one aligned mechanism. Without a DKIM or SPF record, no message can pass DMARC."
