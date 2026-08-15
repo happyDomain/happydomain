@@ -77,6 +77,18 @@
                 "title": "p={{policy}} but no DKIM or SPF record in this zone",
                 "detail": "Every legitimate message will fail DMARC and be quarantined or rejected. Publish DKIM and/or SPF before enforcing."
             },
+            "no-dkim-record": {
+                "title": "No DKIM selector in this zone",
+                "detail": "SPF alignment breaks as soon as a message is forwarded or goes through a mailing list. Publish a DKIM selector so DMARC keeps passing."
+            },
+            "all-dkim-revoked": {
+                "title": "Every DKIM selector of this zone is revoked",
+                "detail": "All the published selectors carry an empty p=, so no signature can be verified and DMARC only relies on SPF."
+            },
+            "all-dkim-testing": {
+                "title": "Every DKIM selector of this zone is in testing mode",
+                "detail": "Verifiers may ignore signatures from a t=y selector. Remove the y flag once the key is in production."
+            },
             "strict-dkim-no-record": {
                 "title": "adkim=s but no DKIM record in this zone",
                 "detail": "Strict DKIM alignment requires the d= signing domain to match exactly. With no DKIM published, only SPF alignment can succeed."

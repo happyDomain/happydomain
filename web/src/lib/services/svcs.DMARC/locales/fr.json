@@ -93,6 +93,18 @@
                 "title": "Impossible de vérifier l'autorisation à {{domain}}",
                 "detail": "La résolution de {{queriedName}} a échoué : {{error}}"
             },
+            "no-dkim-record": {
+                "title": "Aucun sélecteur DKIM dans cette zone",
+                "detail": "L'alignement SPF échoue dès qu'un message est transféré ou passe par une liste de diffusion. Publiez un sélecteur DKIM pour que DMARC continue de passer."
+            },
+            "all-dkim-revoked": {
+                "title": "Tous les sélecteurs DKIM de cette zone sont révoqués",
+                "detail": "Tous les sélecteurs publiés ont un p= vide : aucune signature ne peut être vérifiée, DMARC ne repose plus que sur SPF."
+            },
+            "all-dkim-testing": {
+                "title": "Tous les sélecteurs DKIM de cette zone sont en mode test",
+                "detail": "Les vérificateurs peuvent ignorer les signatures d'un sélecteur t=y. Retirez le drapeau y une fois la clé en production."
+            },
             "strict-dkim-no-record": {
                 "title": "adkim=s mais aucun enregistrement DKIM dans cette zone",
                 "detail": "L'alignement DKIM strict requiert que le domaine signataire d= corresponde exactement. Sans DKIM publié, seul l'alignement SPF peut aboutir."

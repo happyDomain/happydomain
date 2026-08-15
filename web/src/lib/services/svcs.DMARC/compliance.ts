@@ -27,6 +27,8 @@ import {
     registerValidators,
 } from "$lib/services/compliance";
 import { parseDMARC, type DMARCValue } from "./model";
+import { parseDKIM } from "$lib/services/svcs.DKIMRecord/model.svelte";
+import type { ServiceWithValue } from "$lib/model/service.svelte";
 
 const POLICY_VALUES = new Set(["none", "quarantine", "reject"]);
 const ALIGNMENT_VALUES = new Set(["r", "s"]);
@@ -63,6 +65,44 @@ function mailtoTarget(uri: string): { address: string; domain: string } | null {
     const at = address.lastIndexOf("@");
     if (at <= 0 || at === address.length - 1) return null;
     return { address, domain: address.slice(at + 1).toLowerCase() };
+}
+
+/**
+ * Tells whether the DKIM selectors of the zone can actually sign anything: a
+ * selector whose key is revoked (empty p=) or still in testing mode (t=y) is
+ * published, but yields no alignment DMARC can rely on. Services whose record
+ * is unreadable are assumed usable, so a partially loaded zone stays quiet.
+ */
+function dkimUsabilityIssues(services: ServiceWithValue[]): ComplianceIssue[] {
+    let known = 0;
+    let revoked = 0;
+    let testing = 0;
+
+    for (const service of services) {
+        const txt = (service.Service as Record<string, any> | undefined)?.txt;
+        const value = typeof txt?.Txt === "string" ? txt.Txt.trim() : "";
+        if (!value) continue;
+
+        let dkim;
+        try {
+            dkim = parseDKIM(value);
+        } catch {
+            continue;
+        }
+
+        known++;
+        if (!dkim.p) revoked++;
+        else if ((dkim.t ?? []).includes("y")) testing++;
+    }
+
+    if (known === 0) return [];
+    if (revoked === known) {
+        return [{ id: "dmarc.all-dkim-revoked", severity: "warning", docUrl: RFC + "#section-3" }];
+    }
+    if (revoked + testing === known) {
+        return [{ id: "dmarc.all-dkim-testing", severity: "warning", docUrl: RFC + "#section-3" }];
+    }
+    return [];
 }
 
 function dmarcSync(raw: Record<string, any>, ctx: ComplianceContext): ComplianceIssue[] {
@@ -309,12 +349,23 @@ function dmarcSync(raw: Record<string, any>, ctx: ComplianceContext): Compliance
                 severity: enforcing ? "error" : "warning",
                 docUrl: RFC + "#section-3",
             });
-        } else if (val.adkim === "s" && !hasDkim) {
+        } else if (!hasDkim) {
+            // SPF alone stops aligning as soon as a message is relayed: only a
+            // DKIM signature survives a mailing list or a forwarder.
             issues.push({
-                id: "dmarc.strict-dkim-no-record",
+                id: "dmarc.no-dkim-record",
                 severity: "warning",
-                docUrl: RFC + "#section-3.1",
+                docUrl: RFC + "#section-3",
             });
+            if (val.adkim === "s") {
+                issues.push({
+                    id: "dmarc.strict-dkim-no-record",
+                    severity: "warning",
+                    docUrl: RFC + "#section-3.1",
+                });
+            }
+        } else {
+            issues.push(...dkimUsabilityIssues(dkimRecords));
         }
     }
 

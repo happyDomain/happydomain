@@ -57,6 +57,7 @@ Sync:
 Sync:
 - wrong owner name, parse error, missing/invalid `v=`/`p=`/`sp=`, invalid `adkim`/`aspf`/`pct`/`ri`, invalid URI scheme, malformed `mailto:`, no alignment source while enforcing (error)
 - invalid `fo`, unknown `rf`, empty URI, no alignment source (`p=none`), `adkim=s` without DKIM in zone (warning)
+- zone relying on SPF only (no DKIM selector), every DKIM selector of the zone revoked or in testing mode (warning)
 - `p=none`, `pct<100`, external reporting destination detected (info)
 
 Async (through `dmarc-report-auth`):
