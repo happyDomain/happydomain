@@ -22,7 +22,8 @@
 import { describe, it, expect } from "vitest";
 import "./compliance";
 import { buildContext, getValidators, type ComplianceIssue } from "$lib/services/compliance";
-import { makeDomain } from "$lib/test-utils/fixtures";
+import { makeDomain, makeService, makeZone } from "$lib/test-utils/fixtures";
+import type { ServiceWithValue } from "$lib/model/service.svelte";
 
 const ORIGIN = makeDomain();
 const CTX = buildContext("", ORIGIN, null);
@@ -31,6 +32,19 @@ function run(name: string, txt: string): ComplianceIssue[] {
     const v = getValidators("svcs.DKIMRecord");
     expect(v?.sync).toBeDefined();
     return v!.sync!({ txt: { Hdr: { Name: name }, Txt: txt } }, CTX);
+}
+
+/** Builds the body of a DKIM service, as the editor and the zone carry it. */
+function dkimBody(name: string, txt: string): Record<string, any> {
+    return { txt: { Hdr: { Name: name }, Txt: txt } };
+}
+
+/** Runs the validator on `raw`, with the given DKIM services published at the apex. */
+function runInZone(raw: Record<string, any>, siblings: ServiceWithValue[]): ComplianceIssue[] {
+    const zone = makeZone({ services: { "": siblings } });
+    const v = getValidators("svcs.DKIMRecord");
+    expect(v?.sync).toBeDefined();
+    return v!.sync!(raw, buildContext("", ORIGIN, zone));
 }
 
 function ids(issues: ComplianceIssue[]): string[] {
@@ -122,6 +136,30 @@ describe("DKIM compliance: RSA key length", () => {
         const issues = run("s._domainkey", `v=DKIM1;k=rsa;p=${KEY_2048}`);
         expect(ids(issues)).not.toContain("dkim.short-rsa-key");
         expect(ids(issues)).not.toContain("dkim.weak-rsa-key");
+    });
+});
+
+describe("DKIM compliance: selectors sharing a name", () => {
+    it("warns when another record publishes the same selector", () => {
+        const raw = dkimBody("mail._domainkey", `v=DKIM1;p=${KEY_2048}`);
+        const issues = runInZone(raw, [
+            makeService("svcs.DKIMRecord", raw),
+            makeService("svcs.DKIMRecord", dkimBody("mail._domainkey", `v=DKIM1;p=${KEY_1024}`)),
+        ]);
+        expect(ids(issues)).toContain("dkim.duplicate-selector");
+    });
+    it("does not warn on a distinct selector", () => {
+        const raw = dkimBody("mail._domainkey", `v=DKIM1;p=${KEY_2048}`);
+        const issues = runInZone(raw, [
+            makeService("svcs.DKIMRecord", raw),
+            makeService("svcs.DKIMRecord", dkimBody("mail2._domainkey", `v=DKIM1;p=${KEY_2048}`)),
+        ]);
+        expect(ids(issues)).not.toContain("dkim.duplicate-selector");
+    });
+    it("does not mistake the edited record for a duplicate of itself", () => {
+        const raw = dkimBody("mail._domainkey", `v=DKIM1;p=${KEY_2048}`);
+        const issues = runInZone(raw, [makeService("svcs.DKIMRecord", raw)]);
+        expect(ids(issues)).toEqual([]);
     });
 });
 

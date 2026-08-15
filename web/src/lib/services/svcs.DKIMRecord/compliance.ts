@@ -19,6 +19,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import type { ServiceWithValue } from "$lib/model/service.svelte";
 import {
     type ComplianceContext,
     type ComplianceIssue,
@@ -166,6 +167,47 @@ function ed25519KeyIssues(bytes: Uint8Array | null): ComplianceIssue[] {
     ];
 }
 
+/**
+ * Looks for another DKIM record published under the same selector. RFC 6376
+ * sec. 3.6.2.2 leaves the verifier free to pick any of the key records a query
+ * returns, in an unspecified order, so a selector holding several keys signs
+ * with whichever one the verifier felt like: rotation needs a second selector,
+ * not a second record.
+ */
+function duplicateSelectorIssues(
+    raw: Record<string, any>,
+    selector: string,
+    hdrName: string,
+    ctx: ComplianceContext,
+): ComplianceIssue[] {
+    if (!ctx.zone) return [];
+
+    const owner = recordFqdn(hdrName, ctx);
+    const duplicates: ServiceWithValue[] = [];
+    for (const [subdomain, services] of Object.entries(ctx.zone.services ?? {})) {
+        for (const service of services) {
+            if (service._svctype !== "svcs.DKIMRecord") continue;
+            const txt = (service.Service as Record<string, any> | undefined)?.txt;
+            // The edited service is part of the zone: skip the record itself.
+            if (!txt || txt === raw?.txt) continue;
+            const name = typeof txt.Hdr?.Name === "string" ? txt.Hdr.Name : "";
+            if (recordFqdn(name, { ...ctx, dn: subdomain }) === owner) duplicates.push(service);
+        }
+    }
+
+    if (duplicates.length === 0) return [];
+
+    return [
+        {
+            id: "dkim.duplicate-selector",
+            severity: "warning",
+            params: { selector, count: duplicates.length + 1 },
+            field: "selector",
+            docUrl: "https://www.rfc-editor.org/rfc/rfc6376#section-3.6.2.2",
+        },
+    ];
+}
+
 function dkimSync(raw: Record<string, any>, ctx: ComplianceContext): ComplianceIssue[] {
     const issues: ComplianceIssue[] = [];
     const txt = raw?.txt;
@@ -187,6 +229,7 @@ function dkimSync(raw: Record<string, any>, ctx: ComplianceContext): ComplianceI
         });
     } else {
         issues.push(...selectorIssues(selector, name, ctx));
+        issues.push(...duplicateSelectorIssues(raw, selector, name, ctx));
     }
 
     if (!txtValue.trim()) {
