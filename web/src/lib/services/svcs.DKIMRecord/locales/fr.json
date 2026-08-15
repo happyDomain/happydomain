@@ -41,6 +41,14 @@
                 "title": "Clé vide, cet enregistrement DKIM est révoqué",
                 "detail": "Un tag p= vide indique aux vérificateurs d'ignorer ce sélecteur."
             },
+            "empty-key": {
+                "title": "Le tag p= ne contient que des espaces",
+                "detail": "Ce sélecteur ne signe rien. Publiez une clé, ou laissez p= strictement vide pour la révoquer volontairement."
+            },
+            "placeholder-key": {
+                "title": "Clé d'exemple « {{value}} »",
+                "detail": "Cette valeur est trop courte, ou trop répétitive, pour être une clé publique. Remplacez-la par la clé de votre signataire."
+            },
             "invalid-base64": {
                 "title": "La clé publique n'est pas du base64 valide",
                 "detail": "p= doit contenir un SubjectPublicKeyInfo encodé en base64."

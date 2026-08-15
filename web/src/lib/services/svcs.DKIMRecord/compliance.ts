@@ -134,6 +134,36 @@ function hasEd25519SpkiPrefix(bytes: Uint8Array): boolean {
     return ED25519_SPKI_PREFIX.every((b, i) => bytes[i] === b);
 }
 
+// The smallest key any DKIM signer publishes, an Ed25519 one, is 32 octets:
+// anything shorter is a leftover of the record being filled in.
+const MIN_KEY_LENGTH = ED25519_KEY_LENGTH;
+// "AAAAAA…", "xxxxxx…": a payload made of a single character, padding aside.
+const REPEATED_CHAR_RE = /^(.)\1*={0,2}$/;
+
+/**
+ * Tells apart a key that is not a key yet from a revoked one. A revocation is
+ * spelled "p=" (RFC 6376 §3.6.1) and is deliberate; a payload too short to hold
+ * any key, or made of a single repeated character, is a placeholder someone
+ * still has to replace, and the selector signs nothing meanwhile.
+ */
+function placeholderKeyIssue(payload: string, bytes: Uint8Array | null): ComplianceIssue | null {
+    // A payload that does not decode (a stray padding, most often) still says
+    // how many octets it was meant to carry: 3 for every 4 base64 characters.
+    const length = bytes
+        ? bytes.length
+        : Math.floor((payload.replace(/=+$/, "").length * 3) / 4);
+    const looksLikePlaceholder = REPEATED_CHAR_RE.test(payload) || length < MIN_KEY_LENGTH;
+    if (!looksLikePlaceholder) return null;
+
+    return {
+        id: "dkim.placeholder-key",
+        severity: "error",
+        params: { value: payload.length > 24 ? payload.slice(0, 24) + "…" : payload },
+        field: "p",
+        docUrl: "https://www.rfc-editor.org/rfc/rfc6376#section-3.6.1",
+    };
+}
+
 /**
  * Checks the shape of an Ed25519 public key (RFC 8463 sec. 3). The curve is
  * fixed, so the octet count is the whole verification: 32 raw octets, or the
@@ -260,11 +290,11 @@ function dkimSync(raw: Record<string, any>, ctx: ComplianceContext): ComplianceI
         });
     }
 
-    // p= is mandatory. parseKeyValueTxt drops empty values, so check the raw
+    // p= is mandatory. parseKeyValueTxt drops empty values, so read the raw
     // string to tell "no p tag" from "p=" (the latter being a key revocation
-    // per RFC 6376 §3.6.1).
-    const hasPTag = /(?:^|;)\s*p\s*=/i.test(txtValue);
-    if (!hasPTag) {
+    // per RFC 6376 §3.6.1) and from a "p=" holding nothing but spaces.
+    const pTag = /(?:^|;)\s*p\s*=([^;]*)/i.exec(txtValue);
+    if (!pTag) {
         issues.push({
             id: "dkim.missing-key",
             severity: "error",
@@ -272,12 +302,23 @@ function dkimSync(raw: Record<string, any>, ctx: ComplianceContext): ComplianceI
             docUrl: "https://www.rfc-editor.org/rfc/rfc6376#section-3.6.1",
         });
     } else if (!val.p) {
-        issues.push({
-            id: "dkim.revoked-key",
-            severity: "warning",
-            field: "p",
-            docUrl: "https://www.rfc-editor.org/rfc/rfc6376#section-3.6.1",
-        });
+        // "p=" revokes the key on purpose; "p=   " is a value someone meant to
+        // fill in, and the record signs nothing until they do.
+        issues.push(
+            pTag[1] === ""
+                ? {
+                      id: "dkim.revoked-key",
+                      severity: "warning",
+                      field: "p",
+                      docUrl: "https://www.rfc-editor.org/rfc/rfc6376#section-3.6.1",
+                  }
+                : {
+                      id: "dkim.empty-key",
+                      severity: "error",
+                      field: "p",
+                      docUrl: "https://www.rfc-editor.org/rfc/rfc6376#section-3.6.1",
+                  },
+        );
     } else if (!BASE64_RE.test(val.p.replace(/\s+/g, ""))) {
         issues.push({
             id: "dkim.invalid-base64",
@@ -289,7 +330,10 @@ function dkimSync(raw: Record<string, any>, ctx: ComplianceContext): ComplianceI
         const bytes = decodeBase64(payload);
         const keyType = val.k ?? "rsa";
 
-        if (keyType === "ed25519") {
+        const placeholder = placeholderKeyIssue(payload, bytes);
+        if (placeholder) {
+            issues.push(placeholder);
+        } else if (keyType === "ed25519") {
             issues.push(...ed25519KeyIssues(bytes));
         } else if (keyType === "rsa" && bytes && bytes.length === ED25519_KEY_LENGTH) {
             // 32 octets is an Ed25519 key, never an RSA one: the k= tag and the

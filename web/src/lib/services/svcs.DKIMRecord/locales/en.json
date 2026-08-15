@@ -41,6 +41,14 @@
                 "title": "Empty key, this DKIM record is revoked",
                 "detail": "An empty p= tag tells verifiers to ignore this selector."
             },
+            "empty-key": {
+                "title": "The p= tag holds nothing but spaces",
+                "detail": "This selector signs nothing. Publish a key, or leave p= strictly empty to revoke it on purpose."
+            },
+            "placeholder-key": {
+                "title": "Placeholder key \"{{value}}\"",
+                "detail": "This payload is too short, or too repetitive, to be a public key. Replace it with the key of your signer."
+            },
             "invalid-base64": {
                 "title": "Public key is not valid base64",
                 "detail": "p= must contain a base64-encoded SubjectPublicKeyInfo."
