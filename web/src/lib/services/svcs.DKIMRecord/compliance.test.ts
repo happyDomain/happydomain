@@ -48,7 +48,10 @@ describe("DKIM compliance: happy paths", () => {
         expect(ids(issues)).toEqual([]);
     });
     it("accepts a clean ed25519 record", () => {
-        const issues = run("ed._domainkey", "v=DKIM1;k=ed25519;p=11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURo=");
+        const issues = run(
+            "ed._domainkey",
+            "v=DKIM1;k=ed25519;p=11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURo=",
+        );
         expect(ids(issues)).toEqual([]);
     });
 });
@@ -100,6 +103,69 @@ describe("DKIM compliance: RSA key length", () => {
     it("does not flag a 2048-bit-sized RSA key", () => {
         const issues = run("s._domainkey", `v=DKIM1;k=rsa;p=${KEY_2048}`);
         expect(ids(issues)).not.toContain("dkim.short-rsa-key");
+        expect(ids(issues)).not.toContain("dkim.weak-rsa-key");
+    });
+});
+
+describe("DKIM compliance: ed25519 key", () => {
+    // 32 raw octets, as RFC 8463 sec. 3 asks for.
+    const ED_RAW = "11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURo=";
+    // The same key wrapped in a SubjectPublicKeyInfo (44 octets).
+    const ED_SPKI = "MCowBQYDK2VwAyEA11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURo=";
+
+    it("accepts the 32 raw octets", () => {
+        const issues = run("ed._domainkey", `v=DKIM1;k=ed25519;p=${ED_RAW}`);
+        expect(ids(issues)).toEqual([]);
+    });
+    it("warns on a SubjectPublicKeyInfo-wrapped key", () => {
+        const issues = run("ed._domainkey", `v=DKIM1;k=ed25519;p=${ED_SPKI}`);
+        expect(ids(issues)).toContain("dkim.ed25519-spki-key");
+    });
+    it("flags a truncated key", () => {
+        const issues = run("ed._domainkey", `v=DKIM1;k=ed25519;p=${ED_RAW.slice(0, 24)}`);
+        expect(ids(issues)).toContain("dkim.invalid-ed25519-key-length");
+    });
+    it("flags an RSA-sized payload announced as ed25519", () => {
+        const issues = run("ed._domainkey", `v=DKIM1;k=ed25519;p=${KEY_2048}`);
+        expect(ids(issues)).toContain("dkim.invalid-ed25519-key-length");
+    });
+    it("reports the length of a key that is not 32 octets", () => {
+        const issue = run("ed._domainkey", `v=DKIM1;k=ed25519;p=${ED_RAW.slice(0, 24)}`).find(
+            (i) => i.id === "dkim.invalid-ed25519-key-length",
+        );
+        expect(issue?.params).toEqual({ length: 18 });
+    });
+    it("flags 44 octets that do not start with the SubjectPublicKeyInfo prefix", () => {
+        const issues = run("ed._domainkey", `v=DKIM1;k=ed25519;p=${"ABCD".repeat(14)}ABC=`);
+        expect(ids(issues)).toContain("dkim.invalid-ed25519-key-length");
+        expect(ids(issues)).not.toContain("dkim.ed25519-spki-key");
+    });
+    it("flags an Ed25519 payload whose length cannot be base64", () => {
+        const issues = run("ed._domainkey", `v=DKIM1;k=ed25519;p=${"AbCd".repeat(11)}x`);
+        expect(ids(issues)).toContain("dkim.invalid-base64");
+    });
+    it("leaves a payload that is not base64 to the generic check", () => {
+        const issues = run("ed._domainkey", "v=DKIM1;k=ed25519;p=not*base64!");
+        expect(ids(issues)).toContain("dkim.invalid-base64");
+        expect(ids(issues)).not.toContain("dkim.invalid-ed25519-key-length");
+    });
+    it("ignores whitespace inside the key, as the TXT chunks may add some", () => {
+        const spaced = `${ED_RAW.slice(0, 20)} ${ED_RAW.slice(20)}`;
+        const issues = run("ed._domainkey", `v=DKIM1;k=ed25519;p=${spaced}`);
+        expect(ids(issues)).toEqual([]);
+    });
+    it("takes a missing k= for rsa, and says so of a 32 octet key", () => {
+        const issues = run("s._domainkey", `v=DKIM1;p=${ED_RAW}`);
+        expect(ids(issues)).toContain("dkim.key-type-mismatch");
+    });
+    it("does not guess the algorithm of an unknown key type", () => {
+        const issues = run("s._domainkey", `v=DKIM1;k=foo;p=${ED_RAW}`);
+        expect(ids(issues)).not.toContain("dkim.key-type-mismatch");
+        expect(ids(issues)).not.toContain("dkim.invalid-ed25519-key-length");
+    });
+    it("flags an ed25519 key announced as rsa", () => {
+        const issues = run("s._domainkey", `v=DKIM1;k=rsa;p=${ED_RAW}`);
+        expect(ids(issues)).toContain("dkim.key-type-mismatch");
         expect(ids(issues)).not.toContain("dkim.weak-rsa-key");
     });
 });
