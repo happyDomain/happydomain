@@ -29,6 +29,22 @@
                 "title": "Unknown subdomain policy \"{{policy}}\"",
                 "detail": "sp= must be one of: none, quarantine, reject."
             },
+            "sp-weaker-than-p": {
+                "title": "Subdomains are left at sp={{sp}} while the domain enforces p={{policy}}",
+                "detail": "Any name below this domain, including the ones that do not exist, can be spoofed without the policy applying. Raise sp= to the level of p=."
+            },
+            "sp-same-as-p": {
+                "title": "sp={{policy}} restates the policy subdomains already inherit",
+                "detail": "Without sp=, subdomains follow p=. The tag can be dropped unless it is there to survive a later change of p=."
+            },
+            "sp-on-subdomain": {
+                "title": "This sp= only covers the names below {{name}}",
+                "detail": "A subdomain policy applies to the subdomains of the name it is published at, not to {{name}} itself, which follows the p= of this record."
+            },
+            "subdomain-weakens-parent": {
+                "title": "p={{policy}} here replaces the {{inherited}} policy inherited from the domain",
+                "detail": "Policy discovery stops at the first _dmarc name found, so this record takes over instead of adding to the parent one: this subdomain becomes the weak spot of the domain."
+            },
             "monitoring-only": {
                 "title": "Policy is p=none (monitoring only)",
                 "detail": "Receivers will collect reports but will not act on failed messages. Move to quarantine or reject once you trust the reports."

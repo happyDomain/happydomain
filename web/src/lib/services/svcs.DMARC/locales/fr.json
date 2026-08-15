@@ -29,6 +29,22 @@
                 "title": "Politique de sous-domaine inconnue « {{policy}} »",
                 "detail": "sp= doit être l'une des valeurs : none, quarantine, reject."
             },
+            "sp-weaker-than-p": {
+                "title": "Les sous-domaines restent en sp={{sp}} alors que le domaine applique p={{policy}}",
+                "detail": "N'importe quel nom sous ce domaine, y compris ceux qui n'existent pas, peut être usurpé sans que la politique s'applique. Alignez sp= sur p=."
+            },
+            "sp-same-as-p": {
+                "title": "sp={{policy}} répète la politique dont les sous-domaines héritent déjà",
+                "detail": "Sans sp=, les sous-domaines suivent p=. La balise peut être retirée, sauf si elle est là pour survivre à une modification ultérieure de p=."
+            },
+            "sp-on-subdomain": {
+                "title": "Ce sp= ne couvre que les noms situés sous {{name}}",
+                "detail": "Une politique de sous-domaine s'applique aux sous-domaines du nom où elle est publiée, pas à {{name}} lui-même, qui suit le p= de cet enregistrement."
+            },
+            "subdomain-weakens-parent": {
+                "title": "p={{policy}} remplace ici la politique {{inherited}} héritée du domaine",
+                "detail": "La découverte de politique s'arrête au premier nom _dmarc trouvé : cet enregistrement remplace celui du domaine au lieu de s'y ajouter, et ce sous-domaine devient le point faible du domaine."
+            },
             "monitoring-only": {
                 "title": "Politique p=none (mode observation)",
                 "detail": "Les destinataires collecteront les rapports mais n'agiront pas sur les messages en échec. Passez à quarantine ou reject quand vous aurez confiance dans les rapports."

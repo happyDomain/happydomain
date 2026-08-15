@@ -109,6 +109,121 @@ describe("DMARC compliance: policy", () => {
     });
 });
 
+describe("DMARC compliance: subdomain policy inheritance", () => {
+    it("treats an empty dn (generator) as the apex", () => {
+        const v = getValidators("svcs.DMARC");
+        const issues = v!.sync!(
+            { txt: { Hdr: { Name: "" }, Txt: "v=DMARC1;p=reject;sp=reject" } },
+            buildContext("", ORIGIN, null),
+        );
+        expect(ids(issues)).not.toContain("dmarc.sp-on-subdomain");
+    });
+    const dmarc = (txt: string) =>
+        makeService("svcs.DMARC", { txt: { Hdr: { Name: "_dmarc" }, Txt: txt } });
+
+    function runOnSubdomain(txt: string, zone: Zone | null = null): ComplianceIssue[] {
+        const v = getValidators("svcs.DMARC");
+        return v!.sync!(
+            { txt: { Hdr: { Name: "_dmarc.sub.example.com." }, Txt: txt } },
+            buildContext("_dmarc.sub", ORIGIN, zone),
+        );
+    }
+
+    it("warns when sp is weaker than p", () => {
+        const issues = run("v=DMARC1;p=reject;sp=none");
+        expect(ids(issues)).toContain("dmarc.sp-weaker-than-p");
+    });
+    it("accepts an sp stronger than p", () => {
+        const issues = run("v=DMARC1;p=quarantine;sp=reject");
+        expect(ids(issues)).not.toContain("dmarc.sp-weaker-than-p");
+    });
+    it("infos when sp restates p", () => {
+        const issues = run("v=DMARC1;p=reject;sp=reject");
+        expect(ids(issues)).toContain("dmarc.sp-same-as-p");
+    });
+    it("says nothing about inheritance without sp", () => {
+        const issues = run("v=DMARC1;p=reject");
+        expect(ids(issues)).not.toContain("dmarc.sp-same-as-p");
+        expect(ids(issues)).not.toContain("dmarc.sp-weaker-than-p");
+        expect(ids(issues)).not.toContain("dmarc.sp-on-subdomain");
+    });
+    it("stays quiet on an invalid sp, already reported", () => {
+        const issues = run("v=DMARC1;p=reject;sp=foo");
+        expect(ids(issues)).not.toContain("dmarc.sp-weaker-than-p");
+    });
+    it("infos on an sp published on a subdomain record", () => {
+        const issues = runOnSubdomain("v=DMARC1;p=reject;sp=reject");
+        const sub = issues.find((i) => i.id === "dmarc.sp-on-subdomain");
+        expect(sub?.params).toMatchObject({ name: "sub" });
+    });
+    it("warns when a subdomain record weakens the apex policy", () => {
+        const zone = makeZone({ services: { _dmarc: [dmarc("v=DMARC1;p=reject")] } });
+        const issues = runOnSubdomain("v=DMARC1;p=none", zone);
+        const weaken = issues.find((i) => i.id === "dmarc.subdomain-weakens-parent");
+        expect(weaken?.params).toMatchObject({ policy: "none", inherited: "reject" });
+    });
+    it("compares against the sp of the apex when it sets one", () => {
+        const zone = makeZone({ services: { _dmarc: [dmarc("v=DMARC1;p=reject;sp=none")] } });
+        const issues = runOnSubdomain("v=DMARC1;p=none", zone);
+        expect(ids(issues)).not.toContain("dmarc.subdomain-weakens-parent");
+    });
+    it("stays quiet when the subdomain matches what it inherits", () => {
+        const zone = makeZone({ services: { _dmarc: [dmarc("v=DMARC1;p=reject")] } });
+        const issues = runOnSubdomain("v=DMARC1;p=reject", zone);
+        expect(ids(issues)).not.toContain("dmarc.subdomain-weakens-parent");
+    });
+    it("ranks quarantine between none and reject", () => {
+        expect(ids(run("v=DMARC1;p=reject;sp=quarantine"))).toContain("dmarc.sp-weaker-than-p");
+        expect(ids(run("v=DMARC1;p=quarantine;sp=none"))).toContain("dmarc.sp-weaker-than-p");
+        expect(ids(run("v=DMARC1;p=quarantine;sp=reject"))).not.toContain("dmarc.sp-weaker-than-p");
+    });
+    it("warns when a subdomain record is a notch below the apex", () => {
+        const zone = makeZone({ services: { _dmarc: [dmarc("v=DMARC1;p=reject")] } });
+        const issues = runOnSubdomain("v=DMARC1;p=quarantine", zone);
+        expect(ids(issues)).toContain("dmarc.subdomain-weakens-parent");
+    });
+    it("accepts a subdomain record stronger than the apex", () => {
+        const zone = makeZone({ services: { _dmarc: [dmarc("v=DMARC1;p=none")] } });
+        const issues = runOnSubdomain("v=DMARC1;p=reject", zone);
+        expect(ids(issues)).not.toContain("dmarc.subdomain-weakens-parent");
+    });
+    it("reports a weak sp and a weak subdomain record side by side", () => {
+        const zone = makeZone({ services: { _dmarc: [dmarc("v=DMARC1;p=reject")] } });
+        const issues = runOnSubdomain("v=DMARC1;p=quarantine;sp=none", zone);
+        expect(ids(issues)).toEqual(
+            expect.arrayContaining([
+                "dmarc.sp-weaker-than-p",
+                "dmarc.sp-on-subdomain",
+                "dmarc.subdomain-weakens-parent",
+            ]),
+        );
+    });
+    it("falls back on the apex whatever the depth of the subdomain", () => {
+        const zone = makeZone({ services: { _dmarc: [dmarc("v=DMARC1;p=reject")] } });
+        const v = getValidators("svcs.DMARC");
+        const issues = v!.sync!(
+            { txt: { Hdr: { Name: "_dmarc.a.sub.example.com." }, Txt: "v=DMARC1;p=none" } },
+            buildContext("_dmarc.a.sub", ORIGIN, zone),
+        );
+        expect(ids(issues)).toContain("dmarc.subdomain-weakens-parent");
+    });
+    it("says nothing when the apex record is missing or unreadable", () => {
+        for (const services of [
+            {},
+            { _dmarc: [dmarc("")] },
+            { _dmarc: [dmarc("v=DMARC1;p=bogus")] },
+        ]) {
+            const issues = runOnSubdomain("v=DMARC1;p=none", makeZone({ services }));
+            expect(ids(issues)).not.toContain("dmarc.subdomain-weakens-parent");
+        }
+    });
+    it("does not compare an apex record with itself", () => {
+        const zone = makeZone({ services: { _dmarc: [dmarc("v=DMARC1;p=reject")] } });
+        const issues = runWithZone("v=DMARC1;p=none", zone);
+        expect(ids(issues)).not.toContain("dmarc.subdomain-weakens-parent");
+    });
+});
+
 describe("DMARC compliance: alignment", () => {
     it("flags invalid adkim", () => {
         const issues = run("v=DMARC1;p=reject;adkim=x");
