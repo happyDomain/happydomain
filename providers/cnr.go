@@ -57,5 +57,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "CentralNic Reseller (CNR)",
 		Description: "DNS and domain management through CentralNic Reseller platform.",
+		Website:     "https://www.centralnicreseller.com",
 	}, providerReg.RegisterProvider)
 }

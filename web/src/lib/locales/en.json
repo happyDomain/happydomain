@@ -449,7 +449,8 @@
         "import-domains": "Import all domains",
         "new-form": "New domain provider form",
         "linked-domains": "Linked domains",
-        "update": "Update domain provider"
+        "update": "Update domain provider",
+        "website": "Visit provider's website"
     },
     "upgrade": {
         "title": "An update is available!",

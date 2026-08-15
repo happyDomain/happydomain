@@ -57,5 +57,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "TransIP B.V.",
 		Description: "Dutch hosting company",
+		Website:     "https://www.transip.nl",
 	}, providerReg.RegisterProvider)
 }

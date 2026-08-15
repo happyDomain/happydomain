@@ -536,6 +536,7 @@
         "import-domains": "Importer tous les domaines",
         "new-form": "Nouvel hébergeur de domaines",
         "update": "Mettre à jour l'hébergeur de domaines",
+        "website": "Visiter le site du fournisseur",
         "associations": "{{count:eq; 0:aucun domaine associé; 1:{{count}} domaine associé; default:{{count}} domaines associés}}",
         "check-config": "Vérifiez les paramètres de votre hébergeur de domaines",
         "empty": "Vous n'avez enregistré aucun hébergeur de domaines. Essayez {{action}} !\n",

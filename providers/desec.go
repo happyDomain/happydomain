@@ -53,5 +53,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "deSEC",
 		Description: "Free and secure DNS hosting with DNSSEC support.",
+		Website:     "https://desec.io",
 	}, providerReg.RegisterProvider)
 }

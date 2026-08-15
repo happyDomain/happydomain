@@ -55,5 +55,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Porkbun",
 		Description: "US Name Registrar.",
+		Website:     "https://porkbun.com",
 	}, providerReg.RegisterProvider)
 }

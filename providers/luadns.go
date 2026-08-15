@@ -55,5 +55,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "LuaDNS",
 		Description: "Bulk DNS hosting company with Git integration",
+		Website:     "https://www.luadns.com",
 	}, providerReg.RegisterProvider)
 }

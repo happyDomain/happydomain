@@ -60,5 +60,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "NexDNS",
 		Description: "DNS hosting provider, requires a plan including API access.",
+		Website:     "https://nexdns.io",
 	}, providerReg.RegisterProvider)
 }

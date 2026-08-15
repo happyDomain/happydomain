@@ -49,5 +49,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "DreamHost",
 		Description: "American web hosting provider and domain registrar.",
+		Website:     "https://www.dreamhost.com",
 	}, providerReg.RegisterProvider)
 }

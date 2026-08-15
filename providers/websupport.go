@@ -55,5 +55,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "WebSupport",
 		Description: "Slovak domain registrar and hosting provider (websupport.sk).",
+		Website:     "https://www.websupport.sk",
 	}, providerReg.RegisterProvider)
 }

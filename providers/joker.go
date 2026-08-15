@@ -65,5 +65,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Joker.com",
 		Description: "Domain registrar and DNS hosting service.",
+		Website:     "https://joker.com",
 	}, providerReg.RegisterProvider)
 }

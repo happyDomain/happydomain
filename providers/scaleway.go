@@ -57,5 +57,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Scaleway",
 		Description: "French cloud hosting provider.",
+		Website:     "https://www.scaleway.com",
 	}, providerReg.RegisterProvider)
 }

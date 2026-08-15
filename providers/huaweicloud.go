@@ -57,5 +57,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Huawei Cloud DNS",
 		Description: "Huawei Cloud's global DNS service.",
+		Website:     "https://www.huaweicloud.com",
 	}, providerReg.RegisterProvider)
 }

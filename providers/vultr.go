@@ -53,5 +53,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Vultr",
 		Description: "Global cloud infrastructure provider with managed DNS.",
+		Website:     "https://www.vultr.com",
 	}, providerReg.RegisterProvider)
 }

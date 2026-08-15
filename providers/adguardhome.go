@@ -57,5 +57,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "AdGuard Home",
 		Description: "Local network-wide ad blocker and DNS server with DNS rewrite capabilities.",
+		Website:     "https://adguard.com/adguard-home/overview.html",
 	}, providerReg.RegisterProvider)
 }

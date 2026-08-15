@@ -51,5 +51,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Spaceship",
 		Description: "Domain registrar and DNS provider",
+		Website:     "https://www.spaceship.com",
 	}, providerReg.RegisterProvider)
 }

@@ -53,5 +53,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "NetBird",
 		Description: "Peer-to-peer DNS service for NetBird networks.",
+		Website:     "https://netbird.io",
 	}, providerReg.RegisterProvider)
 }

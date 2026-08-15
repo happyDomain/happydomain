@@ -53,5 +53,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Gigahost",
 		Description: "Danish hosting provider with DNS services.",
+		Website:     "https://www.gigahost.dk",
 	}, providerReg.RegisterProvider)
 }

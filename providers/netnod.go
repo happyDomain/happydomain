@@ -55,5 +55,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Netnod",
 		Description: "Swedish DNS provider offering enterprise Primary DNS services.",
+		Website:     "https://www.netnod.se",
 	}, providerReg.RegisterProvider)
 }

@@ -64,5 +64,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Realtime Register",
 		Description: "Domain registrar and DNS hosting provider.",
+		Website:     "https://www.realtimeregister.com",
 	}, providerReg.RegisterProvider)
 }

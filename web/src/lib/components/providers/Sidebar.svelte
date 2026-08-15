@@ -56,10 +56,10 @@
         <ul class="list-unstyled mb-0 flex-fill overflow-auto">
             {#each $providers as provider}
                 {@const isActive = provider._id === currentProviderId}
-                <li>
+                <li class="d-flex align-items-center">
                     <a
                         href={providerLinks().provider(encodeURIComponent(provider._id))}
-                        class="provider-item d-flex align-items-center gap-2 py-2 px-2 rounded text-decoration-none {isActive
+                        class="provider-item d-flex align-items-center gap-2 py-2 px-2 rounded text-decoration-none flex-fill {isActive
                             ? 'fw-bold text-primary active'
                             : 'text-muted'}"
                     >
@@ -69,11 +69,23 @@
                                 style="width: 1.5em; height: 1.5em; object-fit: contain;"
                             />
                         </span>
-                        <span class="text-truncate">
+                        <span class="text-truncate flex-fill">
                             {provider._comment ||
                                 ($providersSpecs[provider._srctype]?.name ?? provider._srctype)}
                         </span>
                     </a>
+                    {#if isActive && $providersSpecs[provider._srctype]?.website}
+                        <a
+                            href={$providersSpecs[provider._srctype].website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="text-muted flex-shrink-0 px-2"
+                            title={$t("provider.website")}
+                            aria-label={$t("provider.website")}
+                        >
+                            <Icon name="box-arrow-up-right" />
+                        </a>
+                    {/if}
                 </li>
             {/each}
         </ul>

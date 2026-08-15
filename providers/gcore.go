@@ -53,5 +53,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Gcore",
 		Description: "Luxembourg cloud provider",
+		Website:     "https://gcore.com",
 	}, providerReg.RegisterProvider)
 }

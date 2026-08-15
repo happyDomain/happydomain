@@ -55,5 +55,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Loopia",
 		Description: "Swedish hosting and DNS provider.",
+		Website:     "https://www.loopia.se",
 	}, providerReg.RegisterProvider)
 }

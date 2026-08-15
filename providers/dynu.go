@@ -53,5 +53,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Dynu",
 		Description: "Dynamic DNS and domain hosting provider.",
+		Website:     "https://www.dynu.com",
 	}, providerReg.RegisterProvider)
 }

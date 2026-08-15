@@ -55,5 +55,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Mythic Beasts",
 		Description: "UK-based internet infrastructure company specializing in domain registration, web hosting, and virtual & dedicated servers.",
+		Website:     "https://www.mythic-beasts.com",
 	}, providerReg.RegisterProvider)
 }

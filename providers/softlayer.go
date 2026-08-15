@@ -55,5 +55,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "SoftLayer",
 		Description: "Hosting provider, now IBM Cloud.",
+		Website:     "https://cloud.ibm.com",
 	}, providerReg.RegisterProvider)
 }

@@ -53,5 +53,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Bunny DNS",
 		Description: "High-performance DNS service from Bunny.net CDN.",
+		Website:     "https://bunny.net",
 	}, providerReg.RegisterProvider)
 }

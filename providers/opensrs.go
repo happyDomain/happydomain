@@ -57,5 +57,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "OpenSRS",
 		Description: "Domain registrar platform and wholesale domain services provider based in Toronto, Canada, and part of Tucows.",
+		Website:     "https://opensrs.com",
 	}, providerReg.RegisterProvider)
 }

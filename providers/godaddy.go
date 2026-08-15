@@ -50,5 +50,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "GoDaddy",
 		Description: "American domain registrar and web hosting company.",
+		Website:     "https://www.godaddy.com",
 	}, providerReg.RegisterProvider)
 }

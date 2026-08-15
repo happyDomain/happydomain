@@ -57,5 +57,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "CSC Global",
 		Description: "Corporation Service Company (CSC) provides various business, legal, and financial services.",
+		Website:     "https://www.cscglobal.com",
 	}, providerReg.RegisterProvider)
 }

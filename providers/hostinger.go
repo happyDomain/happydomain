@@ -49,5 +49,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Hostinger",
 		Description: "Lithuanian web hosting provider and domain registrar.",
+		Website:     "https://www.hostinger.com",
 	}, providerReg.RegisterProvider)
 }

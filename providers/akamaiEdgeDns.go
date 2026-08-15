@@ -62,6 +62,7 @@ func init() {
 		return &AkamaiEdgeDnsAPI{}
 	}, happydns.ProviderInfos{
 		Name:        "Akamai Edge DNS",
-		Description: "American content delivery network and cloud service company - https://www.akamai.com",
+		Description: "American content delivery network and cloud service company",
+		Website:     "https://www.akamai.com/products/edge-dns",
 	}, providerReg.RegisterProvider)
 }

@@ -57,5 +57,6 @@ func init() {
 	}, happydns.ProviderInfos{
 		Name:        "Exoscale",
 		Description: "Cloud computing provider based in Switzerland, offering infrastructure-as-a-service (IaaS) solutions.",
+		Website:     "https://www.exoscale.com",
 	}, providerReg.RegisterProvider)
 }
