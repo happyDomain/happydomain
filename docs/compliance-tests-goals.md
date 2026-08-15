@@ -61,7 +61,12 @@ Sync:
 - invalid `fo`, unknown `rf`, empty URI, no alignment source (`p=none`), `adkim=s` without DKIM in zone (warning)
 - report URI in plain http, pointing at an address literal or at a single-label host (warning)
 - zone relying on SPF only (no DKIM selector), every DKIM selector of the zone revoked or in testing mode (warning)
-- `p=none`, `pct<100`, external reporting destination detected (info)
+- `p=none`, `pct<100`, external reporting destination detected, whatever the URI scheme (info)
+
+A destination is external when its host falls outside the Organizational Domain
+of the protected domain (RFC 7489 sec. 7.1). No public suffix list is shipped to
+the browser, so two names sharing a suffix on a label boundary are taken as
+related, and an address literal, having no domain to ask, is left alone.
 
 Async (through `dmarc-report-auth`):
 - external reporting authorization missing/external domain has no DMARC (error)

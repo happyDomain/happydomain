@@ -103,7 +103,7 @@
             },
             "report-auth-missing": {
                 "title": "{{domain}} n'autorise pas les rapports pour ce domaine",
-                "detail": "Aucun enregistrement TXT trouvé à {{queriedName}}. Sans cet enregistrement, {{address}} ignorera silencieusement vos rapports DMARC."
+                "detail": "Aucun enregistrement TXT trouvé à {{queriedName}}. Sans cet enregistrement, {{destination}} ignorera silencieusement vos rapports DMARC."
             },
             "report-auth-no-dmarc": {
                 "title": "L'enregistrement d'autorisation à {{domain}} est malformé",

@@ -19,11 +19,17 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { describe, it, expect } from "vitest";
+import { beforeEach, describe, it, expect, vi } from "vitest";
+
+vi.mock("$lib/api/resolver", () => ({
+    checkDMARCReportAuth: vi.fn(),
+}));
+
 import "./compliance";
 import { buildContext, getValidators, type ComplianceIssue } from "$lib/services/compliance";
 import type { Zone } from "$lib/model/zone";
 import { makeDomain, makeService, makeZone } from "$lib/test-utils/fixtures";
+import { checkDMARCReportAuth } from "$lib/api/resolver";
 
 const ORIGIN = makeDomain();
 const CTX = buildContext("_dmarc", ORIGIN, null);
@@ -297,12 +303,9 @@ describe("DMARC compliance: external reporting (sync hint)", () => {
         expect(ids(issues)).not.toContain("dmarc.external-reporting");
     });
     it("does not flag a rua pointing at a subdomain of the protected domain", () => {
-        // Same apex, different label. Strictly speaking RFC 7489 still wants
-        // an authorization record across labels, but this is a sync-only hint;
-        // the async check still runs against the resolver.
+        // Same Organizational Domain: sec. 7.1 asks for nothing there.
         const issues = run("v=DMARC1;p=reject;rua=mailto:dmarc@reports.example.com");
-        const ext = issues.find((i) => i.id === "dmarc.external-reporting");
-        expect(ext?.params).toMatchObject({ domain: "reports.example.com" });
+        expect(ids(issues)).not.toContain("dmarc.external-reporting");
     });
     it("dedupes external destinations", () => {
         const issues = run(
@@ -310,9 +313,81 @@ describe("DMARC compliance: external reporting (sync hint)", () => {
         );
         expect(issues.filter((i) => i.id === "dmarc.external-reporting")).toHaveLength(1);
     });
-    it("ignores http rua URIs (only mailto carries an external domain)", () => {
+    it("flags an http rua pointing outside the protected domain", () => {
         const issues = run("v=DMARC1;p=reject;rua=https://thirdparty.tld/collect");
+        const ext = issues.find((i) => i.id === "dmarc.external-reporting");
+        expect(ext?.params).toMatchObject({ domain: "thirdparty.tld" });
+    });
+    it("does not flag an http rua hosted inside the protected domain", () => {
+        const issues = run("v=DMARC1;p=reject;rua=https://reports.example.com/collect");
         expect(ids(issues)).not.toContain("dmarc.external-reporting");
+    });
+    it("counts a mailto and an http destination on one host only once", () => {
+        const issues = run(
+            "v=DMARC1;p=reject;rua=mailto:a@thirdparty.tld,https://thirdparty.tld/collect",
+        );
+        expect(issues.filter((i) => i.id === "dmarc.external-reporting")).toHaveLength(1);
+    });
+});
+
+describe("DMARC compliance: external reporting authorization (async)", () => {
+    beforeEach(() => {
+        vi.mocked(checkDMARCReportAuth).mockReset();
+    });
+
+    function runAsync(txt: string): Promise<ComplianceIssue[]> {
+        const v = getValidators("svcs.DMARC");
+        expect(v?.async).toBeDefined();
+        return v!.async!(
+            { txt: { Hdr: { Name: "_dmarc.example.com." }, Txt: txt } },
+            CTX,
+            new AbortController().signal,
+        );
+    }
+
+    it("looks up the authorization of an http destination", async () => {
+        vi.mocked(checkDMARCReportAuth).mockResolvedValueOnce({
+            status: "not-found",
+            queriedName: "example.com._report._dmarc.thirdparty.tld",
+        });
+        const issues = await runAsync("v=DMARC1;p=reject;rua=https://thirdparty.tld/collect");
+        expect(checkDMARCReportAuth).toHaveBeenCalledWith(
+            { owner: "example.com", externalDomain: "thirdparty.tld" },
+            expect.anything(),
+        );
+        const missing = issues.find((i) => i.id === "dmarc.report-auth-missing");
+        expect(missing?.params).toMatchObject({
+            domain: "thirdparty.tld",
+            destination: "https://thirdparty.tld/collect",
+        });
+    });
+    it("stays quiet on an authorized destination", async () => {
+        vi.mocked(checkDMARCReportAuth).mockResolvedValueOnce({
+            status: "ok",
+            queriedName: "example.com._report._dmarc.thirdparty.tld",
+        });
+        expect(await runAsync("v=DMARC1;p=reject;rua=mailto:d@thirdparty.tld")).toEqual([]);
+    });
+    it("does not look up a destination of the same organizational domain", async () => {
+        const issues = await runAsync(
+            "v=DMARC1;p=reject;rua=mailto:d@reports.example.com,https://collect.example.com/d",
+        );
+        expect(checkDMARCReportAuth).not.toHaveBeenCalled();
+        expect(issues).toEqual([]);
+    });
+    it("does not look up an address literal, which has no domain to ask", async () => {
+        const issues = await runAsync("v=DMARC1;p=reject;rua=https://192.0.2.1/collect");
+        expect(checkDMARCReportAuth).not.toHaveBeenCalled();
+        expect(issues).toEqual([]);
+    });
+    it("warns when the resolver cannot answer", async () => {
+        vi.mocked(checkDMARCReportAuth).mockResolvedValueOnce({
+            status: "resolver-error",
+            queriedName: "example.com._report._dmarc.thirdparty.tld",
+            errorMsg: "timeout",
+        });
+        const issues = await runAsync("v=DMARC1;p=reject;ruf=mailto:d@thirdparty.tld");
+        expect(ids(issues)).toContain("dmarc.report-auth-resolver-error");
     });
 });
 
