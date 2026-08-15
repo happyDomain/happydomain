@@ -166,6 +166,7 @@ func (app *App) setupRouter() {
 			DomainLog:             app.usecases.domainLog,
 			EmailAutoconfig:       app.usecases.emailAutoconfig,
 			FailureTracker:        app.failureTracker,
+			FaviconService:        app.faviconService,
 			OutboundGuard:         app.guards.Outbound,
 			Provider:              app.usecases.provider,
 			ProviderSettings:      app.usecases.providerSettings,

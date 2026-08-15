@@ -321,7 +321,5 @@ func (cc *CheckerController) GetExecutionHTMLReport(c *gin.Context) {
 		return
 	}
 
-	c.Header("Content-Security-Policy", "sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'")
-	c.Header("X-Content-Type-Options", "nosniff")
-	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(htmlContent))
+	middleware.ServeSandboxedHTML(c, htmlContent)
 }
