@@ -100,6 +100,25 @@ type Dependencies struct {
 //	@name						Authorization
 //	@description				Description for what is this security definition being used
 
+// perClientRateLimiter builds a middleware allowing limit requests per minute
+// and per client, for the unauthenticated endpoints that make happyDomain reach
+// out to a destination the caller chose.
+func perClientRateLimiter(limit uint) gin.HandlerFunc {
+	store := ratelimit.InMemoryStore(&ratelimit.InMemoryOptions{
+		Rate:  time.Minute,
+		Limit: limit,
+	})
+
+	return ratelimit.RateLimiter(store, &ratelimit.Options{
+		ErrorHandler: func(c *gin.Context, info ratelimit.Info) {
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, happydns.ErrorResponse{
+				Message: "Too many requests. Please try again later.",
+			})
+		},
+		KeyFunc: middleware.ClientKey,
+	})
+}
+
 func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependencies) {
 	baseRoutes := router.Group("")
 
@@ -117,19 +136,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 	)
 	auc := DeclareAuthUserRoutes(apiRoutes, dep.AuthUser, lc)
 
-	domainInfoRL := ratelimit.InMemoryStore(&ratelimit.InMemoryOptions{
-		Rate:  time.Minute,
-		Limit: 10,
-	})
-	domainInfoRLMiddleware := ratelimit.RateLimiter(domainInfoRL, &ratelimit.Options{
-		ErrorHandler: func(c *gin.Context, info ratelimit.Info) {
-			c.AbortWithStatusJSON(http.StatusTooManyRequests, happydns.ErrorResponse{
-				Message: "Too many requests. Please try again later.",
-			})
-		},
-		KeyFunc: middleware.ClientKey,
-	})
-	DeclareDomainInfoRoutes(apiRoutes.Group("/domaininfo/:domain", domainInfoRLMiddleware), dep.DomainInfo)
+	DeclareDomainInfoRoutes(apiRoutes.Group("/domaininfo/:domain", perClientRateLimiter(10)), dep.DomainInfo)
 	DeclareEmailAutoconfigRoutes(baseRoutes, apiRoutes, dep.EmailAutoconfig)
 	DeclareProviderSpecsRoutes(apiRoutes, dep.ProviderSpecs)
 	DeclareRegistrationRoutes(apiRoutes, dep.AuthUser, dep.CaptchaVerifier)
