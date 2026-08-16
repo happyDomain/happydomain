@@ -36,5 +36,5 @@ func DeclareProviderSpecsRoutes(router *gin.RouterGroup, providerSpecsUC happydn
 	apiProviderSpecsRoutes := router.Group("/providers/_specs/:psid")
 
 	apiProviderSpecsRoutes.GET("", pc.GetProviderSpec)
-	apiProviderSpecsRoutes.GET("/icon.png", pc.GetProviderSpecIcon)
+	apiProviderSpecsRoutes.GET("/icon", perClientRateLimiter(60), pc.GetProviderSpecIcon)
 }

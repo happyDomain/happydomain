@@ -65,7 +65,7 @@ func (psc *ProviderSpecsController) ListProviders(c *gin.Context) {
 //	@Param			providerType	path		string	true	"The provider's type"
 //	@Success		200				{file}		binary
 //	@Failure		404				{object}	happydns.ErrorResponse	"Provider type does not exist"
-//	@Router			/providers/_specs/{providerType}/icon.png [get]
+//	@Router			/providers/_specs/{providerType}/icon [get]
 func (psc *ProviderSpecsController) GetProviderSpecIcon(c *gin.Context) {
 	psid := string(c.Param("psid"))
 

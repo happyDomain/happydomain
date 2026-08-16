@@ -51,7 +51,7 @@
 </script>
 
 <ImgWithFallback
-    src={type ? "/api/providers/_specs/" + type + "/icon.png" : undefined}
+    src={type ? "/api/providers/_specs/" + type + "/icon" : undefined}
     errorKey={type}
     alt={type}
     title={type}
