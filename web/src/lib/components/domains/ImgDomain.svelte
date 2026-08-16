@@ -32,7 +32,7 @@
 
     let {
         domain,
-        style = "width: 2.5em; height: 2.5em; object-fit: scale-down",
+        style = "width: 2.5em; height: 2.5em; object-fit: scale-down;",
         ...rest
     }: Props = $props();
 

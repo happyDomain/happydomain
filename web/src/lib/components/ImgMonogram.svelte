@@ -44,7 +44,7 @@
 
     let {
         label,
-        style = "max-width: 100%; max-height: 2.5em",
+        style = "max-width: 100%; max-height: 2.5em;",
         size = 32,
         ...rest
     }: Props = $props();

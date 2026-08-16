@@ -45,7 +45,7 @@
         alt = label,
         title = label,
         loading,
-        style = "max-width: 100%; max-height: 2.5em",
+        style = "max-width: 100%; max-height: 2.5em;",
         ...rest
     }: Props = $props();
 
