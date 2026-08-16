@@ -48,7 +48,7 @@
     let ptype: string = $state("");
 
     function previous() {
-        if (!form || form.state < 0) {
+        if (!ptype || !form || form.state < 0) {
             isOpen = false;
         } else {
             form.previousState().then(() => {
