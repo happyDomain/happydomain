@@ -49,6 +49,14 @@ const (
 	// request for a domain that has no favicon starts a fresh outbound fetch,
 	// which turns this service into an amplifier aimed at a third party.
 	negativeTTL = 15 * time.Minute
+
+	// DomainTTL is how long a successfully fetched domain favicon is cached.
+	DomainTTL = 24 * time.Hour
+
+	// ProviderIconTTL is how long a successfully fetched provider icon is
+	// cached. Providers change their branding far less often than arbitrary
+	// domains, so it is cached for longer.
+	ProviderIconTTL = 7 * 24 * time.Hour
 )
 
 // allowedContentTypes maps the media types we accept from a remote host to the
@@ -182,7 +190,7 @@ func (fs *FaviconService) FetchDomain(domain string) ([]byte, string, error) {
 		return nil, "", fmt.Errorf("invalid domain: %q", domain)
 	}
 
-	return fs.Fetch("https://"+strings.ToLower(domain), 24*time.Hour)
+	return fs.Fetch("https://"+strings.ToLower(domain), DomainTTL)
 }
 
 // fetch walks the source chain and returns the first icon obtained.

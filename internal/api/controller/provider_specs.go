@@ -54,28 +54,30 @@ func (psc *ProviderSpecsController) ListProviders(c *gin.Context) {
 	c.JSON(http.StatusOK, psc.pSpecsServices.ListProviders())
 }
 
-// GetProviderSpecIcon returns the icon as image/png.
+// GetProviderSpecIcon returns the provider's icon.
 //
-//	@Summary	Get the PNG icon.
+//	@Summary	Get the provider's icon.
 //	@Schemes
-//	@Description	Return the icon as a image/png file for the given provider type.
+//	@Description	Return the icon for the given provider type. It is served as image/png by default, or with the content type fetched from the provider's website when available (e.g. svg, webp, ico).
 //	@Tags			provider_specs
 //	@Accept			json
-//	@Produce		png
+//	@Produce		octet-stream
 //	@Param			providerType	path		string	true	"The provider's type"
-//	@Success		200				{file}		png
+//	@Success		200				{file}		binary
 //	@Failure		404				{object}	happydns.ErrorResponse	"Provider type does not exist"
 //	@Router			/providers/_specs/{providerType}/icon.png [get]
 func (psc *ProviderSpecsController) GetProviderSpecIcon(c *gin.Context) {
 	psid := string(c.Param("psid"))
 
-	cnt, err := psc.pSpecsServices.GetProviderIcon(psid)
+	cnt, contentType, err := psc.pSpecsServices.GetProviderIcon(psid)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
 	}
 
-	c.Data(http.StatusOK, "image/png", cnt)
+	// The icon may have been fetched from the provider's website, so it gets
+	// the same treatment as any other third-party bytes served from our origin.
+	middleware.ServeSandboxedImage(c, contentType, cnt)
 }
 
 // GetProviderSpec returns a description of the expected settings and the provider capabilities.

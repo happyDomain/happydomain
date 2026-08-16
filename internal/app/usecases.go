@@ -26,7 +26,6 @@ import (
 	"strings"
 
 	checkerPkg "git.happydns.org/happyDomain/internal/dnschecker"
-	"git.happydns.org/happyDomain/pkg/favicon"
 	notifPkg "git.happydns.org/happyDomain/internal/notifier"
 	"git.happydns.org/happyDomain/internal/usecase"
 	authuserUC "git.happydns.org/happyDomain/internal/usecase/authuser"
@@ -45,6 +44,7 @@ import (
 	zoneServiceUC "git.happydns.org/happyDomain/internal/usecase/zone_service"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/pkg/domaininfo"
+	"git.happydns.org/happyDomain/pkg/favicon"
 	"git.happydns.org/happyDomain/services/abstract"
 )
 
@@ -64,7 +64,7 @@ func (app *App) initUsecases() {
 
 	app.usecases.backup = backupUC.NewUsecase(app.store)
 	app.initFaviconService()
-	app.usecases.providerSpecs = usecase.NewProviderSpecsUsecase()
+	app.usecases.providerSpecs = usecase.NewProviderSpecsUsecase(app.faviconService)
 	app.usecases.provider = providerService
 	app.usecases.providerAdmin = providerAdminService
 	app.usecases.providerSettings = usecase.NewProviderSettingsUsecase(app.cfg, app.usecases.provider)

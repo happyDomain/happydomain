@@ -27,14 +27,18 @@ import (
 	"git.happydns.org/happyDomain/internal/forms"
 	providerReg "git.happydns.org/happyDomain/internal/providerregistry"
 	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/pkg/favicon"
 	"git.happydns.org/happyDomain/providers"
 )
 
 type providerSpecsUsecase struct {
+	faviconService *favicon.FaviconService
 }
 
-func NewProviderSpecsUsecase() happydns.ProviderSpecsUsecase {
-	return &providerSpecsUsecase{}
+func NewProviderSpecsUsecase(faviconService *favicon.FaviconService) happydns.ProviderSpecsUsecase {
+	return &providerSpecsUsecase{
+		faviconService: faviconService,
+	}
 }
 
 func (psu *providerSpecsUsecase) ListProviders() map[string]happydns.ProviderInfos {
@@ -48,13 +52,22 @@ func (psu *providerSpecsUsecase) ListProviders() map[string]happydns.ProviderInf
 	return ret
 }
 
-func (psu *providerSpecsUsecase) GetProviderIcon(psid string) ([]byte, error) {
-	cnt, ok := providers.Icons[strings.TrimSuffix(psid, ".png")]
-	if !ok {
-		return nil, happydns.NotFoundError{Msg: "provider icon not found"}
+func (psu *providerSpecsUsecase) GetProviderIcon(psid string) ([]byte, string, error) {
+	providerType := strings.TrimSuffix(psid, ".png")
+
+	// Prefer the embedded icon when we have one
+	if cnt, ok := providers.Icons[providerType]; ok {
+		return cnt, "image/png", nil
 	}
 
-	return cnt, nil
+	// Fallback to fetching the favicon from the provider's website
+	if creator, ok := providerReg.GetProviders()[providerType]; psu.faviconService != nil && ok && creator.Infos.Website != "" {
+		if iconBytes, contentType, err := psu.faviconService.Fetch(creator.Infos.Website, favicon.ProviderIconTTL); err == nil {
+			return iconBytes, contentType, nil
+		}
+	}
+
+	return nil, "", happydns.NotFoundError{Msg: "provider icon not found"}
 }
 
 func (psu *providerSpecsUsecase) GetProviderSpecs(psid string) (*happydns.ProviderSpecs, error) {

@@ -33,6 +33,6 @@ type ProviderSpecs struct {
 
 type ProviderSpecsUsecase interface {
 	ListProviders() map[string]ProviderInfos
-	GetProviderIcon(string) ([]byte, error)
+	GetProviderIcon(string) ([]byte, string, error)
 	GetProviderSpecs(string) (*ProviderSpecs, error)
 }
