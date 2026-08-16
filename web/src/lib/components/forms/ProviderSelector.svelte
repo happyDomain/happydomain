@@ -22,9 +22,9 @@
 -->
 
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, onMount, tick } from "svelte";
 
-    import { ListGroup, ListGroupItem, Spinner } from "@sveltestrap/sveltestrap";
+    import { Input, ListGroup, ListGroupItem, Spinner } from "@sveltestrap/sveltestrap";
 
     import { listProviders } from "$lib/api/provider_specs";
     import ImgProvider from "$lib/components/providers/ImgProvider.svelte";
@@ -41,6 +41,19 @@
     let { value = $bindable(null), ...rest }: Props = $props();
     let isLoading = $state(true);
     let providers: ProviderList = $state({});
+    let filter = $state("");
+    let filterInput: HTMLInputElement | undefined = $state();
+
+    onMount(async () => {
+        // When rendered inside a Modal, its content is portalled into
+        // document.body after mount (so the native `autofocus` attribute
+        // fires too early), and the Modal itself steals focus back to its
+        // wrapper once its fade transition ends. Retry focusing once the
+        // DOM has settled, and again after the transition would have ended.
+        await tick();
+        filterInput?.focus();
+        setTimeout(() => filterInput?.focus(), 350);
+    });
 
     listProviders().then((res) => {
         providers = res;
@@ -51,8 +64,29 @@
         value = ptype;
         dispatch("provider-selected", { provider, ptype });
     }
+
+    let filteredPtypes = $derived(
+        Object.keys(providers).filter((ptype) => {
+            if (!filter) return true;
+            const needle = filter.toLowerCase();
+            const provider = providers[ptype];
+            return (
+                provider.name.toLowerCase().includes(needle) ||
+                provider.description.toLowerCase().includes(needle) ||
+                (provider.website ?? "").toLowerCase().includes(needle)
+            );
+        }),
+    );
 </script>
 
+<Input
+    type="search"
+    autofocus
+    class="mb-2"
+    placeholder={$t("common.filter")}
+    bind:value={filter}
+    bind:inner={filterInput}
+/>
 <ListGroup {...rest}>
     {#if isLoading}
         <ListGroupItem class="d-flex justify-content-center align-items-center gap-2">
@@ -60,7 +94,7 @@
             {$t("wait.retrieving-provider")}
         </ListGroupItem>
     {/if}
-    {#each Object.keys(providers) as ptype (ptype)}
+    {#each filteredPtypes as ptype (ptype)}
         {@const provider = providers[ptype]}
         <ListGroupItem
             active={value === ptype}
