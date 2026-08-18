@@ -36,10 +36,12 @@
     } from "@sveltestrap/sveltestrap";
 
     import { addDomain } from "$lib/api/domains";
-    import PickProvider, { controls as pickProviderControls } from "$lib/components/modals/PickProvider.svelte";
+    import PickProvider, {
+        controls as pickProviderControls,
+    } from "$lib/components/modals/PickProvider.svelte";
     import { fqdn, validateDomain } from "$lib/dns";
-        import { domains, domains_by_name, refreshDomains } from "$lib/stores/domains";
-    import { filteredName, filteredProvider } from "$lib/stores/home";
+    import { domains, refreshDomains } from "$lib/stores/domains";
+    import { filterDomains, filteredName, filteredProvider } from "$lib/stores/home";
     import type { Provider } from "$lib/model/provider";
     import { providers } from "$lib/stores/providers";
     import { t } from "$lib/translations";
@@ -58,8 +60,8 @@
 
         if (actionAddDomain) {
             addDomainToProvider();
-        } else if (filteredDomains.length > 0) {
-            goto(domainLinks().zone(encodeURIComponent(filteredDomains[0].id)));
+        } else if (matchingDomains.length > 0) {
+            goto(domainLinks().zone(encodeURIComponent(matchingDomains[0].id)));
         }
     }
 
@@ -116,23 +118,11 @@
         return validateDomain(val, "", false);
     }
 
-    let filteredDomains = $derived(
-        !$domains
-            ? []
-            : $domains.filter(
-                  (dn) =>
-                      dn.domain == fqdn($filteredName, "") &&
-                      (!$filteredProvider ||
-                          !$domains_by_name[fqdn($filteredName, "")].reduce(
-                              (acc, d) => acc || d.id_provider == $filteredProvider._id,
-                              false,
-                          )),
-              ),
+    let filteredDomains = $derived(filterDomains($domains, $filteredName, $filteredProvider, null));
+    let matchingDomains = $derived(
+        filteredDomains.filter((dn) => dn.domain == fqdn($filteredName, "")),
     );
-    let actionAddDomain = $derived(
-        ($domains && $filteredName && filteredDomains.length == 0) ||
-            ($domains && $domains.length == 0),
-    );
+    let actionAddDomain = $derived($filteredName && matchingDomains.length == 0);
 </script>
 
 <PickProvider ondone={onProviderSelected} />

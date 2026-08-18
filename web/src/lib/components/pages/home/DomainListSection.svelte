@@ -28,35 +28,16 @@
     import FilterDomainInput from "$lib/components/pages/home/FilterDomainInput.svelte";
     import CardImportableDomains from "$lib/components/providers/CardImportableDomains.svelte";
     import ZoneList from "$lib/components/zones/ZoneList.svelte";
-    import type { HappydnsDomainWithCheckStatus } from "$lib/api-base/types.gen";
-    import { fqdnCompare } from "$lib/dns";
     import { domains } from "$lib/stores/domains";
-    import { filteredGroup, filteredName, filteredProvider } from "$lib/stores/home";
+    import { filterDomains, filteredGroup, filteredName, filteredProvider } from "$lib/stores/home";
     import { t } from "$lib/translations";
     import { getStatusColor, getStatusIcon } from "$lib/utils/checkers";
 
     let noDomainsList = $state(false);
 
-    let filteredDomains: Array<HappydnsDomainWithCheckStatus> = $derived(refreshFilteredDomains());
-
-    function refreshFilteredDomains(): Array<HappydnsDomainWithCheckStatus> {
-        let myDomains: Array<HappydnsDomainWithCheckStatus> = [];
-
-        if ($domains) {
-            myDomains = $domains.filter(
-                (d) =>
-                    (!$filteredName || d.domain.indexOf($filteredName) >= 0) &&
-                    (!$filteredProvider || d.id_provider === $filteredProvider._id) &&
-                    ($filteredGroup === null ||
-                        d.group === $filteredGroup ||
-                        (($filteredGroup === "" || $filteredGroup === "undefined") &&
-                            (d.group === "" || d.group === undefined))),
-            );
-            myDomains.sort(fqdnCompare);
-        }
-
-        return myDomains;
-    }
+    let filteredDomains = $derived(
+        filterDomains($domains, $filteredName, $filteredProvider, $filteredGroup),
+    );
 </script>
 
 <FilterDomainInput class="mb-3" />

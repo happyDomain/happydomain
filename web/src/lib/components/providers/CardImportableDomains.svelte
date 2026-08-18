@@ -42,7 +42,7 @@
     import type { Domain } from "$lib/model/domain";
     import type { Provider } from "$lib/model/provider";
     import { appConfig } from "$lib/stores/config";
-    import { filteredName } from '$lib/stores/home';
+    import { filteredName, matchesFilteredName } from '$lib/stores/home';
     import { providersSpecs } from "$lib/stores/providers";
     import { domains_by_name, domains_idx, refreshDomains } from "$lib/stores/domains";
     import { toasts } from "$lib/stores/toasts";
@@ -98,6 +98,11 @@
         return domains !== undefined && domains.reduce((acc, d) => acc || d.id_provider == provider._id, false);
     }
 
+    let filteredImportableDomainsList: Array<string> = $derived.by(() => {
+        const list = importableDomainsList;
+        return list ? list.filter((dn) => matchesFilteredName(dn, $filteredName)) : [];
+    });
+
     let domainsInProgress = new SvelteSet<string>();
 
     async function importDomain(domainName: string, noToast: boolean) {
@@ -125,7 +130,7 @@
     async function importAllDomains() {
         if (importableDomainsList) {
             allImportInProgress = true;
-            for (const d of importableDomainsList.filter((dn) => dn.indexOf($filteredName) >= 0)) {
+            for (const d of filteredImportableDomainsList) {
                 if (!haveDomain($domains_idx, d)) {
                     await importDomain(d, true);
                 }
@@ -219,10 +224,10 @@
                     </ListGroupItem>
                 {/if}
             {:else}
-                {#each importableDomainsList.map((dn) => ({
+                {#each filteredImportableDomainsList.map((dn) => ({
                     domain: dn,
                     id_provider: provider._id,
-                })).filter((dn) => dn.domain.indexOf($filteredName) >= 0) as domain}
+                })) as domain}
                     <ListGroupItem class="d-flex justify-content-between align-items-center text-muted">
                         <DomainWithProvider {domain} />
                         <div>
@@ -249,13 +254,13 @@
                         </div>
                     </ListGroupItem>
                 {/each}
-                {#if importableDomainsList.filter((dn) => dn.indexOf($filteredName) >= 0).length != importableDomainsList.length}
+                {#if filteredImportableDomainsList.length != importableDomainsList.length}
                     <ListGroupItem
                         tag="button"
                         class="text-center text-muted"
                         on:click={() => $filteredName = ""}
                     >
-                        {$t('domains.and-more-filtered', { count: importableDomainsList.length - importableDomainsList.filter((dn) => dn.indexOf($filteredName) >= 0).length })}
+                        {$t('domains.and-more-filtered', { count: importableDomainsList.length - filteredImportableDomainsList.length })}
                     </ListGroupItem>
                 {/if}
             {/if}

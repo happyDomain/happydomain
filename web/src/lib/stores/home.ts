@@ -20,8 +20,36 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { writable } from 'svelte/store';
+import type { HappydnsDomainWithCheckStatus } from '$lib/api-base/types.gen';
+import { fqdnCompare } from '$lib/dns';
 import type { Provider } from '$lib/model/provider';
 
 export const filteredName = writable<string>("");
 export const filteredProvider = writable<Provider | null>(null);
 export const filteredGroup = writable<string | null>(null);
+
+export function matchesFilteredName(domainName: string, filteredName: string): boolean {
+    return !filteredName || domainName.indexOf(filteredName) >= 0;
+}
+
+export function filterDomains(
+    domains: Array<HappydnsDomainWithCheckStatus> | undefined,
+    filteredName: string,
+    filteredProvider: Provider | null,
+    filteredGroup: string | null,
+): Array<HappydnsDomainWithCheckStatus> {
+    if (!domains) return [];
+
+    const myDomains = domains.filter(
+        (d) =>
+            matchesFilteredName(d.domain, filteredName) &&
+            (!filteredProvider || d.id_provider === filteredProvider._id) &&
+            (filteredGroup === null ||
+                d.group === filteredGroup ||
+                ((filteredGroup === "" || filteredGroup === "undefined") &&
+                    (d.group === "" || d.group === undefined))),
+    );
+    myDomains.sort(fqdnCompare);
+
+    return myDomains;
+}
