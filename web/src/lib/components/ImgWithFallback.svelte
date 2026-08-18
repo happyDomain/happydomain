@@ -62,3 +62,12 @@
 {:else}
     <span {style} {...rest}></span>
 {/if}
+
+<style>
+    /*
+      Hide alt text while loading image
+    */
+    img {
+        color: transparent;
+    }
+</style>
