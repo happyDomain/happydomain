@@ -46,6 +46,7 @@
     interface Props {
         addingNewDomain?: boolean;
         autofocus?: boolean;
+        formId?: string;
         noButton?: boolean;
         preAddFunc?: (arg0: string) => Promise<boolean>;
         provider?: Provider;
@@ -56,14 +57,13 @@
     let {
         addingNewDomain = $bindable(false),
         autofocus = false,
+        formId = "new-domain-form",
         noButton = false,
         preAddFunc,
         provider,
         value = $bindable(""),
         ...rest
     }: Props = $props();
-
-    let formId = "new-domain-form";
 
     async function addDomainToProvider(e: SubmitEvent) {
         e.preventDefault();

@@ -63,12 +63,19 @@
     let form: ProviderForm = $state({} as ProviderForm);
     let myProvider: Provider = $state({} as Provider);
 
+    let noDomainsList = $state(false);
+    let addingNewDomain = $state(false);
+    let newDomainValue = $state("");
+
     function Open(): void {
         isOpen = true;
         step = 0;
         addingProvider = !$providers || $providers.length === 0;
         providerType = "";
         myProvider = {} as Provider;
+        noDomainsList = false;
+        addingNewDomain = false;
+        newDomainValue = "";
     }
 
     controls.Open = Open;
@@ -80,6 +87,13 @@
     function onProviderSelected(provider: Provider): void {
         myProvider = provider;
         step = 1;
+    }
+
+    function backToProviderPicker(): void {
+        step = 0;
+        noDomainsList = false;
+        addingNewDomain = false;
+        newDomainValue = "";
     }
 
     function previous(): void {
@@ -114,7 +128,14 @@
                 ondone={onProviderSelected}
             />
         {:else if myProvider && myProvider._id}
-            <DomainImport provider={myProvider} />
+            <DomainImport
+                provider={myProvider}
+                bind:noDomainsList
+                bind:addingNewDomain
+                bind:value={newDomainValue}
+                formId="newdomaininputform"
+                noButton
+            />
         {:else}
             <div class="d-flex justify-content-center align-items-center gap-2 my-3">
                 <Spinner color="primary" />
@@ -144,13 +165,27 @@
                 </Button>
             {/if}
         {:else}
-            <Button color="outline-secondary" onclick={() => (step = 0)}>
+            <Button color="outline-secondary" onclick={backToProviderPicker}>
                 <Icon name="chevron-left" />
                 {$t("common.previous")}
             </Button>
-            <Button color="primary" onclick={toggle}>
-                {$t("common.got-it")}
-            </Button>
+            {#if noDomainsList}
+                <Button
+                    color="primary"
+                    type="submit"
+                    form="newdomaininputform"
+                    disabled={!newDomainValue.length || addingNewDomain}
+                >
+                    {#if addingNewDomain}
+                        <Spinner size="sm" class="me-1" />
+                    {/if}
+                    {$t("common.add-new-thing", { thing: $t("domains.kind") })}
+                </Button>
+            {:else}
+                <Button color="primary" onclick={toggle}>
+                    {$t("common.got-it")}
+                </Button>
+            {/if}
         {/if}
     </ModalFooter>
 </Modal>

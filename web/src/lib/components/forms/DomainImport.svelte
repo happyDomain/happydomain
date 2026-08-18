@@ -33,24 +33,35 @@
         /** Optional content rendered after NewDomainInput when the provider
          *  does not support domain listing (e.g. Onboarding's ZoneList). */
         extra?: Snippet;
+        addingNewDomain?: boolean;
+        formId?: string;
+        noButton?: boolean;
+        noDomainsList?: boolean;
+        value?: string;
     }
 
-    let { provider, extra }: Props = $props();
-
-    let noDomainsList = $state(false);
-    let myDomain = $state("");
-    let myDomainInProgress = $state(false);
+    let {
+        provider,
+        extra,
+        addingNewDomain = $bindable(false),
+        formId = "new-domain-form",
+        noButton = false,
+        noDomainsList = $bindable(false),
+        value = $bindable(""),
+    }: Props = $props();
 </script>
 
 <CardImportableDomains {provider} bind:noDomainsList />
 
 {#if noDomainsList}
     <NewDomainInput
-        bind:addingNewDomain={myDomainInProgress}
+        bind:addingNewDomain
         autofocus
         class="mt-3"
+        {formId}
+        {noButton}
         {provider}
-        bind:value={myDomain}
+        bind:value
     />
     {@render extra?.()}
 {/if}
