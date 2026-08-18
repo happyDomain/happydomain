@@ -20,7 +20,6 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { base } from "$app/paths";
-import { refreshUserSession } from "$lib/stores/usersession";
 import type { CreateClientConfig } from "./api-base/client.gen";
 
 export class NotAuthorizedError extends Error {
@@ -125,6 +124,12 @@ export async function customFetch(
             throw new NotAuthorizedError("Not authenticated");
         }
         try {
+            // Imported lazily: statically, this module sits on the client's
+            // own initialization path (hey-api -> usersession -> sdk.gen ->
+            // client.gen -> hey-api), and a static import here would race
+            // createClientConfig's own definition depending on which module
+            // of the cycle happens to load first.
+            const { refreshUserSession } = await import("$lib/stores/usersession");
             await refreshUserSession();
             // Retry the original request after successful session refresh
             const retryResponse = await fetch(input, init);

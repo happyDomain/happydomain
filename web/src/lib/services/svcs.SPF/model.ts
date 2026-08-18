@@ -34,7 +34,7 @@ export function parseSPF(val: string): SPFValue {
     // syntactic role in SPF, but they are the separator used by DKIM, DMARC,
     // and other key=value TXT records. Splitting on both keeps an SPF parse
     // robust when foreign residue lands in the same TXT slot.
-    const fields = trimmed.split(/[\s;]+/).filter(Boolean);
+    const fields = trimmed.split(/[\s;]+/);
     const first = fields[0] ?? "";
     if (/^v=/i.test(first)) {
         return {
