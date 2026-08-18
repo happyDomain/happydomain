@@ -51,13 +51,11 @@
     }: Props = $props();
 </script>
 
-<CardImportableDomains {provider} bind:noDomainsList />
-
 {#if noDomainsList}
     <NewDomainInput
         bind:addingNewDomain
         autofocus
-        class="mt-3"
+        class="mb-3"
         {formId}
         {noButton}
         {provider}
@@ -65,3 +63,5 @@
     />
     {@render extra?.()}
 {/if}
+
+<CardImportableDomains {provider} bind:noDomainsList />
