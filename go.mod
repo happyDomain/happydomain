@@ -54,7 +54,7 @@ require (
 	github.com/libdns/ionos v1.2.0
 	github.com/libdns/libdns v1.1.1
 	github.com/libdns/spaceship v1.0.0
-	github.com/miekg/dns v1.1.72
+	github.com/miekg/dns v1.1.73
 	github.com/mileusna/useragent v1.3.5
 	github.com/oracle/nosql-go-sdk v1.4.8
 	github.com/ovh/go-ovh v1.9.0
