@@ -111,7 +111,42 @@ export const TYPE_CNAME = 5;
 const HOSTNAME_LABEL_RE = /^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/;
 
 /** Case-insensitive hexadecimal string test, for fingerprints and digests. */
-export const HEX_RE = /^[0-9a-f]*$/i;
+export const HEX_RE = /^[0-9a-f]+$/i;
+
+/**
+ * Outcome of checking a digest against the length its type mandates.
+ * `expected` and `got` are lengths in hexadecimal characters; they are only
+ * known once the digest type is.
+ */
+export type DigestCheck =
+    | { status: "unknown-type" }
+    | { status: "not-hex" | "bad-length" | "ok"; expected: number; got: number };
+
+/**
+ * Checks a digest against the length its type mandates.
+ *
+ * Records publishing a hash (DS, SSHFP, ...) carry the digest type next to it,
+ * and each type produces a digest of a fixed size: a digest of another size, or
+ * one carrying something else than hexadecimal, is a truncated or mistyped copy
+ * rather than a mismatched key.
+ *
+ * @param digest Digest as published, in hexadecimal.
+ * @param type Digest type, as found in the record.
+ * @param lengths Digest length, in hexadecimal characters, per known type.
+ */
+export function checkDigest(
+    digest: string,
+    type: number,
+    lengths: Record<number, number>,
+): DigestCheck {
+    const expected = lengths[type];
+    if (expected === undefined) return { status: "unknown-type" };
+
+    const got = digest.length;
+    if (!HEX_RE.test(digest)) return { status: "not-hex", expected, got };
+    if (got !== expected) return { status: "bad-length", expected, got };
+    return { status: "ok", expected, got };
+}
 
 /** Whether a value is a valid 16-bit unsigned integer, as DNS uint16 fields require. */
 export function isUint16(v: unknown): v is number {
