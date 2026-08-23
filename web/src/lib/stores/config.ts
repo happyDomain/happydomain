@@ -38,6 +38,7 @@ interface AppConfig {
     };
     no_mail?: boolean;
     oidc_configured?: boolean;
+    service_hosting_host?: string;
 }
 
 const defaultConfig: AppConfig = {
