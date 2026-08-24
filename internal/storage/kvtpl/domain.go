@@ -31,6 +31,7 @@ import (
 
 	"github.com/miekg/dns"
 
+	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -70,12 +71,12 @@ func domainFQDNIndexKey(fqdn string, domainId happydns.Identifier) string {
 	return fmt.Sprintf("%s%s|%s", domainFQDNIndexPrefix, hashFQDN(fqdn), domainId.String())
 }
 
-// putDomainIndexes writes the owner and FQDN secondary indexes for d.
-func (s *KVStorage) putDomainIndexes(d *happydns.Domain) error {
-	if err := s.db.Put(domainOwnerIndexKey(d.Owner, d.Id), ""); err != nil {
+// putDomainIndexes stages the owner and FQDN secondary indexes for d onto batch.
+func putDomainIndexes(batch storage.Batch, d *happydns.Domain) error {
+	if err := batch.Put(domainOwnerIndexKey(d.Owner, d.Id), ""); err != nil {
 		return err
 	}
-	return s.db.Put(domainFQDNIndexKey(d.DomainName, d.Id), "")
+	return batch.Put(domainFQDNIndexKey(d.DomainName, d.Id), "")
 }
 
 func (s *KVStorage) ListAllDomains() (happydns.Iterator[happydns.Domain], error) {
@@ -182,10 +183,15 @@ func (s *KVStorage) CreateDomain(z *happydns.Domain) error {
 	}
 
 	z.Id = id
-	if err := s.db.Put(key, z); err != nil {
+
+	batch := s.db.NewBatch()
+	if err := batch.Put(key, z); err != nil {
 		return err
 	}
-	return s.putDomainIndexes(z)
+	if err := putDomainIndexes(batch, z); err != nil {
+		return err
+	}
+	return batch.Commit()
 }
 
 func (s *KVStorage) UpdateDomain(z *happydns.Domain) error {
@@ -199,40 +205,39 @@ func (s *KVStorage) UpdateDomain(z *happydns.Domain) error {
 		return err
 	}
 
-	if err := s.db.Put(primaryKey, z); err != nil {
+	batch := s.db.NewBatch()
+	if err := batch.Put(primaryKey, z); err != nil {
 		return err
 	}
 
 	if old != nil {
 		if !old.Owner.Equals(z.Owner) {
-			if delErr := s.db.Delete(domainOwnerIndexKey(old.Owner, old.Id)); delErr != nil {
-				log.Printf("UpdateDomain: failed to delete stale owner index for owner %s: %v", old.Owner.String(), delErr)
-			}
+			batch.Delete(domainOwnerIndexKey(old.Owner, old.Id))
 		}
 		if normalizeDomainName(old.DomainName) != normalizeDomainName(z.DomainName) {
-			if delErr := s.db.Delete(domainFQDNIndexKey(old.DomainName, old.Id)); delErr != nil {
-				log.Printf("UpdateDomain: failed to delete stale fqdn index for %s: %v", old.DomainName, delErr)
-			}
+			batch.Delete(domainFQDNIndexKey(old.DomainName, old.Id))
 		}
 	}
 
-	return s.putDomainIndexes(z)
+	if err := putDomainIndexes(batch, z); err != nil {
+		return err
+	}
+	return batch.Commit()
 }
 
 func (s *KVStorage) DeleteDomain(zId happydns.Identifier) error {
+	batch := s.db.NewBatch()
+	batch.Delete(fmt.Sprintf("%s%s", domainPrimaryPrefix, zId.String()))
+
 	// Best-effort index cleanup: if the primary is already gone we still want
 	// the caller's Delete to succeed, and any orphan index entry will be
 	// skipped harmlessly by readers and reaped by tidy.
 	if d, err := s.GetDomain(zId); err == nil {
-		if delErr := s.db.Delete(domainOwnerIndexKey(d.Owner, d.Id)); delErr != nil {
-			log.Printf("DeleteDomain: failed to delete owner index for owner %s: %v", d.Owner.String(), delErr)
-		}
-		if delErr := s.db.Delete(domainFQDNIndexKey(d.DomainName, d.Id)); delErr != nil {
-			log.Printf("DeleteDomain: failed to delete fqdn index for %s: %v", d.DomainName, delErr)
-		}
+		batch.Delete(domainOwnerIndexKey(d.Owner, d.Id))
+		batch.Delete(domainFQDNIndexKey(d.DomainName, d.Id))
 	}
 
-	return s.db.Delete(fmt.Sprintf("%s%s", domainPrimaryPrefix, zId.String()))
+	return batch.Commit()
 }
 
 func (s *KVStorage) ClearDomains() error {

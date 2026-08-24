@@ -122,19 +122,15 @@ func (s *KVStorage) CreateAuthUser(u *happydns.UserAuth) error {
 	}
 
 	u.Id = id
-	if err := s.db.Put(key, u); err != nil {
-		return err
-	}
 
-	if err := s.db.Put(authEmailIndexKey(u.Email), u.Id.String()); err != nil {
-		// Roll back the primary so a failed index write doesn't orphan
-		// an account that nobody can log in to.
-		if delErr := s.db.Delete(key); delErr != nil {
-			log.Printf("storage: orphan auth user %q after index write failed (rollback also failed: %v)", u.Id.String(), delErr)
-		}
+	batch := s.db.NewBatch()
+	if err := batch.Put(key, u); err != nil {
 		return err
 	}
-	return nil
+	if err := batch.Put(authEmailIndexKey(u.Email), u.Id.String()); err != nil {
+		return err
+	}
+	return batch.Commit()
 }
 
 func (s *KVStorage) UpdateAuthUser(u *happydns.UserAuth) error {
@@ -144,7 +140,8 @@ func (s *KVStorage) UpdateAuthUser(u *happydns.UserAuth) error {
 		return err
 	}
 
-	if err := s.db.Put(authPrimaryKey(u.Id), u); err != nil {
+	batch := s.db.NewBatch()
+	if err := batch.Put(authPrimaryKey(u.Id), u); err != nil {
 		return err
 	}
 
@@ -152,25 +149,21 @@ func (s *KVStorage) UpdateAuthUser(u *happydns.UserAuth) error {
 	if old != nil {
 		oldIndexKey := authEmailIndexKey(old.Email)
 		if oldIndexKey != newIndexKey {
-			if delErr := s.db.Delete(oldIndexKey); delErr != nil {
-				log.Printf("storage: failed to delete stale auth-email index for user %q: %v", u.Id.String(), delErr)
-			}
+			batch.Delete(oldIndexKey)
 		}
 	}
 
-	if err := s.db.Put(newIndexKey, u.Id.String()); err != nil {
+	if err := batch.Put(newIndexKey, u.Id.String()); err != nil {
 		return err
 	}
-	return nil
+	return batch.Commit()
 }
 
 func (s *KVStorage) DeleteAuthUser(u *happydns.UserAuth) error {
-	// Delete the index first so a partial failure hides the account
-	// rather than leaving it visible-but-broken.
-	if err := s.db.Delete(authEmailIndexKey(u.Email)); err != nil {
-		log.Printf("storage: failed to delete auth-email index for user %q: %v", u.Id.String(), err)
-	}
-	return s.db.Delete(authPrimaryKey(u.Id))
+	batch := s.db.NewBatch()
+	batch.Delete(authEmailIndexKey(u.Email))
+	batch.Delete(authPrimaryKey(u.Id))
+	return batch.Commit()
 }
 
 func (s *KVStorage) ClearAuthUsers() error {

@@ -104,18 +104,14 @@ func (s *KVStorage) CreateProvider(prvd *happydns.Provider) error {
 
 	prvd.Id = id
 
-	if err := s.db.Put(key, prvd); err != nil {
+	batch := s.db.NewBatch()
+	if err := batch.Put(key, prvd); err != nil {
 		return err
 	}
-
-	if err := s.db.Put(providerOwnerKey(prvd.Owner, prvd.Id), true); err != nil {
-		// Roll back primary so a failed index write doesn't orphan it.
-		if delErr := s.db.Delete(key); delErr != nil {
-			log.Printf("storage: orphan provider %q after index write failed (rollback also failed: %v)", prvd.Id.String(), delErr)
-		}
+	if err := batch.Put(providerOwnerKey(prvd.Owner, prvd.Id), true); err != nil {
 		return err
 	}
-	return nil
+	return batch.Commit()
 }
 
 func (s *KVStorage) UpdateProvider(prvd *happydns.Provider) error {
@@ -128,17 +124,19 @@ func (s *KVStorage) UpdateProvider(prvd *happydns.Provider) error {
 		return err
 	}
 
-	if err := s.db.Put(fmt.Sprintf("%s%s", providerPrimaryPrefix, prvd.Id.String()), prvd); err != nil {
+	batch := s.db.NewBatch()
+	if err := batch.Put(fmt.Sprintf("%s%s", providerPrimaryPrefix, prvd.Id.String()), prvd); err != nil {
 		return err
 	}
 
 	if old != nil && !old.Owner.Equals(prvd.Owner) {
-		if err := s.db.Delete(providerOwnerKey(old.Owner, prvd.Id)); err != nil {
-			log.Printf("UpdateProvider: failed to delete stale owner index for owner %s: %v", old.Owner.String(), err)
-		}
+		batch.Delete(providerOwnerKey(old.Owner, prvd.Id))
 	}
 
-	return s.db.Put(providerOwnerKey(prvd.Owner, prvd.Id), true)
+	if err := batch.Put(providerOwnerKey(prvd.Owner, prvd.Id), true); err != nil {
+		return err
+	}
+	return batch.Commit()
 }
 
 func (s *KVStorage) DeleteProvider(prvdId happydns.Identifier) error {
@@ -148,11 +146,10 @@ func (s *KVStorage) DeleteProvider(prvdId happydns.Identifier) error {
 		return err
 	}
 
-	if err := s.db.Delete(providerOwnerKey(prvd.Owner, prvdId)); err != nil {
-		log.Printf("DeleteProvider: failed to delete owner index for owner %s: %v", prvd.Owner.String(), err)
-	}
-
-	return s.db.Delete(fmt.Sprintf("%s%s", providerPrimaryPrefix, prvdId.String()))
+	batch := s.db.NewBatch()
+	batch.Delete(providerOwnerKey(prvd.Owner, prvdId))
+	batch.Delete(fmt.Sprintf("%s%s", providerPrimaryPrefix, prvdId.String()))
+	return batch.Commit()
 }
 
 func (s *KVStorage) ClearProviders() error {

@@ -139,13 +139,14 @@ func (s *KVStorage) UpdateSession(session *happydns.Session) error {
 	// If the same primary key already exists under a different user, drop
 	// the stale user index so it doesn't outlive this update.
 	old := &happydns.Session{}
-	if err := s.db.Get(primary, old); err == nil && !old.IdUser.IsEmpty() && !old.IdUser.Equals(session.IdUser) {
-		if delErr := s.db.Delete(sessionUserIndexKey(old.IdUser, sessionShortHash(hash))); delErr != nil {
-			log.Printf("storage: failed to delete stale session user index for %s: %v", old.IdUser.String(), delErr)
-		}
+	hasOld := s.db.Get(primary, old) == nil
+
+	batch := s.db.NewBatch()
+	if hasOld && !old.IdUser.IsEmpty() && !old.IdUser.Equals(session.IdUser) {
+		batch.Delete(sessionUserIndexKey(old.IdUser, sessionShortHash(hash)))
 	}
 
-	if err := s.db.Put(primary, session); err != nil {
+	if err := batch.Put(primary, session); err != nil {
 		return err
 	}
 
@@ -153,11 +154,11 @@ func (s *KVStorage) UpdateSession(session *happydns.Session) error {
 	// are still reachable via the primary key. The index value holds the full
 	// hash so listSessionsByUserID can locate the primary.
 	if !session.IdUser.IsEmpty() {
-		if err := s.db.Put(sessionUserIndexKey(session.IdUser, sessionShortHash(hash)), hash); err != nil {
+		if err := batch.Put(sessionUserIndexKey(session.IdUser, sessionShortHash(hash)), hash); err != nil {
 			return err
 		}
 	}
-	return nil
+	return batch.Commit()
 }
 
 func (s *KVStorage) DeleteSession(id string) error {
@@ -165,17 +166,17 @@ func (s *KVStorage) DeleteSession(id string) error {
 
 	// Load first so we can clean up the user index. If the primary is gone,
 	// fall through to a best-effort delete of the primary key.
+	batch := s.db.NewBatch()
 	if session, err := s.getSession(primary); err == nil {
 		if !session.IdUser.IsEmpty() {
-			if delErr := s.db.Delete(sessionUserIndexKey(session.IdUser, sessionShortHash(sessionHash(id)))); delErr != nil {
-				log.Printf("storage: failed to delete session user index for %s: %v", session.IdUser.String(), delErr)
-			}
+			batch.Delete(sessionUserIndexKey(session.IdUser, sessionShortHash(sessionHash(id))))
 		}
 	} else if !errors.Is(err, happydns.ErrSessionNotFound) {
 		return err
 	}
 
-	return s.db.Delete(primary)
+	batch.Delete(primary)
+	return batch.Commit()
 }
 
 func (s *KVStorage) ClearSessions() error {

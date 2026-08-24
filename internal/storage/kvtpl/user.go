@@ -148,7 +148,8 @@ func (s *KVStorage) CreateOrUpdateUser(u *happydns.User) error {
 		old = prev
 	}
 
-	if err := s.db.Put(userPrimaryKey(u.Id), u); err != nil {
+	batch := s.db.NewBatch()
+	if err := batch.Put(userPrimaryKey(u.Id), u); err != nil {
 		return err
 	}
 
@@ -156,35 +157,27 @@ func (s *KVStorage) CreateOrUpdateUser(u *happydns.User) error {
 	if old != nil {
 		oldIndexKey := userEmailIndexKey(old.Email)
 		if oldIndexKey != newIndexKey {
-			if delErr := s.db.Delete(oldIndexKey); delErr != nil {
-				log.Printf("storage: failed to delete stale user-email index for user %q: %v", u.Id.String(), delErr)
-			}
+			batch.Delete(oldIndexKey)
 		}
 	}
 
-	if err := s.db.Put(newIndexKey, u.Id.String()); err != nil {
-		if isNew {
-			// Roll back the primary so a failed index write doesn't orphan
-			// an account that nobody can resolve by email.
-			if delErr := s.db.Delete(userPrimaryKey(u.Id)); delErr != nil {
-				log.Printf("storage: orphan user %q after index write failed (rollback also failed: %v)", u.Id.String(), delErr)
-			}
-		}
+	if err := batch.Put(newIndexKey, u.Id.String()); err != nil {
 		return err
 	}
-	return nil
+	return batch.Commit()
 }
 
 func (s *KVStorage) DeleteUser(uId happydns.Identifier) error {
+	batch := s.db.NewBatch()
+	batch.Delete(userPrimaryKey(uId))
+
 	// Best-effort index cleanup: if the primary is already gone we still
 	// want the caller's Delete to succeed, and any orphan index entry will
 	// be skipped harmlessly by readers and reaped by tidy.
 	if u, err := s.GetUser(uId); err == nil {
-		if delErr := s.db.Delete(userEmailIndexKey(u.Email)); delErr != nil {
-			log.Printf("storage: failed to delete user-email index for user %q: %v", uId.String(), delErr)
-		}
+		batch.Delete(userEmailIndexKey(u.Email))
 	}
-	return s.db.Delete(userPrimaryKey(uId))
+	return batch.Commit()
 }
 
 func (s *KVStorage) ClearUsers() error {

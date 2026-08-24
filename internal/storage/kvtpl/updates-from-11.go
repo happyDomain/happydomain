@@ -193,7 +193,10 @@ func migrateFrom11_domains(s *KVStorage) error {
 		if d == nil {
 			continue
 		}
-		if err := s.putDomainIndexes(d); err != nil {
+		if err := s.db.Put(domainOwnerIndexKey(d.Owner, d.Id), ""); err != nil {
+			return err
+		}
+		if err := s.db.Put(domainFQDNIndexKey(d.DomainName, d.Id), ""); err != nil {
 			return err
 		}
 		n++
