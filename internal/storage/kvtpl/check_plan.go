@@ -48,6 +48,10 @@ func planUserIndexKey(userId string, planId string) string {
 	return fmt.Sprintf("%s%s|%s", checkPlanByUserIndexPrefix, userId, planId)
 }
 
+func checkPlanPrimaryKey(id happydns.Identifier) string {
+	return checkPlanPrimaryPrefix + id.String()
+}
+
 func (s *KVStorage) ListAllCheckPlans() (happydns.Iterator[happydns.CheckPlan], error) {
 	iter := s.db.Search(checkPlanPrimaryPrefix)
 	return NewKVIterator[happydns.CheckPlan](s.db, iter), nil
@@ -67,7 +71,7 @@ func (s *KVStorage) ListCheckPlansByUser(userId happydns.Identifier) ([]*happydn
 
 func (s *KVStorage) GetCheckPlan(planID happydns.Identifier) (*happydns.CheckPlan, error) {
 	plan := &happydns.CheckPlan{}
-	err := s.db.Get(fmt.Sprintf("%s%s", checkPlanPrimaryPrefix, planID.String()), plan)
+	err := s.db.Get(checkPlanPrimaryKey(planID), plan)
 	if errors.Is(err, happydns.ErrNotFound) {
 		return nil, happydns.ErrCheckPlanNotFound
 	}
@@ -98,7 +102,7 @@ func (s *KVStorage) UpdateCheckPlan(plan *happydns.CheckPlan) error {
 	}
 
 	batch := s.db.NewBatch()
-	if err := batch.Put(fmt.Sprintf("%s%s", checkPlanPrimaryPrefix, plan.Id.String()), plan); err != nil {
+	if err := batch.Put(checkPlanPrimaryKey(plan.Id), plan); err != nil {
 		return err
 	}
 
@@ -152,7 +156,7 @@ func stageCheckPlanIndexes(batch storage.Batch, plan *happydns.CheckPlan) error 
 // the original identifier instead of generating a new one.
 func (s *KVStorage) RestoreCheckPlan(plan *happydns.CheckPlan) error {
 	batch := s.db.NewBatch()
-	if err := batch.Put(fmt.Sprintf("%s%s", checkPlanPrimaryPrefix, plan.Id.String()), plan); err != nil {
+	if err := batch.Put(checkPlanPrimaryKey(plan.Id), plan); err != nil {
 		return err
 	}
 	if err := stageCheckPlanIndexes(batch, plan); err != nil {
@@ -175,7 +179,7 @@ func (s *KVStorage) DeleteCheckPlan(planID happydns.Identifier) error {
 		batch.Delete(planUserIndexKey(plan.Target.UserId, planID.String()))
 	}
 
-	batch.Delete(fmt.Sprintf("%s%s", checkPlanPrimaryPrefix, planID.String()))
+	batch.Delete(checkPlanPrimaryKey(planID))
 
 	return batch.Commit()
 }

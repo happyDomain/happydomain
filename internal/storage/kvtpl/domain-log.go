@@ -103,7 +103,7 @@ func (s *KVStorage) getDomainLog(id string) (l *happydns.DomainLog, d *happydns.
 	}
 
 	d = &happydns.Domain{}
-	err = s.db.Get(fmt.Sprintf("%s%s", domainPrimaryPrefix, st[1]), d)
+	err = s.db.Get(domainPrimaryPrefix+st[1], d)
 	if errors.Is(err, happydns.ErrNotFound) {
 		return nil, nil, happydns.ErrDomainNotFound
 	}

@@ -86,7 +86,7 @@ func TestSessionUserIndexKeySize(t *testing.T) {
 // --- domain ---
 
 func TestDomainPrimaryKeySize(t *testing.T) {
-	assertKeySize(t, "domainPrimaryKey", fmt.Sprintf("%s%s", domainPrimaryPrefix, maxID.String()))
+	assertKeySize(t, "domainPrimaryKey", domainPrimaryKey(maxID))
 }
 
 func TestDomainOwnerIndexKeySize(t *testing.T) {
@@ -108,13 +108,13 @@ func TestDomainLogKeySize(t *testing.T) {
 // --- zone ---
 
 func TestZonePrimaryKeySize(t *testing.T) {
-	assertKeySize(t, "zonePrimaryKey", fmt.Sprintf("%s%s", zonePrimaryPrefix, maxID.String()))
+	assertKeySize(t, "zonePrimaryKey", zonePrimaryKey(maxID))
 }
 
 // --- provider ---
 
 func TestProviderPrimaryKeySize(t *testing.T) {
-	assertKeySize(t, "providerPrimaryKey", fmt.Sprintf("%s%s", providerPrimaryPrefix, maxID.String()))
+	assertKeySize(t, "providerPrimaryKey", providerPrimaryKey(maxID))
 }
 
 func TestProviderOwnerKeySize(t *testing.T) {
@@ -124,7 +124,7 @@ func TestProviderOwnerKeySize(t *testing.T) {
 // --- check plan ---
 
 func TestCheckPlanPrimaryKeySize(t *testing.T) {
-	assertKeySize(t, "checkPlanPrimaryKey", fmt.Sprintf("%s%s", checkPlanPrimaryPrefix, maxID.String()))
+	assertKeySize(t, "checkPlanPrimaryKey", checkPlanPrimaryKey(maxID))
 }
 
 func TestPlanUserIndexKeySize(t *testing.T) {
@@ -134,7 +134,7 @@ func TestPlanUserIndexKeySize(t *testing.T) {
 // --- check evaluation ---
 
 func TestEvaluationPrimaryKeySize(t *testing.T) {
-	assertKeySize(t, "evaluationPrimaryKey", fmt.Sprintf("%s%s", evaluationPrimaryPrefix, maxID.String()))
+	assertKeySize(t, "evaluationPrimaryKey", evaluationPrimaryKey(maxID))
 }
 
 func TestEvaluationPlanIndexKeySize(t *testing.T) {
@@ -144,7 +144,7 @@ func TestEvaluationPlanIndexKeySize(t *testing.T) {
 // --- execution ---
 
 func TestExecutionPrimaryKeySize(t *testing.T) {
-	assertKeySize(t, "executionPrimaryKey", fmt.Sprintf("%s%s", ExecutionPrimaryPrefix, maxID.String()))
+	assertKeySize(t, "executionPrimaryKey", executionPrimaryKey(maxID))
 }
 
 func TestExecutionPlanIndexKeySize(t *testing.T) {
@@ -205,7 +205,7 @@ func TestNotifStateKeySize(t *testing.T) {
 // --- observation snapshot ---
 
 func TestObservationSnapshotKeySize(t *testing.T) {
-	assertKeySize(t, "observationSnapshotKey", fmt.Sprintf("%s%s", observationSnapshotPrefix, maxID.String()))
+	assertKeySize(t, "observationSnapshotKey", observationSnapshotKey(maxID))
 }
 
 // --- scheduler ---

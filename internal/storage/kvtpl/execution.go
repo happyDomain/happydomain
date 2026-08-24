@@ -54,6 +54,10 @@ func executionDomainIndexKey(domainId string, startedAt time.Time, execId string
 	return fmt.Sprintf("%s%s|%s|%s", ExecutionByDomainIndexPrefix, domainId, reverseChronoSegment(startedAt), execId)
 }
 
+func executionPrimaryKey(id happydns.Identifier) string {
+	return ExecutionPrimaryPrefix + id.String()
+}
+
 func (s *KVStorage) ListExecutionsByPlan(planID happydns.Identifier) ([]*happydns.Execution, error) {
 	return listByIndex(s, fmt.Sprintf("%s%s|", ExecutionByPlanIndexPrefix, planID.String()), s.GetExecution)
 }
@@ -84,7 +88,7 @@ func (s *KVStorage) ListAllExecutions() (happydns.Iterator[happydns.Execution], 
 
 func (s *KVStorage) GetExecution(execID happydns.Identifier) (*happydns.Execution, error) {
 	exec := &happydns.Execution{}
-	err := s.db.Get(fmt.Sprintf("%s%s", ExecutionPrimaryPrefix, execID.String()), exec)
+	err := s.db.Get(executionPrimaryKey(execID), exec)
 	if errors.Is(err, happydns.ErrNotFound) {
 		return nil, happydns.ErrExecutionNotFound
 	}
@@ -137,7 +141,7 @@ func (s *KVStorage) CreateExecution(exec *happydns.Execution) error {
 // its secondary indexes. Used by the backup restore path.
 func (s *KVStorage) RestoreExecution(exec *happydns.Execution) error {
 	batch := s.db.NewBatch()
-	if err := batch.Put(fmt.Sprintf("%s%s", ExecutionPrimaryPrefix, exec.Id.String()), exec); err != nil {
+	if err := batch.Put(executionPrimaryKey(exec.Id), exec); err != nil {
 		return err
 	}
 
@@ -175,7 +179,7 @@ func (s *KVStorage) UpdateExecution(exec *happydns.Execution) error {
 	}
 
 	batch := s.db.NewBatch()
-	if err := batch.Put(fmt.Sprintf("%s%s", ExecutionPrimaryPrefix, exec.Id.String()), exec); err != nil {
+	if err := batch.Put(executionPrimaryKey(exec.Id), exec); err != nil {
 		return err
 	}
 
@@ -268,7 +272,7 @@ func (s *KVStorage) DeleteExecution(execID happydns.Identifier) error {
 		batch.Delete(executionDomainIndexKey(exec.Target.DomainId, exec.StartedAt, execID.String()))
 	}
 
-	batch.Delete(fmt.Sprintf("%s%s", ExecutionPrimaryPrefix, execID.String()))
+	batch.Delete(executionPrimaryKey(execID))
 
 	return batch.Commit()
 }
@@ -322,7 +326,7 @@ func (s *KVStorage) DeleteExecutionsByChecker(checkerID string, target happydns.
 			batch.Delete(executionDomainIndexKey(exec.Target.DomainId, exec.StartedAt, exec.Id.String()))
 		}
 
-		batch.Delete(fmt.Sprintf("%s%s", ExecutionPrimaryPrefix, exec.Id.String()))
+		batch.Delete(executionPrimaryKey(exec.Id))
 		batch.Delete(iter.Key())
 
 		if err := batch.Commit(); err != nil {

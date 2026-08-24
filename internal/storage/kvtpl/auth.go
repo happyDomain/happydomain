@@ -25,7 +25,6 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"log"
 	"strings"
 
@@ -191,7 +190,7 @@ func (s *KVStorage) ClearAuthUsers() error {
 	defer iter.Close()
 
 	for iter.Next() {
-		if err := s.db.Delete(fmt.Sprintf("%s%s", authPrimaryPrefix, iter.Item().Id.String())); err != nil {
+		if err := s.db.Delete(authPrimaryKey(iter.Item().Id)); err != nil {
 			return err
 		}
 	}

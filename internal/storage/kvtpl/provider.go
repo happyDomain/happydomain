@@ -34,6 +34,10 @@ const (
 	providerOwnerPrefix   = "provider.owner|"
 )
 
+func providerPrimaryKey(id happydns.Identifier) string {
+	return providerPrimaryPrefix + id.String()
+}
+
 func providerOwnerKey(ownerId, providerId happydns.Identifier) string {
 	return fmt.Sprintf("%s%s|%s", providerOwnerPrefix, ownerId.String(), providerId.String())
 }
@@ -49,7 +53,7 @@ func (s *KVStorage) CountProviders() (int, error) {
 
 func (s *KVStorage) getProviderMeta(id happydns.Identifier) (*happydns.ProviderMessage, error) {
 	srcMsg := &happydns.ProviderMessage{}
-	err := s.db.Get(fmt.Sprintf("%s%s", providerPrimaryPrefix, id.String()), srcMsg)
+	err := s.db.Get(providerPrimaryKey(id), srcMsg)
 	if errors.Is(err, happydns.ErrNotFound) {
 		return nil, happydns.ErrProviderNotFound
 	}
@@ -85,7 +89,7 @@ func (s *KVStorage) ListProviders(u *happydns.User) (srcs happydns.ProviderMessa
 
 func (s *KVStorage) GetProvider(id happydns.Identifier) (*happydns.ProviderMessage, error) {
 	var prvdMsg happydns.ProviderMessage
-	err := s.db.Get(fmt.Sprintf("%s%s", providerPrimaryPrefix, id.String()), &prvdMsg)
+	err := s.db.Get(providerPrimaryKey(id), &prvdMsg)
 	if errors.Is(err, happydns.ErrNotFound) {
 		return nil, happydns.ErrProviderNotFound
 	}
@@ -125,7 +129,7 @@ func (s *KVStorage) UpdateProvider(prvd *happydns.Provider) error {
 	}
 
 	batch := s.db.NewBatch()
-	if err := batch.Put(fmt.Sprintf("%s%s", providerPrimaryPrefix, prvd.Id.String()), prvd); err != nil {
+	if err := batch.Put(providerPrimaryKey(prvd.Id), prvd); err != nil {
 		return err
 	}
 
@@ -148,7 +152,7 @@ func (s *KVStorage) DeleteProvider(prvdId happydns.Identifier) error {
 
 	batch := s.db.NewBatch()
 	batch.Delete(providerOwnerKey(prvd.Owner, prvdId))
-	batch.Delete(fmt.Sprintf("%s%s", providerPrimaryPrefix, prvdId.String()))
+	batch.Delete(providerPrimaryKey(prvdId))
 	return batch.Commit()
 }
 

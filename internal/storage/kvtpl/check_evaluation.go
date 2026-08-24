@@ -47,6 +47,10 @@ func evaluationPlanIndexKey(planID string, evaluatedAt time.Time, evalId string)
 	return fmt.Sprintf("%s%s|%s|%s", evaluationByPlanIndexPrefix, planID, reverseChronoSegment(evaluatedAt), evalId)
 }
 
+func evaluationPrimaryKey(id happydns.Identifier) string {
+	return evaluationPrimaryPrefix + id.String()
+}
+
 func (s *KVStorage) ListEvaluationsByPlan(planID happydns.Identifier) ([]*happydns.CheckEvaluation, error) {
 	return listByIndex(s, fmt.Sprintf("%s%s|", evaluationByPlanIndexPrefix, planID.String()), s.GetEvaluation)
 }
@@ -58,7 +62,7 @@ func (s *KVStorage) ListAllEvaluations() (happydns.Iterator[happydns.CheckEvalua
 
 func (s *KVStorage) GetEvaluation(evalID happydns.Identifier) (*happydns.CheckEvaluation, error) {
 	eval := &happydns.CheckEvaluation{}
-	err := s.db.Get(fmt.Sprintf("%s%s", evaluationPrimaryPrefix, evalID.String()), eval)
+	err := s.db.Get(evaluationPrimaryKey(evalID), eval)
 	if errors.Is(err, happydns.ErrNotFound) {
 		return nil, happydns.ErrCheckEvaluationNotFound
 	}
@@ -116,7 +120,7 @@ func (s *KVStorage) CreateEvaluation(eval *happydns.CheckEvaluation) error {
 // its secondary indexes. Used by the backup restore path.
 func (s *KVStorage) RestoreEvaluation(eval *happydns.CheckEvaluation) error {
 	batch := s.db.NewBatch()
-	if err := batch.Put(fmt.Sprintf("%s%s", evaluationPrimaryPrefix, eval.Id.String()), eval); err != nil {
+	if err := batch.Put(evaluationPrimaryKey(eval.Id), eval); err != nil {
 		return err
 	}
 
@@ -147,7 +151,7 @@ func (s *KVStorage) DeleteEvaluation(evalID happydns.Identifier) error {
 	}
 
 	batch.Delete(evaluationCheckerIndexKey(eval.CheckerID, eval.Target, eval.EvaluatedAt, eval.Id.String()))
-	batch.Delete(fmt.Sprintf("%s%s", evaluationPrimaryPrefix, evalID.String()))
+	batch.Delete(evaluationPrimaryKey(evalID))
 
 	return batch.Commit()
 }
@@ -179,7 +183,7 @@ func (s *KVStorage) DeleteEvaluationsByChecker(checkerID string, target happydns
 		if eval.PlanID != nil {
 			batch.Delete(evaluationPlanIndexKey(eval.PlanID.String(), eval.EvaluatedAt, eval.Id.String()))
 		}
-		batch.Delete(fmt.Sprintf("%s%s", evaluationPrimaryPrefix, eval.Id.String()))
+		batch.Delete(evaluationPrimaryKey(eval.Id))
 		batch.Delete(iter.Key())
 
 		if err := batch.Commit(); err != nil {

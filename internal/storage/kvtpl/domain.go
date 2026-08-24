@@ -79,6 +79,10 @@ func putDomainIndexes(batch storage.Batch, d *happydns.Domain) error {
 	return batch.Put(domainFQDNIndexKey(d.DomainName, d.Id), "")
 }
 
+func domainPrimaryKey(id happydns.Identifier) string {
+	return domainPrimaryPrefix + id.String()
+}
+
 func (s *KVStorage) ListAllDomains() (happydns.Iterator[happydns.Domain], error) {
 	iter := s.db.Search(domainPrimaryPrefix)
 	return NewKVIterator[happydns.Domain](s.db, iter), nil
@@ -122,7 +126,7 @@ func (s *KVStorage) getDomain(id string) (*happydns.Domain, error) {
 }
 
 func (s *KVStorage) GetDomain(id happydns.Identifier) (*happydns.Domain, error) {
-	return s.getDomain(fmt.Sprintf("%s%s", domainPrimaryPrefix, id.String()))
+	return s.getDomain(domainPrimaryKey(id))
 }
 
 func (s *KVStorage) GetDomainByDN(u *happydns.User, dn string) ([]*happydns.Domain, error) {
@@ -195,7 +199,7 @@ func (s *KVStorage) CreateDomain(z *happydns.Domain) error {
 }
 
 func (s *KVStorage) UpdateDomain(z *happydns.Domain) error {
-	primaryKey := fmt.Sprintf("%s%s", domainPrimaryPrefix, z.Id.String())
+	primaryKey := domainPrimaryKey(z.Id)
 
 	// Load the previous record to detect index-affecting changes. UpdateDomain
 	// is also used by the backup restore path where the primary may not exist
@@ -227,7 +231,7 @@ func (s *KVStorage) UpdateDomain(z *happydns.Domain) error {
 
 func (s *KVStorage) DeleteDomain(zId happydns.Identifier) error {
 	batch := s.db.NewBatch()
-	batch.Delete(fmt.Sprintf("%s%s", domainPrimaryPrefix, zId.String()))
+	batch.Delete(domainPrimaryKey(zId))
 
 	// Best-effort index cleanup: if the primary is already gone we still want
 	// the caller's Delete to succeed, and any orphan index entry will be
