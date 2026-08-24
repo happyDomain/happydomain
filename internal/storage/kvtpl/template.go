@@ -98,6 +98,23 @@ func lastTwoSegments(key string) (tail string, ok bool) {
 	return key[j+1:], true
 }
 
+// parseTwoIdKey parses a "{prefix}{first}|{second}" key into its two identifier
+// segments.
+func parseTwoIdKey(key, prefix string) (first, second happydns.Identifier, err error) {
+	rest := strings.TrimPrefix(key, prefix)
+	parts := strings.SplitN(rest, "|", 2)
+	if len(parts) != 2 {
+		return nil, nil, fmt.Errorf("malformed share key %q", key)
+	}
+	if first, err = happydns.NewIdentifierFromString(parts[0]); err != nil {
+		return nil, nil, err
+	}
+	if second, err = happydns.NewIdentifierFromString(parts[1]); err != nil {
+		return nil, nil, err
+	}
+	return first, second, nil
+}
+
 // listByIndex scans a secondary index prefix, resolves each entity by its
 // last key segment, and returns the collected results.
 func listByIndex[T any](s *KVStorage, prefix string, getEntity func(happydns.Identifier) (*T, error)) ([]*T, error) {
@@ -190,33 +207,20 @@ func (s *KVStorage) tidyTwoPartIndex(prefix, label string, validateOwner func(ha
 	defer iter.Release()
 	for iter.Next() {
 		key := iter.Key()
-		rest := strings.TrimPrefix(key, prefix)
-		parts := strings.SplitN(rest, "|", 2)
-		if len(parts) != 2 {
-			_ = s.db.Delete(key)
-			continue
-		}
-
-		ownerId, err := happydns.NewIdentifierFromString(parts[0])
-		if err != nil {
-			_ = s.db.Delete(key)
-			continue
-		}
-
-		entityId, err := happydns.NewIdentifierFromString(parts[1])
+		ownerId, entityId, err := parseTwoIdKey(key, prefix)
 		if err != nil {
 			_ = s.db.Delete(key)
 			continue
 		}
 
 		if validateOwner != nil && !validateOwner(ownerId) {
-			log.Printf("Deleting stale %s index (%s %s not found): %s\n", label, label, parts[0], key)
+			log.Printf("Deleting stale %s index (%s %s not found): %s\n", label, label, ownerId.String(), key)
 			_ = s.db.Delete(key)
 			continue
 		}
 
 		if !entityExists(entityId) {
-			log.Printf("Deleting stale %s index (entity %s not found): %s\n", label, parts[1], key)
+			log.Printf("Deleting stale %s index (entity %s not found): %s\n", label, entityId.String(), key)
 			_ = s.db.Delete(key)
 		}
 	}
