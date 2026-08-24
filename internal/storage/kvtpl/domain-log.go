@@ -22,7 +22,6 @@
 package database
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -85,27 +84,6 @@ func (s *KVStorage) ListDomainLogs(domain *happydns.Domain) (logs []*happydns.Do
 
 	if err = iter.Err(); err != nil {
 		return
-	}
-
-	return
-}
-
-func (s *KVStorage) getDomainLog(id string) (l *happydns.DomainLog, d *happydns.Domain, err error) {
-	l = &happydns.DomainLog{}
-	err = s.db.Get(id, l)
-	if errors.Is(err, happydns.ErrNotFound) {
-		return nil, nil, happydns.ErrDomainLogNotFound
-	}
-
-	st := strings.Split(id, "|")
-	if len(st) < 3 {
-		return
-	}
-
-	d = &happydns.Domain{}
-	err = s.db.Get(domainPrimaryPrefix+st[1], d)
-	if errors.Is(err, happydns.ErrNotFound) {
-		return nil, nil, happydns.ErrDomainNotFound
 	}
 
 	return
