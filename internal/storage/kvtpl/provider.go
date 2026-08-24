@@ -152,6 +152,22 @@ func (s *KVStorage) DeleteProvider(prvdId happydns.Identifier) error {
 	return batch.Commit()
 }
 
+func (s *KVStorage) providerExists(id happydns.Identifier) bool {
+	_, err := s.GetProvider(id)
+	return err == nil
+}
+
+// TidyProviderIndexes removes stale owner index entries: those whose target
+// provider no longer exists, or whose owner segment no longer resolves to a User.
+func (s *KVStorage) TidyProviderIndexes() error {
+	s.tidyTwoPartIndex(providerOwnerPrefix, "provider owner", func(id happydns.Identifier) bool {
+		_, err := s.GetUser(id)
+		return err == nil
+	}, s.providerExists)
+
+	return nil
+}
+
 func (s *KVStorage) ClearProviders() error {
 	if err := s.clearByPrefix(providerOwnerPrefix); err != nil {
 		return err

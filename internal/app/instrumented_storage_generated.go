@@ -661,9 +661,19 @@ func (s *instrumentedStorage) SetLastSchedulerRun(t time.Time) (err error) {
 	return s.inner.SetLastSchedulerRun(t)
 }
 
+func (s *instrumentedStorage) TidyAuthUserIndexes() (err error) {
+	defer observe("tidy", "authuser")(&err)
+	return s.inner.TidyAuthUserIndexes()
+}
+
 func (s *instrumentedStorage) TidyCheckPlanIndexes() (err error) {
 	defer observe("tidy", "check_plan")(&err)
 	return s.inner.TidyCheckPlanIndexes()
+}
+
+func (s *instrumentedStorage) TidyDomainIndexes() (err error) {
+	defer observe("tidy", "domain")(&err)
+	return s.inner.TidyDomainIndexes()
 }
 
 func (s *instrumentedStorage) TidyEvaluationIndexes() (err error) {
@@ -674,6 +684,21 @@ func (s *instrumentedStorage) TidyEvaluationIndexes() (err error) {
 func (s *instrumentedStorage) TidyExecutionIndexes() (err error) {
 	defer observe("tidy", "execution")(&err)
 	return s.inner.TidyExecutionIndexes()
+}
+
+func (s *instrumentedStorage) TidyProviderIndexes() (err error) {
+	defer observe("tidy", "provider")(&err)
+	return s.inner.TidyProviderIndexes()
+}
+
+func (s *instrumentedStorage) TidySessionIndexes() (err error) {
+	defer observe("tidy", "session")(&err)
+	return s.inner.TidySessionIndexes()
+}
+
+func (s *instrumentedStorage) TidyUserIndexes() (err error) {
+	defer observe("tidy", "user")(&err)
+	return s.inner.TidyUserIndexes()
 }
 
 func (s *instrumentedStorage) UpdateAuthUser(user *happydns.UserAuth) (err error) {

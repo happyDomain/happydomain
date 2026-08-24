@@ -59,4 +59,7 @@ type DomainStorage interface {
 
 	// ClearDomains deletes all Domains present in the database.
 	ClearDomains() error
+
+	// TidyDomainIndexes removes stale owner/FQDN secondary index entries.
+	TidyDomainIndexes() error
 }

@@ -166,6 +166,17 @@ func (s *KVStorage) DeleteAuthUser(u *happydns.UserAuth) error {
 	return batch.Commit()
 }
 
+// TidyAuthUserIndexes removes stale email index entries whose target auth
+// user no longer exists.
+func (s *KVStorage) TidyAuthUserIndexes() error {
+	s.tidyValueIndex(authEmailPrefix, "auth email", func(id happydns.Identifier) bool {
+		_, err := s.GetAuthUser(id)
+		return err == nil
+	})
+
+	return nil
+}
+
 func (s *KVStorage) ClearAuthUsers() error {
 	// Wipe the secondary index first; clearByPrefix uses a snapshot
 	// iterator so this is safe to do before the primaries.

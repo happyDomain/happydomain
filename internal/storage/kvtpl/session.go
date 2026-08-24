@@ -27,6 +27,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 
 	"git.happydns.org/happyDomain/model"
 )
@@ -177,6 +178,53 @@ func (s *KVStorage) DeleteSession(id string) error {
 
 	batch.Delete(primary)
 	return batch.Commit()
+}
+
+// TidySessionIndexes removes stale per-user session index entries: those
+// whose owner segment no longer resolves to a User, whose value isn't a
+// well-formed hash, or whose hash no longer resolves to a primary session
+// record. The entity id lives in the key's owner segment and its value
+// (the full hash), not as a trailing key segment, so this doesn't reuse the
+// generic tidy helpers.
+func (s *KVStorage) TidySessionIndexes() error {
+	iter := s.db.Search(sessionUserPrefix)
+	defer iter.Release()
+
+	for iter.Next() {
+		key := iter.Key()
+		rest := strings.TrimPrefix(key, sessionUserPrefix)
+		ownerStr, _, ok := strings.Cut(rest, "|")
+		if !ok {
+			_ = s.db.Delete(key)
+			continue
+		}
+
+		ownerId, err := happydns.NewIdentifierFromString(ownerStr)
+		if err != nil {
+			_ = s.db.Delete(key)
+			continue
+		}
+
+		if _, err := s.GetUser(ownerId); err != nil {
+			log.Printf("Deleting stale session user index (user %s not found): %s\n", ownerStr, key)
+			_ = s.db.Delete(key)
+			continue
+		}
+
+		var fullHash string
+		if err := s.db.DecodeData(iter.Value(), &fullHash); err != nil || fullHash == "" {
+			log.Printf("Deleting stale session user index (malformed value): %s\n", key)
+			_ = s.db.Delete(key)
+			continue
+		}
+
+		if _, err := s.getSession(sessionPrimaryKeyFromHash(fullHash)); err != nil {
+			log.Printf("Deleting stale session user index (primary session not found): %s\n", key)
+			_ = s.db.Delete(key)
+		}
+	}
+
+	return iter.Err()
 }
 
 func (s *KVStorage) ClearSessions() error {

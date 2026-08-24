@@ -49,4 +49,7 @@ type AuthUserStorage interface {
 
 	// ClearAuthUsers deletes all AuthUsers present in the database.
 	ClearAuthUsers() error
+
+	// TidyAuthUserIndexes removes stale email secondary index entries.
+	TidyAuthUserIndexes() error
 }

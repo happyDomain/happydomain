@@ -293,6 +293,38 @@ func (s *KVStorage) tidyLastSegmentIndex(prefix, label string, entityExists func
 	}
 }
 
+// tidyValueIndex removes stale secondary index entries whose target entity
+// id is stored as the value rather than embedded in the key (e.g. an email
+// index mapping a hashed email to an id string). Entries with an
+// undecodable or unparseable value, or whose target entity no longer
+// exists, are deleted.
+func (s *KVStorage) tidyValueIndex(prefix, label string, entityExists func(happydns.Identifier) bool) {
+	iter := s.db.Search(prefix)
+	defer iter.Release()
+	for iter.Next() {
+		key := iter.Key()
+
+		var idStr string
+		if err := s.db.DecodeData(iter.Value(), &idStr); err != nil || idStr == "" {
+			log.Printf("Deleting stale %s index (undecodable value): %s\n", label, key)
+			_ = s.db.Delete(key)
+			continue
+		}
+
+		id, err := happydns.NewIdentifierFromString(idStr)
+		if err != nil {
+			log.Printf("Deleting stale %s index (malformed value %q): %s\n", label, idStr, key)
+			_ = s.db.Delete(key)
+			continue
+		}
+
+		if !entityExists(id) {
+			log.Printf("Deleting stale %s index (entity %s not found): %s\n", label, idStr, key)
+			_ = s.db.Delete(key)
+		}
+	}
+}
+
 // clearByPrefix deletes all KV entries matching the given prefix.
 func (s *KVStorage) clearByPrefix(prefix string) error {
 	iter := s.db.Search(prefix)

@@ -36,7 +36,7 @@ func (tu *tidyUpUsecase) TidyAuthUsers(dropInvalid bool) error {
 	}
 	defer iter.Close()
 
-	return iterateTidy(iter, dropInvalid, func(userAuth *happydns.UserAuth) error {
+	err = iterateTidy(iter, dropInvalid, func(userAuth *happydns.UserAuth) error {
 		_, err := tu.store.GetUser(userAuth.Id)
 		if errors.Is(err, happydns.ErrUserNotFound) && time.Since(userAuth.CreatedAt) > 24*time.Hour {
 			// Drop providers of unexistant users
@@ -47,6 +47,11 @@ func (tu *tidyUpUsecase) TidyAuthUsers(dropInvalid bool) error {
 		}
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+
+	return tu.store.TidyAuthUserIndexes()
 }
 
 func (tu *tidyUpUsecase) TidyUsers(dropInvalid bool) error {
@@ -56,7 +61,7 @@ func (tu *tidyUpUsecase) TidyUsers(dropInvalid bool) error {
 	}
 	defer iter.Close()
 
-	return iterateTidy(iter, dropInvalid, func(authUser *happydns.UserAuth) error {
+	err = iterateTidy(iter, dropInvalid, func(authUser *happydns.UserAuth) error {
 		if authUser.EmailVerification == nil && authUser.LastLoggedIn == nil && time.Since(authUser.CreatedAt) > 7*24*time.Hour {
 			log.Printf("Deleting user with unverified email and no login (created %s): %s\n", authUser.CreatedAt.Format(time.RFC3339), authUser.Email)
 			if err := tu.store.DeleteUser(authUser.Id); err != nil && !errors.Is(err, happydns.ErrUserNotFound) {
@@ -68,4 +73,9 @@ func (tu *tidyUpUsecase) TidyUsers(dropInvalid bool) error {
 		}
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+
+	return tu.store.TidyUserIndexes()
 }

@@ -52,4 +52,7 @@ type ProviderStorage interface {
 
 	// ClearProviders deletes all Providers present in the database.
 	ClearProviders() error
+
+	// TidyProviderIndexes removes stale owner secondary index entries.
+	TidyProviderIndexes() error
 }

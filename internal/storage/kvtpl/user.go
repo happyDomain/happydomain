@@ -180,6 +180,17 @@ func (s *KVStorage) DeleteUser(uId happydns.Identifier) error {
 	return batch.Commit()
 }
 
+// TidyUserIndexes removes stale email index entries whose target user no
+// longer exists.
+func (s *KVStorage) TidyUserIndexes() error {
+	s.tidyValueIndex(userEmailPrefix, "user email", func(id happydns.Identifier) bool {
+		_, err := s.GetUser(id)
+		return err == nil
+	})
+
+	return nil
+}
+
 func (s *KVStorage) ClearUsers() error {
 	if err := s.ClearSessions(); err != nil {
 		return err

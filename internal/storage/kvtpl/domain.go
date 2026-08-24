@@ -240,6 +240,28 @@ func (s *KVStorage) DeleteDomain(zId happydns.Identifier) error {
 	return batch.Commit()
 }
 
+func (s *KVStorage) domainExists(id happydns.Identifier) bool {
+	_, err := s.GetDomain(id)
+	return err == nil
+}
+
+// TidyDomainIndexes removes stale owner and FQDN index entries: those whose
+// target domain no longer exists, and owner-index entries whose owner
+// segment no longer resolves to a User.
+func (s *KVStorage) TidyDomainIndexes() error {
+	// Tidy domain.owner|{ownerId}|{domainId} indexes.
+	s.tidyTwoPartIndex(domainOwnerIndexPrefix, "domain owner", func(id happydns.Identifier) bool {
+		_, err := s.GetUser(id)
+		return err == nil
+	}, s.domainExists)
+
+	// Tidy domain.fqdn|{hash(fqdn)}|{domainId} indexes. The first segment is
+	// a content hash, not an owner id, so only the trailing domain id matters.
+	s.tidyLastSegmentIndex(domainFQDNIndexPrefix, "domain fqdn", s.domainExists)
+
+	return nil
+}
+
 func (s *KVStorage) ClearDomains() error {
 	if err := s.ClearZones(); err != nil {
 		return err

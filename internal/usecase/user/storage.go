@@ -48,4 +48,7 @@ type UserStorage interface {
 
 	// ClearUsers deletes all Users present in the database.
 	ClearUsers() error
+
+	// TidyUserIndexes removes stale email secondary index entries.
+	TidyUserIndexes() error
 }

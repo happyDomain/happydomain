@@ -35,7 +35,7 @@ func (tu *tidyUpUsecase) TidySessions(dropInvalid bool) error {
 	}
 	defer iter.Close()
 
-	return iterateTidy(iter, dropInvalid, func(session *happydns.Session) error {
+	err = iterateTidy(iter, dropInvalid, func(session *happydns.Session) error {
 		_, err := tu.store.GetUser(session.IdUser)
 		if errors.Is(err, happydns.ErrUserNotFound) {
 			// Drop session from unexistant users
@@ -46,4 +46,9 @@ func (tu *tidyUpUsecase) TidySessions(dropInvalid bool) error {
 		}
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+
+	return tu.store.TidySessionIndexes()
 }

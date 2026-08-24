@@ -35,7 +35,7 @@ func (tu *tidyUpUsecase) TidyDomains(dropInvalid bool) error {
 	}
 	defer iter.Close()
 
-	return iterateTidy(iter, dropInvalid, func(domain *happydns.Domain) error {
+	err = iterateTidy(iter, dropInvalid, func(domain *happydns.Domain) error {
 		if _, err := tu.store.GetUser(domain.Owner); errors.Is(err, happydns.ErrUserNotFound) {
 			// Drop domain of unexistant users
 			log.Printf("Deleting orphan domain (user %s not found): %v\n", domain.Owner.String(), domain)
@@ -53,6 +53,11 @@ func (tu *tidyUpUsecase) TidyDomains(dropInvalid bool) error {
 		}
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+
+	return tu.store.TidyDomainIndexes()
 }
 
 func (tu *tidyUpUsecase) TidyDomainLogs(dropInvalid bool) error {

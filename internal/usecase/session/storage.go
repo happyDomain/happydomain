@@ -48,4 +48,7 @@ type SessionStorage interface {
 
 	// ClearSessions deletes all Sessions present in the database.
 	ClearSessions() error
+
+	// TidySessionIndexes removes stale per-user session secondary index entries.
+	TidySessionIndexes() error
 }

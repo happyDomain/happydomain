@@ -35,7 +35,7 @@ func (tu *tidyUpUsecase) TidyProviders(dropInvalid bool) error {
 	}
 	defer iter.Close()
 
-	return iterateTidy(iter, dropInvalid, func(prvd *happydns.ProviderMessage) error {
+	err = iterateTidy(iter, dropInvalid, func(prvd *happydns.ProviderMessage) error {
 		_, err := tu.store.GetUser(prvd.Owner)
 		if errors.Is(err, happydns.ErrUserNotFound) {
 			// Drop providers of unexistant users
@@ -46,4 +46,9 @@ func (tu *tidyUpUsecase) TidyProviders(dropInvalid bool) error {
 		}
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+
+	return tu.store.TidyProviderIndexes()
 }
