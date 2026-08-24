@@ -34,6 +34,11 @@
         {
             "matchPackageNames": ["github.com/DNSControl/dnscontrol/v[[:digit:]]"],
             "enabled": false
+        },
+        {
+            "matchDatasources": ["golang-version"],
+            "matchUpdateTypes": ["minor", "major"],
+            "automerge": false
         }
     ]
 }
