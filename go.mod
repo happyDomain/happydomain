@@ -1,6 +1,6 @@
 module git.happydns.org/happyDomain
 
-go 1.26
+go 1.26.0
 
 toolchain go1.26.7
 
@@ -66,7 +66,7 @@ require (
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/wneessen/go-mail v0.8.1
 	github.com/yuin/goldmark v1.8.5
-	golang.org/x/crypto v0.55.0
+	golang.org/x/crypto v0.56.0
 	golang.org/x/oauth2 v0.36.0
 	golang.org/x/term v0.45.0
 )
