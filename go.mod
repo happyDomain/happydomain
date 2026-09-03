@@ -65,7 +65,7 @@ require (
 	github.com/swaggo/swag v1.16.6
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/wneessen/go-mail v0.8.1
-	github.com/yuin/goldmark v1.8.5
+	github.com/yuin/goldmark v1.8.6
 	golang.org/x/crypto v0.56.0
 	golang.org/x/oauth2 v0.36.0
 	golang.org/x/term v0.45.0
