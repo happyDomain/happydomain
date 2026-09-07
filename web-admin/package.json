@@ -43,6 +43,8 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@fontsource-variable/outfit": "^5.3.0",
+		"@fontsource-variable/source-sans-3": "^5.3.0",
 		"@hey-api/openapi-ts": "^0.95.0",
 		"@sveltestrap/sveltestrap": "^7.0.0",
 		"bootstrap": "^5.3.0",

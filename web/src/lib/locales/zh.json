@@ -64,10 +64,7 @@
         "survey": "有话说？尽管告诉我们！",
         "update": "更新",
         "update-what": "更新{{what}}",
-        "welcome": {
-            "start": "欢迎来到 ",
-            "end": "！"
-        },
+        "welcome": "欢迎来到 HappyDomain！",
         "help": "求助",
         "records": "{{n:eq; 0:暂无 {{type}} 记录; 1:1 条 {{type}} 记录; default:{{type}} 记录}}"
     },

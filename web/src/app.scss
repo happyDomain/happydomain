@@ -1,40 +1,1672 @@
-$teal: #1cb487;
-$primary: $teal;
-$blue: #20a7c9;
-$info: $blue;
-$purple: #360b48;
-$secondary: $purple;
-$yellow: #c99720;
-$green: #20c943;
-$red: #c92052;
+// ============================================================================
+// happyDomain × Bootstrap 5 — SCSS theme
+// happyDomain Design System v3 (brand refresh, Sep 2026): new palette,
+// simplified typography. Mirrors website/assets/scss/bootstrap.scss so the
+// app and the marketing site share one design system.
+// ============================================================================
 
-// Default value make text color on button unreadable
-$min-contrast-ratio: 2.6;
+// ─────────────────────────────────────────────────────────────────────────────
+//  1. BRAND TOKENS
+// ─────────────────────────────────────────────────────────────────────────────
 
-$enable-shadows: true;
-$enable-gradients: true;
-$enable-responsive-font-sizes: true;
+// — Brand green (primary) ────────────────────────────────────────────────────
+$hd-green-50: #e8f6f1;
+$hd-green-100: #c9ece1;
+$hd-green-200: #93d8c3;
+$hd-green-300: #4fbd9f;
+$hd-green-400: #00a37b;
+$hd-green-500: #008a65; // PRIMARY — interactive fill, white text
+$hd-green-600: #007655;
+$hd-green-700: #006147; // green as text/icon on light
+$hd-green-800: #004b37;
+$hd-green-900: #003526;
+$hd-green-logo: #00aa7d; // logo artwork only — never a UI colour
+
+// — Brand plum (supplementary) ───────────────────────────────────────────────
+$hd-plum-50: #f7ecfc;
+$hd-plum-100: #eed4f8;
+$hd-plum-200: #dda9f0;
+$hd-plum-300: #c377e1;
+$hd-plum-400: #a231c9;
+$hd-plum-500: #7d00aa;
+$hd-plum-600: #6a0091;
+$hd-plum-700: #560075;
+$hd-plum-800: #41005a;
+$hd-plum-900: #2c003c;
+
+// — Surface tints · sage (page backgrounds) ──────────────────────────────────
+$hd-sage-50: #f5f8f0;
+$hd-sage-100: #ebf2e3; // page background
+$hd-sage-200: #d4ddc9;
+$hd-sage-300: #bdc3b7; // border on sage
+
+// — Neutral grays ────────────────────────────────────────────────────────────
+$hd-gray-50: #f4f5f5;
+$hd-gray-200: #dfe0e2;
+$hd-gray-500: #6c7075;
+$hd-gray-700: #3b3f44;
+$hd-gray-900: #000000;
+
+// — Surfaces (light) ─────────────────────────────────────────────────────────
+$hd-bg-canvas: #ffffff; // cards, panels, sheets
+$hd-bg-subtle: $hd-sage-50;
+$hd-bg-default: $hd-sage-100;
+$hd-bg-inset: $hd-sage-200;
+$hd-bg-overlay: rgba(0, 0, 0, 0.05);
+
+// — Foreground (light) ───────────────────────────────────────────────────────
+$hd-fg-1: $hd-gray-900;
+$hd-fg-2: $hd-gray-700;
+$hd-fg-3: $hd-gray-500;
+$hd-fg-4: $hd-gray-500;
+$hd-fg-disabled: #a3a7ab;
+$hd-fg-inverse: #ffffff;
+
+// — Borders (light) ──────────────────────────────────────────────────────────
+$hd-border-1: $hd-gray-200;
+$hd-border-2: $hd-sage-300;
+$hd-border-3: $hd-gray-500;
+
+// — Accent · primary green interactive ───────────────────────────────────────
+$hd-accent: $hd-green-500;
+$hd-accent-hover: $hd-green-600;
+$hd-accent-active: $hd-green-700;
+$hd-accent-fg: #ffffff;
+$hd-accent-subtle: $hd-green-50;
+$hd-accent-muted: $hd-green-100;
+$hd-accent-border: $hd-green-200;
+$hd-accent-text: $hd-green-700;
+$hd-focus-ring: rgba(0, 138, 101, 0.24);
+$hd-focus: $hd-green-700;
+
+// — Secondary · neutral gray ─────────────────────────────────────────────────
+$hd-secondary: $hd-gray-50;
+$hd-secondary-hover: $hd-gray-200;
+$hd-secondary-active: #cfd1d4;
+$hd-secondary-fg: $hd-gray-700;
+$hd-secondary-subtle: $hd-gray-50;
+$hd-secondary-muted: $hd-gray-200;
+$hd-secondary-border: $hd-sage-300;
+$hd-secondary-text: $hd-gray-500;
+
+// — Brand plum roles ─────────────────────────────────────────────────────────
+$hd-plum: $hd-plum-500;
+$hd-plum-hover: $hd-plum-600;
+$hd-plum-active: $hd-plum-700;
+$hd-plum-fg: #ffffff;
+$hd-plum-subtle: $hd-plum-50;
+$hd-plum-muted: $hd-plum-100;
+$hd-plum-border: $hd-plum-200;
+$hd-plum-text: $hd-plum-600;
+
+// — Semantic (light) ─────────────────────────────────────────────────────────
+$hd-success: #006147;
+$hd-success-bg: #e8f6f1;
+$hd-success-border: #93d8c3;
+$hd-success-solid: #008a65;
+$hd-success-on-solid: #ffffff;
+
+$hd-danger: #b3001b;
+$hd-danger-bg: #fdecee;
+$hd-danger-border: #f0b5bb;
+$hd-danger-solid: #b3001b;
+$hd-danger-on-solid: #ffffff;
+
+$hd-warning: #8a5300;
+$hd-warning-bg: #fbf3e4;
+$hd-warning-border: #e8cf9a;
+$hd-warning-solid: #d38b00;
+$hd-warning-on-solid: #000000;
+
+$hd-info: #005f9e;
+$hd-info-bg: #e7f2f9;
+$hd-info-border: #a9cfe6;
+$hd-info-solid: #005f9e;
+$hd-info-on-solid: #ffffff;
+
+$hd-success-solid-hover: $hd-accent-hover;
+$hd-danger-solid-hover: mix(#000000, $hd-danger-solid, 15%);
+$hd-warning-solid-hover: mix(#000000, $hd-warning-solid, 15%);
+$hd-info-solid-hover: mix(#000000, $hd-info-solid, 15%);
+
+// — Form inputs (light) ──────────────────────────────────────────────────────
+$hd-input-bg: #ffffff;
+$hd-input-bg-disabled: $hd-gray-50;
+$hd-input-fg: $hd-gray-900;
+$hd-input-placeholder: $hd-gray-500;
+$hd-input-border: $hd-sage-300;
+$hd-input-border-hover: $hd-gray-500;
+$hd-input-border-focus: $hd-accent;
+$hd-input-ring: rgba(0, 138, 101, 0.24);
+$hd-input-border-invalid: $hd-danger;
+$hd-input-ring-invalid: rgba(179, 0, 27, 0.2);
+$hd-input-label: $hd-gray-700;
+$hd-input-help: $hd-gray-500;
+$hd-input-fg-disabled: $hd-fg-disabled;
+
+// — DNS diff (light) ─────────────────────────────────────────────────────────
+$hd-diff-add: $hd-success;
+$hd-diff-add-bg: $hd-success-bg;
+$hd-diff-add-line: $hd-success-border;
+$hd-diff-del: $hd-danger;
+$hd-diff-del-bg: $hd-danger-bg;
+$hd-diff-del-line: $hd-danger-border;
+$hd-diff-mod: $hd-warning;
+$hd-diff-mod-bg: $hd-warning-bg;
+$hd-diff-mod-line: $hd-warning-border;
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  1b. DARK TOKENS — same hues, dark end of the ramp. See the marketing site's
+//      bootstrap.scss for the full rationale; kept identical here.
+// ─────────────────────────────────────────────────────────────────────────────
+
+$hd-dark-bg-inset: #0f110e;
+$hd-dark-bg-default: #191d16;
+$hd-dark-bg-canvas: #252628;
+$hd-dark-bg-subtle: #2e322a;
+$hd-dark-bg-overlay: rgba(255, 255, 255, 0.05);
+
+$hd-dark-fg-1: $hd-gray-50;
+$hd-dark-fg-2: $hd-gray-200;
+$hd-dark-fg-3: #9aa0a4;
+$hd-dark-fg-4: #9aa0a4;
+$hd-dark-fg-disabled: #6b7075;
+$hd-dark-fg-inverse: $hd-dark-bg-default;
+
+$hd-dark-border-1: #383a40;
+$hd-dark-border-2: #4a5044;
+$hd-dark-border-3: #767c72;
+
+$hd-dark-accent: $hd-accent;
+$hd-dark-accent-hover: $hd-accent-hover;
+$hd-dark-accent-active: $hd-accent-active;
+$hd-dark-accent-fg: $hd-accent-fg;
+$hd-dark-accent-subtle: #0c211c;
+$hd-dark-accent-muted: #15332b;
+$hd-dark-accent-border: #255649;
+$hd-dark-accent-text: $hd-green-300;
+$hd-dark-focus-ring: rgba(0, 163, 123, 0.35);
+$hd-dark-focus: $hd-green-300;
+
+$hd-dark-secondary: #2c2e30;
+$hd-dark-secondary-hover: #393b3c;
+$hd-dark-secondary-active: #45474a;
+$hd-dark-secondary-fg: $hd-dark-fg-2;
+$hd-dark-secondary-subtle: #2c2e30;
+$hd-dark-secondary-muted: #393b3c;
+$hd-dark-secondary-border: $hd-dark-border-2;
+$hd-dark-secondary-text: $hd-dark-fg-3;
+
+$hd-dark-plum: mix(#ffffff, $hd-plum-400, 8%);
+$hd-dark-plum-hover: $hd-plum-500;
+$hd-dark-plum-active: $hd-plum-600;
+$hd-dark-plum-fg: $hd-plum-fg;
+$hd-dark-plum-subtle: #1f0e25;
+$hd-dark-plum-muted: #31183a;
+$hd-dark-plum-border: #562b64;
+$hd-dark-plum-text: $hd-plum-300;
+
+$hd-dark-success: $hd-green-300;
+$hd-dark-success-bg: $hd-dark-accent-subtle;
+$hd-dark-success-border: $hd-dark-accent-border;
+$hd-dark-success-solid: $hd-success-solid;
+$hd-dark-success-on-solid: $hd-success-on-solid;
+
+$hd-dark-danger: #f68e9d;
+$hd-dark-danger-bg: #2a0e12;
+$hd-dark-danger-border: #60242d;
+$hd-dark-danger-solid: #d93a44;
+$hd-dark-danger-on-solid: #ffffff;
+
+$hd-dark-warning: #f5ba47;
+$hd-dark-warning-bg: #291e0a;
+$hd-dark-warning-border: #604a20;
+$hd-dark-warning-solid: $hd-warning-solid;
+$hd-dark-warning-on-solid: $hd-warning-on-solid;
+
+$hd-dark-info: #6cbbef;
+$hd-dark-info-bg: #0c1f2b;
+$hd-dark-info-border: #254860;
+$hd-dark-info-solid: #0579c7;
+$hd-dark-info-on-solid: #ffffff;
+
+$hd-dark-success-solid-hover: $hd-accent-hover;
+$hd-dark-danger-solid-hover: mix(#000000, $hd-dark-danger-solid, 15%);
+$hd-dark-warning-solid-hover: mix(#000000, $hd-dark-warning-solid, 15%);
+$hd-dark-info-solid-hover: mix(#000000, $hd-dark-info-solid, 15%);
+
+$hd-dark-input-bg: $hd-dark-bg-canvas;
+$hd-dark-input-bg-disabled: $hd-dark-secondary;
+$hd-dark-input-fg: $hd-dark-fg-1;
+$hd-dark-input-placeholder: $hd-dark-fg-4;
+$hd-dark-input-border: $hd-dark-border-2;
+$hd-dark-input-border-hover: $hd-dark-border-3;
+$hd-dark-input-border-focus: $hd-dark-accent;
+$hd-dark-input-ring: rgba(0, 163, 123, 0.35);
+$hd-dark-input-border-invalid: $hd-dark-danger;
+$hd-dark-input-ring-invalid: rgba(246, 142, 157, 0.28);
+$hd-dark-input-label: $hd-dark-fg-2;
+$hd-dark-input-help: $hd-dark-fg-3;
+$hd-dark-input-fg-disabled: $hd-dark-fg-disabled;
+
+$hd-dark-diff-add: $hd-dark-success;
+$hd-dark-diff-add-bg: $hd-dark-success-bg;
+$hd-dark-diff-add-line: $hd-dark-success-border;
+$hd-dark-diff-del: $hd-dark-danger;
+$hd-dark-diff-del-bg: $hd-dark-danger-bg;
+$hd-dark-diff-del-line: $hd-dark-danger-border;
+$hd-dark-diff-mod: $hd-dark-warning;
+$hd-dark-diff-mod-bg: $hd-dark-warning-bg;
+$hd-dark-diff-mod-line: $hd-dark-warning-border;
+
+// — Type stack ───────────────────────────────────────────────────────────────
+// Outfit and Source Sans 3 are loaded via @fontsource-variable in +layout.svelte.
+$hd-font-title: "Outfit Variable", "Outfit", system-ui, sans-serif;
+$hd-font-text: "Source Sans 3 Variable", "Source Sans 3", system-ui, -apple-system, sans-serif;
+$hd-font-mono:
+    JetBrainsMono, "JetBrains Mono Variable", "JetBrains Mono", "SFMono-Regular", Menlo, Monaco,
+    Consolas, monospace;
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  2. BOOTSTRAP VARIABLE OVERRIDES  (declared before importing bootstrap)
+// ─────────────────────────────────────────────────────────────────────────────
+
+$primary: $hd-accent;
+$secondary: $hd-gray-500;
+$success: $hd-success-solid;
+$info: $hd-info-solid;
+$warning: $hd-warning-solid;
+$danger: $hd-danger-solid;
+$light: $hd-bg-subtle;
+$dark: $hd-fg-1;
+
+$white: #ffffff;
+$gray-100: $hd-gray-50;
+$gray-200: $hd-gray-200;
+$gray-300: $hd-secondary-active;
+$gray-400: $hd-sage-300;
+$gray-500: $hd-gray-500;
+$gray-600: $hd-gray-500;
+$gray-700: $hd-gray-700;
+$gray-800: #26292c;
+$gray-900: $hd-gray-900;
+$black: #000000;
+
+$custom-theme-colors: (
+    "accent": $hd-accent,
+    "plum": $hd-plum,
+);
+
+$color-contrast-dark: $hd-fg-1;
+$color-contrast-light: $hd-fg-inverse;
+
+$body-bg: $hd-bg-default;
+$body-color: $hd-fg-2;
+$body-secondary-color: $hd-fg-3;
+$body-secondary-bg: $hd-bg-subtle;
+$body-tertiary-color: $hd-fg-4;
+$body-tertiary-bg: $hd-bg-inset;
+$body-emphasis-color: $hd-fg-1;
+
+$border-color: $hd-border-1;
+$border-color-translucent: $hd-border-1;
+
+$border-radius: 6px;
+$border-radius-sm: 4px;
+$border-radius-lg: 8px;
+$border-radius-xl: 12px;
+$border-radius-xxl: 12px;
+$border-radius-pill: 9999px;
+
+// A link is never signalled by colour alone (1.4.1) — underlined by default.
+$link-color: $hd-accent-text;
+$link-hover-color: $hd-accent-hover;
+$link-decoration: underline;
+$link-shade-percentage: 0%;
+
+$font-family-sans-serif: $hd-font-text;
+$font-family-monospace: $hd-font-mono;
+$font-family-base: $font-family-sans-serif;
+
+$font-size-root: null;
+$font-size-base: 0.9375rem; // 15px
+$font-size-sm: 0.8125rem;
+$font-size-lg: 1.0625rem;
+
+$font-weight-lighter: 300;
+$font-weight-light: 300;
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+$font-weight-base: $font-weight-normal;
+
+$line-height-base: 1.5;
+$line-height-sm: 1.375;
+$line-height-lg: 1.625;
+
+$h1-font-size: 2.25rem;
+$h2-font-size: 1.875rem;
+$h3-font-size: 1.5rem;
+$h4-font-size: 1.25rem;
+$h5-font-size: 1.0625rem;
+$h6-font-size: 0.9375rem;
+
+$headings-font-family: $hd-font-title;
+$headings-font-weight: 600;
+$headings-line-height: 1.2;
+$headings-color: $hd-fg-1;
+
+$display-font-family: $hd-font-title;
+$display-font-weight: 700;
+$display-line-height: 1.2;
+
+$small-font-size: 0.8125rem;
+$text-muted: $hd-fg-3;
+
+$spacer: 1rem;
+$spacers: (
+    0: 0,
+    1: $spacer * 0.25,
+    2: $spacer * 0.5,
+    3: $spacer * 0.75,
+    4: $spacer,
+    5: $spacer * 1.25,
+    6: $spacer * 1.5,
+    7: $spacer * 2,
+    8: $spacer * 2.5,
+    9: $spacer * 3,
+    10: $spacer * 4,
+    11: $spacer * 5,
+);
+
+// Flat system: separation by border, never by shadow.
+$enable-shadows: false;
+$enable-gradients: false;
+$enable-rounded: true;
+$enable-transitions: true;
+$enable-reduced-motion: true;
+$enable-smooth-scroll: true;
 $enable-cssgrid: true;
+$enable-responsive-font-sizes: true;
 
-$font-family-sans-serif:
-    Montserrat,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    "Helvetica Neue",
-    Arial,
-    "Noto Sans",
-    sans-serif,
-    "Apple Color Emoji",
-    "Segoe UI Emoji",
-    "Segoe UI Symbol",
-    "Noto Color Emoji";
-$font-family-monospace:
-    JetBrainsMono, "Fantasque Sans Mono", SFMono-Regular, Menlo, Monaco, Consolas,
-    "Liberation Mono", "Courier New", monospace;
+$box-shadow: none;
+$box-shadow-sm: none;
+$box-shadow-lg: none;
+$box-shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+
+$focus-ring-width: 3px;
+$focus-ring-opacity: 1;
+$focus-ring-color: $hd-focus-ring;
+$focus-ring-blur: 0;
+$focus-ring-box-shadow: 0 0 0 $focus-ring-width $focus-ring-color;
+
+// Buttons
+$btn-font-weight: 600;
+$btn-border-radius: $border-radius;
+$btn-border-radius-sm: $border-radius-sm;
+$btn-border-radius-lg: $border-radius-lg;
+$btn-padding-y: 0.5rem;
+$btn-padding-x: 0.875rem;
+$btn-focus-width: 3px;
+$btn-focus-box-shadow: $focus-ring-box-shadow;
+$btn-disabled-opacity: 0.5;
+$btn-transition:
+    color 0.12s ease-in-out,
+    background-color 0.12s ease-in-out,
+    border-color 0.12s ease-in-out;
+
+// Forms
+$input-bg: $hd-input-bg;
+$input-color: $hd-input-fg;
+$input-border-color: $hd-input-border;
+$input-border-radius: $border-radius;
+$input-border-radius-sm: $border-radius-sm;
+$input-border-radius-lg: $border-radius-lg;
+$input-padding-y: 0.5rem;
+$input-padding-x: 0.75rem;
+$input-placeholder-color: $hd-input-placeholder;
+$input-focus-border-color: $hd-input-border-focus;
+$input-focus-box-shadow: 0 0 0 3px $hd-input-ring;
+$input-disabled-bg: $hd-input-bg-disabled;
+$input-disabled-color: $hd-input-fg-disabled;
+$input-box-shadow: $box-shadow-inset;
+
+$form-label-color: $hd-input-label;
+$form-label-font-weight: 600;
+$form-label-font-size: $font-size-sm;
+$form-text-color: $hd-input-help;
+
+$form-check-input-border: 1px solid $hd-input-border;
+$form-check-input-checked-bg-color: $hd-accent;
+$form-check-input-focus-box-shadow: 0 0 0 3px $hd-input-ring;
+
+$form-feedback-invalid-color: $hd-danger;
+$form-feedback-valid-color: $hd-success;
+
+// Cards
+$card-bg: $hd-bg-canvas;
+$card-color: $hd-fg-2;
+$card-border-color: $hd-border-1;
+$card-border-radius: $border-radius;
+$card-cap-bg: $hd-bg-subtle;
+$card-cap-color: $hd-fg-1;
+$card-box-shadow: none;
+$card-spacer-y: 1rem;
+$card-spacer-x: 1.25rem;
+
+// Navbar
+$navbar-padding-y: 0.75rem;
+$navbar-light-color: $hd-fg-2;
+$navbar-light-hover-color: $hd-fg-1;
+$navbar-light-active-color: $hd-accent-text;
+$navbar-light-brand-color: $hd-fg-1;
+$navbar-light-brand-hover-color: $hd-fg-1;
+
+// Dropdowns
+$dropdown-bg: $hd-bg-canvas;
+$dropdown-border-color: $hd-border-1;
+$dropdown-border-radius: $border-radius-lg;
+$dropdown-box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+$dropdown-link-hover-bg: $hd-bg-subtle;
+$dropdown-link-active-bg: $hd-accent-subtle;
+$dropdown-link-active-color: $hd-accent-text;
+
+// Modals
+$modal-content-bg: $hd-bg-canvas;
+$modal-content-border-color: $hd-border-1;
+$modal-content-border-radius: $border-radius-lg;
+$modal-content-box-shadow-xs: 0 8px 24px rgba(0, 0, 0, 0.08);
+$modal-content-box-shadow-sm-up: 0 16px 48px rgba(0, 0, 0, 0.12);
+$modal-backdrop-bg: #000000;
+$modal-backdrop-opacity: 0.4;
+
+// Alerts
+$alert-border-radius: $border-radius;
+$alert-border-width: 1px;
+$alert-padding-y: 0.75rem;
+$alert-padding-x: 1rem;
+
+// Badges
+$badge-font-size: 0.75em;
+$badge-font-weight: 600;
+$badge-padding-y: 0.25em;
+$badge-padding-x: 0.5em;
+$badge-border-radius: $border-radius-sm;
+
+// Tables
+$table-border-color: $hd-border-1;
+$table-striped-bg: $hd-bg-overlay;
+$table-hover-bg: $hd-bg-overlay;
+$table-color: $hd-fg-2;
+
+// Code
+$code-color: $hd-accent-text;
+$code-font-size: 0.9em;
+$kbd-bg: $hd-fg-1;
+$pre-color: $hd-fg-2;
+
+// Tooltip / popover
+$tooltip-bg: $hd-fg-1;
+$tooltip-color: $hd-fg-inverse;
+$tooltip-border-radius: $border-radius-sm;
+$tooltip-font-size: $font-size-sm;
+$popover-bg: $hd-bg-canvas;
+$popover-border-color: $hd-border-1;
+$popover-border-radius: $border-radius-lg;
+$popover-box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+
+// ── Dark colour mode (feeds Bootstrap's own [data-bs-theme="dark"] block) ────
+$body-bg-dark: $hd-dark-bg-default;
+$body-color-dark: $hd-dark-fg-2;
+$body-secondary-color-dark: $hd-dark-fg-3;
+$body-secondary-bg-dark: $hd-dark-bg-subtle;
+$body-tertiary-color-dark: $hd-dark-fg-4;
+$body-tertiary-bg-dark: $hd-dark-bg-inset;
+$body-emphasis-color-dark: $hd-dark-fg-1;
+$border-color-dark: $hd-dark-border-1;
+$border-color-translucent-dark: rgba(255, 255, 255, 0.12);
+$headings-color-dark: $hd-dark-fg-1;
+$link-color-dark: $hd-dark-accent-text;
+$link-hover-color-dark: $hd-green-200;
+$code-color-dark: $hd-dark-accent-text;
+$mark-bg-dark: $hd-dark-warning-bg;
+
+$primary-text-emphasis-dark: $hd-dark-accent-text;
+$secondary-text-emphasis-dark: $hd-dark-secondary-text;
+$success-text-emphasis-dark: $hd-dark-success;
+$info-text-emphasis-dark: $hd-dark-info;
+$warning-text-emphasis-dark: $hd-dark-warning;
+$danger-text-emphasis-dark: $hd-dark-danger;
+$light-text-emphasis-dark: $hd-dark-fg-1;
+$dark-text-emphasis-dark: $hd-dark-fg-3;
+
+$primary-bg-subtle-dark: $hd-dark-accent-subtle;
+$secondary-bg-subtle-dark: $hd-dark-bg-subtle;
+$success-bg-subtle-dark: $hd-dark-success-bg;
+$info-bg-subtle-dark: $hd-dark-info-bg;
+$warning-bg-subtle-dark: $hd-dark-warning-bg;
+$danger-bg-subtle-dark: $hd-dark-danger-bg;
+$light-bg-subtle-dark: $hd-dark-bg-subtle;
+$dark-bg-subtle-dark: $hd-dark-bg-inset;
+
+$primary-border-subtle-dark: $hd-dark-accent-border;
+$secondary-border-subtle-dark: $hd-dark-border-2;
+$success-border-subtle-dark: $hd-dark-success-border;
+$info-border-subtle-dark: $hd-dark-info-border;
+$warning-border-subtle-dark: $hd-dark-warning-border;
+$danger-border-subtle-dark: $hd-dark-danger-border;
+$light-border-subtle-dark: $hd-dark-border-2;
+$dark-border-subtle-dark: $hd-dark-border-1;
+
+$form-select-indicator-color-dark: $hd-dark-fg-2;
+$form-switch-color-dark: rgba(255, 255, 255, 0.35);
+$form-valid-color-dark: $hd-dark-success;
+$form-valid-border-color-dark: $hd-dark-success;
+$form-invalid-color-dark: $hd-dark-danger;
+$form-invalid-border-color-dark: $hd-dark-danger;
+
+$accordion-icon-color-dark: $hd-dark-accent-text;
+$accordion-icon-active-color-dark: $hd-dark-accent-text;
+
+$carousel-indicator-active-bg-dark: $hd-dark-fg-1;
+$carousel-caption-color-dark: $hd-dark-fg-1;
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  3. BOOTSTRAP IMPORT
+// ─────────────────────────────────────────────────────────────────────────────
+
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+@import "bootstrap/scss/variables-dark";
+@import "bootstrap/scss/maps";
+@import "bootstrap/scss/mixins";
+@import "bootstrap/scss/utilities";
+
+$theme-colors: map-merge($theme-colors, $custom-theme-colors);
 
 @import "bootstrap/scss/bootstrap";
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  4. happyDomain CSS CUSTOM PROPERTIES
+//     Templates and components read --hd-*, never the Sass scalars above.
+// ─────────────────────────────────────────────────────────────────────────────
+
+:root,
+[data-bs-theme="light"] {
+    // Bootstrap resolves the emphasis/link slots from $primary (#008a65), a
+    // FILL that fails 4.5:1 as text — re-point them at the text shade.
+    --bs-primary-text-emphasis: #{$hd-accent-text};
+    --bs-success-text-emphasis: #{$hd-success};
+    --bs-link-color: #{$hd-accent-text};
+    --bs-link-color-rgb: #{red($hd-accent-text)}, #{green($hd-accent-text)},
+        #{blue($hd-accent-text)};
+    --bs-link-hover-color: #{$hd-accent-hover};
+    --bs-link-hover-color-rgb: #{red($hd-accent-hover)}, #{green($hd-accent-hover)},
+        #{blue($hd-accent-hover)};
+
+    --hd-green-50: #{$hd-green-50};
+    --hd-green-100: #{$hd-green-100};
+    --hd-green-200: #{$hd-green-200};
+    --hd-green-300: #{$hd-green-300};
+    --hd-green-400: #{$hd-green-400};
+    --hd-green-500: #{$hd-green-500};
+    --hd-green-600: #{$hd-green-600};
+    --hd-green-700: #{$hd-green-700};
+    --hd-green-800: #{$hd-green-800};
+    --hd-green-900: #{$hd-green-900};
+    --hd-green-logo: #{$hd-green-logo};
+
+    --hd-plum-50: #{$hd-plum-50};
+    --hd-plum-100: #{$hd-plum-100};
+    --hd-plum-200: #{$hd-plum-200};
+    --hd-plum-300: #{$hd-plum-300};
+    --hd-plum-400: #{$hd-plum-400};
+    --hd-plum-500: #{$hd-plum-500};
+    --hd-plum-600: #{$hd-plum-600};
+    --hd-plum-700: #{$hd-plum-700};
+    --hd-plum-800: #{$hd-plum-800};
+    --hd-plum-900: #{$hd-plum-900};
+
+    --hd-sage-50: #{$hd-sage-50};
+    --hd-sage-100: #{$hd-sage-100};
+    --hd-sage-200: #{$hd-sage-200};
+    --hd-sage-300: #{$hd-sage-300};
+    --hd-gray-50: #{$hd-gray-50};
+    --hd-gray-200: #{$hd-gray-200};
+    --hd-gray-500: #{$hd-gray-500};
+    --hd-gray-700: #{$hd-gray-700};
+    --hd-gray-900: #{$hd-gray-900};
+
+    --hd-bg-canvas: #{$hd-bg-canvas};
+    --hd-bg-default: #{$hd-bg-default};
+    --hd-bg-subtle: #{$hd-bg-subtle};
+    --hd-bg-inset: #{$hd-bg-inset};
+    --hd-bg-overlay: #{$hd-bg-overlay};
+    --hd-bg-field: #{$hd-input-bg};
+
+    --hd-fg-1: #{$hd-fg-1};
+    --hd-fg-2: #{$hd-fg-2};
+    --hd-fg-3: #{$hd-fg-3};
+    --hd-fg-4: #{$hd-fg-4};
+    --hd-fg-disabled: #{$hd-fg-disabled};
+    --hd-fg-inverse: #{$hd-fg-inverse};
+
+    --hd-border-1: #{$hd-border-1};
+    --hd-border-2: #{$hd-border-2};
+    --hd-border-3: #{$hd-border-3};
+
+    --hd-accent: #{$hd-accent};
+    --hd-accent-hover: #{$hd-accent-hover};
+    --hd-accent-active: #{$hd-accent-active};
+    --hd-accent-fg: #{$hd-accent-fg};
+    --hd-accent-subtle: #{$hd-accent-subtle};
+    --hd-accent-muted: #{$hd-accent-muted};
+    --hd-accent-border: #{$hd-accent-border};
+    --hd-accent-text: #{$hd-accent-text};
+    --hd-focus-ring: #{$hd-focus-ring};
+    --hd-focus: #{$hd-focus};
+
+    --hd-secondary: #{$hd-secondary};
+    --hd-secondary-hover: #{$hd-secondary-hover};
+    --hd-secondary-active: #{$hd-secondary-active};
+    --hd-secondary-fg: #{$hd-secondary-fg};
+    --hd-secondary-subtle: #{$hd-secondary-subtle};
+    --hd-secondary-muted: #{$hd-secondary-muted};
+    --hd-secondary-border: #{$hd-secondary-border};
+    --hd-secondary-text: #{$hd-secondary-text};
+
+    --hd-plum: #{$hd-plum};
+    --hd-plum-hover: #{$hd-plum-hover};
+    --hd-plum-active: #{$hd-plum-active};
+    --hd-plum-fg: #{$hd-plum-fg};
+    --hd-plum-subtle: #{$hd-plum-subtle};
+    --hd-plum-muted: #{$hd-plum-muted};
+    --hd-plum-border: #{$hd-plum-border};
+    --hd-plum-text: #{$hd-plum-text};
+    --hd-plum-bg: #{$hd-plum-subtle};
+    --hd-plum-line: #{$hd-plum-border};
+
+    --hd-success: #{$hd-success};
+    --hd-success-bg: #{$hd-success-bg};
+    --hd-success-border: #{$hd-success-border};
+    --hd-success-solid: #{$hd-success-solid};
+    --hd-success-solid-hover: #{$hd-success-solid-hover};
+    --hd-success-on-solid: #{$hd-success-on-solid};
+    --hd-success-fill: #{$hd-success-solid};
+    --hd-success-fg: #{$hd-success-on-solid};
+
+    --hd-danger: #{$hd-danger};
+    --hd-danger-bg: #{$hd-danger-bg};
+    --hd-danger-border: #{$hd-danger-border};
+    --hd-danger-solid: #{$hd-danger-solid};
+    --hd-danger-solid-hover: #{$hd-danger-solid-hover};
+    --hd-danger-on-solid: #{$hd-danger-on-solid};
+    --hd-danger-fill: #{$hd-danger-solid};
+    --hd-danger-fg: #{$hd-danger-on-solid};
+
+    --hd-warning: #{$hd-warning};
+    --hd-warning-bg: #{$hd-warning-bg};
+    --hd-warning-border: #{$hd-warning-border};
+    --hd-warning-solid: #{$hd-warning-solid};
+    --hd-warning-solid-hover: #{$hd-warning-solid-hover};
+    --hd-warning-on-solid: #{$hd-warning-on-solid};
+    --hd-warning-fill: #{$hd-warning-solid};
+    --hd-warning-fg: #{$hd-warning-on-solid};
+
+    --hd-info: #{$hd-info};
+    --hd-info-bg: #{$hd-info-bg};
+    --hd-info-border: #{$hd-info-border};
+    --hd-info-solid: #{$hd-info-solid};
+    --hd-info-solid-hover: #{$hd-info-solid-hover};
+    --hd-info-on-solid: #{$hd-info-on-solid};
+    --hd-info-fill: #{$hd-info-solid};
+    --hd-info-fg: #{$hd-info-on-solid};
+
+    --hd-input-bg: #{$hd-input-bg};
+    --hd-input-bg-disabled: #{$hd-input-bg-disabled};
+    --hd-input-fg: #{$hd-input-fg};
+    --hd-input-placeholder: #{$hd-input-placeholder};
+    --hd-input-border: #{$hd-input-border};
+    --hd-input-border-hover: #{$hd-input-border-hover};
+    --hd-input-border-focus: #{$hd-input-border-focus};
+    --hd-input-ring: #{$hd-input-ring};
+    --hd-input-border-invalid: #{$hd-input-border-invalid};
+    --hd-input-ring-invalid: #{$hd-input-ring-invalid};
+    --hd-input-label: #{$hd-input-label};
+    --hd-input-help: #{$hd-input-help};
+    --hd-input-fg-disabled: #{$hd-input-fg-disabled};
+
+    --hd-diff-add: #{$hd-diff-add};
+    --hd-diff-add-bg: #{$hd-diff-add-bg};
+    --hd-diff-add-line: #{$hd-diff-add-line};
+    --hd-diff-del: #{$hd-diff-del};
+    --hd-diff-del-bg: #{$hd-diff-del-bg};
+    --hd-diff-del-line: #{$hd-diff-del-line};
+    --hd-diff-mod: #{$hd-diff-mod};
+    --hd-diff-mod-bg: #{$hd-diff-mod-bg};
+    --hd-diff-mod-line: #{$hd-diff-mod-line};
+
+    --hd-font-title: #{$hd-font-title};
+    --hd-font-text: #{$hd-font-text};
+    --hd-font-mono: #{$hd-font-mono};
+    --hd-font-brand: var(--hd-font-title);
+    --hd-font-ui: var(--hd-font-text);
+
+    --hd-text-xs: 0.6875rem;
+    --hd-text-sm: 0.8125rem;
+    --hd-text-base: 0.9375rem;
+    --hd-text-md: 1.0625rem;
+    --hd-text-lg: 1.25rem;
+    --hd-text-xl: 1.5rem;
+    --hd-text-2xl: 1.875rem;
+    --hd-text-3xl: 2.25rem;
+    --hd-text-4xl: 3rem;
+
+    --hd-leading-none: 1;
+    --hd-leading-tight: 1.2;
+    --hd-leading-snug: 1.375;
+    --hd-leading-normal: 1.5;
+    --hd-leading-relaxed: 1.625;
+
+    --hd-weight-light: 300;
+    --hd-weight-normal: 400;
+    --hd-weight-medium: 500;
+    --hd-weight-semi: 600;
+    --hd-weight-bold: 700;
+
+    --hd-tracking-tight: -0.02em;
+    --hd-tracking-normal: 0;
+    --hd-tracking-wide: 0.04em;
+    --hd-tracking-wider: 0.08em;
+    --hd-tracking-widest: 0.12em;
+
+    --hd-sp-1: 0.25rem;
+    --hd-sp-2: 0.5rem;
+    --hd-sp-3: 0.75rem;
+    --hd-sp-4: 1rem;
+    --hd-sp-5: 1.25rem;
+    --hd-sp-6: 1.5rem;
+    --hd-sp-8: 2rem;
+    --hd-sp-10: 2.5rem;
+    --hd-sp-12: 3rem;
+    --hd-sp-16: 4rem;
+    --hd-sp-20: 5rem;
+
+    --hd-radius-none: 0;
+    --hd-radius-xs: 2px;
+    --hd-radius-sm: 4px;
+    --hd-radius: 6px;
+    --hd-radius-md: 8px;
+    --hd-radius-lg: 12px;
+    --hd-radius-full: 9999px;
+
+    --hd-shadow-none: none;
+    --hd-shadow-focus: 0 0 0 3px var(--hd-focus-ring);
+    --hd-shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+
+    --hd-z-base: 0;
+    --hd-z-raised: 10;
+    --hd-z-dropdown: 100;
+    --hd-z-sticky: 200;
+    --hd-z-modal: 300;
+    --hd-z-toast: 400;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  5. DARK MODE  (Bootstrap 5.3 data-bs-theme="dark")
+// ─────────────────────────────────────────────────────────────────────────────
+
+[data-bs-theme="dark"] {
+    --bs-secondary: #{$hd-dark-secondary-text};
+    --bs-secondary-rgb: #{red($hd-dark-secondary-text)}, #{green($hd-dark-secondary-text)},
+        #{blue($hd-dark-secondary-text)};
+    --bs-danger: #{$hd-dark-danger-solid};
+    --bs-danger-rgb: #{red($hd-dark-danger-solid)}, #{green($hd-dark-danger-solid)},
+        #{blue($hd-dark-danger-solid)};
+    --bs-info: #{$hd-dark-info-solid};
+    --bs-info-rgb: #{red($hd-dark-info-solid)}, #{green($hd-dark-info-solid)},
+        #{blue($hd-dark-info-solid)};
+    --bs-plum: #{$hd-dark-plum};
+    --bs-plum-rgb: #{red($hd-dark-plum)}, #{green($hd-dark-plum)}, #{blue($hd-dark-plum)};
+    --bs-light: #{$hd-dark-bg-subtle};
+    --bs-light-rgb: #{red($hd-dark-bg-subtle)}, #{green($hd-dark-bg-subtle)},
+        #{blue($hd-dark-bg-subtle)};
+    --bs-dark: #{$hd-dark-fg-1};
+    --bs-dark-rgb: #{red($hd-dark-fg-1)}, #{green($hd-dark-fg-1)}, #{blue($hd-dark-fg-1)};
+
+    --bs-primary-text-emphasis: #{$hd-dark-accent-text};
+    --bs-success-text-emphasis: #{$hd-dark-success};
+    --bs-link-color: #{$hd-dark-accent-text};
+    --bs-link-color-rgb: #{red($hd-dark-accent-text)}, #{green($hd-dark-accent-text)},
+        #{blue($hd-dark-accent-text)};
+    --bs-link-hover-color: #{$hd-dark-accent-hover};
+    --bs-link-hover-color-rgb: #{red($hd-dark-accent-hover)}, #{green($hd-dark-accent-hover)},
+        #{blue($hd-dark-accent-hover)};
+
+    --hd-bg-canvas: #{$hd-dark-bg-canvas};
+    --hd-bg-default: #{$hd-dark-bg-default};
+    --hd-bg-subtle: #{$hd-dark-bg-subtle};
+    --hd-bg-inset: #{$hd-dark-bg-inset};
+    --hd-bg-overlay: #{$hd-dark-bg-overlay};
+    --hd-bg-field: #{$hd-dark-input-bg};
+
+    --hd-fg-1: #{$hd-dark-fg-1};
+    --hd-fg-2: #{$hd-dark-fg-2};
+    --hd-fg-3: #{$hd-dark-fg-3};
+    --hd-fg-4: #{$hd-dark-fg-4};
+    --hd-fg-disabled: #{$hd-dark-fg-disabled};
+    --hd-fg-inverse: #{$hd-dark-fg-inverse};
+
+    --hd-border-1: #{$hd-dark-border-1};
+    --hd-border-2: #{$hd-dark-border-2};
+    --hd-border-3: #{$hd-dark-border-3};
+
+    --hd-accent: #{$hd-dark-accent};
+    --hd-accent-hover: #{$hd-dark-accent-hover};
+    --hd-accent-active: #{$hd-dark-accent-active};
+    --hd-accent-fg: #{$hd-dark-accent-fg};
+    --hd-accent-subtle: #{$hd-dark-accent-subtle};
+    --hd-accent-muted: #{$hd-dark-accent-muted};
+    --hd-accent-border: #{$hd-dark-accent-border};
+    --hd-accent-text: #{$hd-dark-accent-text};
+    --hd-focus-ring: #{$hd-dark-focus-ring};
+    --hd-focus: #{$hd-dark-focus};
+
+    --hd-secondary: #{$hd-dark-secondary};
+    --hd-secondary-hover: #{$hd-dark-secondary-hover};
+    --hd-secondary-active: #{$hd-dark-secondary-active};
+    --hd-secondary-fg: #{$hd-dark-secondary-fg};
+    --hd-secondary-subtle: #{$hd-dark-secondary-subtle};
+    --hd-secondary-muted: #{$hd-dark-secondary-muted};
+    --hd-secondary-border: #{$hd-dark-secondary-border};
+    --hd-secondary-text: #{$hd-dark-secondary-text};
+
+    --hd-plum: #{$hd-dark-plum};
+    --hd-plum-hover: #{$hd-dark-plum-hover};
+    --hd-plum-active: #{$hd-dark-plum-active};
+    --hd-plum-fg: #{$hd-dark-plum-fg};
+    --hd-plum-subtle: #{$hd-dark-plum-subtle};
+    --hd-plum-muted: #{$hd-dark-plum-muted};
+    --hd-plum-border: #{$hd-dark-plum-border};
+    --hd-plum-text: #{$hd-dark-plum-text};
+    --hd-plum-bg: #{$hd-dark-plum-subtle};
+    --hd-plum-line: #{$hd-dark-plum-border};
+
+    --hd-success: #{$hd-dark-success};
+    --hd-success-bg: #{$hd-dark-success-bg};
+    --hd-success-border: #{$hd-dark-success-border};
+    --hd-success-solid: #{$hd-dark-success-solid};
+    --hd-success-solid-hover: #{$hd-dark-success-solid-hover};
+    --hd-success-on-solid: #{$hd-dark-success-on-solid};
+    --hd-success-fill: #{$hd-dark-success-solid};
+    --hd-success-fg: #{$hd-dark-success-on-solid};
+
+    --hd-danger: #{$hd-dark-danger};
+    --hd-danger-bg: #{$hd-dark-danger-bg};
+    --hd-danger-border: #{$hd-dark-danger-border};
+    --hd-danger-solid: #{$hd-dark-danger-solid};
+    --hd-danger-solid-hover: #{$hd-dark-danger-solid-hover};
+    --hd-danger-on-solid: #{$hd-dark-danger-on-solid};
+    --hd-danger-fill: #{$hd-dark-danger-solid};
+    --hd-danger-fg: #{$hd-dark-danger-on-solid};
+
+    --hd-warning: #{$hd-dark-warning};
+    --hd-warning-bg: #{$hd-dark-warning-bg};
+    --hd-warning-border: #{$hd-dark-warning-border};
+    --hd-warning-solid: #{$hd-dark-warning-solid};
+    --hd-warning-solid-hover: #{$hd-dark-warning-solid-hover};
+    --hd-warning-on-solid: #{$hd-dark-warning-on-solid};
+    --hd-warning-fill: #{$hd-dark-warning-solid};
+    --hd-warning-fg: #{$hd-dark-warning-on-solid};
+
+    --hd-info: #{$hd-dark-info};
+    --hd-info-bg: #{$hd-dark-info-bg};
+    --hd-info-border: #{$hd-dark-info-border};
+    --hd-info-solid: #{$hd-dark-info-solid};
+    --hd-info-solid-hover: #{$hd-dark-info-solid-hover};
+    --hd-info-on-solid: #{$hd-dark-info-on-solid};
+    --hd-info-fill: #{$hd-dark-info-solid};
+    --hd-info-fg: #{$hd-dark-info-on-solid};
+
+    --hd-input-bg: #{$hd-dark-input-bg};
+    --hd-input-bg-disabled: #{$hd-dark-input-bg-disabled};
+    --hd-input-fg: #{$hd-dark-input-fg};
+    --hd-input-placeholder: #{$hd-dark-input-placeholder};
+    --hd-input-border: #{$hd-dark-input-border};
+    --hd-input-border-hover: #{$hd-dark-input-border-hover};
+    --hd-input-border-focus: #{$hd-dark-input-border-focus};
+    --hd-input-ring: #{$hd-dark-input-ring};
+    --hd-input-border-invalid: #{$hd-dark-input-border-invalid};
+    --hd-input-ring-invalid: #{$hd-dark-input-ring-invalid};
+    --hd-input-label: #{$hd-dark-input-label};
+    --hd-input-help: #{$hd-dark-input-help};
+    --hd-input-fg-disabled: #{$hd-dark-input-fg-disabled};
+
+    --hd-diff-add: #{$hd-dark-diff-add};
+    --hd-diff-add-bg: #{$hd-dark-diff-add-bg};
+    --hd-diff-add-line: #{$hd-dark-diff-add-line};
+    --hd-diff-del: #{$hd-dark-diff-del};
+    --hd-diff-del-bg: #{$hd-dark-diff-del-bg};
+    --hd-diff-del-line: #{$hd-dark-diff-del-line};
+    --hd-diff-mod: #{$hd-dark-diff-mod};
+    --hd-diff-mod-bg: #{$hd-dark-diff-mod-bg};
+    --hd-diff-mod-line: #{$hd-dark-diff-mod-line};
+
+    // Depth comes from the border and the fill step; a black shadow on a
+    // black ground is invisible.
+    --hd-shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+[data-bs-theme="dark"] {
+    .modal-backdrop {
+        --bs-backdrop-bg: #000000;
+        --bs-backdrop-opacity: 0.7;
+    }
+
+    .dropdown-menu,
+    .popover {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+    }
+
+    .modal-content {
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  6. RESET-LEVEL RULES
+// ─────────────────────────────────────────────────────────────────────────────
+
+h1,
+h2,
+.h1,
+.h2,
+.display-1,
+.display-2,
+.display-3,
+.display-4,
+.display-5,
+.display-6 {
+    letter-spacing: var(--hd-tracking-tight);
+}
+
+// 1.4.1 Use of Color — links are underlined by default ($link-decoration),
+// and thicken on hover. Chrome links opt out below; Bootstrap already opts
+// out .btn/.nav-link/.dropdown-item/.page-link/.list-group-item/.navbar-brand.
+a:hover {
+    text-decoration-thickness: 2px;
+}
+
+a {
+    text-underline-offset: 2px;
+    text-decoration-thickness: 1px;
+}
+
+.hd-nav-link,
+.navbar a,
+footer a,
+.breadcrumb a,
+.card a.stretched-link {
+    text-decoration: none;
+}
+
+.hd-nav-link:hover,
+.hd-nav-link:focus-visible,
+.navbar a:hover,
+.navbar a:focus-visible,
+footer a:hover,
+footer a:focus-visible,
+.breadcrumb a:hover,
+.breadcrumb a:focus-visible {
+    text-decoration: underline;
+}
+
+// 2.4.7 Focus Visible — one solid ring, never colour alone, on every control.
+:where(a, button, input, select, textarea, summary, [tabindex], [role="button"], [role="link"], [role="tab"], [role="menuitem"], [role="switch"], [role="checkbox"]):focus-visible,
+.hd-focus-ring:focus-visible {
+    outline: 3px solid var(--hd-focus);
+    outline-offset: 2px;
+    box-shadow: none;
+    border-radius: var(--hd-radius-xs);
+}
+
+.hd-on-accent:focus-visible,
+.hd-on-dark:focus-visible,
+.hd-brand-dark-surface :focus-visible {
+    outline-color: var(--hd-fg-inverse);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  7. COMPONENT REFINEMENTS  — align Bootstrap with the design system
+// ─────────────────────────────────────────────────────────────────────────────
+
+.text-primary,
+.text-accent,
+.link-primary,
+.link-accent {
+    color: var(--hd-accent-text) !important;
+}
+
+.text-success,
+.link-success {
+    color: var(--hd-success) !important;
+}
+
+.text-plum,
+.link-plum {
+    color: var(--hd-plum-text) !important;
+}
+
+.text-bg-primary,
+.text-bg-accent {
+    color: var(--hd-accent-fg) !important;
+    background-color: var(--hd-accent) !important;
+}
+.text-bg-success {
+    color: var(--hd-success-on-solid) !important;
+    background-color: var(--hd-success-solid) !important;
+}
+.text-bg-danger {
+    color: var(--hd-danger-on-solid) !important;
+    background-color: var(--hd-danger-solid) !important;
+}
+.text-bg-warning {
+    color: var(--hd-warning-on-solid) !important;
+    background-color: var(--hd-warning-solid) !important;
+}
+.text-bg-info {
+    color: var(--hd-info-on-solid) !important;
+    background-color: var(--hd-info-solid) !important;
+}
+.text-bg-plum {
+    color: var(--hd-plum-fg) !important;
+    background-color: var(--hd-plum) !important;
+}
+
+// ── Buttons ─────────────────────────────────────────────────────────────────
+.btn-primary,
+.btn-accent {
+    --bs-btn-bg: var(--hd-accent);
+    --bs-btn-border-color: var(--hd-accent);
+    --bs-btn-color: var(--hd-accent-fg);
+    --bs-btn-hover-bg: var(--hd-accent-hover);
+    --bs-btn-hover-border-color: var(--hd-accent-hover);
+    --bs-btn-hover-color: var(--hd-accent-fg);
+    --bs-btn-active-bg: var(--hd-accent-active);
+    --bs-btn-active-border-color: var(--hd-accent-active);
+    --bs-btn-active-color: var(--hd-accent-fg);
+    --bs-btn-disabled-bg: var(--hd-accent);
+    --bs-btn-disabled-border-color: var(--hd-accent);
+    --bs-btn-disabled-color: var(--hd-accent-fg);
+}
+
+.btn-outline-primary,
+.btn-outline-accent {
+    --bs-btn-color: var(--hd-accent-text);
+    --bs-btn-border-color: var(--hd-accent-border);
+    --bs-btn-hover-bg: var(--hd-accent-subtle);
+    --bs-btn-hover-border-color: var(--hd-accent);
+    --bs-btn-hover-color: var(--hd-accent-text);
+    --bs-btn-active-bg: var(--hd-accent);
+    --bs-btn-active-border-color: var(--hd-accent);
+    --bs-btn-active-color: var(--hd-accent-fg);
+}
+
+// Bootstrap compiles status buttons from the LIGHT palette and never
+// re-derives them per colour mode — route through -solid/-on-solid instead.
+@each $name in (success, danger, warning, info) {
+    .btn-#{$name} {
+        --bs-btn-bg: var(--hd-#{$name}-solid);
+        --bs-btn-border-color: var(--hd-#{$name}-solid);
+        --bs-btn-color: var(--hd-#{$name}-on-solid);
+        --bs-btn-hover-bg: var(--hd-#{$name}-solid-hover);
+        --bs-btn-hover-border-color: var(--hd-#{$name}-solid-hover);
+        --bs-btn-hover-color: var(--hd-#{$name}-on-solid);
+        --bs-btn-active-bg: var(--hd-#{$name}-solid-hover);
+        --bs-btn-active-border-color: var(--hd-#{$name}-solid-hover);
+        --bs-btn-active-color: var(--hd-#{$name}-on-solid);
+        --bs-btn-disabled-bg: var(--hd-#{$name}-solid);
+        --bs-btn-disabled-border-color: var(--hd-#{$name}-solid);
+        --bs-btn-disabled-color: var(--hd-#{$name}-on-solid);
+    }
+
+    .btn-outline-#{$name} {
+        --bs-btn-color: var(--hd-#{$name});
+        --bs-btn-border-color: var(--hd-#{$name}-border);
+        --bs-btn-hover-bg: var(--hd-#{$name}-bg);
+        --bs-btn-hover-border-color: var(--hd-#{$name});
+        --bs-btn-hover-color: var(--hd-#{$name});
+        --bs-btn-active-bg: var(--hd-#{$name}-solid);
+        --bs-btn-active-border-color: var(--hd-#{$name}-solid);
+        --bs-btn-active-color: var(--hd-#{$name}-on-solid);
+    }
+}
+
+// Secondary is the quiet second action: a neutral gray surface with a dark
+// label and a perceivable edge — not a filled gray slab.
+.btn-secondary {
+    --bs-btn-bg: var(--hd-secondary);
+    --bs-btn-border-color: var(--hd-secondary-border);
+    --bs-btn-color: var(--hd-secondary-fg);
+    --bs-btn-hover-bg: var(--hd-secondary-hover);
+    --bs-btn-hover-border-color: var(--hd-border-3);
+    --bs-btn-hover-color: var(--hd-fg-1);
+    --bs-btn-active-bg: var(--hd-secondary-active);
+    --bs-btn-active-border-color: var(--hd-border-3);
+    --bs-btn-active-color: var(--hd-fg-1);
+    --bs-btn-disabled-bg: var(--hd-secondary);
+    --bs-btn-disabled-border-color: var(--hd-secondary-border);
+    --bs-btn-disabled-color: var(--hd-fg-disabled);
+}
+
+.btn-outline-secondary {
+    --bs-btn-color: var(--hd-fg-2);
+    --bs-btn-border-color: var(--hd-secondary-border);
+    --bs-btn-hover-bg: var(--hd-bg-subtle);
+    --bs-btn-hover-border-color: var(--hd-border-3);
+    --bs-btn-hover-color: var(--hd-fg-1);
+    --bs-btn-active-bg: var(--hd-bg-inset);
+    --bs-btn-active-border-color: var(--hd-border-3);
+    --bs-btn-active-color: var(--hd-fg-1);
+}
+
+// Brand plum — emphasis, categorisation, marketing. Never a CTA.
+.btn-plum {
+    --bs-btn-bg: var(--hd-plum);
+    --bs-btn-border-color: var(--hd-plum);
+    --bs-btn-color: var(--hd-plum-fg);
+    --bs-btn-hover-bg: var(--hd-plum-hover);
+    --bs-btn-hover-border-color: var(--hd-plum-hover);
+    --bs-btn-hover-color: var(--hd-plum-fg);
+    --bs-btn-active-bg: var(--hd-plum-active);
+    --bs-btn-active-border-color: var(--hd-plum-active);
+    --bs-btn-active-color: var(--hd-plum-fg);
+    --bs-btn-disabled-bg: var(--hd-plum);
+    --bs-btn-disabled-border-color: var(--hd-plum);
+    --bs-btn-disabled-color: var(--hd-plum-fg);
+}
+
+.btn-outline-plum {
+    --bs-btn-color: var(--hd-plum-text);
+    --bs-btn-border-color: var(--hd-plum-border);
+    --bs-btn-hover-bg: var(--hd-plum-subtle);
+    --bs-btn-hover-border-color: var(--hd-plum);
+    --bs-btn-hover-color: var(--hd-plum-text);
+    --bs-btn-active-bg: var(--hd-plum);
+    --bs-btn-active-border-color: var(--hd-plum);
+    --bs-btn-active-color: var(--hd-plum-fg);
+}
+
+.btn-dark {
+    --bs-btn-bg: var(--hd-fg-1);
+    --bs-btn-border-color: var(--hd-fg-1);
+    --bs-btn-color: var(--hd-fg-inverse);
+    --bs-btn-hover-bg: var(--hd-fg-2);
+    --bs-btn-hover-border-color: var(--hd-fg-2);
+    --bs-btn-hover-color: var(--hd-fg-inverse);
+    --bs-btn-active-bg: var(--hd-fg-2);
+    --bs-btn-active-border-color: var(--hd-fg-2);
+    --bs-btn-active-color: var(--hd-fg-inverse);
+}
+
+.btn-outline-dark {
+    --bs-btn-color: var(--hd-fg-1);
+    --bs-btn-border-color: var(--hd-border-2);
+    --bs-btn-hover-bg: var(--hd-bg-subtle);
+    --bs-btn-hover-border-color: var(--hd-border-3);
+    --bs-btn-hover-color: var(--hd-fg-1);
+    --bs-btn-active-bg: var(--hd-fg-1);
+    --bs-btn-active-border-color: var(--hd-fg-1);
+    --bs-btn-active-color: var(--hd-fg-inverse);
+}
+
+.btn-ghost {
+    --bs-btn-bg: transparent;
+    --bs-btn-border-color: transparent;
+    --bs-btn-color: var(--hd-fg-2);
+    --bs-btn-hover-bg: var(--hd-bg-subtle);
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-hover-color: var(--hd-fg-1);
+    --bs-btn-active-bg: var(--hd-bg-inset);
+    --bs-btn-active-border-color: transparent;
+    --bs-btn-active-color: var(--hd-fg-1);
+}
+
+.btn-subtle {
+    --bs-btn-bg: var(--hd-accent-subtle);
+    --bs-btn-border-color: var(--hd-accent-muted);
+    --bs-btn-color: var(--hd-accent-text);
+    --bs-btn-hover-bg: var(--hd-accent-muted);
+    --bs-btn-hover-border-color: var(--hd-accent-border);
+    --bs-btn-hover-color: var(--hd-accent-text);
+    --bs-btn-active-bg: var(--hd-accent-border);
+    --bs-btn-active-border-color: var(--hd-accent-border);
+    --bs-btn-active-color: var(--hd-accent-text);
+}
+
+// ── Surfaces Bootstrap compiles from fixed Sass values ──────────────────────
+.dropdown-menu {
+    --bs-dropdown-bg: var(--hd-bg-canvas);
+    --bs-dropdown-color: var(--hd-fg-2);
+    --bs-dropdown-border-color: var(--hd-border-1);
+    --bs-dropdown-divider-bg: var(--hd-border-1);
+    --bs-dropdown-link-color: var(--hd-fg-2);
+    --bs-dropdown-link-hover-bg: var(--hd-bg-subtle);
+    --bs-dropdown-link-hover-color: var(--hd-fg-1);
+    --bs-dropdown-link-active-bg: var(--hd-accent-subtle);
+    --bs-dropdown-link-active-color: var(--hd-accent-text);
+    --bs-dropdown-link-disabled-color: var(--hd-fg-disabled);
+    --bs-dropdown-header-color: var(--hd-fg-3);
+    border: none;
+    border-radius: var(--hd-radius-md);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+    padding: 0.35rem;
+}
+
+.dropdown-item {
+    border-radius: var(--hd-radius-sm);
+    padding: 0.4rem 0.75rem;
+}
+
+.modal-content {
+    --bs-modal-bg: var(--hd-bg-canvas);
+    --bs-modal-color: var(--hd-fg-2);
+    --bs-modal-border-color: var(--hd-border-1);
+    --bs-modal-header-border-color: var(--hd-border-1);
+    --bs-modal-footer-border-color: var(--hd-border-1);
+}
+
+.offcanvas,
+.offcanvas-sm,
+.offcanvas-md,
+.offcanvas-lg,
+.offcanvas-xl,
+.offcanvas-xxl {
+    --bs-offcanvas-bg: var(--hd-bg-canvas);
+    --bs-offcanvas-color: var(--hd-fg-2);
+    --bs-offcanvas-border-color: var(--hd-border-1);
+}
+
+.popover {
+    --bs-popover-bg: var(--hd-bg-canvas);
+    --bs-popover-body-color: var(--hd-fg-2);
+    --bs-popover-header-bg: var(--hd-bg-subtle);
+    --bs-popover-header-color: var(--hd-fg-1);
+    --bs-popover-border-color: var(--hd-border-1);
+}
+
+// The tooltip is the one inverted surface in the system: near-black on
+// light, a lifted panel on dark (an "inverted" tooltip on black would flash).
+.tooltip {
+    --bs-tooltip-bg: var(--hd-fg-1);
+    --bs-tooltip-color: var(--hd-fg-inverse);
+}
+[data-bs-theme="dark"] .tooltip {
+    --bs-tooltip-bg: #{$hd-dark-bg-subtle};
+    --bs-tooltip-color: #{$hd-dark-fg-1};
+}
+
+.toast {
+    --bs-toast-bg: var(--hd-bg-canvas);
+    --bs-toast-color: var(--hd-fg-2);
+    --bs-toast-border-color: var(--hd-border-1);
+    --bs-toast-header-bg: var(--hd-bg-subtle);
+    --bs-toast-header-color: var(--hd-fg-2);
+    --bs-toast-header-border-color: var(--hd-border-1);
+}
+
+.table {
+    --bs-table-color: var(--hd-fg-2);
+    --bs-table-bg: transparent;
+    --bs-table-border-color: var(--hd-border-1);
+    --bs-table-striped-color: var(--hd-fg-2);
+    --bs-table-striped-bg: var(--hd-bg-overlay);
+    --bs-table-hover-color: var(--hd-fg-1);
+    --bs-table-hover-bg: var(--hd-bg-overlay);
+}
+
+.accordion {
+    --bs-accordion-bg: var(--hd-bg-canvas);
+    --bs-accordion-color: var(--hd-fg-2);
+    --bs-accordion-border-color: var(--hd-border-1);
+    --bs-accordion-btn-color: var(--hd-fg-1);
+    --bs-accordion-btn-bg: var(--hd-bg-canvas);
+    --bs-accordion-active-color: var(--hd-accent-text);
+    --bs-accordion-active-bg: var(--hd-accent-subtle);
+}
+
+.nav-tabs {
+    --bs-nav-tabs-border-color: var(--hd-border-1);
+    --bs-nav-tabs-link-hover-border-color: var(--hd-border-2);
+    --bs-nav-tabs-link-active-color: var(--hd-accent-text);
+    --bs-nav-tabs-link-active-bg: var(--hd-bg-canvas);
+    --bs-nav-tabs-link-active-border-color: var(--hd-border-1);
+    --bs-nav-link-color: var(--hd-fg-2);
+    --bs-nav-link-hover-color: var(--hd-fg-1);
+    --bs-nav-link-disabled-color: var(--hd-fg-disabled);
+}
+
+.pagination {
+    --bs-pagination-bg: var(--hd-bg-canvas);
+    --bs-pagination-color: var(--hd-fg-2);
+    --bs-pagination-border-color: var(--hd-border-1);
+    --bs-pagination-hover-bg: var(--hd-bg-subtle);
+    --bs-pagination-hover-color: var(--hd-fg-1);
+    --bs-pagination-hover-border-color: var(--hd-border-2);
+    --bs-pagination-focus-bg: var(--hd-bg-subtle);
+    --bs-pagination-focus-color: var(--hd-fg-1);
+    --bs-pagination-active-bg: var(--hd-accent);
+    --bs-pagination-active-border-color: var(--hd-accent);
+    --bs-pagination-active-color: var(--hd-accent-fg);
+    --bs-pagination-disabled-bg: var(--hd-bg-subtle);
+    --bs-pagination-disabled-color: var(--hd-fg-disabled);
+    --bs-pagination-disabled-border-color: var(--hd-border-1);
+}
+
+.breadcrumb {
+    --bs-breadcrumb-divider-color: var(--hd-fg-3);
+    --bs-breadcrumb-item-active-color: var(--hd-fg-2);
+}
+
+.progress,
+.progress-stacked {
+    --bs-progress-bg: var(--hd-bg-inset);
+    --bs-progress-bar-bg: var(--hd-accent);
+    --bs-progress-bar-color: var(--hd-accent-fg);
+}
+
+.badge-gray {
+    color: var(--hd-fg-inverse);
+    background-color: var(--hd-secondary-text);
+}
+
+// ── Forms ───────────────────────────────────────────────────────────────────
+.form-control,
+.form-select {
+    background-color: var(--hd-input-bg);
+    border-color: var(--hd-input-border);
+    color: var(--hd-input-fg);
+
+    &:hover:not(:disabled):not([readonly]) {
+        border-color: var(--hd-input-border-hover);
+    }
+
+    &:focus {
+        background-color: var(--hd-input-bg);
+        border-color: var(--hd-input-border-focus);
+        color: var(--hd-input-fg);
+        box-shadow: 0 0 0 3px var(--hd-input-ring);
+    }
+
+    &:disabled {
+        background-color: var(--hd-input-bg-disabled);
+        color: var(--hd-input-fg-disabled);
+    }
+
+    &::placeholder {
+        color: var(--hd-input-placeholder);
+    }
+
+    &.is-invalid,
+    &[aria-invalid="true"] {
+        border-color: var(--hd-input-border-invalid);
+
+        &:focus {
+            box-shadow: 0 0 0 3px var(--hd-input-ring-invalid);
+        }
+    }
+}
+
+.form-label {
+    color: var(--hd-input-label);
+}
+
+.form-text {
+    color: var(--hd-input-help);
+}
+
+.form-check-input {
+    background-color: var(--hd-input-bg);
+    border-color: var(--hd-input-border);
+
+    &:checked {
+        background-color: var(--hd-accent);
+        border-color: var(--hd-accent);
+    }
+
+    &:focus {
+        border-color: var(--hd-input-border-focus);
+        box-shadow: 0 0 0 3px var(--hd-input-ring);
+    }
+}
+
+.input-group-text {
+    background-color: var(--hd-bg-subtle);
+    border-color: var(--hd-input-border);
+    color: var(--hd-fg-2);
+}
+
+.invalid-feedback {
+    color: var(--hd-danger);
+    font-weight: 600;
+}
+
+.valid-feedback {
+    color: var(--hd-success);
+}
+
+// ── Cards — flat, separated by a 1px border ─────────────────────────────────
+.card {
+    --bs-card-bg: var(--hd-bg-canvas);
+    --bs-card-color: var(--hd-fg-2);
+    --bs-card-border-color: var(--hd-border-1);
+    --bs-card-cap-bg: var(--hd-bg-subtle);
+    --bs-card-cap-color: var(--hd-fg-1);
+    box-shadow: none;
+}
+
+.card-hover:hover {
+    background: var(--hd-bg-subtle);
+}
+
+.new-service-card .card-hover {
+    opacity: 0.5;
+}
+.new-service-card .card-hover:hover {
+    opacity: 0.8;
+}
+
+// ── List group — the active row is a tint, not a saturated slab ─────────────
+.list-group {
+    --bs-list-group-bg: var(--hd-bg-canvas);
+    --bs-list-group-color: var(--hd-fg-2);
+    --bs-list-group-border-color: var(--hd-border-1);
+    --bs-list-group-action-hover-bg: var(--hd-bg-subtle);
+    --bs-list-group-action-hover-color: var(--hd-fg-1);
+    --bs-list-group-disabled-color: var(--hd-fg-disabled);
+    --bs-list-group-active-bg: var(--hd-accent-subtle);
+    --bs-list-group-active-border-color: var(--hd-accent-border);
+    --bs-list-group-active-color: var(--hd-accent-text);
+}
+.list-group-item.active {
+    font-weight: 600;
+}
+.list-group-item-action {
+    transition: background-color 0.15s;
+}
+
+// ── Alerts ───────────────────────────────────────────────────────────────────
+.alert-primary {
+    background-color: var(--hd-accent-subtle);
+    border-color: var(--hd-accent-border);
+    color: var(--hd-accent-text);
+}
+.alert-success {
+    background-color: var(--hd-success-bg);
+    border-color: var(--hd-success-border);
+    color: var(--hd-success);
+}
+.alert-danger {
+    background-color: var(--hd-danger-bg);
+    border-color: var(--hd-danger-border);
+    color: var(--hd-danger);
+}
+.alert-warning {
+    background-color: var(--hd-warning-bg);
+    border-color: var(--hd-warning-border);
+    color: var(--hd-warning);
+}
+.alert-info {
+    background-color: var(--hd-info-bg);
+    border-color: var(--hd-info-border);
+    color: var(--hd-info);
+}
+.alert-plum {
+    background-color: var(--hd-plum-subtle);
+    border-color: var(--hd-plum-border);
+    color: var(--hd-plum-text);
+}
+
+.alert a:not(.btn) {
+    color: inherit;
+    text-decoration: underline;
+    font-weight: 600;
+}
+
+// ── Code & DNS data ─────────────────────────────────────────────────────────
+code,
+.hd-code {
+    font-family: var(--hd-font-mono);
+    font-size: var(--hd-text-sm);
+    background: var(--hd-bg-subtle);
+    border: 1px solid var(--hd-border-1);
+    border-radius: var(--hd-radius-xs);
+    padding: 0.1em 0.35em;
+    color: var(--hd-fg-1);
+}
+
+pre code {
+    background: none;
+    border: 0;
+    padding: 0;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  8. ACCESSIBILITY UTILITIES  (WCAG 2.2 AA)
+// ─────────────────────────────────────────────────────────────────────────────
+
+.hd-link {
+    color: var(--hd-accent-text);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    font-weight: var(--hd-weight-semi);
+}
+.hd-link:hover {
+    color: var(--hd-accent-hover);
+}
+
+.hd-sr-only,
+.hd-sr-only-focusable:not(:focus):not(:focus-within) {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.hd-field-border {
+    border: 1px solid var(--hd-input-border-hover);
+}
+
+.hd-status {
+    font-family: var(--hd-font-text);
+    font-size: var(--hd-text-sm);
+    line-height: var(--hd-leading-normal);
+    padding: var(--hd-sp-3) var(--hd-sp-4);
+    border-radius: var(--hd-radius);
+    border: 1px solid transparent;
+}
+.hd-status--success {
+    background: var(--hd-success-bg);
+    color: var(--hd-success);
+    border-color: var(--hd-success-border);
+}
+.hd-status--danger {
+    background: var(--hd-danger-bg);
+    color: var(--hd-danger);
+    border-color: var(--hd-danger-border);
+}
+.hd-status--warning {
+    background: var(--hd-warning-bg);
+    color: var(--hd-warning);
+    border-color: var(--hd-warning-border);
+}
+.hd-status--info {
+    background: var(--hd-info-bg);
+    color: var(--hd-info);
+    border-color: var(--hd-info-border);
+}
+
+.hd-field-error {
+    color: var(--hd-danger);
+    font-family: var(--hd-font-text);
+    font-size: var(--hd-text-sm);
+    font-weight: var(--hd-weight-semi);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  9. DNS UTILITIES — happyDomain-specific
+// ─────────────────────────────────────────────────────────────────────────────
+
+.hd-diff-add {
+    background: var(--hd-diff-add-bg);
+    border-left: 3px solid var(--hd-diff-add-line);
+    color: var(--hd-diff-add);
+}
+.hd-diff-del {
+    background: var(--hd-diff-del-bg);
+    border-left: 3px solid var(--hd-diff-del-line);
+    color: var(--hd-diff-del);
+}
+.hd-diff-mod {
+    background: var(--hd-diff-mod-bg);
+    border-left: 3px solid var(--hd-diff-mod-line);
+    color: var(--hd-diff-mod);
+}
+
+.hd-record-type {
+    display: inline-block;
+    font-family: var(--hd-font-mono);
+    font-size: var(--hd-text-xs);
+    font-weight: var(--hd-weight-semi);
+    letter-spacing: var(--hd-tracking-wide);
+    text-transform: uppercase;
+    padding: 0.15em 0.45em;
+    border-radius: var(--hd-radius-sm);
+    background: var(--hd-bg-inset);
+    color: var(--hd-fg-2);
+    border: 1px solid var(--hd-border-1);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  10. APP LAYOUT & STRUCTURE — happyDomain-specific (not in the DS)
+// ─────────────────────────────────────────────────────────────────────────────
 
 body {
     display: flex;
@@ -49,9 +1681,9 @@ body {
 }
 
 nav.navbar {
-    background: #fff;
-    box-shadow: 0 1px 3px rgba($primary, 0.65);
-    border-bottom: 1px solid rgba($primary, 0.35);
+    background: var(--hd-bg-canvas);
+    box-shadow: 0 1px 3px rgba($hd-accent, 0.65);
+    border-bottom: 1px solid rgba($hd-accent, 0.35);
     transition:
         padding 0.3s ease,
         box-shadow 0.3s ease;
@@ -59,39 +1691,7 @@ nav.navbar {
 }
 
 footer {
-    border-top: 2px solid rgba(#9332bb, 0.3);
-}
-
-.dropdown-menu {
-    border: none;
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
-    padding: 0.35rem;
-}
-
-.dropdown-item {
-    border-radius: 0.35rem;
-    padding: 0.4rem 0.75rem;
-}
-
-.badge-gray {
-    color: #fff;
-    background-color: $gray-600;
-}
-
-.list-group-item-action {
-    transition: background-color 0.15s;
-}
-
-.card-hover:hover {
-    background: $gray-100;
-}
-
-.new-service-card .card-hover {
-    opacity: 0.5;
-}
-.new-service-card .card-hover:hover {
-    opacity: 0.8;
+    border-top: 2px solid rgba($hd-plum, 0.3);
 }
 
 a.text-body:not(.list-group-item-action),
@@ -106,7 +1706,7 @@ a.text-muted:not(.list-group-item-action) {
 }
 
 a.sidebar-back.text-muted:hover {
-    color: var(--bs-black) !important;
+    color: var(--hd-fg-1) !important;
 }
 
 .text-indent {
@@ -114,20 +1714,6 @@ a.sidebar-back.text-muted:hover {
 }
 .text-justify {
     text-align: justify;
-}
-
-@font-face {
-    font-family: "Montserrat";
-    font-style: normal;
-    font-weight: 400;
-    src:
-        local("Montserrat Regular"),
-        local("Montserrat-Regular"),
-        url(/fonts/Montserrat.woff2) format("woff2");
-    unicode-range:
-        U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074,
-        U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-    font-display: swap;
 }
 
 @font-face {
@@ -198,25 +1784,25 @@ tr.zone-highlight {
 
 @keyframes zone-highlight-pulse {
     0% {
-        border-color: $primary;
-        box-shadow: 0 0 0 0.25rem rgba($primary, 0.5);
+        border-color: $hd-accent;
+        box-shadow: 0 0 0 0.25rem rgba($hd-accent, 0.5);
     }
     30% {
-        border-color: $primary;
-        box-shadow: 0 0 0 0.25rem rgba($primary, 0.4);
+        border-color: $hd-accent;
+        box-shadow: 0 0 0 0.25rem rgba($hd-accent, 0.4);
     }
     100% {
-        box-shadow: 0 0 0 0.25rem rgba($primary, 0);
+        box-shadow: 0 0 0 0.25rem rgba($hd-accent, 0);
     }
 }
 
 @keyframes zone-highlight-row-pulse {
     0%,
     30% {
-        background-color: rgba($primary, 0.25);
+        background-color: rgba($hd-accent, 0.25);
     }
     100% {
-        background-color: rgba($primary, 0);
+        background-color: rgba($hd-accent, 0);
     }
 }
 
@@ -233,10 +1819,10 @@ tr.zone-highlight {
     @keyframes zone-highlight-fade {
         0%,
         60% {
-            background-color: rgba($primary, 0.15);
+            background-color: rgba($hd-accent, 0.15);
         }
         100% {
-            background-color: rgba($primary, 0);
+            background-color: rgba($hd-accent, 0);
         }
     }
 }

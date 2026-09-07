@@ -88,7 +88,9 @@
         />
     {:else if page.route.id && (page.route.id.startsWith("/domains/[dn]/checks") || page.route.id.startsWith("/domains/[dn]/history") || page.route.id.startsWith("/domains/[dn]/logs") || page.route.id.startsWith("/domains/[dn]/[[historyid]]/export"))}
         <a
-            href={resolve("/domains/[dn]/[[historyid]]", { dn: encodeURIComponent(domainLink(selectedDomain)) })}
+            href={resolve("/domains/[dn]/[[historyid]]", {
+                dn: encodeURIComponent(domainLink(selectedDomain)),
+            })}
             class="sidebar-back d-flex align-items-center gap-1 mt-3 text-muted text-decoration-none fw-semibold"
         >
             <Icon name="chevron-left" />
@@ -177,7 +179,7 @@
         bottom: 0;
         left: 0;
         padding: 0.75rem;
-        background-color: #edf5f2;
+        background-color: var(--bs-body-bg);
         z-index: 10;
     }
     .sidebar-footer-spacer {

@@ -41,7 +41,6 @@
 
     import { logout as APILogout, cleanUserSession } from "$lib/api/user";
     import HelpButton from "$lib/components/Help.svelte";
-    import Logo from "$lib/components/Logo.svelte";
     import { appConfig } from "$lib/stores/config";
     import { openReportModal } from "$lib/stores/report";
     import { userSession, refreshUserSession } from "$lib/stores/usersession";
@@ -83,7 +82,13 @@
         style="padding: 0;"
         target={$userSession.id ? undefined : "_self"}
     >
-        <Logo />
+        <img src="/img/happyDomain-mark.svg" alt="HappyDomain" height="26" class="d-sm-none" />
+        <img
+            src="/img/happyDomain.svg"
+            alt="HappyDomain"
+            height="25"
+            class="d-none d-sm-block"
+        />
     </NavbarBrand>
     <Nav class="ms-auto align-items-center gap-1" navbar>
         <HelpButton size="sm" class="btn-icon" />

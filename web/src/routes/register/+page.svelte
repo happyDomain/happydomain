@@ -25,7 +25,6 @@
     import { resolve } from "$app/paths";
     import { Col, Container, Row } from "@sveltestrap/sveltestrap";
 
-    import Logo from "$lib/components/Logo.svelte";
     import { t } from "$lib/translations";
     import SignUpForm from "./SignUpForm.svelte";
 </script>
@@ -41,9 +40,7 @@
         </Col>
         <Col sm="10" md="7" lg="5">
             <div class="signup-card">
-                <div class="text-center mb-4 d-md-none">
-                    <Logo height="32" />
-                </div>
+                <div class="text-center mb-4 d-md-none">HappyDomain</div>
                 <h5 class="fw-bold mb-1">{$t("account.signup.join-call")}</h5>
                 <p class="text-body-secondary small mb-4">
                     Join our open source and free (as freedom) DNS platform to manage your domains

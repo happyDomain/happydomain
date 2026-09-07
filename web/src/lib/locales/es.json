@@ -60,10 +60,7 @@
         "run": "¡Ejecutar la consulta!",
         "survey": "¿Una observación? ¿Un comentario para compartir? ¡No dudes en escribirnos!",
         "update": "Actualizar",
-        "welcome": {
-            "start": "¡Bienvenido a ",
-            "end": "!"
-        },
+        "welcome": "¡Bienvenido a HappyDomain!",
         "help": "¡Ayuda!",
         "records": "{{n:eq; 0:ningún registro {{type}}; 1:registro {{type}}; default:registros {{type}}}}"
     },

@@ -26,6 +26,8 @@
     import { resolve } from "$app/paths";
     import { onMount } from "svelte";
     import "bootstrap-icons/font/bootstrap-icons.css";
+    import "@fontsource-variable/outfit";
+    import "@fontsource-variable/source-sans-3";
     import "../app.scss";
 
     import Header from "$lib/components/Header.svelte";

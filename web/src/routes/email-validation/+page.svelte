@@ -26,7 +26,6 @@
     import { resolve } from "$app/paths";
     import { Alert, Col, Container, Icon, Row, Spinner } from "@sveltestrap/sveltestrap";
 
-    import Logo from "$lib/components/Logo.svelte";
     import { validateEmail } from "$lib/api/user";
     import { appConfig } from "$lib/stores/config";
     import { toasts } from "$lib/stores/toasts";
@@ -77,9 +76,7 @@
         </Col>
         <Col sm="10" md="7" lg="5">
             <div class="validation-card">
-                <div class="text-center mb-4 d-md-none">
-                    <Logo height="32" />
-                </div>
+                <div class="text-center mb-4 d-md-none">HappyDomain</div>
                 {#if $appConfig.no_mail}
                     <Alert color="warning" class="mb-0">
                         <h6 class="alert-heading fw-bold">
@@ -134,7 +131,7 @@
 
     .validation-visual :global(.validation-icon) {
         font-size: 5rem;
-        color: #1cb487;
+        color: var(--hd-accent);
         opacity: 0.6;
     }
 

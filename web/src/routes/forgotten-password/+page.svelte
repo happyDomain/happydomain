@@ -25,7 +25,6 @@
     import { resolve } from "$app/paths";
     import { Alert, Col, Container, Icon, Row } from "@sveltestrap/sveltestrap";
 
-    import Logo from "$lib/components/Logo.svelte";
     import { appConfig } from "$lib/stores/config";
     import { t } from "$lib/translations";
     import ForgottenPasswordForm from "./ForgottenPasswordForm.svelte";
@@ -49,9 +48,7 @@
         </Col>
         <Col sm="10" md="7" lg="5">
             <div class="recover-card">
-                <div class="text-center mb-4 d-md-none">
-                    <Logo height="32" />
-                </div>
+                <div class="text-center mb-4 d-md-none">HappyDomain</div>
                 {#if $appConfig.no_mail}
                     <Alert color="warning" class="mb-0">
                         <h6 class="alert-heading fw-bold">{$t("password.recovery-unavailable.title")}</h6>

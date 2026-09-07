@@ -191,6 +191,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, captchaVerifi
 	router.GET("/fonts/*path", serveFile)
 	router.GET("/img/*path", serveFile)
 	router.GET("/favicon.ico", serveFile)
+	router.GET("/favicon.svg", serveFile)
 	router.GET("/manifest.json", serveManifest)
 	router.GET("/robots.txt", serveFile)
 	router.GET("/service-worker.js", serveFile)

@@ -1,6 +1,6 @@
 {
     "background_color": "#343a40",
-    "theme_color": "#1cb487",
+    "theme_color": "#008a65",
     "description": "Finally a simple interface for domain names.",
     "display": "standalone",
     "icons": [

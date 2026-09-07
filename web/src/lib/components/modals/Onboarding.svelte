@@ -43,7 +43,6 @@
     import DomainImport from "$lib/components/forms/DomainImport.svelte";
     import ProviderConnect from "$lib/components/forms/ProviderConnect.svelte";
     import LocaleSelect from "$lib/components/LocaleSelect.svelte";
-    import Logo from "$lib/components/Logo.svelte";
     import SettingsStateButtons from "$lib/components/providers/SettingsStateButtons.svelte";
     import ZoneList from "$lib/components/zones/ZoneList.svelte";
     import type { Provider } from "$lib/model/provider";
@@ -105,9 +104,7 @@
 <Modal {isOpen} size="xl" scrollable {toggle}>
     <ModalHeader {toggle} class="bg-primary-subtle ps-4 pt-4 align-items-start">
         <h3 class="fw-bolder text-primary mb-1">
-            {$t("common.welcome.start")}<Logo height="30" color="#1cb487" />{$t(
-                "common.welcome.end",
-            )}
+            {$t("common.welcome")}
         </h3>
         <p class="text-muted mb-2" style="font-size: 0.85em">
             {$t("onboarding.intro")}
@@ -164,7 +161,7 @@
             <Col class="p-3">
                 {#if step == 0}
                     <h3 class="fw-bolder">
-                        {$t("common.welcome.start")}<Logo height="30" />{$t("common.welcome.end")}
+                        {$t("common.welcome")}
                     </h3>
                     <Row class="align-items-center mb-2">
                         <label class="col-auto" for="locale-select">
@@ -309,7 +306,9 @@
                                     {$t("onboarding.explore.history.description")}
                                 </p>
                                 {#if $domains && $domains.length}
-                                    <a href={domainLinks().history($domains[0].id)} class="feature-link"
+                                    <a
+                                        href={domainLinks().history($domains[0].id)}
+                                        class="feature-link"
                                         >{$t("onboarding.explore.history.link")}
                                         <Icon name="arrow-right-short" /></a
                                     >

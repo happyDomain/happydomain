@@ -24,6 +24,8 @@
 <script lang="ts">
     import "../app.scss";
     import "bootstrap-icons/font/bootstrap-icons.css";
+    import "@fontsource-variable/outfit";
+    import "@fontsource-variable/source-sans-3";
 
     import { page } from "$app/state";
 
@@ -38,7 +40,6 @@
         NavLink,
     } from "@sveltestrap/sveltestrap";
 
-    import Logo from "$lib/components/Logo.svelte";
     import ReportProblem from "$lib/components/modals/ReportProblem.svelte";
     import Toaster from "$lib/components/Toaster.svelte";
     import { registerReportModal } from "$lib/stores/report";
@@ -83,7 +84,13 @@
         style="padding: 0; margin: -.5rem 1rem -.5rem 0;"
         target="_self"
     >
-        <Logo />
+        <img src="/img/happyDomain-mark.svg" alt="HappyDomain" height="26" class="d-sm-none" />
+        <img
+            src="/img/happyDomain.svg"
+            alt="HappyDomain"
+            height="25"
+            class="d-none d-sm-block"
+        />
         <Badge color="danger" class="d-none d-sm-inline">ADMIN</Badge>
     </NavbarBrand>
     <NavbarToggler on:click={() => (isOpen = !isOpen)} />

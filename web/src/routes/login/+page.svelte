@@ -25,7 +25,6 @@
     import { resolve } from "$app/paths";
     import { Col, Container, Row } from "@sveltestrap/sveltestrap";
 
-    import Logo from "$lib/components/Logo.svelte";
     import { appConfig } from "$lib/stores/config";
     import { t } from "$lib/translations";
     import LoginForm from "./LoginForm.svelte";
@@ -42,9 +41,7 @@
         </Col>
         <Col sm="10" md="7" lg="5">
             <div class="login-card">
-                <div class="text-center mb-4 d-md-none">
-                    <Logo height="32" />
-                </div>
+                <div class="text-center mb-4 d-md-none">HappyDomain</div>
                 <h5 class="fw-bold mb-4">{$t("account.signup.join-call")}</h5>
                 <LoginForm />
                 {#if !$appConfig.disable_registration}
