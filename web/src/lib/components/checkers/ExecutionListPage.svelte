@@ -277,9 +277,13 @@
                             <td>
                                 <div class="d-flex gap-1">
                                     <a
-                                        href={links.execution!(checkerId, execution.id!)}
+                                        href={execution.id
+                                            ? links.execution!(checkerId, execution.id)
+                                            : undefined}
                                         class="btn btn-sm btn-outline-primary"
-                                        class:disabled={!execution.id && !isRunning}
+                                        class:disabled={!execution.id}
+                                        aria-disabled={!execution.id}
+                                        tabindex={execution.id ? undefined : -1}
                                     >
                                         {$t("checkers.executions.view")}
                                     </a>
