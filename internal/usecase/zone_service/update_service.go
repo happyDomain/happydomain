@@ -31,27 +31,39 @@ import (
 
 // UpdateServiceUsecase replaces an existing service within a zone in-place.
 type UpdateServiceUsecase struct {
-	store serviceUC.ZoneUpdaterStorage
+	store           serviceUC.ZoneUpdaterStorage
+	validateService *serviceUC.ValidateServiceUsecase
 }
 
 // NewUpdateServiceUsecase creates an UpdateServiceUsecase with the given
 // storage dependency.
-func NewUpdateServiceUsecase(store serviceUC.ZoneUpdaterStorage) *UpdateServiceUsecase {
+func NewUpdateServiceUsecase(store serviceUC.ZoneUpdaterStorage, validateService *serviceUC.ValidateServiceUsecase) *UpdateServiceUsecase {
 	return &UpdateServiceUsecase{
-		store: store,
+		store:           store,
+		validateService: validateService,
 	}
 }
 
 // Update replaces the service identified by serviceid under subdomain in zone
 // with newservice, updates the zone's LastModified timestamp, and persists the
-// change.  A validation error is returned when the service cannot be found;
-// an internal error is returned when the storage update fails.
+// change.  A validation error is returned when newservice produces no valid
+// record or when the service cannot be found; an internal error is returned
+// when the storage update fails.
 func (uc *UpdateServiceUsecase) Update(
 	zone *happydns.Zone,
 	subdomain happydns.Subdomain,
+	origin happydns.Origin,
 	serviceid happydns.Identifier,
 	newservice *happydns.Service,
 ) error {
+	if newservice.Service == nil {
+		return happydns.ValidationError{Msg: "Unable to parse the given service."}
+	}
+
+	if _, err := uc.validateService.Validate(newservice.Service, subdomain, origin); err != nil {
+		return err
+	}
+
 	err := zone.EraseService(subdomain, serviceid, newservice)
 	if err != nil {
 		return happydns.ValidationError{Msg: fmt.Sprintf("unable to delete service: %s", err.Error())}

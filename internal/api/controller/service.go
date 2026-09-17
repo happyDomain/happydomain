@@ -156,7 +156,7 @@ func (sc *ServiceController) UpdateZoneService(c *gin.Context) {
 		return
 	}
 
-	zone, err = sc.duService.UpdateZoneService(user, domain, zone, happydns.Subdomain(usc.Domain), usc.Id, newservice)
+	zone, err = sc.duService.UpdateZoneService(user, domain, zone, happydns.Subdomain(usc.Domain), happydns.Origin(domain.DomainName), usc.Id, newservice)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return

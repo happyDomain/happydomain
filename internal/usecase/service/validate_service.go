@@ -50,12 +50,12 @@ func (uc *ValidateServiceUsecase) Validate(svc happydns.ServiceBody, subdomain h
 
 	if len(rrs) == 0 {
 		return nil, fmt.Errorf("no record can be generated from your service.")
-	} else {
-		hash := sha1.New()
-		for _, rr := range rrs {
-			io.WriteString(hash, rr.String())
-		}
-
-		return hash.Sum(nil), nil
 	}
+
+	hash := sha1.New()
+	for _, rr := range rrs {
+		io.WriteString(hash, rr.String())
+	}
+
+	return hash.Sum(nil), nil
 }

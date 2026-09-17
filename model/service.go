@@ -63,7 +63,8 @@ type ServiceBody interface {
 	// GenComment sum up the content of the Service, in a small usefull string.
 	GenComment() string
 
-	// GetRecords retrieves underlying RRs.
+	// GetRecords retrieves underlying RRs. Their names are relative to the
+	// subdomain the service sits on: empty for the subdomain itself.
 	GetRecords(domain string, ttl uint32, origin string) ([]Record, error)
 }
 

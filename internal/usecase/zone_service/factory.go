@@ -59,7 +59,7 @@ func NewZoneServiceUsecases(
 		ActionOnDomainUC: NewActionOnDomainUsecase(domainUpdater, zoneCreator),
 		AddToZoneUC:      NewAddToZoneUsecase(store, validateService),
 		DeleteFromZoneUC: NewDeleteFromZoneUsecase(store),
-		UpdateServiceUC:  NewUpdateServiceUsecase(store),
+		UpdateServiceUC:  NewUpdateServiceUsecase(store, validateService),
 	}
 }
 
@@ -106,10 +106,11 @@ func (s *Service) UpdateZoneService(
 	domain *happydns.Domain,
 	zone *happydns.Zone,
 	subdomain happydns.Subdomain,
+	origin happydns.Origin,
 	serviceID happydns.Identifier,
 	service *happydns.Service,
 ) (*happydns.Zone, error) {
 	return s.ActionOnDomainUC.ActionOnEditableZone(user, domain, zone, func(z *happydns.Zone) error {
-		return s.UpdateServiceUC.Update(z, subdomain, serviceID, service)
+		return s.UpdateServiceUC.Update(z, subdomain, origin, serviceID, service)
 	})
 }
