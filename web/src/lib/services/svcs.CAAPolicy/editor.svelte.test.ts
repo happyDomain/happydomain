@@ -74,7 +74,7 @@ describe("CAA policy editor", () => {
     });
 
     it("names in its summary the authorities a restricted policy allows", () => {
-        mount([newCAARecord("example.com", "issue", "letsencrypt.org")]);
+        mount([newCAARecord("issue", "letsencrypt.org")]);
 
         expect(kind("TLS certificates").getByRole("radio", { name: /Only chosen/ })).toBeChecked();
         expect(summary().getByText("Let's Encrypt")).toBeVisible();
@@ -92,7 +92,7 @@ describe("CAA policy editor", () => {
 
     it("drops the records of a kind handed back to any authority", async () => {
         const user = userEvent.setup();
-        const policy = mount([newCAARecord("example.com", "issue", ";")]);
+        const policy = mount([newCAARecord("issue", ";")]);
 
         await user.click(kind("TLS certificates").getByRole("radio", { name: /Any authority/ }));
 
@@ -101,7 +101,7 @@ describe("CAA policy editor", () => {
 
     it("keeps an authority left in the add row on submit", async () => {
         const user = userEvent.setup();
-        const policy = mount([newCAARecord("example.com", "issue", "letsencrypt.org")]);
+        const policy = mount([newCAARecord("issue", "letsencrypt.org")]);
 
         // The add row comes last: a user who took the save button for the way
         // to confirm their choice leaves it filled in.
@@ -114,7 +114,7 @@ describe("CAA policy editor", () => {
     });
 
     it("leaves an untouched add row out of the records", () => {
-        const policy = mount([newCAARecord("example.com", "issue", "letsencrypt.org")]);
+        const policy = mount([newCAARecord("issue", "letsencrypt.org")]);
 
         policy.form.requestSubmit();
 

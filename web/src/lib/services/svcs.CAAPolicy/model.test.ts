@@ -31,42 +31,43 @@ import {
     stringifyCAAIodef,
     type CAAIssuer,
     type CAAParameter,
-    type CAAIodef
+    type CAAIodef,
 } from "./model.svelte";
 import type { dnsResource, dnsTypeCAA } from "$lib/dns_rr";
 
 describe("newCAARecord", () => {
     it("should create a CAA record with the specified tag and value", () => {
-        const record = newCAARecord("example.com", "issue", "letsencrypt.org");
+        const record = newCAARecord("issue", "letsencrypt.org");
 
         expect(record.Tag).toBe("issue");
         expect(record.Value).toBe("letsencrypt.org");
-        expect(record.Hdr.Name).toBe("example.com");
+        // Relative to the service's subdomain: the backend appends it.
+        expect(record.Hdr.Name).toBe("");
     });
 
     it("should create a CAA record with issuewild tag", () => {
-        const record = newCAARecord("example.com", "issuewild", "comodoca.com");
+        const record = newCAARecord("issuewild", "comodoca.com");
 
         expect(record.Tag).toBe("issuewild");
         expect(record.Value).toBe("comodoca.com");
     });
 
     it("should create a CAA record with issuemail tag", () => {
-        const record = newCAARecord("example.com", "issuemail", "sectigo.com");
+        const record = newCAARecord("issuemail", "sectigo.com");
 
         expect(record.Tag).toBe("issuemail");
         expect(record.Value).toBe("sectigo.com");
     });
 
     it("should create a CAA record with iodef tag", () => {
-        const record = newCAARecord("example.com", "iodef", "mailto:security@example.com");
+        const record = newCAARecord("iodef", "mailto:security@example.com");
 
         expect(record.Tag).toBe("iodef");
         expect(record.Value).toBe("mailto:security@example.com");
     });
 
     it("should create a disallow record with semicolon value", () => {
-        const record = newCAARecord("example.com", "issue", ";");
+        const record = newCAARecord("issue", ";");
 
         expect(record.Tag).toBe("issue");
         expect(record.Value).toBe(";");
@@ -84,8 +85,8 @@ describe("CAAPolicy", () => {
 
         it("should initialize with existing CAA records", () => {
             const caaRecords: dnsTypeCAA[] = [
-                newCAARecord("example.com", "issue", "letsencrypt.org"),
-                newCAARecord("example.com", "issuewild", "comodoca.com"),
+                newCAARecord("issue", "letsencrypt.org"),
+                newCAARecord("issuewild", "comodoca.com"),
             ];
             const resource: dnsResource = { caa: caaRecords };
             const policy = new CAAPolicy(resource);
@@ -95,7 +96,7 @@ describe("CAAPolicy", () => {
         });
 
         it("should accept a single record instead of an RRset", () => {
-            const record = newCAARecord("example.com", "issue", "letsencrypt.org");
+            const record = newCAARecord("issue", "letsencrypt.org");
             const policy = new CAAPolicy({ caa: record });
 
             expect(policy.records).toEqual([record]);
@@ -106,9 +107,9 @@ describe("CAAPolicy", () => {
         it("should return the records of the tag, with their index", () => {
             const resource: dnsResource = {
                 caa: [
-                    newCAARecord("example.com", "issue", "letsencrypt.org"),
-                    newCAARecord("example.com", "issuewild", "digicert.com"),
-                    newCAARecord("example.com", "issue", "comodoca.com"),
+                    newCAARecord("issue", "letsencrypt.org"),
+                    newCAARecord("issuewild", "digicert.com"),
+                    newCAARecord("issue", "comodoca.com"),
                 ],
             };
             const policy = new CAAPolicy(resource);
@@ -116,15 +117,12 @@ describe("CAAPolicy", () => {
             const entries = policy.entries("issue");
 
             expect(entries.map((e) => e.index)).toEqual([0, 2]);
-            expect(entries.map((e) => e.record.Value)).toEqual([
-                "letsencrypt.org",
-                "comodoca.com",
-            ]);
+            expect(entries.map((e) => e.record.Value)).toEqual(["letsencrypt.org", "comodoca.com"]);
         });
 
         it("should return an empty array when no record matches", () => {
             const resource: dnsResource = {
-                caa: [newCAARecord("example.com", "issue", "letsencrypt.org")],
+                caa: [newCAARecord("issue", "letsencrypt.org")],
             };
             const policy = new CAAPolicy(resource);
 
@@ -135,10 +133,7 @@ describe("CAAPolicy", () => {
     describe("issuers", () => {
         it("should leave the deny marker out", () => {
             const resource: dnsResource = {
-                caa: [
-                    newCAARecord("example.com", "issue", ";"),
-                    newCAARecord("example.com", "issue", "letsencrypt.org"),
-                ],
+                caa: [newCAARecord("issue", ";"), newCAARecord("issue", "letsencrypt.org")],
             };
             const policy = new CAAPolicy(resource);
 
@@ -151,27 +146,27 @@ describe("CAAPolicy", () => {
 
     describe("isDenied", () => {
         it("should return true when a deny record exists for the tag", () => {
-            const resource: dnsResource = { caa: [newCAARecord("example.com", "issue", ";")] };
+            const resource: dnsResource = { caa: [newCAARecord("issue", ";")] };
 
             expect(new CAAPolicy(resource).isDenied("issue")).toBe(true);
         });
 
         it("should return false when an issuer is authorized", () => {
             const resource: dnsResource = {
-                caa: [newCAARecord("example.com", "issue", "letsencrypt.org")],
+                caa: [newCAARecord("issue", "letsencrypt.org")],
             };
 
             expect(new CAAPolicy(resource).isDenied("issue")).toBe(false);
         });
 
         it("should not confuse the tags", () => {
-            const resource: dnsResource = { caa: [newCAARecord("example.com", "issue", ";")] };
+            const resource: dnsResource = { caa: [newCAARecord("issue", ";")] };
 
             expect(new CAAPolicy(resource).isDenied("issuewild")).toBe(false);
         });
 
         it("should handle semicolon with whitespace", () => {
-            const resource: dnsResource = { caa: [newCAARecord("example.com", "issue", " ; ")] };
+            const resource: dnsResource = { caa: [newCAARecord("issue", " ; ")] };
 
             expect(new CAAPolicy(resource).isDenied("issue")).toBe(true);
         });
@@ -184,24 +179,21 @@ describe("CAAPolicy", () => {
 
         it("should be restricted when issuers are listed", () => {
             const resource: dnsResource = {
-                caa: [newCAARecord("example.com", "issue", "letsencrypt.org")],
+                caa: [newCAARecord("issue", "letsencrypt.org")],
             };
 
             expect(new CAAPolicy(resource).mode("issue")).toBe("restricted");
         });
 
         it("should be none when the deny marker is published", () => {
-            const resource: dnsResource = { caa: [newCAARecord("example.com", "issue", ";")] };
+            const resource: dnsResource = { caa: [newCAARecord("issue", ";")] };
 
             expect(new CAAPolicy(resource).mode("issue")).toBe("none");
         });
 
         it("should report each kind of certificate on its own", () => {
             const resource: dnsResource = {
-                caa: [
-                    newCAARecord("example.com", "issue", "letsencrypt.org"),
-                    newCAARecord("example.com", "issuemail", ";"),
-                ],
+                caa: [newCAARecord("issue", "letsencrypt.org"), newCAARecord("issuemail", ";")],
             };
             const policy = new CAAPolicy(resource);
 
@@ -214,25 +206,25 @@ describe("CAAPolicy", () => {
 
     describe("setMode", () => {
         it("should publish the deny marker for none", () => {
-            const policy = new CAAPolicy({ caa: [] }, "example.com");
+            const policy = new CAAPolicy({ caa: [] });
 
             policy.setMode("issue", "none");
 
             expect(policy.records).toHaveLength(1);
             expect(policy.records[0].Tag).toBe("issue");
             expect(policy.records[0].Value).toBe(";");
-            expect(policy.records[0].Hdr.Name).toBe("example.com");
+            expect(policy.records[0].Hdr.Name).toBe("");
             expect(policy.mode("issue")).toBe("none");
         });
 
         it("should replace the authorized issuers by the deny marker", () => {
             const resource: dnsResource = {
                 caa: [
-                    newCAARecord("example.com", "issue", "letsencrypt.org"),
-                    newCAARecord("example.com", "issue", "comodoca.com"),
+                    newCAARecord("issue", "letsencrypt.org"),
+                    newCAARecord("issue", "comodoca.com"),
                 ],
             };
-            const policy = new CAAPolicy(resource, "example.com");
+            const policy = new CAAPolicy(resource);
 
             policy.setMode("issue", "none");
 
@@ -243,12 +235,12 @@ describe("CAAPolicy", () => {
         it("should remove every record of the tag for any", () => {
             const resource: dnsResource = {
                 caa: [
-                    newCAARecord("example.com", "issue", ";"),
-                    newCAARecord("example.com", "issue", "letsencrypt.org"),
-                    newCAARecord("example.com", "issuewild", "digicert.com"),
+                    newCAARecord("issue", ";"),
+                    newCAARecord("issue", "letsencrypt.org"),
+                    newCAARecord("issuewild", "digicert.com"),
                 ],
             };
-            const policy = new CAAPolicy(resource, "example.com");
+            const policy = new CAAPolicy(resource);
 
             policy.setMode("issue", "any");
 
@@ -260,12 +252,12 @@ describe("CAAPolicy", () => {
         it("should keep the listed issuers when restricting again", () => {
             const resource: dnsResource = {
                 caa: [
-                    newCAARecord("example.com", "issue", ";"),
-                    newCAARecord("example.com", "issue", "letsencrypt.org"),
-                    newCAARecord("example.com", "issue", ";"),
+                    newCAARecord("issue", ";"),
+                    newCAARecord("issue", "letsencrypt.org"),
+                    newCAARecord("issue", ";"),
                 ],
             };
-            const policy = new CAAPolicy(resource, "example.com");
+            const policy = new CAAPolicy(resource);
 
             policy.setMode("issue", "restricted");
 
@@ -276,12 +268,9 @@ describe("CAAPolicy", () => {
 
         it("should not touch the other tags", () => {
             const resource: dnsResource = {
-                caa: [
-                    newCAARecord("example.com", "issue", ";"),
-                    newCAARecord("example.com", "issuewild", ";"),
-                ],
+                caa: [newCAARecord("issue", ";"), newCAARecord("issuewild", ";")],
             };
-            const policy = new CAAPolicy(resource, "example.com");
+            const policy = new CAAPolicy(resource);
 
             policy.setMode("issue", "any");
 
@@ -292,15 +281,15 @@ describe("CAAPolicy", () => {
     });
 
     describe("add", () => {
-        it("should append a record carrying the policy owner name", () => {
-            const policy = new CAAPolicy({ caa: [] }, "www.example.com");
+        it("should append a record sitting on the service's own subdomain", () => {
+            const policy = new CAAPolicy({ caa: [] });
 
             policy.add("issue", "letsencrypt.org");
 
             expect(policy.records).toHaveLength(1);
             expect(policy.records[0].Tag).toBe("issue");
             expect(policy.records[0].Value).toBe("letsencrypt.org");
-            expect(policy.records[0].Hdr.Name).toBe("www.example.com");
+            expect(policy.records[0].Hdr.Name).toBe("");
         });
     });
 
@@ -308,9 +297,9 @@ describe("CAAPolicy", () => {
         it("should remove the record at the specified index", () => {
             const resource: dnsResource = {
                 caa: [
-                    newCAARecord("example.com", "issue", "letsencrypt.org"),
-                    newCAARecord("example.com", "issue", "comodoca.com"),
-                    newCAARecord("example.com", "issuewild", "digicert.com"),
+                    newCAARecord("issue", "letsencrypt.org"),
+                    newCAARecord("issue", "comodoca.com"),
+                    newCAARecord("issuewild", "digicert.com"),
                 ],
             };
             const policy = new CAAPolicy(resource);
@@ -325,8 +314,8 @@ describe("CAAPolicy", () => {
         it("should handle removing the first record", () => {
             const resource: dnsResource = {
                 caa: [
-                    newCAARecord("example.com", "issue", "letsencrypt.org"),
-                    newCAARecord("example.com", "issue", "comodoca.com"),
+                    newCAARecord("issue", "letsencrypt.org"),
+                    newCAARecord("issue", "comodoca.com"),
                 ],
             };
             const policy = new CAAPolicy(resource);
@@ -350,7 +339,9 @@ describe("parseCAAIssuer", () => {
     });
 
     it("should parse issuer domain name with one parameter", () => {
-        const result = parseCAAIssuer("letsencrypt.org;accounturi=https://acme.example.com/account/123");
+        const result = parseCAAIssuer(
+            "letsencrypt.org;accounturi=https://acme.example.com/account/123",
+        );
 
         expect(result).toEqual({
             IssuerDomainName: "letsencrypt.org",
@@ -359,11 +350,16 @@ describe("parseCAAIssuer", () => {
     });
 
     it("should parse issuer domain name with multiple parameters", () => {
-        const result = parseCAAIssuer("letsencrypt.org;accounturi=https://acme.example.com/account/123;validationmethods=dns-01");
+        const result = parseCAAIssuer(
+            "letsencrypt.org;accounturi=https://acme.example.com/account/123;validationmethods=dns-01",
+        );
 
         expect(result).toEqual({
             IssuerDomainName: "letsencrypt.org",
-            Parameters: ["accounturi=https://acme.example.com/account/123", "validationmethods=dns-01"],
+            Parameters: [
+                "accounturi=https://acme.example.com/account/123",
+                "validationmethods=dns-01",
+            ],
         });
     });
 
@@ -422,7 +418,10 @@ describe("stringifyCAAIssuer", () => {
             Parameters: ["accounturi=https://acme.example.com/account/123"],
         };
 
-        const result = stringifyCAAIssuer(issuer, "letsencrypt.org; accounturi=https://acme.example.com/account/123");
+        const result = stringifyCAAIssuer(
+            issuer,
+            "letsencrypt.org; accounturi=https://acme.example.com/account/123",
+        );
 
         expect(result).toBe("letsencrypt.org; accounturi=https://acme.example.com/account/123");
     });
@@ -430,12 +429,17 @@ describe("stringifyCAAIssuer", () => {
     it("should stringify issuer with multiple parameters", () => {
         const issuer: CAAIssuer = {
             IssuerDomainName: "letsencrypt.org",
-            Parameters: ["accounturi=https://acme.example.com/account/123", "validationmethods=dns-01"],
+            Parameters: [
+                "accounturi=https://acme.example.com/account/123",
+                "validationmethods=dns-01",
+            ],
         };
 
         const result = stringifyCAAIssuer(issuer);
 
-        expect(result).toBe("letsencrypt.org;accounturi=https://acme.example.com/account/123;validationmethods=dns-01");
+        expect(result).toBe(
+            "letsencrypt.org;accounturi=https://acme.example.com/account/123;validationmethods=dns-01",
+        );
     });
 
     it("should return empty string when domain name is undefined", () => {
@@ -633,7 +637,8 @@ describe("stringifyCAAIodef", () => {
 
 describe("CAA parsing roundtrip tests", () => {
     it("should maintain issuer data through parse and stringify", () => {
-        const original = "letsencrypt.org;accounturi=https://acme.example.com/account/123;validationmethods=dns-01";
+        const original =
+            "letsencrypt.org;accounturi=https://acme.example.com/account/123;validationmethods=dns-01";
         const parsed = parseCAAIssuer(original);
         const stringified = stringifyCAAIssuer(parsed, original);
 

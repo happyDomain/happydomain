@@ -46,7 +46,7 @@
         value: SvcsCAAPolicyBody;
     }
 
-    let { dn, readonly = false, value = $bindable() }: Props = $props();
+    let { readonly = false, value = $bindable() }: Props = $props();
 
     // The RRset is the source of truth; normalize it once so the class below can
     // splice it in place.
@@ -56,7 +56,7 @@
         value.caa = [value.caa];
     }
 
-    let val = $derived(new CAAPolicy(value, dn));
+    let val = $derived(new CAAPolicy(value));
 
     const MODES: Array<CAAMode> = ["any", "restricted", "none"];
 

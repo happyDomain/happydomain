@@ -63,8 +63,8 @@
         />
     {:else}
         <Input
-            onclick={() => (value["A"] = newRR(dn, getRrtype("A")) as dnsTypeA)}
-            oninput={() => (value["A"] = newRR(dn, getRrtype("A")) as dnsTypeA)}
+            onclick={() => (value["A"] = newRR("", getRrtype("A")) as dnsTypeA)}
+            oninput={() => (value["A"] = newRR("", getRrtype("A")) as dnsTypeA)}
         />
     {/if}
     {#if value["AAAA"]}
@@ -81,8 +81,8 @@
     {:else}
         <Input
             label="test"
-            onclick={() => (value["AAAA"] = newRR(dn, getRrtype("AAAA")) as dnsTypeAAAA)}
-            oninput={() => (value["AAAA"] = newRR(dn, getRrtype("AAAA")) as dnsTypeAAAA)}
+            onclick={() => (value["AAAA"] = newRR("", getRrtype("AAAA")) as dnsTypeAAAA)}
+            oninput={() => (value["AAAA"] = newRR("", getRrtype("AAAA")) as dnsTypeAAAA)}
         />
     {/if}
 </div>

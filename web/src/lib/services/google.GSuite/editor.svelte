@@ -57,7 +57,7 @@
         if (validationCode && validationCode.trim() !== "") {
             // Create ValidationMX record if it doesn't exist
             if (!value["validationMX"]) {
-                value["validationMX"] = newRR(dn, getRrtype("MX")) as dnsTypeMX;
+                value["validationMX"] = newRR("", getRrtype("MX")) as dnsTypeMX;
                 value["validationMX"].Preference = 15;
             }
             // Update the Mx field with proper formatting

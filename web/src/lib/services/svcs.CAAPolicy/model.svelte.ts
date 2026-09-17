@@ -77,8 +77,8 @@ export class CAAIodef {
     }
 }
 
-export function newCAARecord(dn: string, tag: CAATag, value: string): dnsTypeCAA {
-    const rr = newRR(dn, getRrtype("CAA")) as dnsTypeCAA;
+export function newCAARecord(tag: CAATag, value: string): dnsTypeCAA {
+    const rr = newRR("", getRrtype("CAA")) as dnsTypeCAA;
     rr.Tag = tag;
     rr.Value = value;
     return rr;
@@ -90,15 +90,13 @@ export function newCAARecord(dn: string, tag: CAATag, value: string): dnsTypeCAA
  */
 export class CAAPolicy {
     records = $state<Array<dnsTypeCAA>>([]);
-    dn: string;
 
-    constructor(records: dnsResource, dn: string = "") {
+    constructor(records: dnsResource) {
         if (records["caa"]) {
             this.records = Array.isArray(records["caa"]) ? records["caa"] : [records["caa"]];
         } else {
             this.records = [];
         }
-        this.dn = dn;
     }
 
     /** Every record carrying that tag, deny marker included. */
@@ -139,7 +137,7 @@ export class CAAPolicy {
     }
 
     add(tag: CAATag, value: string): void {
-        this.records.push(newCAARecord(this.dn, tag, value));
+        this.records.push(newCAARecord(tag, value));
     }
 
     remove(index: number): void {

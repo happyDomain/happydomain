@@ -54,7 +54,7 @@
     function addLine() {
         if (!rrs) rrs = [];
 
-        const newrr = newRR(dn, getRrtype(rrtype));
+        const newrr = newRR("", getRrtype(rrtype));
 
         if (rrs.length) {
             newrr.Hdr = JSON.parse(JSON.stringify(rrs[rrs.length - 1].Hdr));
