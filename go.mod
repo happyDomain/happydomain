@@ -165,7 +165,6 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudflare/cloudflare-go v0.117.0 // indirect
 	github.com/cloudwego/base64x v0.1.7 // indirect
-	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/digitalocean/godo v1.203.0 // indirect
 	github.com/dnsimple/dnsimple-go/v8 v8.3.0 // indirect
 	github.com/failsafe-go/failsafe-go v0.9.6 // indirect
@@ -238,7 +237,6 @@ require (
 	github.com/philhug/opensrs-go v0.0.0-20171126225031-9dfa7433020d // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/pquerna/otp v1.5.0 // indirect
 	github.com/prometheus-community/pro-bing v0.8.0 // indirect
 	github.com/prometheus/client_golang v1.24.1
@@ -284,7 +282,6 @@ require (
 	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/ini.v1 v1.67.1 // indirect
 	gopkg.in/ns1/ns1-go.v2 v2.18.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 	moul.io/http2curl v1.0.0 // indirect
 )
 
