@@ -116,6 +116,16 @@ func DNSControlDiffByRecord(oldrrs []happydns.Record, newrrs []happydns.Record, 
 	return ret, nbCorrections, nil
 }
 
+// canonicalDNSRR strips DNSControl's rtype wrapper (e.g. *rtype.DS) down to
+// the canonical miekg record (e.g. *dns.DS) it embeds, via the copy() method
+// promoted from that embedded record. The modern types (DS, RP, …) DNSControl
+// hands back from models.RecordConfig.ToRR() come wrapped that way, and the
+// FromStruct converting them back to a RecordConfig asserts on the canonical
+// type specifically, rejecting the wrapper.
+func canonicalDNSRR(rr dns.RR) dns.RR {
+	return dns.Copy(rr)
+}
+
 // DNSControlRRtoRC converts a slice of happyDomain records to DNSControl's RecordConfig format.
 // It handles conversion of custom record types (like happydns.TXT, happydns.SPF) to standard dns.RR
 // before converting to DNSControl format.
@@ -146,7 +156,7 @@ func DNSControlRRtoRC(rrs []happydns.Record, origin string) (dnscontrol.Records,
 
 		if _, ok := rtypecontrol.Func[typeName]; ok {
 			dcn := domaintags.MakeDomainNameVarieties(originNoTrailingDot)
-			rcPtr, e := rtypecontrol.NewRecordConfigFromStruct(rr.Header().Name, rr.Header().Ttl, typeName, rr, dcn)
+			rcPtr, e := rtypecontrol.NewRecordConfigFromStruct(rr.Header().Name, rr.Header().Ttl, typeName, canonicalDNSRR(rr.(dns.RR)), dcn)
 			if e != nil {
 				return nil, e
 			}

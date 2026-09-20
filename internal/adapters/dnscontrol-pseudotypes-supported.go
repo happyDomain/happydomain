@@ -175,9 +175,8 @@ func recordFromRecordConfig(rc *models.RecordConfig) (happydns.Record, error) {
 	// rc.ToRR() for modern types (DS, RP, …) returns the rtype wrapper (e.g.
 	// *rtype.DS) rather than the canonical *dns.DS. When these are later passed
 	// back through dnsrr.RRtoRC → DS.FromStruct, the type assertion on *dns.DS
-	// fails. dns.Copy invokes the promoted copy() method from the embedded
-	// *dns.DS, which returns the canonical type.
-	return dns.Copy(rr), nil
+	// fails.
+	return canonicalDNSRR(rr), nil
 }
 
 // checkPseudoTypesSupported refuses the pseudo-types the given provider does not
