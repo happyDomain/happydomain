@@ -29,7 +29,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/term"
 
-	happydns "git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/internal/helpers"
 )
 
 // runAdminHash implements the `happydomain admin-hash` subcommand. It reads a
@@ -48,7 +48,7 @@ func runAdminHash() {
 
 	// Share the cost with user passwords, so raising it there also strengthens
 	// admin hashes generated from here.
-	hash, err := bcrypt.GenerateFromPassword(pw, happydns.BcryptCost)
+	hash, err := bcrypt.GenerateFromPassword(pw, helpers.BcryptCost)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Unable to hash password:", err)
 		os.Exit(1)

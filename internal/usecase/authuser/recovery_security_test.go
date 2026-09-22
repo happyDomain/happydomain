@@ -24,6 +24,7 @@ package authuser_test
 import (
 	"testing"
 
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/internal/usecase/authuser"
 	"git.happydns.org/happyDomain/model"
 )
@@ -112,10 +113,10 @@ func TestResetPassword_EmptyKeyAfterPasswordChange(t *testing.T) {
 		t.Fatal("SECURITY: password reset with empty key must be rejected")
 	}
 
-	if user.CheckPassword("AttackerPass789!") {
+	if helpers.CheckPassword(user, "AttackerPass789!") {
 		t.Fatal("SECURITY: attacker password must not have been set")
 	}
-	if !user.CheckPassword("CurrentPass456!") {
+	if !helpers.CheckPassword(user, "CurrentPass456!") {
 		t.Fatal("expected the legitimate password to still work after the failed reset")
 	}
 }

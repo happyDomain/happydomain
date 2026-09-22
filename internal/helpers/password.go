@@ -25,6 +25,10 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"strings"
+
+	"golang.org/x/crypto/bcrypt"
+
+	"git.happydns.org/happyDomain/model"
 )
 
 // GeneratePassword randomly generates a secure 12 chars long password.
@@ -50,4 +54,45 @@ func GeneratePassword() (password string, err error) {
 	}
 
 	return
+}
+
+// BcryptCost is the target bcrypt cost used when hashing passwords, for user
+// accounts and for the admin interface password alike.
+const BcryptCost = 12
+
+// NewUserAuth fills a new UserAuth structure and hashes the given password,
+// when not empty.
+func NewUserAuth(email string, password string) (u *happydns.UserAuth, err error) {
+	u = happydns.NewUserAuth(email)
+
+	if len(password) != 0 {
+		err = DefinePassword(u, password)
+	}
+
+	return
+}
+
+// DefinePassword erases the current UserAuth's password by the new one given.
+func DefinePassword(u *happydns.UserAuth, password string) (err error) {
+	u.Password, err = bcrypt.GenerateFromPassword([]byte(password), BcryptCost)
+	u.PasswordRecoveryKey = nil
+
+	return
+}
+
+// CheckPassword compares the given password to the hashed one in the UserAuth struct.
+func CheckPassword(u *happydns.UserAuth, password string) bool {
+	if len(password) < 8 || len(password) > 72 {
+		return false
+	}
+
+	return bcrypt.CompareHashAndPassword(u.Password, []byte(password)) == nil
+}
+
+// NeedsRehash reports whether the stored password hash was generated with a
+// lower cost than the current target, meaning it should be transparently
+// upgraded on the next successful login.
+func NeedsRehash(u *happydns.UserAuth) bool {
+	cost, err := bcrypt.Cost(u.Password)
+	return err != nil || cost < BcryptCost
 }

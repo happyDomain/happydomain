@@ -27,6 +27,7 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/internal/usecase/authuser"
 	"git.happydns.org/happyDomain/internal/usecase/user"
 	"git.happydns.org/happyDomain/model"
@@ -86,7 +87,7 @@ func (lu *loginUsecase) AuthenticateUserWithPassword(request happydns.LoginReque
 		return nil, fmt.Errorf("user not found: %w", err)
 	}
 
-	if !user.CheckPassword(request.Password) {
+	if !helpers.CheckPassword(user, request.Password) {
 		return nil, fmt.Errorf("invalid password")
 	}
 
@@ -98,8 +99,8 @@ func (lu *loginUsecase) AuthenticateUserWithPassword(request happydns.LoginReque
 	// Record the successful login time and transparently upgrade the hash cost if needed
 	now := time.Now()
 	user.LastLoggedIn = &now
-	if user.NeedsRehash() {
-		user.DefinePassword(request.Password)
+	if helpers.NeedsRehash(user) {
+		helpers.DefinePassword(user, request.Password)
 	}
 	lu.store.UpdateAuthUser(user)
 

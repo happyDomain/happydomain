@@ -23,8 +23,6 @@ package happydns
 
 import (
 	"time"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 // UserAuth represents an account used for authentication (not used in case of external auth).
@@ -57,18 +55,12 @@ type UserAuth struct {
 // UserAuths is a group of UserAuth.
 type UserAuths []*UserAuth
 
-// NewUserAuth fills a new UserAuth structure.
-func NewUserAuth(email string, password string) (u *UserAuth, err error) {
-	u = &UserAuth{
+// NewUserAuth fills a new UserAuth structure, without any password set.
+func NewUserAuth(email string) *UserAuth {
+	return &UserAuth{
 		Email:     email,
 		CreatedAt: time.Now(),
 	}
-
-	if len(password) != 0 {
-		err = u.DefinePassword(password)
-	}
-
-	return
 }
 
 func (u *UserAuth) GetUserId() Identifier {
@@ -81,35 +73,6 @@ func (u *UserAuth) GetEmail() string {
 
 func (u *UserAuth) JoinNewsletter() bool {
 	return u.AllowCommercials
-}
-
-// BcryptCost is the target bcrypt cost used when hashing passwords, for user
-// accounts and for the admin interface password alike.
-const BcryptCost = 12
-
-// DefinePassword erases the current UserAuth's password by the new one given.
-func (u *UserAuth) DefinePassword(password string) (err error) {
-	u.Password, err = bcrypt.GenerateFromPassword([]byte(password), BcryptCost)
-	u.PasswordRecoveryKey = nil
-
-	return
-}
-
-// CheckPassword compares the given password to the hashed one in the UserAuth struct.
-func (u *UserAuth) CheckPassword(password string) bool {
-	if len(password) < 8 || len(password) > 72 {
-		return false
-	}
-
-	return bcrypt.CompareHashAndPassword(u.Password, []byte(password)) == nil
-}
-
-// NeedsRehash reports whether the stored password hash was generated with a
-// lower cost than the current target, meaning it should be transparently
-// upgraded on the next successful login.
-func (u *UserAuth) NeedsRehash() bool {
-	cost, err := bcrypt.Cost(u.Password)
-	return err != nil || cost < BcryptCost
 }
 
 type AuthUserUsecase interface {

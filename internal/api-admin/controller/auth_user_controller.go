@@ -285,12 +285,12 @@ func (ac *AuthUserController) ResetUserPasswd(c *gin.Context) {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: err.Error()})
 			return
 		}
-	} else if user.CheckPassword(urp.Password) {
+	} else if helpers.CheckPassword(user, urp.Password) {
 		c.AbortWithStatusJSON(http.StatusNotAcceptable, happydns.ErrorResponse{Message: "The reset password is identical to the current password"})
 		return
 	}
 
-	err = user.DefinePassword(urp.Password)
+	err = helpers.DefinePassword(user, urp.Password)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: err.Error()})
 		return

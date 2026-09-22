@@ -29,6 +29,7 @@ import (
 	"testing"
 	"time"
 
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	"git.happydns.org/happyDomain/internal/usecase/authuser"
@@ -302,7 +303,7 @@ func TestChangePassword(t *testing.T) {
 	user := &happydns.UserAuth{
 		Email: "test@example.com",
 	}
-	user.DefinePassword("OldPassword123!")
+	helpers.DefinePassword(user, "OldPassword123!")
 
 	err := store.CreateAuthUser(user)
 	if err != nil {
@@ -319,7 +320,7 @@ func TestChangePassword(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
-	if !updatedUser.CheckPassword(newPassword) {
+	if !helpers.CheckPassword(updatedUser, newPassword) {
 		t.Error("Expected password to be updated")
 	}
 }
@@ -344,7 +345,7 @@ func TestChangePassword_ClosesInteractiveSessions(t *testing.T) {
 	user := &happydns.UserAuth{
 		Email: "test@example.com",
 	}
-	user.DefinePassword("OldPassword123!")
+	helpers.DefinePassword(user, "OldPassword123!")
 	if err := store.CreateAuthUser(user); err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -372,7 +373,7 @@ func TestChangePassword_SessionCloseFailure(t *testing.T) {
 	user := &happydns.UserAuth{
 		Email: "test@example.com",
 	}
-	user.DefinePassword("OldPassword123!")
+	helpers.DefinePassword(user, "OldPassword123!")
 	if err := store.CreateAuthUser(user); err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -388,14 +389,14 @@ func TestChangePassword_WeakNewPassword(t *testing.T) {
 	user := &happydns.UserAuth{
 		Email: "test@example.com",
 	}
-	user.DefinePassword("OldPassword123!")
+	helpers.DefinePassword(user, "OldPassword123!")
 	store.CreateAuthUser(user)
 
 	err := service.ChangePassword(user, "short")
 	requireValidationError(t, err)
 
 	// Verify old password still works (change was not applied)
-	if !user.CheckPassword("OldPassword123!") {
+	if !helpers.CheckPassword(user, "OldPassword123!") {
 		t.Error("expected old password to still be valid after failed change")
 	}
 }
@@ -406,7 +407,7 @@ func TestCheckPassword(t *testing.T) {
 	user := &happydns.UserAuth{
 		Email: "test@example.com",
 	}
-	user.DefinePassword("OldPassword123!")
+	helpers.DefinePassword(user, "OldPassword123!")
 
 	err := store.CreateAuthUser(user)
 	if err != nil {
@@ -504,7 +505,7 @@ func TestDeleteAuthUser(t *testing.T) {
 	user := &happydns.UserAuth{
 		Email: "test@example.com",
 	}
-	user.DefinePassword("TestPassword123!")
+	helpers.DefinePassword(user, "TestPassword123!")
 
 	err := store.CreateAuthUser(user)
 	if err != nil {
@@ -896,7 +897,7 @@ func TestRecovery_ResetPasswordSuccess(t *testing.T) {
 		t.Fatalf("expected password reset to succeed, got %v", err)
 	}
 
-	if !user.CheckPassword(newPassword) {
+	if !helpers.CheckPassword(user, newPassword) {
 		t.Error("expected new password to work after reset")
 	}
 }
@@ -925,7 +926,7 @@ func TestRecovery_ResetPasswordInvalidKey(t *testing.T) {
 		t.Error("expected error for invalid recovery key")
 	}
 
-	if !user.CheckPassword("OldPassword123!") {
+	if !helpers.CheckPassword(user, "OldPassword123!") {
 		t.Error("expected old password to still work after failed reset")
 	}
 }

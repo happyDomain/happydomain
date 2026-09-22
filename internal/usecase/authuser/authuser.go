@@ -74,7 +74,7 @@ func (s *Service) CanRegister(user happydns.UserRegistration) error {
 
 // CheckPassword validates the user's current password and new password constraints.
 func (s *Service) CheckPassword(user *happydns.UserAuth, request happydns.ChangePasswordForm) error {
-	if !user.CheckPassword(request.Current) {
+	if !helpers.CheckPassword(user, request.Current) {
 		return happydns.ValidationError{Msg: "bad current password"}
 	}
 	return s.checkPasswordConstraints(request.Password, request.PasswordConfirm)
@@ -137,7 +137,7 @@ func (s *Service) ChangePassword(user *happydns.UserAuth, newPassword string) er
 	}
 
 	// Apply the new password to the user
-	if err := user.DefinePassword(newPassword); err != nil {
+	if err := helpers.DefinePassword(user, newPassword); err != nil {
 		return fmt.Errorf("unable to change user password: %w", err)
 	}
 
@@ -186,7 +186,7 @@ func (s *Service) CreateAuthUser(uu happydns.UserRegistration) (*happydns.UserAu
 	}
 
 	// Create the user object
-	user, err := happydns.NewUserAuth(uu.Email, uu.Password)
+	user, err := helpers.NewUserAuth(uu.Email, uu.Password)
 	if err != nil {
 		return nil, happydns.InternalError{
 			Err:         fmt.Errorf("unable to create user object: %w", err),
@@ -240,7 +240,7 @@ If this was not you, you can safely ignore this email.
 // DeleteAuthUser deletes an authenticated user from the system, ensuring their sessions are also removed.
 func (s *Service) DeleteAuthUser(user *happydns.UserAuth, password string) error {
 	// Verify the current password
-	if !user.CheckPassword(password) {
+	if !helpers.CheckPassword(user, password) {
 		return fmt.Errorf("invalid current password")
 	}
 

@@ -237,7 +237,7 @@ func (uc *UserController) NewAuthUser(c *gin.Context) {
 		return
 	}
 
-	au, err := happydns.NewUserAuth(user.Email, password)
+	au, err := helpers.NewUserAuth(user.Email, password)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: err.Error()})
 		return

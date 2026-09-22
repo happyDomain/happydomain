@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	"git.happydns.org/happyDomain/internal/usecase"
 	userUC "git.happydns.org/happyDomain/internal/usecase/user"
@@ -101,7 +102,7 @@ func Test_AuthenticateUserWithPassword_WrongPassword(t *testing.T) {
 	authUser := &happydns.UserAuth{
 		Email: "a@b.c",
 	}
-	err := authUser.DefinePassword("secure")
+	err := helpers.DefinePassword(authUser, "secure")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -129,7 +130,7 @@ func Test_AuthenticateUserWithPassword_WeakPassword(t *testing.T) {
 	authUser := &happydns.UserAuth{
 		Email: "a@b.c",
 	}
-	err := authUser.DefinePassword("weak")
+	err := helpers.DefinePassword(authUser, "weak")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -157,7 +158,7 @@ func Test_AuthenticateUserWithPassword_UnverifiedEmail(t *testing.T) {
 	authUser := &happydns.UserAuth{
 		Email: "a@b.c",
 	}
-	err := authUser.DefinePassword("v3rySecure")
+	err := helpers.DefinePassword(authUser, "v3rySecure")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -185,7 +186,7 @@ func Test_AuthenticateUserWithPassword_NoEmail(t *testing.T) {
 	authUser := &happydns.UserAuth{
 		Email: "a@b.c",
 	}
-	err := authUser.DefinePassword("v3rySecure")
+	err := helpers.DefinePassword(authUser, "v3rySecure")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -215,7 +216,7 @@ func Test_AuthenticateUserWithPassword(t *testing.T) {
 		Email:             "a@b.c",
 		EmailVerification: &now,
 	}
-	err := authUser.DefinePassword("v3rySecure")
+	err := helpers.DefinePassword(authUser, "v3rySecure")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
