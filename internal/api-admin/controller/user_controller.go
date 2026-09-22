@@ -89,7 +89,7 @@ func (uc *UserController) UserHandler(c *gin.Context) {
 //	@Router			/users [get]
 func (uc *UserController) GetUsers(c *gin.Context) {
 	users, err := uc.adminService.ListAllUsers()
-	happydns.ApiResponse(c, users, err)
+	apiResponse(c, users, err)
 }
 
 // newUser creates a new user in the database.
@@ -113,7 +113,7 @@ func (uc *UserController) NewUser(c *gin.Context) {
 		return
 	}
 
-	happydns.ApiResponse(c, uu, uc.adminService.CreateOrUpdateUser(uu))
+	apiResponse(c, uu, uc.adminService.CreateOrUpdateUser(uu))
 }
 
 // deleteUsers deletes all users from the database.
@@ -128,7 +128,7 @@ func (uc *UserController) NewUser(c *gin.Context) {
 //	@Failure		500		{object}	happydns.ErrorResponse
 //	@Router			/users [delete]
 func (uc *UserController) DeleteUsers(c *gin.Context) {
-	happydns.ApiResponse(c, true, uc.adminService.ClearUsers())
+	apiResponse(c, true, uc.adminService.ClearUsers())
 }
 
 // getUser retrieves a specific user from the database.
@@ -188,7 +188,7 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 		u.Quota = uu.Quota
 	})
 
-	happydns.ApiResponse(c, updated, err)
+	apiResponse(c, updated, err)
 }
 
 // deleteUser removes a specific user from the database.
@@ -207,7 +207,7 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 func (uc *UserController) DeleteUser(c *gin.Context) {
 	user := c.MustGet("user").(*happydns.User)
 
-	happydns.ApiResponse(c, true, uc.adminService.DeleteUserByID(user.Id))
+	apiResponse(c, true, uc.adminService.DeleteUserByID(user.Id))
 }
 
 type newAuthUserResponse struct {
@@ -256,11 +256,11 @@ func (uc *UserController) NewAuthUser(c *gin.Context) {
 	// AdminUpdateAuthUser persists at the supplied Id (Put), unlike
 	// AdminCreateAuthUser which always allocates a fresh identifier.
 	if err := uc.authAdminService.AdminUpdateAuthUser(au); err != nil {
-		happydns.ApiResponse(c, nil, err)
+		apiResponse(c, nil, err)
 		return
 	}
 
-	happydns.ApiResponse(c, newAuthUserResponse{Password: password, AuthUser: au}, nil)
+	apiResponse(c, newAuthUserResponse{Password: password, AuthUser: au}, nil)
 }
 
 // getUsersStats returns resource counts (providers, domains, zones) for each user.
@@ -277,7 +277,7 @@ func (uc *UserController) NewAuthUser(c *gin.Context) {
 func (uc *UserController) GetUserStats(c *gin.Context) {
 	users, err := uc.adminService.ListAllUsers()
 	if err != nil {
-		happydns.ApiResponse(c, nil, err)
+		apiResponse(c, nil, err)
 		return
 	}
 
@@ -285,7 +285,7 @@ func (uc *UserController) GetUserStats(c *gin.Context) {
 	zoneCount := map[string]int{}
 	domains, err := uc.adminDomain.ListAllDomains()
 	if err != nil {
-		happydns.ApiResponse(c, nil, err)
+		apiResponse(c, nil, err)
 		return
 	}
 	for _, d := range domains {
@@ -297,7 +297,7 @@ func (uc *UserController) GetUserStats(c *gin.Context) {
 	providerCount := map[string]int{}
 	providers, err := uc.adminProvider.ListAllProviderMetas()
 	if err != nil {
-		happydns.ApiResponse(c, nil, err)
+		apiResponse(c, nil, err)
 		return
 	}
 	for _, p := range providers {
@@ -315,5 +315,5 @@ func (uc *UserController) GetUserStats(c *gin.Context) {
 		})
 	}
 
-	happydns.ApiResponse(c, stats, nil)
+	apiResponse(c, stats, nil)
 }

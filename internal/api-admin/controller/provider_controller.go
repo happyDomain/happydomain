@@ -61,12 +61,12 @@ func (pc *ProviderController) ListProviders(c *gin.Context) {
 	user := middleware.MyUser(c)
 	if user != nil {
 		metas, err := pc.providerService.ListUserProviders(c.Request.Context(), user)
-		happydns.ApiResponse(c, metas, err)
+		apiResponse(c, metas, err)
 		return
 	}
 
 	metas, err := pc.adminService.ListAllProviderMetas()
-	happydns.ApiResponse(c, metas, err)
+	apiResponse(c, metas, err)
 }
 
 // AddProvider appends a new provider.
@@ -109,7 +109,7 @@ func (pc *ProviderController) AddProvider(c *gin.Context) {
 func (pc *ProviderController) DeleteProvider(c *gin.Context) {
 	srcMeta := c.MustGet("providermeta").(*happydns.ProviderMeta)
 
-	happydns.ApiResponse(c, true, pc.adminService.DeleteProviderByID(srcMeta.Id))
+	apiResponse(c, true, pc.adminService.DeleteProviderByID(srcMeta.Id))
 }
 
 // GetProvider retrieves information about a given provider.
@@ -194,5 +194,5 @@ func (pc *ProviderController) ClearProviders(c *gin.Context) {
 		return
 	}
 
-	happydns.ApiResponse(c, true, pc.adminService.ClearProviders())
+	apiResponse(c, true, pc.adminService.ClearProviders())
 }

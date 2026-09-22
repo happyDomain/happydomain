@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2026 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,17 +19,21 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package happydns
+package controller
 
 import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
+	"git.happydns.org/happyDomain/internal/api/middleware"
 )
 
-func ApiResponse(c *gin.Context, data any, err error) {
+// apiResponse answers with data on success, or delegates the error to
+// middleware.ErrorResponse (400 unless the error carries its own status).
+func apiResponse(c *gin.Context, data any, err error) {
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, ErrorResponse{Message: err.Error()})
+		middleware.ErrorResponse(c, http.StatusBadRequest, err)
 		return
 	}
 

@@ -58,11 +58,11 @@ func (tc *TidyController) TidyDB(c *gin.Context) {
 	if v := c.Query("drop_invalid"); v != "" {
 		parsed, err := strconv.ParseBool(v)
 		if err != nil {
-			happydns.ApiResponse(c, nil, fmt.Errorf("drop_invalid must be a boolean: %w", err))
+			apiResponse(c, nil, fmt.Errorf("drop_invalid must be a boolean: %w", err))
 			return
 		}
 		dropInvalid = parsed
 	}
 
-	happydns.ApiResponse(c, true, tc.tidyUpService.TidyAll(dropInvalid))
+	apiResponse(c, true, tc.tidyUpService.TidyAll(dropInvalid))
 }

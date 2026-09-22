@@ -53,7 +53,7 @@ func NewSessionController(cfg *happydns.Options, sessionService happydns.AdminSe
 //	@Failure		500	{object}	happydns.ErrorResponse	"Internal server error"
 //	@Router			/sessions [delete]
 func (sc *SessionController) DeleteSessions(c *gin.Context) {
-	happydns.ApiResponse(c, true, sc.sessionService.ClearAllSessions())
+	apiResponse(c, true, sc.sessionService.ClearAllSessions())
 }
 
 // sessionHandler is a middleware that loads a session by ID and adds it to the context.
@@ -106,5 +106,5 @@ func (sc *SessionController) GetSession(c *gin.Context) {
 //	@Failure		500			{object}	happydns.ErrorResponse	"Internal server error"
 //	@Router			/sessions/{sessionid} [delete]
 func (sc *SessionController) DeleteSession(c *gin.Context) {
-	happydns.ApiResponse(c, true, sc.sessionService.DeleteSessionByID(c.Param("sessionid")))
+	apiResponse(c, true, sc.sessionService.DeleteSessionByID(c.Param("sessionid")))
 }

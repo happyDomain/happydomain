@@ -76,7 +76,7 @@ func (zc *ZoneController) AddZone(c *gin.Context) {
 	}
 	uz.Id = nil
 
-	happydns.ApiResponse(c, uz, zc.zoneService.CreateZone(uz))
+	apiResponse(c, uz, zc.zoneService.CreateZone(uz))
 }
 
 // deleteZone deletes a zone from the system.
@@ -103,7 +103,7 @@ func (zc *ZoneController) DeleteZone(c *gin.Context) {
 		return
 	}
 
-	happydns.ApiResponse(c, true, zc.zoneService.DeleteZone(zoneid))
+	apiResponse(c, true, zc.zoneService.DeleteZone(zoneid))
 }
 
 // getZone retrieves a zone's information.
@@ -179,5 +179,5 @@ func (zc *ZoneController) UpdateZone(c *gin.Context) {
 	}
 	uz.Id = zone.Id
 
-	happydns.ApiResponse(c, uz, zc.zoneService.UpdateZone(zone.Id, func(z *happydns.Zone) { *z = *uz }))
+	apiResponse(c, uz, zc.zoneService.UpdateZone(zone.Id, func(z *happydns.Zone) { *z = *uz }))
 }

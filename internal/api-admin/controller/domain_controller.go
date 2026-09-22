@@ -84,7 +84,7 @@ func (dc *DomainController) ListDomains(c *gin.Context) {
 		return
 	}
 
-	happydns.ApiResponse(c, domains, nil)
+	apiResponse(c, domains, nil)
 }
 
 // NewDomain creates a new domain in the system.
@@ -116,7 +116,7 @@ func (dc *DomainController) NewDomain(c *gin.Context) {
 	ud.Id = nil
 	ud.Owner = user.Id
 
-	happydns.ApiResponse(c, ud, dc.adminService.AdminCreateDomain(ud))
+	apiResponse(c, ud, dc.adminService.AdminCreateDomain(ud))
 }
 
 // DeleteDomain removes a domain from the system by identifier or domain name.
@@ -163,7 +163,7 @@ func (dc *DomainController) DeleteDomain(c *gin.Context) {
 		domainid = domains[0].Id
 	}
 
-	happydns.ApiResponse(c, true, dc.domainService.DeleteDomain(domainid))
+	apiResponse(c, true, dc.domainService.DeleteDomain(domainid))
 }
 
 func (dc *DomainController) searchUserDomain(filter func(*happydns.Domain) bool) *happydns.User {
@@ -215,7 +215,7 @@ func (dc *DomainController) GetDomain(c *gin.Context) {
 		}
 
 		domain, err := dc.adminService.GetDomainsByFQDN(user, c.Param("domain"))
-		happydns.ApiResponse(c, domain, err)
+		apiResponse(c, domain, err)
 	} else {
 		var user *happydns.User
 
@@ -229,16 +229,16 @@ func (dc *DomainController) GetDomain(c *gin.Context) {
 
 		domain, err := dc.adminService.GetDomainByID(domainid)
 		if err != nil {
-			happydns.ApiResponse(c, nil, err)
+			apiResponse(c, nil, err)
 			return
 		}
 
 		if !user.Id.Equals(domain.Owner) {
-			happydns.ApiResponse(c, nil, fmt.Errorf("domain not found"))
+			apiResponse(c, nil, happydns.ErrDomainNotFound)
 			return
 		}
 
-		happydns.ApiResponse(c, domain, err)
+		apiResponse(c, domain, err)
 	}
 }
 
@@ -272,7 +272,7 @@ func (dc *DomainController) UpdateDomain(c *gin.Context) {
 	}
 	ud.Id = domain.Id
 
-	happydns.ApiResponse(c, ud, dc.adminService.AdminUpdateDomain(ud))
+	apiResponse(c, ud, dc.adminService.AdminUpdateDomain(ud))
 }
 
 // ClearDomains removes all domains from the system or all domains belonging to a specific user.
@@ -314,7 +314,7 @@ func (dc *DomainController) ClearDomains(c *gin.Context) {
 		return
 	}
 
-	happydns.ApiResponse(c, true, dc.adminService.ClearDomains())
+	apiResponse(c, true, dc.adminService.ClearDomains())
 }
 
 // UpdateZones updates the zone history for a specific domain.
@@ -345,5 +345,5 @@ func (dc *DomainController) UpdateZones(c *gin.Context) {
 		return
 	}
 
-	happydns.ApiResponse(c, domain, dc.adminService.AdminUpdateDomain(domain))
+	apiResponse(c, domain, dc.adminService.AdminUpdateDomain(domain))
 }

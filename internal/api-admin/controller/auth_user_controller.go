@@ -74,7 +74,7 @@ func (ac *AuthUserController) AuthUserHandler(c *gin.Context) {
 //	@Router			/auth [get]
 func (ac *AuthUserController) GetAuthUsers(c *gin.Context) {
 	users, err := ac.adminService.ListAllAuthUsers()
-	happydns.ApiResponse(c, users, err)
+	apiResponse(c, users, err)
 }
 
 // NewAuthUser creates a new user account.
@@ -99,7 +99,7 @@ func (ac *AuthUserController) NewAuthUser(c *gin.Context) {
 	}
 	uu.Id = []byte{}
 
-	happydns.ApiResponse(c, uu, ac.adminService.AdminCreateAuthUser(uu))
+	apiResponse(c, uu, ac.adminService.AdminCreateAuthUser(uu))
 }
 
 // InviteAuthUser creates a new user account, marks its email as verified, and
@@ -125,7 +125,7 @@ func (ac *AuthUserController) InviteAuthUser(c *gin.Context) {
 	}
 	uu.Id = []byte{}
 
-	happydns.ApiResponse(c, uu, ac.adminService.AdminInviteAuthUser(uu))
+	apiResponse(c, uu, ac.adminService.AdminInviteAuthUser(uu))
 }
 
 // DeleteAuthUsers deletes all user accounts.
@@ -140,7 +140,7 @@ func (ac *AuthUserController) InviteAuthUser(c *gin.Context) {
 //	@Failure		500	{object}	happydns.ErrorResponse
 //	@Router			/auth [delete]
 func (ac *AuthUserController) DeleteAuthUsers(c *gin.Context) {
-	happydns.ApiResponse(c, true, ac.adminService.ClearAuthUsers())
+	apiResponse(c, true, ac.adminService.ClearAuthUsers())
 }
 
 // GetAuthUser retrieves a specific user by identifier.
@@ -187,7 +187,7 @@ func (ac *AuthUserController) UpdateAuthUser(c *gin.Context) {
 	}
 	uu.Id = user.Id
 
-	happydns.ApiResponse(c, uu, ac.adminService.AdminUpdateAuthUser(uu))
+	apiResponse(c, uu, ac.adminService.AdminUpdateAuthUser(uu))
 }
 
 // DeleteAuthUser deletes a specific user account.
@@ -206,7 +206,7 @@ func (ac *AuthUserController) UpdateAuthUser(c *gin.Context) {
 func (ac *AuthUserController) DeleteAuthUser(c *gin.Context) {
 	user := c.MustGet("authuser").(*happydns.UserAuth)
 
-	happydns.ApiResponse(c, true, ac.adminService.AdminDeleteAuthUser(user))
+	apiResponse(c, true, ac.adminService.AdminDeleteAuthUser(user))
 }
 
 // EmailValidationLink generates an email validation link for a user.
@@ -226,7 +226,7 @@ func (ac *AuthUserController) EmailValidationLink(c *gin.Context) {
 	user := c.MustGet("authuser").(*happydns.UserAuth)
 
 	link, err := ac.auService.GenerateValidationLink(user)
-	happydns.ApiResponse(c, link, err)
+	apiResponse(c, link, err)
 }
 
 // RecoverUserAcct generates an account recovery link for a user.
@@ -246,7 +246,7 @@ func (ac *AuthUserController) RecoverUserAcct(c *gin.Context) {
 	user := c.MustGet("authuser").(*happydns.UserAuth)
 
 	link, err := ac.auService.GenerateRecoveryLink(user)
-	happydns.ApiResponse(c, link, err)
+	apiResponse(c, link, err)
 }
 
 type resetPassword struct {
@@ -296,7 +296,7 @@ func (ac *AuthUserController) ResetUserPasswd(c *gin.Context) {
 		return
 	}
 
-	happydns.ApiResponse(c, urp, ac.adminService.AdminUpdateAuthUser(user))
+	apiResponse(c, urp, ac.adminService.AdminUpdateAuthUser(user))
 }
 
 // SendRecoverUserAcct sends an account recovery email to the user.
@@ -315,7 +315,7 @@ func (ac *AuthUserController) ResetUserPasswd(c *gin.Context) {
 func (ac *AuthUserController) SendRecoverUserAcct(c *gin.Context) {
 	user := c.MustGet("authuser").(*happydns.UserAuth)
 
-	happydns.ApiResponse(c, true, ac.auService.SendRecoveryLink(user))
+	apiResponse(c, true, ac.auService.SendRecoveryLink(user))
 }
 
 // SendValidateUserEmail sends an email validation link to the user.
@@ -334,7 +334,7 @@ func (ac *AuthUserController) SendRecoverUserAcct(c *gin.Context) {
 func (ac *AuthUserController) SendValidateUserEmail(c *gin.Context) {
 	user := c.MustGet("authuser").(*happydns.UserAuth)
 
-	happydns.ApiResponse(c, true, ac.auService.SendValidationLink(user))
+	apiResponse(c, true, ac.auService.SendValidationLink(user))
 }
 
 // ValidateEmail marks a user's email as verified.
@@ -353,5 +353,5 @@ func (ac *AuthUserController) SendValidateUserEmail(c *gin.Context) {
 func (ac *AuthUserController) ValidateEmail(c *gin.Context) {
 	user := c.MustGet("authuser").(*happydns.UserAuth)
 
-	happydns.ApiResponse(c, user, ac.adminService.MarkEmailValidated(user))
+	apiResponse(c, user, ac.adminService.MarkEmailValidated(user))
 }
