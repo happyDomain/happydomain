@@ -103,6 +103,7 @@ func (uc *UserController) GetUsers(c *gin.Context) {
 //	@Param			body	body		happydns.User			true	"User information"
 //	@Success		200		{object}	happydns.User			"The created user"
 //	@Failure		400		{object}	happydns.ErrorResponse	"Invalid input"
+//	@Failure		409		{object}	happydns.ErrorResponse	"A user with this email already exists"
 //	@Failure		500		{object}	happydns.ErrorResponse
 //	@Router			/users [post]
 func (uc *UserController) NewUser(c *gin.Context) {
