@@ -27,22 +27,23 @@ import (
 	"fmt"
 	"testing"
 
-	happydns "git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/pkg/domaininfo"
+	"git.happydns.org/happyDomain/pkg/domaininfo/types"
 
 	"git.happydns.org/happyDomain/internal/usecase"
 )
 
-func fakeGetter(info *happydns.DomainInfo, err error) happydns.DomainInfoGetter {
-	return func(_ context.Context, _ happydns.Origin) (*happydns.DomainInfo, error) {
+func fakeGetter(info *domaininfo.DomainInfo, err error) domaininfo.Getter {
+	return func(_ context.Context, _ string) (*domaininfo.DomainInfo, error) {
 		return info, err
 	}
 }
 
 func TestDomainInfoUsecase_FirstGetterSucceeds(t *testing.T) {
-	expected := &happydns.DomainInfo{Name: "example.com", Registrar: "First"}
+	expected := &domaininfo.DomainInfo{Name: "example.com", Registrar: "First"}
 	uc := usecase.NewDomainInfoUsecase(
 		fakeGetter(expected, nil),
-		fakeGetter(&happydns.DomainInfo{Name: "example.com", Registrar: "Second"}, nil),
+		fakeGetter(&domaininfo.DomainInfo{Name: "example.com", Registrar: "Second"}, nil),
 	)
 
 	info, err := uc.GetDomainInfo(context.Background(), "example.com.")
@@ -55,7 +56,7 @@ func TestDomainInfoUsecase_FirstGetterSucceeds(t *testing.T) {
 }
 
 func TestDomainInfoUsecase_FallsBackToSecondGetter(t *testing.T) {
-	expected := &happydns.DomainInfo{Name: "example.com", Registrar: "Second"}
+	expected := &domaininfo.DomainInfo{Name: "example.com", Registrar: "Second"}
 	uc := usecase.NewDomainInfoUsecase(
 		fakeGetter(nil, fmt.Errorf("RDAP failed")),
 		fakeGetter(expected, nil),
@@ -73,15 +74,15 @@ func TestDomainInfoUsecase_FallsBackToSecondGetter(t *testing.T) {
 func TestDomainInfoUsecase_DomainDoesNotExist_StopsImmediately(t *testing.T) {
 	secondCalled := false
 	uc := usecase.NewDomainInfoUsecase(
-		fakeGetter(nil, happydns.ErrDomainDoesNotExist),
-		func(_ context.Context, _ happydns.Origin) (*happydns.DomainInfo, error) {
+		fakeGetter(nil, types.ErrDomainDoesNotExist),
+		func(_ context.Context, _ string) (*domaininfo.DomainInfo, error) {
 			secondCalled = true
-			return &happydns.DomainInfo{Name: "example.com"}, nil
+			return &domaininfo.DomainInfo{Name: "example.com"}, nil
 		},
 	)
 
 	_, err := uc.GetDomainInfo(context.Background(), "example.com")
-	if !errors.Is(err, happydns.ErrDomainDoesNotExist) {
+	if !errors.Is(err, types.ErrDomainDoesNotExist) {
 		t.Errorf("expected ErrDomainDoesNotExist, got: %v", err)
 	}
 	if secondCalled {
@@ -108,7 +109,7 @@ func TestDomainInfoUsecase_AllGettersFail(t *testing.T) {
 }
 
 func TestDomainInfoUsecase_GetterReturnsNilInfo(t *testing.T) {
-	expected := &happydns.DomainInfo{Name: "example.com", Registrar: "Fallback"}
+	expected := &domaininfo.DomainInfo{Name: "example.com", Registrar: "Fallback"}
 	uc := usecase.NewDomainInfoUsecase(
 		fakeGetter(nil, nil), // no error but nil info
 		fakeGetter(expected, nil),
@@ -124,11 +125,11 @@ func TestDomainInfoUsecase_GetterReturnsNilInfo(t *testing.T) {
 }
 
 func TestDomainInfoUsecase_StripsTrailingDot(t *testing.T) {
-	var receivedDomain happydns.Origin
+	var receivedDomain string
 	uc := usecase.NewDomainInfoUsecase(
-		func(_ context.Context, domain happydns.Origin) (*happydns.DomainInfo, error) {
+		func(_ context.Context, domain string) (*domaininfo.DomainInfo, error) {
 			receivedDomain = domain
-			return &happydns.DomainInfo{Name: string(domain)}, nil
+			return &domaininfo.DomainInfo{Name: domain}, nil
 		},
 	)
 

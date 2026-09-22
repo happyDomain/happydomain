@@ -26,13 +26,13 @@ import (
 	"errors"
 	"time"
 
-	"git.happydns.org/happyDomain/model"
-
 	"github.com/likexian/whois"
 	"github.com/likexian/whois-parser"
+
+	"git.happydns.org/happyDomain/pkg/domaininfo/types"
 )
 
-func GetDomainWhoisInfo(ctx context.Context, domain happydns.Origin) (*happydns.DomainInfo, error) {
+func GetDomainWhoisInfo(ctx context.Context, domain string) (*DomainInfo, error) {
 	client := whois.NewClient()
 
 	// The whois library has no context support; derive a timeout from the
@@ -43,7 +43,7 @@ func GetDomainWhoisInfo(ctx context.Context, domain happydns.Origin) (*happydns.
 		}
 	}
 
-	raw, err := client.Whois(string(domain))
+	raw, err := client.Whois(domain)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func GetDomainWhoisInfo(ctx context.Context, domain happydns.Origin) (*happydns.
 	result, err := whoisparser.Parse(raw)
 	if err != nil {
 		if errors.Is(err, whoisparser.ErrNotFoundDomain) {
-			return nil, happydns.ErrDomainDoesNotExist
+			return nil, types.ErrDomainDoesNotExist
 		}
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func GetDomainWhoisInfo(ctx context.Context, domain happydns.Origin) (*happydns.
 	// that the parser accepts without error but produces an empty Domain
 	// field. Treat this as a non-existent domain.
 	if result.Domain == nil || result.Domain.Domain == "" {
-		return nil, happydns.ErrDomainDoesNotExist
+		return nil, types.ErrDomainDoesNotExist
 	}
 
 	return mapWhoisResult(&result), nil
@@ -69,7 +69,7 @@ func GetDomainWhoisInfo(ctx context.Context, domain happydns.Origin) (*happydns.
 // mapWhoisResult converts a parsed whois response into a DomainInfo. Kept
 // separate from the network call so the mapping can be unit-tested without
 // touching the registry.
-func mapWhoisResult(result *whoisparser.WhoisInfo) *happydns.DomainInfo {
+func mapWhoisResult(result *whoisparser.WhoisInfo) *DomainInfo {
 	registrar := "Unknown"
 	var registrarURL *string
 	if result.Registrar != nil {
@@ -93,7 +93,7 @@ func mapWhoisResult(result *whoisparser.WhoisInfo) *happydns.DomainInfo {
 	}
 
 	// Contacts
-	contacts := make(map[string]*happydns.ContactInfo)
+	contacts := make(map[string]*ContactInfo)
 	whoisContacts := map[string]*whoisparser.Contact{
 		"registrant": result.Registrant,
 		"admin":      result.Administrative,
@@ -103,7 +103,7 @@ func mapWhoisResult(result *whoisparser.WhoisInfo) *happydns.DomainInfo {
 		if wc == nil {
 			continue
 		}
-		contacts[key] = &happydns.ContactInfo{
+		contacts[key] = &ContactInfo{
 			Name:         wc.Name,
 			Organization: wc.Organization,
 			Email:        wc.Email,
@@ -116,12 +116,12 @@ func mapWhoisResult(result *whoisparser.WhoisInfo) *happydns.DomainInfo {
 		}
 	}
 
-	var contactsPtr map[string]*happydns.ContactInfo
+	var contactsPtr map[string]*ContactInfo
 	if len(contacts) > 0 {
 		contactsPtr = contacts
 	}
 
-	return &happydns.DomainInfo{
+	return &DomainInfo{
 		Name:           name,
 		Nameservers:    nameservers,
 		CreationDate:   created,

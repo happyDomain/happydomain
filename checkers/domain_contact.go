@@ -29,6 +29,7 @@ import (
 
 	"git.happydns.org/happyDomain/internal/dnschecker"
 	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/pkg/domaininfo"
 )
 
 // redactedPatterns is the list of substrings that, when found in a contact
@@ -189,7 +190,7 @@ func (r *domainContactRule) Evaluate(ctx context.Context, obs happydns.Observati
 }
 
 // isRedacted reports whether a contact's fields look privacy-protected.
-func isRedacted(c *happydns.ContactInfo) bool {
+func isRedacted(c *domaininfo.ContactInfo) bool {
 	for _, field := range []string{c.Name, c.Organization, c.Email} {
 		lower := strings.ToLower(field)
 		for _, pattern := range redactedPatterns {

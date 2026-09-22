@@ -26,8 +26,8 @@ import (
 	"errors"
 	"testing"
 
-	happydns "git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/pkg/domaininfo"
+	"git.happydns.org/happyDomain/pkg/domaininfo/types"
 )
 
 func TestGetDomainWhoisInfo_KnownDomain(t *testing.T) {
@@ -35,7 +35,7 @@ func TestGetDomainWhoisInfo_KnownDomain(t *testing.T) {
 		t.Skip("skipping live WHOIS integration test")
 	}
 
-	info, err := domaininfo.GetDomainWhoisInfo(context.Background(), happydns.Origin("example.com"))
+	info, err := domaininfo.GetDomainWhoisInfo(context.Background(), "example.com")
 	if err != nil {
 		t.Fatalf("unexpected error for example.com: %v", err)
 	}
@@ -64,8 +64,8 @@ func TestGetDomainWhoisInfo_NonExistentDomain(t *testing.T) {
 		t.Skip("skipping live WHOIS integration test")
 	}
 
-	_, err := domaininfo.GetDomainWhoisInfo(context.Background(), happydns.Origin("this-domain-definitely-does-not-exist-xyz987654321.com"))
-	if !errors.Is(err, happydns.ErrDomainDoesNotExist) {
+	_, err := domaininfo.GetDomainWhoisInfo(context.Background(), "this-domain-definitely-does-not-exist-xyz987654321.com")
+	if !errors.Is(err, types.ErrDomainDoesNotExist) {
 		t.Errorf("expected ErrDomainDoesNotExist error, got: %v", err)
 	}
 }
@@ -77,7 +77,7 @@ func TestGetDomainWhoisInfo_NilRegistrarURL(t *testing.T) {
 
 	// example.com's registrar referral URL may be empty; the function should
 	// not panic and should return a valid DomainInfo regardless.
-	info, err := domaininfo.GetDomainWhoisInfo(context.Background(), happydns.Origin("example.com"))
+	info, err := domaininfo.GetDomainWhoisInfo(context.Background(), "example.com")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

@@ -19,6 +19,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import type { HappydnsDomainInfo } from "$lib/api-base/types.gen";
+import type { TypesDomainInfo } from "$lib/api-base/types.gen";
 
-export type DomainInfo = HappydnsDomainInfo;
+export type DomainInfo = TypesDomainInfo;

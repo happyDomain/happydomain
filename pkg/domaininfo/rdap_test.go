@@ -26,8 +26,8 @@ import (
 	"errors"
 	"testing"
 
-	happydns "git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/pkg/domaininfo"
+	"git.happydns.org/happyDomain/pkg/domaininfo/types"
 )
 
 func TestGetDomainRDAPInfo_KnownDomain(t *testing.T) {
@@ -35,7 +35,7 @@ func TestGetDomainRDAPInfo_KnownDomain(t *testing.T) {
 		t.Skip("skipping live RDAP integration test")
 	}
 
-	info, err := domaininfo.GetDomainRDAPInfo(context.Background(), happydns.Origin("example.com"))
+	info, err := domaininfo.GetDomainRDAPInfo(context.Background(), "example.com")
 	if err != nil {
 		t.Fatalf("unexpected error for example.com: %v", err)
 	}
@@ -64,9 +64,8 @@ func TestGetDomainRDAPInfo_NonExistentDomain(t *testing.T) {
 		t.Skip("skipping live RDAP integration test")
 	}
 
-	_, err := domaininfo.GetDomainRDAPInfo(context.Background(), happydns.Origin("this-domain-definitely-does-not-exist-xyz987654321.com"))
-	if !errors.Is(err, happydns.ErrDomainDoesNotExist) {
+	_, err := domaininfo.GetDomainRDAPInfo(context.Background(), "this-domain-definitely-does-not-exist-xyz987654321.com")
+	if !errors.Is(err, types.ErrDomainDoesNotExist) {
 		t.Errorf("expected DomainDoesNotExist error, got: %v", err)
 	}
 }
-

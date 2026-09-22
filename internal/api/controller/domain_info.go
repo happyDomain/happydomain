@@ -30,6 +30,7 @@ import (
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/pkg/domaininfo/types"
 )
 
 type DomainInfoController struct {
@@ -52,7 +53,7 @@ func NewDomainInfoController(diuService happydns.DomainInfoUsecase) *DomainInfoC
 //	@Produce		json
 //	@Security		securitydefinitions.basic
 //	@Param			domain	path		string			true	"Domain name"
-//	@Success		200		{object}	happydns.DomainInfo
+//	@Success		200		{object}	types.DomainInfo
 //	@Failure		400		{object}	happydns.ErrorResponse	"Invalid input"
 //	@Failure		500		{object}	happydns.ErrorResponse
 //	@Router			/domaininfo/{domain} [post]
@@ -74,7 +75,7 @@ func (dc *DomainInfoController) GetDomainInfo(c *gin.Context) {
 
 	info, err := dc.diuService.GetDomainInfo(c.Request.Context(), happydns.Origin(domain))
 	if err != nil {
-		if errors.Is(err, happydns.ErrDomainDoesNotExist) {
+		if errors.Is(err, types.ErrDomainDoesNotExist) {
 			c.AbortWithStatusJSON(http.StatusNotFound, happydns.ErrorResponse{Message: err.Error()})
 		} else {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: err.Error()})

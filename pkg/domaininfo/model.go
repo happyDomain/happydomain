@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2025 happyDomain
+// Copyright (c) 2020-2026 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,14 +19,16 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package happydns
+package domaininfo
 
 import (
-	"context"
-
 	"git.happydns.org/happyDomain/pkg/domaininfo/types"
 )
 
-type DomainInfoUsecase interface {
-	GetDomainInfo(context.Context, Origin) (*types.DomainInfo, error)
-}
+// The result types live in the dependency-free types subpackage; they are
+// re-exported here for convenience.
+type (
+	ContactInfo = types.ContactInfo
+	DomainInfo  = types.DomainInfo
+	Getter      = types.Getter
+)

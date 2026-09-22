@@ -26,14 +26,14 @@ import (
 	"fmt"
 	"time"
 
-	"git.happydns.org/happyDomain/model"
-
 	"github.com/openrdap/rdap"
+
+	"git.happydns.org/happyDomain/pkg/domaininfo/types"
 )
 
-func GetDomainRDAPInfo(ctx context.Context, domain happydns.Origin) (*happydns.DomainInfo, error) {
+func GetDomainRDAPInfo(ctx context.Context, domain string) (*DomainInfo, error) {
 	client := &rdap.Client{}
-	req := rdap.NewDomainRequest(string(domain)).WithContext(ctx)
+	req := rdap.NewDomainRequest(domain).WithContext(ctx)
 	resp, err := client.Do(req)
 	var domainInfo *rdap.Domain
 	if err == nil {
@@ -45,7 +45,7 @@ func GetDomainRDAPInfo(ctx context.Context, domain happydns.Origin) (*happydns.D
 	}
 	if err != nil {
 		if ce, ok := err.(*rdap.ClientError); ok && ce.Type == rdap.ObjectDoesNotExist {
-			return nil, happydns.ErrDomainDoesNotExist
+			return nil, types.ErrDomainDoesNotExist
 		}
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func GetDomainRDAPInfo(ctx context.Context, domain happydns.Origin) (*happydns.D
 // mapRDAPDomain converts an RDAP Domain object into a DomainInfo. Kept
 // separate from the network call so the mapping can be unit-tested without
 // touching the registry.
-func mapRDAPDomain(domainInfo *rdap.Domain) (*happydns.DomainInfo, error) {
+func mapRDAPDomain(domainInfo *rdap.Domain) (*DomainInfo, error) {
 	// Registrar
 	registrar := "Unknown"
 	var registrarURL *string
@@ -112,7 +112,7 @@ func mapRDAPDomain(domainInfo *rdap.Domain) (*happydns.DomainInfo, error) {
 		"administrative": "admin",
 		"technical":      "tech",
 	}
-	contacts := make(map[string]*happydns.ContactInfo)
+	contacts := make(map[string]*ContactInfo)
 	for _, ent := range domainInfo.Entities {
 		if ent.VCard == nil || ent.Roles == nil {
 			continue
@@ -122,7 +122,7 @@ func mapRDAPDomain(domainInfo *rdap.Domain) (*happydns.DomainInfo, error) {
 			if !ok {
 				continue
 			}
-			ci := &happydns.ContactInfo{
+			ci := &ContactInfo{
 				Name:       ent.VCard.Name(),
 				Email:      ent.VCard.Email(),
 				Street:     ent.VCard.StreetAddress(),
@@ -141,12 +141,12 @@ func mapRDAPDomain(domainInfo *rdap.Domain) (*happydns.DomainInfo, error) {
 		}
 	}
 
-	var contactsPtr map[string]*happydns.ContactInfo
+	var contactsPtr map[string]*ContactInfo
 	if len(contacts) > 0 {
 		contactsPtr = contacts
 	}
 
-	return &happydns.DomainInfo{
+	return &DomainInfo{
 		Name:           name,
 		Nameservers:    nameservers,
 		CreationDate:   creation,

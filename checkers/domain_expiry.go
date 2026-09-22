@@ -46,7 +46,7 @@ const (
 type WHOISData struct {
 	ExpiryDate time.Time                          `json:"expiryDate"`
 	Registrar  string                             `json:"registrar"`
-	Contacts   map[string]*happydns.ContactInfo   `json:"contacts,omitempty"`
+	Contacts   map[string]*domaininfo.ContactInfo `json:"contacts,omitempty"`
 	Status     []string                           `json:"status,omitempty"`
 }
 
@@ -63,7 +63,7 @@ func (p *whoisProvider) Collect(ctx context.Context, opts happydns.CheckerOption
 		return nil, fmt.Errorf("domainName is required")
 	}
 
-	info, err := domaininfo.GetDomainInfo(ctx, happydns.Origin(domainName))
+	info, err := domaininfo.GetDomainInfo(ctx, domainName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve domain info: %w", err)
 	}

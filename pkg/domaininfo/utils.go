@@ -28,20 +28,20 @@ import (
 	"net/url"
 	"strings"
 
-	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/pkg/domaininfo/types"
 )
 
 // GetDomainInfo tries RDAP first, then falls back to WHOIS. It strips
 // any trailing dot from the domain and short-circuits on
-// ErrDomainDoesNotExist.
-func GetDomainInfo(ctx context.Context, fqdn happydns.Origin) (*happydns.DomainInfo, error) {
-	domain := happydns.Origin(strings.TrimSuffix(string(fqdn), "."))
+// types.ErrDomainDoesNotExist.
+func GetDomainInfo(ctx context.Context, fqdn string) (*DomainInfo, error) {
+	domain := strings.TrimSuffix(fqdn, ".")
 
 	info, err := GetDomainRDAPInfo(ctx, domain)
 	if err == nil {
 		return info, nil
 	}
-	if errors.Is(err, happydns.ErrDomainDoesNotExist) {
+	if errors.Is(err, types.ErrDomainDoesNotExist) {
 		return nil, err
 	}
 
@@ -49,7 +49,7 @@ func GetDomainInfo(ctx context.Context, fqdn happydns.Origin) (*happydns.DomainI
 	if err == nil {
 		return info, nil
 	}
-	if errors.Is(err, happydns.ErrDomainDoesNotExist) {
+	if errors.Is(err, types.ErrDomainDoesNotExist) {
 		return nil, err
 	}
 

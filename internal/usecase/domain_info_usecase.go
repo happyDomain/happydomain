@@ -28,24 +28,26 @@ import (
 	"strings"
 
 	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/pkg/domaininfo"
+	"git.happydns.org/happyDomain/pkg/domaininfo/types"
 )
 
 type domainInfoUsecase struct {
-	getters []happydns.DomainInfoGetter
+	getters []domaininfo.Getter
 }
 
-func NewDomainInfoUsecase(getters ...happydns.DomainInfoGetter) happydns.DomainInfoUsecase {
+func NewDomainInfoUsecase(getters ...domaininfo.Getter) happydns.DomainInfoUsecase {
 	return &domainInfoUsecase{getters: getters}
 }
 
-func (diu *domainInfoUsecase) GetDomainInfo(ctx context.Context, fqdn happydns.Origin) (*happydns.DomainInfo, error) {
-	domain := happydns.Origin(strings.TrimSuffix(string(fqdn), "."))
+func (diu *domainInfoUsecase) GetDomainInfo(ctx context.Context, fqdn happydns.Origin) (*domaininfo.DomainInfo, error) {
+	domain := strings.TrimSuffix(string(fqdn), ".")
 
 	var lastErr error
 	for _, getter := range diu.getters {
 		infos, err := getter(ctx, domain)
 		if err != nil {
-			if errors.Is(err, happydns.ErrDomainDoesNotExist) {
+			if errors.Is(err, types.ErrDomainDoesNotExist) {
 				return nil, err
 			}
 			lastErr = err

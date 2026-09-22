@@ -27,10 +27,11 @@ import (
 	"testing"
 
 	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/pkg/domaininfo"
 )
 
-func contactsFixture() map[string]*happydns.ContactInfo {
-	return map[string]*happydns.ContactInfo{
+func contactsFixture() map[string]*domaininfo.ContactInfo {
+	return map[string]*domaininfo.ContactInfo{
 		"registrant": {
 			Name:         "Alice Example",
 			Organization: "Example Inc",
@@ -54,8 +55,8 @@ func TestDomainContactRule_Evaluate(t *testing.T) {
 	obs := newWhoisObs(&WHOISData{Contacts: contactsFixture()})
 
 	cases := []struct {
-		name     string
-		opts     happydns.CheckerOptions
+		name      string
+		opts      happydns.CheckerOptions
 		wantWorst happydns.Status
 		// wantCodes: if non-nil, expect one state per entry with the listed code
 		// (order matches roles). If nil, expect a single state and use wantCode.
@@ -174,8 +175,8 @@ func TestDomainContactRule_ValidateOptions(t *testing.T) {
 	}{
 		{"empty", nil, false},
 		{"all valid", happydns.CheckerOptions{
-			"expectedName":  "x",
-			"checkRoles":    "registrant,tech",
+			"expectedName": "x",
+			"checkRoles":   "registrant,tech",
 		}, false},
 		{"unknown role", happydns.CheckerOptions{"checkRoles": "billing"}, true},
 		{"empty roles after split", happydns.CheckerOptions{"checkRoles": " , , "}, true},
@@ -193,13 +194,13 @@ func TestDomainContactRule_ValidateOptions(t *testing.T) {
 
 func TestIsRedacted(t *testing.T) {
 	cases := []struct {
-		c    *happydns.ContactInfo
+		c    *domaininfo.ContactInfo
 		want bool
 	}{
-		{&happydns.ContactInfo{Name: "REDACTED FOR PRIVACY"}, true},
-		{&happydns.ContactInfo{Organization: "Contact Privacy Inc"}, true},
-		{&happydns.ContactInfo{Email: "withheld@example.com"}, true},
-		{&happydns.ContactInfo{Name: "Alice", Email: "alice@example.com"}, false},
+		{&domaininfo.ContactInfo{Name: "REDACTED FOR PRIVACY"}, true},
+		{&domaininfo.ContactInfo{Organization: "Contact Privacy Inc"}, true},
+		{&domaininfo.ContactInfo{Email: "withheld@example.com"}, true},
+		{&domaininfo.ContactInfo{Name: "Alice", Email: "alice@example.com"}, false},
 	}
 	for _, tc := range cases {
 		if got := isRedacted(tc.c); got != tc.want {

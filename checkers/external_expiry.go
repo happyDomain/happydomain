@@ -169,7 +169,7 @@ func uniqueRegistrables(jobs []rdapJob) []string {
 // (we want partial results when most lookups succeed).
 func lookupRegistrable(ctx context.Context, registrable string) ExternalWhoisFacts {
 	out := ExternalWhoisFacts{Registrable: registrable}
-	info, err := domaininfo.GetDomainInfo(ctx, happydns.Origin(registrable))
+	info, err := domaininfo.GetDomainInfo(ctx, registrable)
 	if err != nil {
 		out.Error = err.Error()
 		return out
