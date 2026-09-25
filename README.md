@@ -243,6 +243,8 @@ HAPPYDOMAIN_LEVELDB_PATH=/var/lib/happydomain/db/
 
 You just have to replace dash by underscore.
 
+The standard [`DO_NOT_TRACK`](https://donottrack.sh/) environment variable is also honored: its boolean value (`1`, `true`, `0`, `false`, ...) is given to `-opt-out-insights`.
+
 #### Behind a reverse proxy?
 
 happyDomain ignores `X-Forwarded-For` unless you declare which proxies may set

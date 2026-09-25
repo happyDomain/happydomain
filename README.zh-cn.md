@@ -222,6 +222,8 @@ HAPPYDOMAIN_LEVELDB_PATH=/var/lib/happydomain/db/
 
 只需将短横线替换为下划线即可。
 
+同样支持标准的 [`DO_NOT_TRACK`](https://donottrack.sh/) 环境变量：其布尔值（`1`、`true`、`0`、`false` 等）会传递给 `-opt-out-insights`。
+
 #### 需要 OVH API？
 
 OVH 没有简单的 API 密钥或凭据，需通过 Web 流程获取密钥。

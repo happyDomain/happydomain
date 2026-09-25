@@ -94,6 +94,24 @@ func TestParseLine(t *testing.T) {
 	if !cfg.NoAuth {
 		t.Fatalf(`parseLine("NO_AUTH=true") = %v, want true`, cfg.NoAuth)
 	}
+
+	t.Setenv("DO_NOT_TRACK", "1")
+	err = parseEnvironmentVariables(cfg)
+	if err != nil {
+		t.Fatalf(`parseEnvironmentVariables() with DO_NOT_TRACK=1 => %v`, err.Error())
+	}
+	if !cfg.OptOutInsights {
+		t.Fatalf(`parseEnvironmentVariables() with DO_NOT_TRACK=1: OptOutInsights = %v, want true`, cfg.OptOutInsights)
+	}
+
+	t.Setenv("HAPPYDOMAIN_OPT_OUT_INSIGHTS", "false")
+	err = parseEnvironmentVariables(cfg)
+	if err != nil {
+		t.Fatalf(`parseEnvironmentVariables() with HAPPYDOMAIN_OPT_OUT_INSIGHTS=false => %v`, err.Error())
+	}
+	if cfg.OptOutInsights {
+		t.Fatalf(`parseEnvironmentVariables() with HAPPYDOMAIN_OPT_OUT_INSIGHTS=false: OptOutInsights = %v, want false`, cfg.OptOutInsights)
+	}
 }
 
 func TestGetBaseURL(t *testing.T) {

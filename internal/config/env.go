@@ -22,6 +22,7 @@
 package config // import "git.happydns.org/happyDomain/config"
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"strings"
@@ -32,6 +33,14 @@ import (
 // parseEnvironmentVariables analyzes all the environment variables to find
 // each one starting by HAPPYDOMAIN_
 func parseEnvironmentVariables(o *happydns.Options) (err error) {
+	// Honor the DO_NOT_TRACK convention (https://donottrack.sh/),
+	// before HAPPYDOMAIN_ variables so they can still override it.
+	if value := strings.TrimSpace(os.Getenv("DO_NOT_TRACK")); value != "" {
+		if err := flag.Set("opt-out-insights", value); err != nil {
+			return fmt.Errorf("error in environment (DO_NOT_TRACK): %w", err)
+		}
+	}
+
 	for _, line := range os.Environ() {
 		if strings.HasPrefix(line, "HAPPYDOMAIN_") || strings.HasPrefix(line, "HAPPYDNS_") {
 			err := parseLine(o, line)
