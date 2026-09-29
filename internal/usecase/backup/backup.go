@@ -120,6 +120,20 @@ func (u *Usecase) Backup() happydns.Backup {
 		}
 	}
 
+	// Safes: the sealed values of the providers above only open with them,
+	// and with the instance keyset, which is not part of the backup.
+	if safeIter, err := u.store.ListAllSafes(); err != nil {
+		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve Safes: %s", err.Error()))
+	} else {
+		defer safeIter.Close()
+		for safeIter.Next() {
+			ret.Safes = append(ret.Safes, safeIter.Item())
+		}
+		if err := safeIter.Err(); err != nil {
+			ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve every Safe: %s", err.Error()))
+		}
+	}
+
 	// Checker configurations (positional, one entry per (checker, user?, domain?, service?)).
 	if cfgIter, err := u.store.ListAllCheckerConfigurations(); err != nil {
 		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve CheckerConfigurations: %s", err.Error()))
@@ -366,6 +380,12 @@ func (u *Usecase) Restore(backup *happydns.Backup) error {
 		}
 	}
 
+	// Safes, before the providers: sealing a clear value restored below
+	// must find the owner's safe rather than create another one.
+	for _, safe := range backup.Safes {
+		errs = errors.Join(errs, u.restoreSafe(safe))
+	}
+
 	// Providers. Those that cannot be restored are remembered, so that their
 	// domains are not restored pointing at nothing.
 	unrestored := map[string]bool{}
@@ -463,4 +483,28 @@ func (u *Usecase) Restore(backup *happydns.Backup) error {
 	}
 
 	return errs
+}
+
+func (u *Usecase) restoreSafe(safe *happydns.Safe) error {
+	if safe == nil {
+		return nil
+	}
+
+	// Stored, a safe that does not open here would keep an instance without
+	// keyset from starting again. The providers sealed in it are then not
+	// restored either.
+	if err := u.secrets.CheckSafe(safe); err != nil {
+		return fmt.Errorf("safe %s not restored: %w", safe.Id.String(), err)
+	}
+
+	_, err := u.store.GetSafe(safe.Id)
+	if errors.Is(err, happydns.ErrSafeNotFound) {
+		// Its owner may already have a safe of that kind here, such as the
+		// instance safe: both are kept, each opening what it sealed.
+		return u.store.RestoreSafe(safe)
+	}
+	if err != nil {
+		return err
+	}
+	return u.store.UpdateSafe(safe)
 }

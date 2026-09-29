@@ -64,6 +64,7 @@ type Storage interface {
 	provider.ProviderStorage
 	secret.CheckStorage
 	secret.SafeStorage
+	secret.SafeRestorer
 	session.SessionStorage
 	user.UserStorage
 	zone.ZoneStorage

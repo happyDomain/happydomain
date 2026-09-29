@@ -25,6 +25,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -44,6 +45,9 @@ const (
 
 	wrapVersion = "hds:1:safe"
 )
+
+// safeKinds lists every kind of safe a user may own.
+var safeKinds = []string{KindInstance}
 
 // scanSafes calls visit on every safe store lists that decodes, until visit
 // returns false, and returns the keys of the records that do not decode.
@@ -251,4 +255,71 @@ func (r *safeRegistry) aead(safe *happydns.Safe) (tink.AEAD, error) {
 // forget drops what is cached about the safe id, once deleted.
 func (r *safeRegistry) forget(id happydns.Identifier) {
 	r.primitives.Delete(id.String())
+}
+
+// CheckSafe returns an error when this instance cannot open safe, one coming
+// from elsewhere such as a backup: stored, it would only hold values that
+// never open here.
+func (m *Manager) CheckSafe(safe *happydns.Safe) error {
+	if m == nil {
+		return errNoManager
+	}
+	if m.safes == nil {
+		return fmt.Errorf("safe %s needs the instance keyset, which is not configured", safe.Id.String())
+	}
+	_, err := m.safes.aead(safe)
+	return err
+}
+
+// DeleteOwnerSafes deletes every safe owned by owner: whatever was sealed in
+// them no longer opens, copies and backups included.
+func (m *Manager) DeleteOwnerSafes(owner happydns.Identifier) error {
+	if m == nil || m.safes == nil {
+		return errNoManager
+	}
+
+	var ids []happydns.Identifier
+	damaged, err := scanSafes(m.safes.store, func(safe *happydns.Safe) bool {
+		if safe.Owner.Equals(owner) {
+			ids = append(ids, safe.Id)
+		}
+		return true
+	})
+	if err != nil {
+		return err
+	}
+
+	if len(damaged) > 0 {
+		// A record that does not decode tells no owner, and must not keep
+		// every other account from being deleted. But the owner index
+		// tells whether it is the safe of this owner: then its key would
+		// stay behind, and the deletion is refused before deleting anything.
+		for _, kind := range safeKinds {
+			if _, err := m.safes.store.GetSafeByOwner(owner, kind); err != nil && !errors.Is(err, happydns.ErrSafeNotFound) {
+				return fmt.Errorf("unable to read the %s safe of this user, which must be deleted with it: %w", kind, err)
+			}
+		}
+		for _, key := range damaged {
+			log.Printf("secret: safe record %q does not decode, left as it is while deleting the safes of %s", key, owner.String())
+		}
+	}
+
+	for _, id := range ids {
+		if _, err := m.deleteSafe(id); err != nil {
+			return fmt.Errorf("unable to delete safe %s: %w", id.String(), err)
+		}
+	}
+	return nil
+}
+
+// deleteSafe deletes the safe id and forgets its key, reporting whether this
+// call deleted it. A safe already gone, deleted meanwhile by someone else, is
+// not an error: that is what was asked.
+func (m *Manager) deleteSafe(id happydns.Identifier) (bool, error) {
+	err := m.safes.store.DeleteSafe(id)
+	m.safes.forget(id)
+	if errors.Is(err, happydns.ErrSafeNotFound) {
+		return false, nil
+	}
+	return err == nil, err
 }

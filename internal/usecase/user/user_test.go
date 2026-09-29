@@ -23,6 +23,7 @@ package user_test
 
 import (
 	"bytes"
+	"errors"
 	"net/mail"
 	"testing"
 
@@ -96,7 +97,7 @@ func createTestService(t *testing.T) (*user.Service, storage.Storage, *mockNewsl
 	newsletter := &mockNewsletterSubscriptor{}
 	sessionCloser := &mockSessionCloser{}
 
-	service := user.NewUserUsecases(db, newsletter, authUserService, sessionCloser)
+	service := user.NewUserUsecases(db, newsletter, authUserService, sessionCloser, nil)
 
 	return service, db, newsletter, sessionCloser
 }
@@ -533,5 +534,41 @@ func Test_GenerateUserAvatar(t *testing.T) {
 	// Verify some data was written
 	if buf.Len() == 0 {
 		t.Error("expected avatar data to be written, got empty buffer")
+	}
+}
+
+// failingShredder cannot delete the safes of a user, as when their safe
+// record does not decode.
+type failingShredder struct{}
+
+func (failingShredder) DeleteOwnerSafes(happydns.Identifier) error {
+	return errors.New("safe record does not decode")
+}
+
+// The user is deleted before their safes. When those cannot be, the deletion
+// fails, but the sessions of the deleted user are still closed.
+func Test_DeleteUser_ClosesSessionsWhenShreddingFails(t *testing.T) {
+	for name, del := range map[string]func(*user.Service, happydns.Identifier) error{
+		"DeleteUser":     (*user.Service).DeleteUser,
+		"DeleteUserByID": (*user.Service).DeleteUserByID,
+	} {
+		t.Run(name, func(t *testing.T) {
+			db, _ := inmemory.Instantiate()
+			authUserService := authuserUC.NewAuthUserUsecases(&happydns.Options{}, &noopMailer{}, db, sessionUC.NewService(db))
+			sessionCloser := &mockSessionCloser{}
+			service := user.NewUserUsecases(db, &mockNewsletterSubscriptor{}, authUserService, sessionCloser, failingShredder{})
+
+			userID := happydns.Identifier([]byte("user-123"))
+			if err := db.CreateOrUpdateUser(&happydns.User{Id: userID, Email: "test@example.com"}); err != nil {
+				t.Fatal(err)
+			}
+
+			if err := del(service, userID); err == nil {
+				t.Error("the deletion succeeded while the safes of the user were left")
+			}
+			if len(sessionCloser.closedUserIDs) != 1 || !sessionCloser.closedUserIDs[0].Equals(userID) {
+				t.Errorf("closed sessions of %v, want those of the deleted user", sessionCloser.closedUserIDs)
+			}
+		})
 	}
 }

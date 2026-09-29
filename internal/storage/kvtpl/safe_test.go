@@ -302,3 +302,70 @@ func TestReplaceSafeLosesToConcurrentWrites(t *testing.T) {
 		t.Errorf("a deleted safe was brought back: %v", err)
 	}
 }
+
+// A safe coming from a backup is stored beside the one its owner already has,
+// rather than refused: it opens what was sealed in it, while new secrets keep
+// going to the one in place.
+func TestRestoreSafe(t *testing.T) {
+	s := newStorage(t)
+	owner, _ := happydns.NewRandomIdentifier()
+
+	// Alone, a restored safe becomes the one of its owner.
+	first := newSafe(owner, "instance")
+	if err := s.RestoreSafe(first); err != nil {
+		t.Fatalf("RestoreSafe: %v", err)
+	}
+	if got, err := s.GetSafeByOwner(owner, "instance"); err != nil || !got.Id.Equals(first.Id) {
+		t.Errorf("GetSafeByOwner = %v, %v; want the restored safe", got, err)
+	}
+
+	// Beside it, another one is stored without taking its place.
+	second := newSafe(owner, "instance")
+	if err := s.RestoreSafe(second); err != nil {
+		t.Fatalf("RestoreSafe beside an existing safe: %v", err)
+	}
+	if _, err := s.GetSafe(second.Id); err != nil {
+		t.Errorf("the second restored safe was not stored: %v", err)
+	}
+	if got, err := s.GetSafeByOwner(owner, "instance"); err != nil || !got.Id.Equals(first.Id) {
+		t.Errorf("GetSafeByOwner = %v, %v; want the safe in place", got, err)
+	}
+
+	if err := s.RestoreSafe(second); !errors.Is(err, happydns.ErrAlreadyExists) {
+		t.Errorf("RestoreSafe with a taken identifier = %v, want ErrAlreadyExists", err)
+	}
+	bad := newSafe(owner, "instance")
+	bad.Id = happydns.Identifier{0x01}
+	if err := s.RestoreSafe(bad); !errors.Is(err, happydns.ErrInvalidIdentifier) {
+		t.Errorf("RestoreSafe with a malformed identifier = %v, want ErrInvalidIdentifier", err)
+	}
+}
+
+// Deleting a safe the owner index does not point to leaves the index alone:
+// the owner keeps sealing into the safe in place.
+func TestDeleteSafeKeepsTheIndexOfAnother(t *testing.T) {
+	s := newStorage(t)
+	owner, _ := happydns.NewRandomIdentifier()
+
+	inPlace := newSafe(owner, "instance")
+	beside := newSafe(owner, "instance")
+	for _, safe := range []*happydns.Safe{inPlace, beside} {
+		if err := s.RestoreSafe(safe); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := s.DeleteSafe(beside.Id); err != nil {
+		t.Fatalf("DeleteSafe: %v", err)
+	}
+	if got, err := s.GetSafeByOwner(owner, "instance"); err != nil || !got.Id.Equals(inPlace.Id) {
+		t.Errorf("GetSafeByOwner after deleting the other safe = %v, %v; want the safe in place", got, err)
+	}
+
+	if err := s.DeleteSafe(inPlace.Id); err != nil {
+		t.Fatalf("DeleteSafe: %v", err)
+	}
+	if _, err := s.GetSafeByOwner(owner, "instance"); !errors.Is(err, happydns.ErrSafeNotFound) {
+		t.Errorf("GetSafeByOwner after deleting the safe in place = %v, want ErrSafeNotFound", err)
+	}
+}

@@ -699,6 +699,11 @@ func (s *instrumentedStorage) RestoreExecution(exec *happydns.Execution) (err er
 	return s.inner.RestoreExecution(exec)
 }
 
+func (s *instrumentedStorage) RestoreSafe(safe *happydns.Safe) (err error) {
+	defer observe("restore", "safe")(&err)
+	return s.inner.RestoreSafe(safe)
+}
+
 func (s *instrumentedStorage) RestoreSnapshot(snap *happydns.ObservationSnapshot) (err error) {
 	defer observe("restore", "observation_snapshot")(&err)
 	return s.inner.RestoreSnapshot(snap)

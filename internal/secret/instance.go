@@ -410,3 +410,14 @@ type SafeStorage interface {
 	// unreadable.
 	DeleteSafe(id happydns.Identifier) error
 }
+
+// SafeRestorer puts back the safes of a backup.
+type SafeRestorer interface {
+	// RestoreSafe stores a safe coming from elsewhere, such as a backup,
+	// under the identifier it carries. Unlike CreateSafe, it does not fail
+	// when the owner already has a safe of that kind: both are kept, and new
+	// secrets keep going to the one in place. Fails with
+	// happydns.ErrInvalidIdentifier, or happydns.ErrAlreadyExists when the
+	// identifier is taken.
+	RestoreSafe(safe *happydns.Safe) error
+}

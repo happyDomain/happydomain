@@ -104,6 +104,23 @@ func (s *KVStorage) CreateSafe(safe *happydns.Safe) error {
 	})
 }
 
+// RestoreSafe stores a safe coming from elsewhere, such as a backup, beside
+// the one its owner may already have: that one keeps the owner index, so that
+// new secrets keep going to it.
+func (s *KVStorage) RestoreSafe(safe *happydns.Safe) error {
+	if safe.Owner.IsEmpty() || safe.Kind == "" {
+		return errors.New("a safe needs an owner and a kind")
+	}
+
+	return s.createNew("safe", safe.Id, safePrimaryKey(safe.Id), safe, func() error {
+		err := s.claimSafeOwnerIndex(safe)
+		if errors.Is(err, happydns.ErrAlreadyExists) {
+			return nil
+		}
+		return err
+	})
+}
+
 // claimSafeOwnerIndex points the owner index of safe to it, unless it already
 // points to another safe that exists.
 func (s *KVStorage) claimSafeOwnerIndex(safe *happydns.Safe) error {
@@ -162,7 +179,14 @@ func (s *KVStorage) DeleteSafe(id happydns.Identifier) error {
 	}
 
 	batch := s.db.NewBatch()
-	batch.Delete(safeOwnerKey(safe.Owner, safe.Kind))
+	// An owner can hold more than one safe of a kind, restored beside each
+	// other: the index goes only with the safe it points to.
+	var indexed happydns.Identifier
+	if err := s.db.Get(safeOwnerKey(safe.Owner, safe.Kind), &indexed); err == nil && indexed.Equals(id) {
+		batch.Delete(safeOwnerKey(safe.Owner, safe.Kind))
+	} else if err != nil && !errors.Is(err, happydns.ErrNotFound) {
+		return err
+	}
 	batch.Delete(safePrimaryKey(id))
 	return batch.Commit()
 }

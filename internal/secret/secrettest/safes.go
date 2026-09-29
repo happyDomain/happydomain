@@ -219,7 +219,8 @@ func (m *Safes) ReplaceSafe(id happydns.Identifier, update func(*happydns.Safe) 
 	return nil
 }
 
-// DeleteSafe removes a safe and its owner index.
+// DeleteSafe removes a safe, and the owner index when it points to it: an
+// owner can hold more than one safe of a kind.
 func (m *Safes) DeleteSafe(id happydns.Identifier) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -227,7 +228,9 @@ func (m *Safes) DeleteSafe(id happydns.Identifier) error {
 	if err != nil {
 		return err
 	}
-	delete(m.index, indexKey(safe.Owner, safe.Kind))
+	if key := indexKey(safe.Owner, safe.Kind); m.index[key] == id.String() {
+		delete(m.index, key)
+	}
 	delete(m.records, id.String())
 	m.deletes++
 	return nil

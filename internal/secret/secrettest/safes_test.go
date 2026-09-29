@@ -321,29 +321,37 @@ func TestReplaceSafe(t *testing.T) {
 	}
 }
 
-// DeleteSafe refuses an unknown safe, and removes the owner index with the
-// safe.
+// DeleteSafe refuses an unknown safe, and removes the owner index only when
+// it points to the safe deleted.
 func TestDeleteSafe(t *testing.T) {
 	safes := secrettest.NewSafes()
 	if err := safes.CreateSafe(newSafe(0x10, 0x01)); err != nil {
 		t.Fatal(err)
 	}
+	safes.Put(*newSafe(0x11, 0x01))
 
 	if err := safes.DeleteSafe(id(0x12)); !errors.Is(err, happydns.ErrSafeNotFound) {
 		t.Errorf("DeleteSafe(unknown) = %v, want ErrSafeNotFound", err)
+	}
+
+	if err := safes.DeleteSafe(id(0x11)); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := safes.GetSafeByOwner(id(0x01), "instance"); err != nil || !got.Id.Equals(id(0x10)) {
+		t.Errorf("after deleting the unindexed safe, GetSafeByOwner = %v, %v; want 0x10", got, err)
 	}
 
 	if err := safes.DeleteSafe(id(0x10)); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := safes.GetSafeByOwner(id(0x01), "instance"); !errors.Is(err, happydns.ErrSafeNotFound) {
-		t.Errorf("after DeleteSafe, GetSafeByOwner = %v, want ErrSafeNotFound", err)
+		t.Errorf("after deleting the indexed safe, GetSafeByOwner = %v, want ErrSafeNotFound", err)
 	}
 	if err := safes.CreateSafe(newSafe(0x13, 0x01)); err != nil {
 		t.Errorf("CreateSafe after deleting the owner's safe = %v", err)
 	}
-	if safes.Deletes() != 1 || safes.Creates() != 2 {
-		t.Errorf("Deletes, Creates = %d, %d; want 1, 2", safes.Deletes(), safes.Creates())
+	if safes.Deletes() != 2 || safes.Creates() != 2 {
+		t.Errorf("Deletes, Creates = %d, %d; want 2, 2", safes.Deletes(), safes.Creates())
 	}
 }
 

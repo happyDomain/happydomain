@@ -418,3 +418,45 @@ func TestAeadCacheChecksTheOwner(t *testing.T) {
 		t.Error("a safe moved to another owner opened with the cached key")
 	}
 }
+
+// CheckSafe tells whether a safe coming from elsewhere, a backup, opens here.
+func TestCheckSafe(t *testing.T) {
+	key := testInstanceKey(t)
+	store := secrettest.NewSafes()
+	m, err := NewManager(Config{Policy: PolicyInstance, InstanceKey: key, Safes: store})
+	if err != nil {
+		t.Fatal(err)
+	}
+	safe, err := m.safes.instanceSafe(happydns.Identifier{0x01})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := m.CheckSafe(safe); err != nil {
+		t.Errorf("CheckSafe(a safe of this keyset) = %v", err)
+	}
+
+	moved := *safe
+	moved.Owner = happydns.Identifier{0x02}
+	unknownKind := *safe
+	unknownKind.Kind = "other"
+
+	other, _ := NewManager(Config{Policy: PolicyInstance, InstanceKey: testInstanceKey(t), Safes: store})
+	noKey, _ := NewManager(Config{Policy: PolicyPlaintext, Safes: store})
+	noSafes, _ := NewManager(Config{Policy: PolicyPlaintext})
+
+	for name, tc := range map[string]struct {
+		m    *Manager
+		safe *happydns.Safe
+	}{
+		"another keyset":   {other, safe},
+		"no keyset":        {noKey, safe},
+		"no safe storage":  {noSafes, safe},
+		"nil manager":      {nil, safe},
+		"moved to another": {m, &moved},
+		"unknown kind":     {m, &unknownKind},
+	} {
+		if err := tc.m.CheckSafe(tc.safe); err == nil {
+			t.Errorf("%s: CheckSafe accepted a safe that does not open", name)
+		}
+	}
+}

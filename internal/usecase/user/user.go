@@ -22,6 +22,7 @@
 package user
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"time"
@@ -36,6 +37,12 @@ type Service struct {
 	authUser          happydns.AuthUserUsecase
 	closeUserSessions happydns.SessionCloserUsecase
 	onUserChanged     func(happydns.Identifier)
+	secrets           SafeShredder
+}
+
+// SafeShredder deletes the safes of a user, making their secrets unreadable.
+type SafeShredder interface {
+	DeleteOwnerSafes(owner happydns.Identifier) error
 }
 
 func NewUserUsecases(
@@ -43,13 +50,27 @@ func NewUserUsecases(
 	newsletter happydns.NewsletterSubscriptor,
 	authUser happydns.AuthUserUsecase,
 	closeUserSessions happydns.SessionCloserUsecase,
+	secrets SafeShredder,
 ) *Service {
 	return &Service{
 		store:             store,
 		newsletter:        newsletter,
 		authUser:          authUser,
 		closeUserSessions: closeUserSessions,
+		secrets:           secrets,
 	}
+}
+
+// shredSecrets deletes the safes of a deleted user. Their objects are left
+// to tidy, and hold nothing readable any more.
+func (s *Service) shredSecrets(userid happydns.Identifier) error {
+	if s.secrets == nil {
+		return nil
+	}
+	if err := s.secrets.DeleteOwnerSafes(userid); err != nil {
+		return fmt.Errorf("unable to delete the safes of user %s: %w", userid.String(), err)
+	}
+	return nil
 }
 
 // SetOnUserChanged installs a callback invoked after any successful user
@@ -152,6 +173,15 @@ func (s *Service) DeleteUser(userid happydns.Identifier) error {
 		}
 	}
 
+	// The user is gone already: their sessions are closed whatever happens
+	// to their safes.
+	if err := s.shredSecrets(userid); err != nil {
+		return happydns.InternalError{
+			Err:         errors.Join(err, s.closeUserSessions.ByID(userid)),
+			UserMessage: "Your profile has been deleted, but some of its data could not be erased yet. Please contact the administrator.",
+		}
+	}
+
 	return s.closeUserSessions.ByID(userid)
 }
 
@@ -197,6 +227,11 @@ func (s *Service) ClearUsers() error {
 func (s *Service) DeleteUserByID(userID happydns.Identifier) error {
 	if err := s.store.DeleteUser(userID); err != nil {
 		return err
+	}
+	// The user is gone already: their sessions are closed whatever happens
+	// to their safes.
+	if err := s.shredSecrets(userID); err != nil {
+		return errors.Join(err, s.closeUserSessions.ByID(userID))
 	}
 	return s.closeUserSessions.ByID(userID)
 }

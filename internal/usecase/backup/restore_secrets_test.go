@@ -59,9 +59,8 @@ func plaintextSecrets(t *testing.T) *secret.Manager {
 	return m
 }
 
-// keyedSecrets returns two Managers sharing a fresh instance keyset and the
-// safes of db: one sealing under the instance policy, one back to plaintext.
-func keyedSecrets(t *testing.T, db storage.Storage) (instance, plaintext *secret.Manager) {
+// newInstanceKey returns the key of a fresh instance keyset.
+func newInstanceKey(t *testing.T) *secret.InstanceKey {
 	t.Helper()
 	h, err := secret.GenerateInstanceKeyset()
 	if err != nil {
@@ -71,6 +70,15 @@ func keyedSecrets(t *testing.T, db storage.Storage) (instance, plaintext *secret
 	if err != nil {
 		t.Fatal(err)
 	}
+	return key
+}
+
+// keyedSecrets returns two Managers sharing a fresh instance keyset and the
+// safes of db: one sealing under the instance policy, one back to plaintext.
+func keyedSecrets(t *testing.T, db storage.Storage) (instance, plaintext *secret.Manager) {
+	t.Helper()
+	key := newInstanceKey(t)
+	var err error
 	if instance, err = secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db}); err != nil {
 		t.Fatal(err)
 	}
@@ -89,6 +97,23 @@ func sealedFor(t *testing.T, m *secret.Manager, owner happydns.Identifier, id by
 		t.Fatal(err)
 	}
 	return body.ApiKey.Token()
+}
+
+// restoredApiKey opens the provider id stored in db and returns its key.
+func restoredApiKey(t *testing.T, db storage.Storage, m *secret.Manager, id byte) string {
+	t.Helper()
+	msg, err := db.GetProvider(happydns.Identifier{id})
+	if err != nil {
+		t.Fatalf("provider %d was not restored: %v", id, err)
+	}
+	p, err := providerUC.ParseProvider(msg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := m.OpenObject(context.Background(), providerUC.SecretContext(p), p.Provider); err != nil {
+		t.Fatalf("the restored provider does not open: %v", err)
+	}
+	return p.Provider.(*BackupSecretProvider).ApiKey.Reveal()
 }
 
 func secretProviderMessage(owner happydns.Identifier, id byte, body string) *happydns.ProviderMessage {
@@ -353,5 +378,184 @@ func TestBackupUserRedactsSecretType(t *testing.T) {
 	}
 	if found != 2 {
 		t.Errorf("exported %d secret providers, want 2", found)
+	}
+}
+
+// The administrative backup carries the safes with the sealed values: restored
+// on an instance holding the same keyset, everything opens; without it, the
+// instance refuses to start.
+func TestBackupRestoreSafes(t *testing.T) {
+	key := newInstanceKey(t)
+	dump, srcUC := sealedDump(t, key)
+
+	// Through JSON, as the admin API hands it out.
+	raw, err := json.Marshal(dump)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var restored happydns.Backup
+	if err := json.Unmarshal(raw, &restored); err != nil {
+		t.Fatal(err)
+	}
+
+	dst, err := inmemory.Instantiate()
+	if err != nil {
+		t.Fatal(err)
+	}
+	dstSecrets, _ := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: dst})
+	if err := backup.NewUsecase(dst, dstSecrets).Restore(&restored); err != nil {
+		t.Fatalf("Restore: %v", err)
+	}
+
+	if got := restoredApiKey(t, dst, dstSecrets, 1); got != "precious" {
+		t.Errorf("restored key = %q", got)
+	}
+
+	// The same database without the keyset: refuse to start.
+	if err := secret.StartupCheck(secret.PolicyPlaintext, nil, dst); err == nil {
+		t.Error("an instance holding restored safes started without the keyset")
+	}
+
+	// The user export carries no safe.
+	if u := srcUC.BackupUser(&happydns.User{Id: happydns.Identifier{0xaa}}); len(u.Safes) != 0 {
+		t.Error("the user export carries safes")
+	}
+}
+
+// sealedDump returns the administrative backup of an instance holding one
+// provider, sealed under the instance keyset key, and the usecase of that
+// instance.
+func sealedDump(t *testing.T, key *secret.InstanceKey) (*happydns.Backup, *backup.Usecase) {
+	t.Helper()
+	src, err := inmemory.Instantiate()
+	if err != nil {
+		t.Fatal(err)
+	}
+	srcSecrets, err := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: src})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	owner := happydns.Identifier{0xaa}
+	if err := src.CreateOrUpdateUser(&happydns.User{Id: owner, Email: "owner@example.com"}); err != nil {
+		t.Fatal(err)
+	}
+	p, err := providerUC.ParseProvider(secretProviderMessage(owner, 1, `{"host":"h","apikey":"precious"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := srcSecrets.SealObject(context.Background(), providerUC.SecretContext(p), p.Provider); err != nil {
+		t.Fatal(err)
+	}
+	if err := src.UpdateProvider(p); err != nil {
+		t.Fatal(err)
+	}
+
+	uc := backup.NewUsecase(src, srcSecrets)
+	dump := uc.Backup()
+	if len(dump.Safes) != 1 || !dump.Safes[0].Owner.Equals(owner) {
+		t.Fatalf("backup safes = %+v, want the owner's safe", dump.Safes)
+	}
+	return &dump, uc
+}
+
+// A safe this instance cannot open is not restored: stored, it would keep an
+// instance without keyset from starting again, and stay unusable on one with
+// another keyset. The providers sealed in it are not restored either.
+func TestRestoreSkipsSafesThatDoNotOpen(t *testing.T) {
+	key := newInstanceKey(t)
+	other := newInstanceKey(t)
+
+	for name, newManager := range map[string]func(storage.Storage) (*secret.Manager, error){
+		"without keyset": func(storage.Storage) (*secret.Manager, error) {
+			return secret.NewManager(secret.Config{Policy: secret.PolicyPlaintext})
+		},
+		"without keyset, with safes": func(db storage.Storage) (*secret.Manager, error) {
+			return secret.NewManager(secret.Config{Policy: secret.PolicyPlaintext, Safes: db})
+		},
+		"with another keyset": func(db storage.Storage) (*secret.Manager, error) {
+			return secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: other, Safes: db})
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			dump, _ := sealedDump(t, key)
+
+			dst, err := inmemory.Instantiate()
+			if err != nil {
+				t.Fatal(err)
+			}
+			dstSecrets, err := newManager(dst)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if err := backup.NewUsecase(dst, dstSecrets).Restore(dump); err == nil {
+				t.Error("Restore reported no error for a safe it cannot open")
+			}
+
+			iter, err := dst.ListAllSafes()
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer iter.Close()
+			if iter.Next() {
+				t.Errorf("safe %s restored, though it does not open here", iter.Item().Id.String())
+			}
+
+			if _, err := dst.GetProvider(happydns.Identifier{1}); err == nil {
+				t.Error("a provider sealed in a skipped safe was restored")
+			}
+
+			// Without keyset, the instance still starts.
+			if err := secret.StartupCheck(secret.PolicyPlaintext, nil, dst); err != nil && name != "with another keyset" {
+				t.Errorf("StartupCheck after the restore: %v", err)
+			}
+		})
+	}
+}
+
+// A backup can carry a safe other than the one its owner already has here:
+// the instance safe, once an administrator set a secret option since, or the
+// safe of a user who sealed something since. Both are kept, and what was
+// sealed in either still opens. New secrets keep going to the one in place.
+func TestRestoreSafeBesideAnExistingOne(t *testing.T) {
+	ctx := context.Background()
+	key := newInstanceKey(t)
+	dump, _ := sealedDump(t, key)
+
+	dst, err := inmemory.Instantiate()
+	if err != nil {
+		t.Fatal(err)
+	}
+	dstSecrets, err := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: dst})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	owner := happydns.Identifier{0xaa}
+	local := sealedFor(t, dstSecrets, owner, 7, "local-key")
+	inPlace, err := dst.GetSafeByOwner(owner, secret.KindInstance)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := backup.NewUsecase(dst, dstSecrets).Restore(dump); err != nil {
+		t.Fatalf("Restore: %v", err)
+	}
+
+	if got := restoredApiKey(t, dst, dstSecrets, 1); got != "precious" {
+		t.Errorf("restored key = %q", got)
+	}
+
+	p, err := providerUC.ParseProvider(secretProviderMessage(owner, 7, `{"host":"h","apikey":"`+local+`"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := dstSecrets.OpenObject(ctx, providerUC.SecretContext(p), p.Provider); err != nil {
+		t.Errorf("what was sealed before the restore no longer opens: %v", err)
+	}
+
+	if s, err := dst.GetSafeByOwner(owner, secret.KindInstance); err != nil || !s.Id.Equals(inPlace.Id) {
+		t.Errorf("new secrets now go to safe %v (%v), want the one in place %s", s, err, inPlace.Id.String())
 	}
 }
