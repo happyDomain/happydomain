@@ -52,6 +52,38 @@ type InstanceKey struct {
 	aead   tink.AEAD
 }
 
+// StartupCheck refuses a configuration that would leave secrets unreadable:
+// the instance policy without a keyset, instance safes without a keyset to
+// open them, or a keyset that is not the one the database was used with.
+func StartupCheck(policy Policy, key *InstanceKey, store Storage) error {
+	if policy == PolicyInstance && key == nil {
+		return errors.New("the instance secret policy requires an instance keyset: see `happydomain secret-keyset generate`")
+	}
+
+	if key == nil {
+		has, err := hasSafeOfKind(store, KindInstance)
+		if err != nil {
+			return fmt.Errorf("unable to list safes: %w", err)
+		}
+		if has {
+			return errors.New("secrets are sealed under an instance keyset, but none is configured: set -secret-keyset-file")
+		}
+		return nil
+	}
+
+	return key.VerifyCheck(store)
+}
+
+// hasSafeOfKind tells whether a safe of kind is stored. A record that does not
+// decode tells no kind: it does not keep happyDomain from starting.
+func hasSafeOfKind(store SafeStorage, kind string) (bool, error) {
+	has := false
+	err := eachSafe(store, func(safe *happydns.Safe) {
+		has = has || safe.Kind == kind
+	}, nil)
+	return has, err
+}
+
 // NewInstanceKey returns the InstanceKey of h.
 func NewInstanceKey(h *keyset.Handle) (*InstanceKey, error) {
 	a, err := aead.New(h)
@@ -91,22 +123,5 @@ func (k *InstanceKey) VerifyCheck(store CheckStorage) error {
 	if err != nil || !bytes.Equal(pt, []byte(checkPlaintext)) {
 		return ErrWrongInstanceKey
 	}
-	return nil
-}
-
-// StartupCheck refuses a configuration that would leave secrets unreadable:
-// the instance policy without a keyset, or a keyset that is not the one the
-// database was used with.
-func StartupCheck(policy Policy, key *InstanceKey, store CheckStorage) error {
-	if policy == PolicyInstance && key == nil {
-		return errors.New("the instance secret policy requires an instance keyset: see `happydomain secret-keyset generate`")
-	}
-
-	if key != nil {
-		if err := key.VerifyCheck(store); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }

@@ -60,6 +60,7 @@ var entityMap = map[string]string{
 	"NotificationRecordStorage":     "notification_record",
 	"ProviderStorage":          "provider",
 	"CheckStorage":             "secret_check",
+	"SafeStorage":              "safe",
 	"SessionStorage":           "session",
 	"UserStorage":              "user",
 	"ZoneStorage":              "zone",

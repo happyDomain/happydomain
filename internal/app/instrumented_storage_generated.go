@@ -194,6 +194,11 @@ func (s *instrumentedStorage) CreateRecord(rec *happydns.NotificationRecord) (er
 	return s.inner.CreateRecord(rec)
 }
 
+func (s *instrumentedStorage) CreateSafe(safe *happydns.Safe) (err error) {
+	defer observe("create", "safe")(&err)
+	return s.inner.CreateSafe(safe)
+}
+
 func (s *instrumentedStorage) CreateSnapshot(snap *happydns.ObservationSnapshot) (err error) {
 	defer observe("create", "observation_snapshot")(&err)
 	return s.inner.CreateSnapshot(snap)
@@ -282,6 +287,11 @@ func (s *instrumentedStorage) DeleteRecord(recId happydns.Identifier) (err error
 func (s *instrumentedStorage) DeleteRecordsOlderThan(before time.Time) (err error) {
 	defer observe("delete", "notification_record")(&err)
 	return s.inner.DeleteRecordsOlderThan(before)
+}
+
+func (s *instrumentedStorage) DeleteSafe(id happydns.Identifier) (err error) {
+	defer observe("delete", "safe")(&err)
+	return s.inner.DeleteSafe(id)
 }
 
 func (s *instrumentedStorage) DeleteSession(sessionid string) (err error) {
@@ -382,6 +392,16 @@ func (s *instrumentedStorage) GetPreference(prefId happydns.Identifier) (ret *ha
 func (s *instrumentedStorage) GetProvider(prvdid happydns.Identifier) (ret *happydns.ProviderMessage, err error) {
 	defer observe("get", "provider")(&err)
 	return s.inner.GetProvider(prvdid)
+}
+
+func (s *instrumentedStorage) GetSafe(id happydns.Identifier) (ret *happydns.Safe, err error) {
+	defer observe("get", "safe")(&err)
+	return s.inner.GetSafe(id)
+}
+
+func (s *instrumentedStorage) GetSafeByOwner(owner happydns.Identifier, kind string) (ret *happydns.Safe, err error) {
+	defer observe("get", "safe")(&err)
+	return s.inner.GetSafeByOwner(owner, kind)
 }
 
 func (s *instrumentedStorage) GetSecretCheck() (ret []byte, err error) {
@@ -502,6 +522,11 @@ func (s *instrumentedStorage) ListAllProviders() (ret happydns.Iterator[happydns
 func (s *instrumentedStorage) ListAllRecords() (ret happydns.Iterator[happydns.NotificationRecord], err error) {
 	defer observe("list", "notification_record")(&err)
 	return s.inner.ListAllRecords()
+}
+
+func (s *instrumentedStorage) ListAllSafes() (ret happydns.Iterator[happydns.Safe], err error) {
+	defer observe("list", "safe")(&err)
+	return s.inner.ListAllSafes()
 }
 
 func (s *instrumentedStorage) ListAllSessions() (ret happydns.Iterator[happydns.Session], err error) {
@@ -806,6 +831,11 @@ func (s *instrumentedStorage) UpdatePreference(pref *happydns.NotificationPrefer
 func (s *instrumentedStorage) UpdateProvider(prvd *happydns.Provider) (err error) {
 	defer observe("update", "provider")(&err)
 	return s.inner.UpdateProvider(prvd)
+}
+
+func (s *instrumentedStorage) UpdateSafe(safe *happydns.Safe) (err error) {
+	defer observe("update", "safe")(&err)
+	return s.inner.UpdateSafe(safe)
 }
 
 func (s *instrumentedStorage) UpdateSession(session *happydns.Session) (err error) {

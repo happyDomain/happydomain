@@ -39,6 +39,7 @@ var (
 	ErrNotificationStateNotFound      = errors.New("notification state not found")
 	ErrProviderNotFound               = errors.New("provider not found")
 	ErrSessionNotFound                = errors.New("session not found")
+	ErrSafeNotFound                   = errors.New("safe not found")
 	ErrSnapshotNotFound               = errors.New("snapshot not found")
 	ErrUserNotFound                   = errors.New("user not found")
 	ErrUserAlreadyExist               = errors.New("user already exists")
