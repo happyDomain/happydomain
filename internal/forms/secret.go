@@ -35,7 +35,8 @@ import (
 // It exists because the credentials a user entrusts to happyDomain live in a
 // struct whose shape differs for each of the 60+ providers, so there is no one
 // type to write a MarshalJSON on. Reading the tags back is the only place we
-// can decide, once, that a stored credential never leaves over the user API.
+// can decide, once, that a stored credential never leaves over the API: the
+// user API and the admin API both rely on it.
 //
 // It mutates data in place, so callers must own what they pass. That holds for
 // the provider handlers: GetUserProvider and the provider middleware both

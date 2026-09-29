@@ -35,12 +35,17 @@ import (
 type ProviderController struct {
 	providerService happydns.ProviderUsecase
 	adminService    happydns.AdminProviderUsecase
+
+	// api holds the user-API handlers, which redact stored credentials for
+	// the admin API too.
+	api *controller.ProviderController
 }
 
 func NewProviderController(providerService happydns.ProviderUsecase, adminService happydns.AdminProviderUsecase) *ProviderController {
 	return &ProviderController{
 		providerService: providerService,
 		adminService:    adminService,
+		api:             controller.NewProviderController(providerService),
 	}
 }
 
@@ -85,10 +90,7 @@ func (pc *ProviderController) ListProviders(c *gin.Context) {
 //	@Router			/providers [post]
 //	@Router			/users/{uid}/providers [post]
 func (pc *ProviderController) AddProvider(c *gin.Context) {
-	// No redaction: an administrator is expected to read provider credentials
-	// back. The user API passes true instead.
-	apidc := controller.NewProviderController(pc.providerService, false)
-	apidc.AddProvider(c)
+	pc.api.AddProvider(c)
 }
 
 // DeleteProvider removes a provider from the database.
@@ -127,10 +129,7 @@ func (pc *ProviderController) DeleteProvider(c *gin.Context) {
 //	@Router			/providers/{pid} [get]
 //	@Router			/users/{uid}/providers/{pid} [get]
 func (pc *ProviderController) GetProvider(c *gin.Context) {
-	// No redaction: an administrator is expected to read provider credentials
-	// back. The user API passes true instead.
-	apidc := controller.NewProviderController(pc.providerService, false)
-	apidc.GetProvider(c)
+	pc.api.GetProvider(c)
 }
 
 // UpdateProvider updates the information about a given provider.
@@ -151,10 +150,7 @@ func (pc *ProviderController) GetProvider(c *gin.Context) {
 //	@Router			/providers/{pid} [put]
 //	@Router			/users/{uid}/providers/{pid} [put]
 func (pc *ProviderController) UpdateProvider(c *gin.Context) {
-	// No redaction: an administrator is expected to read provider credentials
-	// back. The user API passes true instead.
-	apidc := controller.NewProviderController(pc.providerService, false)
-	apidc.UpdateProvider(c)
+	pc.api.UpdateProvider(c)
 }
 
 // ClearProviders removes all providers from the database.
