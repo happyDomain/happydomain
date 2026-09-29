@@ -178,6 +178,23 @@ func (u *CheckerOptionsUsecase) sealOptions(checkerName string, userId, domainId
 	return sealOptionsWith(u.secrets, checkerName, userId, domainId, serviceId, opts)
 }
 
+// RestoreOptions returns opts, the options of one scope read from a backup,
+// as they have to be stored. The placeholders a user export carries in place
+// of the values it withholds stand for no value, and are dropped. Secret
+// options in clear are sealed under the current policy. A sealed value is
+// kept only if it opens here.
+func RestoreOptions(secrets *secret.Manager, checkerName string, userId, domainId, serviceId *happydns.Identifier, opts happydns.CheckerOptions) (happydns.CheckerOptions, error) {
+	out := resolveEchoes(nil, opts)
+
+	if err := openOptionsWith(secrets.NewValueOpener(), checkerName, userId, domainId, serviceId, maps.Clone(out)); err != nil {
+		return nil, err
+	}
+	if err := sealOptionsWith(secrets, checkerName, userId, domainId, serviceId, out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func sealOptionsWith(secrets *secret.Manager, checkerName string, userId, domainId, serviceId *happydns.Identifier, opts happydns.CheckerOptions) error {
 	secretIds := secretIdsOf(checkerName)
 	for k, v := range opts {

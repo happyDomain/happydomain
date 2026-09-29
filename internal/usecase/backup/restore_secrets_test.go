@@ -559,3 +559,106 @@ func TestRestoreSafeBesideAnExistingOne(t *testing.T) {
 		t.Errorf("new secrets now go to safe %v (%v), want the one in place %s", s, err, inPlace.Id.String())
 	}
 }
+
+// storedOptions returns the options stored at the user scope of checkerName.
+func storedOptions(t *testing.T, db storage.Storage, checkerName string, user *happydns.User) happydns.CheckerOptions {
+	t.Helper()
+	positionals, err := db.GetCheckerConfiguration(checkerName, &user.Id, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range positionals {
+		if p.UserId != nil && p.DomainId == nil && p.ServiceId == nil {
+			return p.Options
+		}
+	}
+	t.Fatalf("no options stored for %s at the user scope", checkerName)
+	return nil
+}
+
+// A user export carries placeholders in place of the options it withholds.
+// They stand for no value: restored, they are dropped, as for providers,
+// rather than stored as values a checker would run with.
+func TestRestoreDropsPlaceholdersOfCheckerOptions(t *testing.T) {
+	db, user := seed(t)
+	uc := backup.NewUsecase(db, plaintextSecrets(t))
+
+	in := &happydns.Backup{
+		CheckerConfigurations: []*happydns.CheckerOptionsPositional{
+			{CheckName: backupSecretChecker, UserId: &user.Id, Options: happydns.CheckerOptions{
+				"token": happydns.RedactedSecret,
+				"plain": "visible",
+			}},
+			{CheckName: "checker_not_loaded", UserId: &user.Id, Options: happydns.CheckerOptions{
+				"api_key": happydns.RedactedSecret,
+				"count":   happydns.RedactedSecret,
+			}},
+		},
+	}
+	if err := uc.Restore(in); err != nil {
+		t.Fatalf("Restore: %v", err)
+	}
+
+	if got := storedOptions(t, db, backupSecretChecker, user); len(got) != 1 || got["plain"] != "visible" {
+		t.Errorf("restored %s = %v, want only plain", backupSecretChecker, got)
+	}
+	if got := storedOptions(t, db, "checker_not_loaded", user); len(got) != 0 {
+		t.Errorf("restored checker_not_loaded = %v, want no option", got)
+	}
+}
+
+// Secret options in clear, from a backup taken before sealing existed, are
+// sealed under the current policy, as provider credentials are.
+func TestRestoreSealsClearCheckerSecrets(t *testing.T) {
+	db, user := seed(t)
+	instance, _ := keyedSecrets(t, db)
+	uc := backup.NewUsecase(db, instance)
+
+	in := &happydns.Backup{
+		CheckerConfigurations: []*happydns.CheckerOptionsPositional{
+			{CheckName: backupSecretChecker, UserId: &user.Id, Options: happydns.CheckerOptions{
+				"token": "clear-token",
+				"plain": "visible",
+			}},
+		},
+	}
+	if err := uc.Restore(in); err != nil {
+		t.Fatalf("Restore: %v", err)
+	}
+
+	got := storedOptions(t, db, backupSecretChecker, user)
+	if token, _ := got["token"].(string); !secret.IsSealed(token) {
+		t.Errorf("restored token = %v, want it sealed", got["token"])
+	}
+	if got["plain"] != "visible" {
+		t.Errorf("restored plain = %v, want it as is", got["plain"])
+	}
+}
+
+// A sealed option no safe opens is refused, as for providers, rather than
+// stored where nobody knows whether it opens.
+func TestRestoreRefusesCheckerOptionsThatDoNotOpen(t *testing.T) {
+	db, user := seed(t)
+	_, plaintext := keyedSecrets(t, db)
+	uc := backup.NewUsecase(db, plaintext)
+
+	in := &happydns.Backup{
+		CheckerConfigurations: []*happydns.CheckerOptionsPositional{
+			{CheckName: backupSecretChecker, UserId: &user.Id, Options: happydns.CheckerOptions{
+				"token": "hds:1:AQ:c2VhbGVk",
+			}},
+		},
+	}
+	if err := uc.Restore(in); !errors.Is(err, secret.ErrUnknownSafe) {
+		t.Errorf("Restore = %v, want it to report the unknown safe", err)
+	}
+	positionals, err := db.GetCheckerConfiguration(backupSecretChecker, &user.Id, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range positionals {
+		if p.UserId != nil && p.DomainId == nil {
+			t.Errorf("options whose secret does not open were stored: %v", p.Options)
+		}
+	}
+}
