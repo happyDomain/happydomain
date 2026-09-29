@@ -26,10 +26,12 @@ import (
 	"fmt"
 	"log"
 
+	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/model"
 )
 
-// TidySafes deletes the safes whose owner no longer exists. A safe record
+// TidySafes deletes the safes whose owner no longer exists. The safe of the
+// instance itself has no user owner, and is kept. A safe record
 // that does not decode is kept whatever dropInvalid says: deleting it would
 // make the secrets it holds unreadable for good.
 func (tu *tidyUpUsecase) TidySafes(_ bool) error {
@@ -40,6 +42,9 @@ func (tu *tidyUpUsecase) TidySafes(_ bool) error {
 
 	var orphans []happydns.Identifier
 	err = iterateTidy(iter, false, func(safe *happydns.Safe) error {
+		if secret.IsInstanceOwner(safe.Owner) {
+			return nil
+		}
 		_, err := tu.store.GetUser(safe.Owner)
 		if errors.Is(err, happydns.ErrUserNotFound) {
 			orphans = append(orphans, safe.Id)

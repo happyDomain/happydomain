@@ -75,6 +75,27 @@ func scanSafes(store SafeStorage, visit func(*happydns.Safe) bool) (damaged []st
 	return damaged, iter.Err()
 }
 
+// instanceOwner owns the secrets of the instance itself. It is persisted, in
+// safes and in the associated data of what they seal: it cannot change.
+const instanceOwner = "instance"
+
+// InstanceOwner returns the owner of the secrets of the instance itself, such
+// as the checker options an administrator sets for every user. Each call
+// returns a new copy, which the caller may change.
+//
+// Generated user identifiers are 16 random bytes and do not collide with it,
+// but an administrator or a restore can store a user under any identifier:
+// code acting on the safes of a user checks IsInstanceOwner first.
+func InstanceOwner() happydns.Identifier {
+	return happydns.Identifier(instanceOwner)
+}
+
+// IsInstanceOwner tells whether owner is the instance itself rather than a
+// user.
+func IsInstanceOwner(owner happydns.Identifier) bool {
+	return string(owner) == instanceOwner
+}
+
 // wrapAssociatedData binds a wrapped keyset to its safe and owner, so that it
 // cannot be moved to another safe.
 //
@@ -198,13 +219,13 @@ func (r *safeRegistry) instanceSafe(owner happydns.Identifier) (*happydns.Safe, 
 	return safe, nil
 }
 
-// checkOwner refuses owner unless it is an existing user.
+// checkOwner refuses owner unless it is the instance or an existing user.
 //
 // It narrows, without closing, the window in which a user deleted while one
 // of their objects is being sealed gets a safe: such a safe is left to
 // TidySafes.
 func (r *safeRegistry) checkOwner(owner happydns.Identifier) error {
-	if r.owners == nil {
+	if r.owners == nil || IsInstanceOwner(owner) {
 		return nil
 	}
 	_, err := r.owners.GetUser(owner)
@@ -276,6 +297,9 @@ func (m *Manager) CheckSafe(safe *happydns.Safe) error {
 func (m *Manager) DeleteOwnerSafes(owner happydns.Identifier) error {
 	if m == nil || m.safes == nil {
 		return errNoManager
+	}
+	if IsInstanceOwner(owner) {
+		return ErrInstanceOwner
 	}
 
 	var ids []happydns.Identifier

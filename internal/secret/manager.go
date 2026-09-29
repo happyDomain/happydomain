@@ -66,6 +66,10 @@ var (
 	// ErrUnknownOwner is returned when a secret would need a new safe for an
 	// owner that does not exist, such as a deleted user.
 	ErrUnknownOwner = errors.New("owner does not exist")
+
+	// ErrInstanceOwner is returned when the safes of the instance itself
+	// would be deleted as those of a user, whose identifier equals it.
+	ErrInstanceOwner = errors.New("the safes of the instance itself are not deleted with a user")
 )
 
 // Manager seals secrets before they are stored, and opens them where
@@ -144,8 +148,25 @@ func (m *Manager) SealObject(ctx context.Context, sc SecretContext, obj any) err
 	}
 
 	// All the secrets of an object go to the same safe.
-	x := &sealer{m: m, owner: sc.Owner, primitives: map[string]tink.AEAD{}}
-	return transform(obj, sc, x.seal)
+	return transform(obj, sc, m.newSealer(sc.Owner).seal)
+}
+
+// SealSecret seals s, a single secret, like SealObject does for each field.
+// sc must name the field. On error, s is left as it was.
+func (m *Manager) SealSecret(ctx context.Context, sc SecretContext, s *happydns.Secret) error {
+	if m == nil {
+		return errNoManager
+	}
+	if err := sc.Validate(); err != nil {
+		return err
+	}
+
+	val := *s
+	if err := m.newSealer(sc.Owner).seal(sc, &val); err != nil {
+		return err
+	}
+	*s = val
+	return nil
 }
 
 // transform calls f on a copy of every Secret of obj, and writes the copies
@@ -180,7 +201,7 @@ func transform(obj any, sc SecretContext, f func(SecretContext, *happydns.Secret
 	return nil
 }
 
-// sealer seals the secrets of one object, looking its safe up once.
+// sealer seals the secrets of one owner, looking its safe up once.
 type sealer struct {
 	m         *Manager
 	owner     happydns.Identifier
@@ -189,6 +210,12 @@ type sealer struct {
 
 	// primitives opens the sealed values met, by safe identifier.
 	primitives map[string]tink.AEAD
+}
+
+// newSealer returns a sealer for the secrets of owner, sharing nothing with
+// another one.
+func (m *Manager) newSealer(owner happydns.Identifier) *sealer {
+	return &sealer{m: m, owner: owner, primitives: map[string]tink.AEAD{}}
 }
 
 func (x *sealer) seal(sc SecretContext, s *happydns.Secret) error {
@@ -270,6 +297,18 @@ func (m *Manager) OpenObject(ctx context.Context, sc SecretContext, obj any) err
 	return transform(obj, sc, func(fsc SecretContext, s *happydns.Secret) error {
 		return m.open(fsc, s, primitives)
 	})
+}
+
+// OpenSecret opens s, a single secret, like OpenObject does for each field.
+// sc must name the field.
+func (m *Manager) OpenSecret(ctx context.Context, sc SecretContext, s *happydns.Secret) error {
+	if m == nil {
+		return errNoManager
+	}
+	if err := sc.Validate(); err != nil {
+		return err
+	}
+	return m.open(sc, s, map[string]tink.AEAD{})
 }
 
 // OpenCopy returns a copy of obj, a pointer to a struct, with every secret

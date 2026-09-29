@@ -113,7 +113,8 @@ func decodeCanonical(s string) ([]byte, error) {
 // associated data, so a sealed value copied to another field, object or user
 // does not open.
 type SecretContext struct {
-	// Owner is the user the secret belongs to.
+	// Owner is the user the secret belongs to, or InstanceOwner() for the
+	// secrets of the instance itself: it is not always a user identifier.
 	Owner happydns.Identifier
 
 	// ObjectType names the kind of object holding the secret: "provider"...

@@ -73,8 +73,13 @@ func TestNoSafeCreatedForAnUnknownOwner(t *testing.T) {
 		t.Error("a refused seal changed the object")
 	}
 
-	if store.Creates() != 1 {
-		t.Errorf("%d safes created, want only the user's", store.Creates())
+	// The instance itself is not a user.
+	inst := sc
+	inst.Owner = InstanceOwner()
+	_ = sealOne(t, m, inst, "v")
+
+	if store.Creates() != 2 {
+		t.Errorf("%d safes created, want one for the user and one for the instance", store.Creates())
 	}
 }
 

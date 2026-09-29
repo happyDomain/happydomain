@@ -379,3 +379,163 @@ func TestInstanceOpenObjectIsAllOrNothing(t *testing.T) {
 		t.Error("a failed OpenObject left the object half opened")
 	}
 }
+
+func TestSealOpenSingleSecret(t *testing.T) {
+	m, _, _ := instanceManagers(t)
+	sc := objectContext()
+	sc.Field = "api_key"
+
+	s := happydns.NewSecret("single")
+	if err := m.SealSecret(context.Background(), sc, &s); err != nil {
+		t.Fatalf("SealSecret: %v", err)
+	}
+	if !IsSealed(s.Token()) {
+		t.Fatalf("token = %q, want it sealed", s.Token())
+	}
+
+	back := sealedFromStorage(t, s.Token())
+	if err := m.OpenSecret(context.Background(), sc, &back); err != nil || back.Reveal() != "single" {
+		t.Errorf("OpenSecret = %v, %q", err, back.Reveal())
+	}
+
+	// Bound to its field.
+	other := sc
+	other.Field = "other_key"
+	back = sealedFromStorage(t, s.Token())
+	if err := m.OpenSecret(context.Background(), other, &back); err == nil {
+		t.Error("a single secret opened under another field")
+	}
+
+	// The field is required.
+	noField := sc
+	noField.Field = ""
+	s = happydns.NewSecret("v")
+	if err := m.SealSecret(context.Background(), noField, &s); err == nil {
+		t.Error("SealSecret without a field succeeded")
+	}
+}
+
+func TestInstanceOwnerSafe(t *testing.T) {
+	m, _, store := instanceManagers(t)
+	sc := SecretContext{Owner: InstanceOwner(), ObjectType: "checker-options", ObjectId: "x", Field: "k"}
+
+	s := happydns.NewSecret("operator key")
+	if err := m.SealSecret(context.Background(), sc, &s); err != nil {
+		t.Fatalf("SealSecret for the instance: %v", err)
+	}
+	if _, err := store.GetSafeByOwner(InstanceOwner(), KindInstance); err != nil {
+		t.Errorf("no instance-owned safe: %v", err)
+	}
+}
+
+// The instance owner is persisted, in safes and in the associated data of
+// what they seal: its value cannot change.
+func TestIsInstanceOwner(t *testing.T) {
+	if !IsInstanceOwner(happydns.Identifier("instance")) {
+		t.Error("the instance owner changed: every safe of the instance becomes unreadable")
+	}
+	for _, id := range []happydns.Identifier{nil, {}, {0x01}, happydns.Identifier("instancf"), make(happydns.Identifier, happydns.IDENTIFIER_LEN)} {
+		if IsInstanceOwner(id) {
+			t.Errorf("IsInstanceOwner(%v) = true", id)
+		}
+	}
+}
+
+func TestInstanceOwnerCannotBeAltered(t *testing.T) {
+	owner := InstanceOwner()
+	owner[0] ^= 0xff
+
+	if !IsInstanceOwner(InstanceOwner()) {
+		t.Error("changing a returned instance owner changed the instance owner")
+	}
+}
+
+// A user whose identifier equals the instance owner can be created by an
+// administrator or a restore. Deleting that user must not delete the safe of
+// the instance, which would make its secrets unreadable for good.
+func TestDeleteOwnerSafesRefusesTheInstance(t *testing.T) {
+	m, _, store := instanceManagers(t)
+	sc := SecretContext{Owner: InstanceOwner(), ObjectType: "checker-options", ObjectId: "x", Field: "k"}
+
+	s := happydns.NewSecret("operator key")
+	if err := m.SealSecret(context.Background(), sc, &s); err != nil {
+		t.Fatalf("SealSecret for the instance: %v", err)
+	}
+
+	if err := m.DeleteOwnerSafes(happydns.Identifier("instance")); !errors.Is(err, ErrInstanceOwner) {
+		t.Errorf("DeleteOwnerSafes(instance) = %v, want ErrInstanceOwner", err)
+	}
+	if _, err := store.GetSafeByOwner(InstanceOwner(), KindInstance); err != nil {
+		t.Fatalf("the instance safe was deleted: %v", err)
+	}
+
+	// What it sealed still opens.
+	sealed := sealedFromStorage(t, s.Token())
+	if err := m.OpenSecret(context.Background(), sc, &sealed); err != nil || sealed.Reveal() != "operator key" {
+		t.Errorf("OpenSecret after the refused deletion = %q, %v", sealed.Reveal(), err)
+	}
+}
+
+func TestSealSecretRebindsAndChecks(t *testing.T) {
+	m, _, _ := instanceManagers(t)
+	from := objectContext()
+	from.Field = "api_key"
+
+	s := happydns.NewSecret("value")
+	if err := m.SealSecret(context.Background(), from, &s); err != nil {
+		t.Fatalf("SealSecret: %v", err)
+	}
+
+	// Opened, moved to another field: sealed again for it.
+	to := from
+	to.Field = "other_key"
+	moved := s
+	if err := m.SealSecret(context.Background(), to, &moved); err != nil {
+		t.Fatalf("SealSecret of a moved value: %v", err)
+	}
+	back := sealedFromStorage(t, moved.Token())
+	if err := m.OpenSecret(context.Background(), to, &back); err != nil || back.Reveal() != "value" {
+		t.Errorf("the moved value does not open where it now lives: %v", err)
+	}
+
+	// Sealed, never opened, moved: refused and left as it was.
+	sealed := sealedFromStorage(t, s.Token())
+	if err := m.SealSecret(context.Background(), to, &sealed); err == nil {
+		t.Error("SealSecret kept a sealed value that does not open where it is stored")
+	}
+	if !sealed.IsSealed() || sealed.Token() != s.Token() {
+		t.Error("a failed SealSecret changed the value")
+	}
+}
+
+// A deleted safe no longer opens anything, even once its key was unwrapped
+// and cached by an earlier open.
+func TestInstanceOpenFailsOnceSafeDeleted(t *testing.T) {
+	m, _, store := instanceManagers(t)
+	sc := objectContext()
+
+	obj := &managedObject{ApiKey: happydns.NewSecret("my-api-key")}
+	if err := m.SealObject(context.Background(), sc, obj); err != nil {
+		t.Fatal(err)
+	}
+	stored := sealedFromStorage(t, obj.ApiKey.Token())
+
+	back := &managedObject{ApiKey: stored}
+	if err := m.OpenObject(context.Background(), sc, back); err != nil {
+		t.Fatalf("OpenObject: %v", err)
+	}
+
+	safe, err := store.GetSafeByOwner(sc.Owner, KindInstance)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Deleted behind the Manager's back, as the tidy job does.
+	if err := store.DeleteSafe(safe.Id); err != nil {
+		t.Fatal(err)
+	}
+
+	back = &managedObject{ApiKey: stored}
+	if err := m.OpenObject(context.Background(), sc, back); !errors.Is(err, ErrUnknownSafe) {
+		t.Errorf("OpenObject after the safe was deleted = %v, want ErrUnknownSafe", err)
+	}
+}
