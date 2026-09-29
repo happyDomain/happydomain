@@ -184,7 +184,7 @@ func TestSecretRedacted(t *testing.T) {
 func TestSecretRedact(t *testing.T) {
 	sealed := unmarshalSecret(t, `"`+sealedToken+`"`)
 	opened := sealed
-	opened.SetOpened(sealedToken, []byte(clearValue))
+	opened.SetOpened(sealedToken, []byte(clearValue), "")
 
 	for name, s := range map[string]happydns.Secret{
 		"clear":  happydns.NewSecret(clearValue),
@@ -226,7 +226,7 @@ func TestSecretSetSealed(t *testing.T) {
 
 func TestSecretSetOpened(t *testing.T) {
 	s := unmarshalSecret(t, `"`+sealedToken+`"`)
-	s.SetOpened(sealedToken, []byte(clearValue))
+	s.SetOpened(sealedToken, []byte(clearValue), "")
 
 	if !s.IsOpened() {
 		t.Fatal("SetOpened: IsOpened() = false, want true")
@@ -244,11 +244,42 @@ func TestSecretSetOpened(t *testing.T) {
 	}
 }
 
+func TestSecretBinding(t *testing.T) {
+	opened := unmarshalSecret(t, `"`+sealedToken+`"`)
+	opened.SetOpened(sealedToken, []byte(clearValue), "ctx-a")
+
+	if opened.Binding() != "ctx-a" {
+		t.Errorf("opened Binding() = %q, want %q", opened.Binding(), "ctx-a")
+	}
+
+	// Only an opened secret is known to belong somewhere: the others say
+	// nothing, rather than a binding they cannot vouch for.
+	for name, s := range map[string]happydns.Secret{
+		"empty":    {},
+		"clear":    happydns.NewSecret(clearValue),
+		"sealed":   unmarshalSecret(t, `"`+sealedToken+`"`),
+		"redacted": unmarshalSecret(t, `"`+happydns.RedactedSecret+`"`),
+	} {
+		if s.Binding() != "" {
+			t.Errorf("%s Binding() = %q, want empty", name, s.Binding())
+		}
+	}
+
+	resealed := opened
+	resealed.SetSealed(sealedToken)
+	if resealed.Binding() != "" {
+		t.Error("SetSealed must drop the binding along with the clear value")
+	}
+	if opened.Binding() != "ctx-a" {
+		t.Error("changing a copy changed the binding of the original")
+	}
+}
+
 func TestSecretSetOpenedPlaintextPolicy(t *testing.T) {
 	// The plaintext policy "seals" a clear value by opening it under its own
 	// value, so the record keeps the exact format it has today.
 	s := happydns.NewSecret(clearValue)
-	s.SetOpened(clearValue, []byte(clearValue))
+	s.SetOpened(clearValue, []byte(clearValue), "")
 
 	b, err := json.Marshal(s)
 	if err != nil || string(b) != `"`+clearValue+`"` {
@@ -266,7 +297,7 @@ func TestSecretClearForSealing(t *testing.T) {
 	}
 
 	opened := unmarshalSecret(t, `"`+sealedToken+`"`)
-	opened.SetOpened(sealedToken, []byte(clearValue))
+	opened.SetOpened(sealedToken, []byte(clearValue), "")
 
 	for name, s := range map[string]happydns.Secret{
 		"empty":    {},
@@ -314,7 +345,7 @@ type providerLike struct {
 func TestSecretNeverFormatted(t *testing.T) {
 	s := happydns.NewSecret(clearValue)
 	opened := unmarshalSecret(t, `"`+sealedToken+`"`)
-	opened.SetOpened(sealedToken, []byte(clearValue))
+	opened.SetOpened(sealedToken, []byte(clearValue), "")
 
 	p := providerLike{
 		Name:   "visible",

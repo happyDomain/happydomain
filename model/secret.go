@@ -78,6 +78,11 @@ type secretValue struct {
 	// clear is the value in clear. Set when clear or opened. No promise of
 	// wiping it from memory is made: Go cannot keep it.
 	clear []byte
+
+	// binding tells where an opened secret belongs, as internal/secret
+	// encodes it: sealing it again elsewhere must not keep a token bound to
+	// another place.
+	binding string
 }
 
 func (s Secret) state() secretState {
@@ -167,12 +172,24 @@ func (s *Secret) SetSealed(token string) {
 	*s = Secret{&secretValue{state: secretSealed, token: token}}
 }
 
-// SetOpened records that token opens to value. The plaintext policy uses the
-// raw value as token, so that its records keep their current format.
+// SetOpened records that token opens to value where binding tells. The
+// plaintext policy uses the raw value as token, so that its records keep their
+// current format.
 //
 // Reserved for internal/secret.
-func (s *Secret) SetOpened(token string, value []byte) {
-	*s = Secret{&secretValue{state: secretOpened, token: token, clear: append([]byte(nil), value...)}}
+func (s *Secret) SetOpened(token string, value []byte, binding string) {
+	*s = Secret{&secretValue{state: secretOpened, token: token, clear: append([]byte(nil), value...), binding: binding}}
+}
+
+// Binding returns where an opened Secret was sealed or opened, as given to
+// SetOpened, and an empty string for any other state.
+//
+// Reserved for internal/secret.
+func (s Secret) Binding() string {
+	if s.state() != secretOpened {
+		return ""
+	}
+	return s.v.binding
 }
 
 // MarshalJSON encodes the stored form of the Secret. It fails with

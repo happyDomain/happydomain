@@ -192,3 +192,22 @@ func TestSecretContextValidate(t *testing.T) {
 		}
 	}
 }
+
+func TestSecretContextBinding(t *testing.T) {
+	sc := SecretContext{Owner: happydns.Identifier{0x01}, ObjectType: "provider", ObjectId: "p", Field: "apikey"}
+
+	if sc.binding() == "" || sc.binding() != sc.binding() {
+		t.Fatal("binding must be non-empty and stable")
+	}
+
+	for name, other := range map[string]SecretContext{
+		"owner":  {Owner: happydns.Identifier{0x02}, ObjectType: "provider", ObjectId: "p", Field: "apikey"},
+		"type":   {Owner: happydns.Identifier{0x01}, ObjectType: "channel", ObjectId: "p", Field: "apikey"},
+		"object": {Owner: happydns.Identifier{0x01}, ObjectType: "provider", ObjectId: "q", Field: "apikey"},
+		"field":  {Owner: happydns.Identifier{0x01}, ObjectType: "provider", ObjectId: "p", Field: "token"},
+	} {
+		if other.binding() == sc.binding() {
+			t.Errorf("changing the %s does not change the binding", name)
+		}
+	}
+}

@@ -302,7 +302,7 @@ func TestGenFieldSecretType(t *testing.T) {
 
 func TestRedactSecretsSecretType(t *testing.T) {
 	opened := sealedSecret(t, "hds:1:AQ:b3BlbmVk")
-	opened.SetOpened(opened.Token(), []byte("opened-value"))
+	opened.SetOpened(opened.Token(), []byte("opened-value"), "")
 
 	p := &typedProvider{
 		Host:     "dns.example.com",
