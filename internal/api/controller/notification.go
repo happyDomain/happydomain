@@ -168,6 +168,7 @@ func (nc *NotificationController) GetChannel(c *gin.Context) {
 //	@Param		channelId	path		string							true	"Channel ID"
 //	@Param		body		body		happydns.NotificationChannel	true	"Channel configuration"
 //	@Success	200			{object}	happydns.NotificationChannel
+//	@Failure	400			{object}	happydns.ErrorResponse	"Type of the channel changed"
 //	@Router		/notifications/channels/{channelId} [put]
 func (nc *NotificationController) UpdateChannel(c *gin.Context) {
 	existing := middleware.MyNotificationChannel(c)
@@ -184,6 +185,7 @@ func (nc *NotificationController) UpdateChannel(c *gin.Context) {
 	ch.UserId = existing.UserId
 
 	// Carry forward stored secrets so a GET → PUT round-trip does not wipe them.
+	// A change of type is refused there: each type reads its own config.
 	merged, err := nc.registry.MergeChannelForUpdate(existing, ch)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusBadRequest, err)

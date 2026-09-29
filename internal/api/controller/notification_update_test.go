@@ -26,6 +26,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -115,6 +116,59 @@ func channelRequest(t *testing.T, method string, body string, user *happydns.Use
 		c.Set("notification_channel", existing)
 	}
 	return w, c
+}
+
+func newTestIdentifier(t *testing.T) happydns.Identifier {
+	t.Helper()
+	id, err := happydns.NewRandomIdentifier()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return id
+}
+
+// Each type reads its own config: changing it would merge the config of the
+// old type, secrets included, into the new one. The refused update leaves the
+// stored channel as it was, config and secret included.
+func TestUpdateChannelRejectsTypeChange(t *testing.T) {
+	nc, db := newTestNotificationController(t)
+	nc.registry.Register(notifPkg.Adapt(notifPkg.NewEmailSender(nil, "https://happydomain.example"), nil))
+
+	user := &happydns.User{Id: happydns.Identifier{0x01}}
+	existingId := newTestIdentifier(t)
+	existing := &happydns.NotificationChannel{
+		Id:     existingId,
+		UserId: user.Id,
+		Type:   notifPkg.ChannelTypeWebhook,
+		Config: json.RawMessage(`{"url":"https://192.0.2.10/hook","secret":"kept"}`),
+	}
+	if err := db.CreateChannel(existing); err != nil {
+		t.Fatal(err)
+	}
+
+	w, c := channelRequest(t, http.MethodPut, `{"type":"email","config":{"url":"https://192.0.2.10/other","secret":"replaced"}}`, user, existing)
+	nc.UpdateChannel(c)
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("UpdateChannel = %d %s, want 400", w.Code, w.Body.String())
+	}
+	if !strings.Contains(w.Body.String(), "create a new channel") {
+		t.Errorf("UpdateChannel answered %s, want the user told what to do", w.Body.String())
+	}
+
+	stored, err := db.GetChannel(existing.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stored.Type != notifPkg.ChannelTypeWebhook {
+		t.Errorf("stored type = %q, want it unchanged", stored.Type)
+	}
+	var cfg map[string]any
+	if err := json.Unmarshal(stored.Config, &cfg); err != nil {
+		t.Fatalf("stored config %s: %v", stored.Config, err)
+	}
+	if len(cfg) != 2 || cfg["url"] != "https://192.0.2.10/hook" || cfg["secret"] != "kept" {
+		t.Errorf("stored config = %s, want it unchanged, secret included", stored.Config)
+	}
 }
 
 // The body is bound onto a clone: the stored preference must not see it.

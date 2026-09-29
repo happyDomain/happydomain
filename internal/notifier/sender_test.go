@@ -24,10 +24,12 @@ package notifier
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"strings"
 	"testing"
 
 	"git.happydns.org/happyDomain/internal/netguard"
+	"git.happydns.org/happyDomain/model"
 )
 
 func publicOnlyGuard(t *testing.T) *netguard.Guard {
@@ -102,5 +104,35 @@ func TestTypedAdapterCheckConfigFailsClosedWithoutGuard(t *testing.T) {
 	}
 	if err := adapter.CheckConfig(context.Background(), cfg); err == nil {
 		t.Error("CheckConfig accepted a destination with no guard in hand")
+	}
+}
+
+// Each type reads its own config: merging the stored config of one type into
+// another would hand it the stored secrets, whether or not the new type is
+// known.
+func TestMergeChannelForUpdateRefusesTypeChange(t *testing.T) {
+	r := NewRegistry()
+	r.Register(Adapt(NewWebhookSender("https://happydomain.example", publicOnlyGuard(t)), publicOnlyGuard(t)))
+	r.Register(Adapt(NewEmailSender(nil, "https://happydomain.example"), nil))
+	existing := &happydns.NotificationChannel{
+		Type:   ChannelTypeWebhook,
+		Config: json.RawMessage(`{"url":"https://example.com/hook","secret":"stored"}`),
+	}
+
+	for _, typ := range []happydns.NotificationChannelType{ChannelTypeEmail, "unregistered"} {
+		t.Run(string(typ), func(t *testing.T) {
+			incoming := &happydns.NotificationChannel{
+				Type:   typ,
+				Config: json.RawMessage(`{"url":"https://example.com/hook"}`),
+			}
+
+			merged, err := r.MergeChannelForUpdate(existing, incoming)
+			if !errors.Is(err, ErrChannelTypeChanged) {
+				t.Errorf("MergeChannelForUpdate = %v, want ErrChannelTypeChanged", err)
+			}
+			if merged != nil {
+				t.Errorf("merged = %s, want nothing", merged)
+			}
+		})
 	}
 }
