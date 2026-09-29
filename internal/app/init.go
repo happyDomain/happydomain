@@ -93,8 +93,30 @@ func (app *App) initStorageEngine() {
 }
 
 func (app *App) initSecrets() {
-	var err error
-	app.secrets, err = secret.NewManager(secret.PolicyPlaintext)
+	// Before the keyset check, which writes to the database.
+	policy, err := secret.ParsePolicy(app.cfg.SecretPolicy)
+	if err != nil {
+		log.Fatalf("Refusing to start: %s", err)
+	}
+
+	var key *secret.InstanceKey
+	if path := app.cfg.SecretKeysetFile; path != "" {
+		if open, err := secret.KeysetFileTooOpen(path); err == nil && open {
+			log.Printf("WARNING: the instance keyset %s can be read by other users than its owner: restrict it (chmod 600).", path)
+		}
+
+		key, err = secret.LoadInstanceKey(path)
+		if err != nil {
+			log.Fatalf("Unable to load the instance keyset: %s", err)
+		}
+	}
+
+	// Refuse to start rather than fail provider by provider.
+	if err := secret.StartupCheck(policy, key, app.store); err != nil {
+		log.Fatalf("Refusing to start: %s", err)
+	}
+
+	app.secrets, err = secret.NewManager(policy)
 	if err != nil {
 		log.Fatalf("Unable to initialize secret management: %s", err)
 	}

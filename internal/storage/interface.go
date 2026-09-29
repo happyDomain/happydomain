@@ -24,6 +24,7 @@ package storage // import "git.happydns.org/happyDomain/internal/storage"
 import (
 	"encoding/json"
 
+	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/internal/usecase/authuser"
 	"git.happydns.org/happyDomain/internal/usecase/checker"
 	"git.happydns.org/happyDomain/internal/usecase/domain"
@@ -61,6 +62,7 @@ type Storage interface {
 	notification.NotificationStateStorage
 	notification.NotificationRecordStorage
 	provider.ProviderStorage
+	secret.CheckStorage
 	session.SessionStorage
 	user.UserStorage
 	zone.ZoneStorage

@@ -372,6 +372,11 @@ func (s *instrumentedStorage) GetProvider(prvdid happydns.Identifier) (ret *happ
 	return s.inner.GetProvider(prvdid)
 }
 
+func (s *instrumentedStorage) GetSecretCheck() (ret []byte, err error) {
+	defer observe("get", "secret_check")(&err)
+	return s.inner.GetSecretCheck()
+}
+
 func (s *instrumentedStorage) GetSession(sessionid string) (ret *happydns.Session, err error) {
 	defer observe("get", "session")(&err)
 	return s.inner.GetSession(sessionid)
@@ -617,6 +622,11 @@ func (s *instrumentedStorage) PutCachedObservation(target happydns.CheckTarget, 
 func (s *instrumentedStorage) PutDiscoveryObservationRef(ref *happydns.DiscoveryObservationRef) (err error) {
 	defer observe("put", "discovery_observation")(&err)
 	return s.inner.PutDiscoveryObservationRef(ref)
+}
+
+func (s *instrumentedStorage) PutSecretCheck(record []byte) (err error) {
+	defer observe("put", "secret_check")(&err)
+	return s.inner.PutSecretCheck(record)
 }
 
 func (s *instrumentedStorage) PutState(state *happydns.NotificationState) (err error) {
