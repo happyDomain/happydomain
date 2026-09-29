@@ -122,12 +122,12 @@ type Field struct {
 	EndpointDefault string `json:"-"`
 }
 
-// RedactedSecret is what the user API sends in place of a stored value whose
-// field is tagged `secret`. Coming back on a write it means "keep the value
-// already stored": see forms.RedactSecrets and forms.MergeSecrets.
+// RedactedSecret is what the API sends in place of a stored secret. Coming
+// back on a write it means "keep the value already stored": see
+// forms.RedactSecrets and forms.MergeSecrets.
 //
-// The admin API is exempt and keeps emitting real values, as does the
-// administrative backup, whose restore depends on round-trip fidelity.
+// The administrative backup is the exception: its restore depends on
+// round-trip fidelity, so it copies stored records as they are.
 const RedactedSecret = "••••••••"
 
 // FieldFromCheckerOption converts a CheckerOptionDocumentation into a Field,

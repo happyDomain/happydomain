@@ -64,7 +64,7 @@ func providerRequest(t *testing.T, method, body string, user *happydns.User) (*h
 func TestAddProviderWithoutIdentifiers(t *testing.T) {
 	user := &happydns.User{Id: happydns.Identifier{0x01}}
 	providers := &creatingProviders{}
-	pc := NewProviderController(providers, true)
+	pc := NewProviderController(providers)
 
 	w, c := providerRequest(t, http.MethodPost, `{"_srctype":"DDNSServer","_comment":"mine","Provider":{"keyname":"ddns"}}`, user)
 	pc.AddProvider(c)
@@ -85,7 +85,7 @@ func TestAddProviderWithoutIdentifiers(t *testing.T) {
 func TestAddProviderIgnoresClientIdentifiers(t *testing.T) {
 	user := &happydns.User{Id: happydns.Identifier{0x01}}
 	providers := &creatingProviders{}
-	pc := NewProviderController(providers, true)
+	pc := NewProviderController(providers)
 
 	w, c := providerRequest(t, http.MethodPost, `{"_srctype":"DDNSServer","_id":"Ag","_ownerid":"Aw","Provider":{}}`, user)
 	pc.AddProvider(c)
@@ -100,7 +100,7 @@ func TestAddProviderIgnoresClientIdentifiers(t *testing.T) {
 func TestAddProviderRequiresType(t *testing.T) {
 	user := &happydns.User{Id: happydns.Identifier{0x01}}
 	providers := &creatingProviders{}
-	pc := NewProviderController(providers, true)
+	pc := NewProviderController(providers)
 
 	w, c := providerRequest(t, http.MethodPost, `{"_comment":"mine","Provider":{}}`, user)
 	pc.AddProvider(c)
@@ -117,7 +117,7 @@ func TestAddProviderRequiresType(t *testing.T) {
 func TestUpdateProviderWithoutIdentifiers(t *testing.T) {
 	user := &happydns.User{Id: happydns.Identifier{0x01}}
 	old := &happydns.Provider{ProviderMeta: happydns.ProviderMeta{Id: happydns.Identifier{0x02}, Owner: user.Id, Type: "DDNSServer", Comment: "before"}}
-	pc := NewProviderController(&updatingProviders{}, false)
+	pc := NewProviderController(&updatingProviders{})
 
 	w, c := providerRequest(t, http.MethodPut, `{"_srctype":"DDNSServer","_comment":"after","Provider":{}}`, user)
 	c.Set("provider", old)
