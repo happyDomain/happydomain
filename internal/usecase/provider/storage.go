@@ -51,6 +51,13 @@ type ProviderStorage interface {
 	// UpdateProvider updates the fields of the given Provider.
 	UpdateProvider(prvd *happydns.Provider) error
 
+	// ReplaceProvider rewrites the provider id with what update returns from
+	// the stored one. It writes nothing when update returns nil, and fails,
+	// writing nothing, with happydns.ErrProviderNotFound or
+	// happydns.ErrChangedMeanwhile when the provider was deleted or changed
+	// in between. Its identifier and owner cannot change.
+	ReplaceProvider(id happydns.Identifier, update func(*happydns.ProviderMessage) (*happydns.Provider, error)) error
+
 	// DeleteProvider removes the given Provider from the database.
 	DeleteProvider(prvdid happydns.Identifier) error
 

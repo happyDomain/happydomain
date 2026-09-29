@@ -55,6 +55,7 @@ func TestErrorResponse(t *testing.T) {
 		// Wrapped on the way by a use case: still answered with their own
 		// status and message.
 		{"wrapped validation error", fmt.Errorf("importing: %w", happydns.ValidationError{Msg: "bad"}), http.StatusBadRequest, "bad"},
+		{"wrapped conflict", fmt.Errorf("updating: %w", happydns.ConflictError{Msg: "try again"}), http.StatusConflict, "try again"},
 		{"wrapped http error", fmt.Errorf("importing: %w", happydns.CustomError{Err: errors.New("later"), Status: http.StatusServiceUnavailable}), http.StatusServiceUnavailable, "later"},
 		{"wrapped http error without status", fmt.Errorf("importing: %w", happydns.CustomError{Err: errors.New("oops")}), http.StatusInternalServerError, "oops"},
 		{"internal error", internal, http.StatusInternalServerError, "try again later"},

@@ -24,6 +24,7 @@ package provider
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"git.happydns.org/happyDomain/internal/forms"
@@ -170,34 +171,36 @@ func (s *Service) ListUserProviders(_ context.Context, user *happydns.User) ([]*
 }
 
 // UpdateProvider updates a provider using the provided update function.
+//
+// The provider is written only if it is still what updateFn was given: what
+// updateFn carries forward, sealed values included, is never written over
+// what another writer, such as a reseal, stored in between. Such an update
+// fails with a happydns.ConflictError; retrying reads the provider again.
+//
+// This only guards against a write landing while the update is handled. A
+// client submitting a form read before someone else's change is not detected:
+// the update is applied to what is stored when writing.
 func (s *Service) UpdateProvider(ctx context.Context, providerID happydns.Identifier, user *happydns.User, updateFn func(*happydns.Provider)) error {
-	provider, err := s.GetUserProvider(ctx, user, providerID)
-	if err != nil {
+	// What updating the stored provider failed with, told apart from what
+	// the storage fails with.
+	var updateErr error
+	err := s.store.ReplaceProvider(providerID, func(msg *happydns.ProviderMessage) (*happydns.Provider, error) {
+		var provider *happydns.Provider
+		provider, updateErr = s.updated(ctx, providerID, user, msg, updateFn)
+		return provider, updateErr
+	})
+
+	switch {
+	case updateErr != nil:
+		return updateErr
+	case errors.Is(err, happydns.ErrChangedMeanwhile):
+		return happydns.ConflictError{
+			Msg: "This provider was written by another operation at the same moment. Please try again.",
+			Err: err,
+		}
+	case errors.Is(err, happydns.ErrProviderNotFound):
 		return err
-	}
-
-	updateFn(provider)
-
-	if !provider.Id.Equals(providerID) {
-		return happydns.ValidationError{Msg: "you cannot change the provider identifier"}
-	}
-	if !provider.Owner.Equals(user.Id) {
-		// Secrets are bound to their owner: those carried forward would no
-		// longer open.
-		return happydns.ValidationError{Msg: "you cannot change the provider owner"}
-	}
-
-	err = s.validator.Validate(ctx, provider)
-	if err != nil {
-		return happydns.ValidationError{Msg: fmt.Sprintf("unable to validate provider attributes: %s", err.Error())}
-	}
-
-	if err := s.seal(ctx, provider); err != nil {
-		return err
-	}
-
-	err = s.store.UpdateProvider(provider)
-	if err != nil {
+	case err != nil:
 		return happydns.InternalError{
 			Err:         fmt.Errorf("unable to UpdateProvider in UpdateProvider: %w", err),
 			UserMessage: "Sorry, we are currently unable to update your provider. Please retry later.",
@@ -205,6 +208,40 @@ func (s *Service) UpdateProvider(ctx context.Context, providerID happydns.Identi
 	}
 
 	return nil
+}
+
+// updated returns msg, the stored provider providerID, as updateFn changes it,
+// validated and sealed.
+func (s *Service) updated(ctx context.Context, providerID happydns.Identifier, user *happydns.User, msg *happydns.ProviderMessage, updateFn func(*happydns.Provider)) (*happydns.Provider, error) {
+	if !user.Id.Equals(msg.Owner) {
+		return nil, happydns.ErrProviderNotFound
+	}
+
+	provider, err := ParseProvider(msg)
+	if err != nil {
+		return nil, err
+	}
+
+	updateFn(provider)
+
+	if !provider.Id.Equals(providerID) {
+		return nil, happydns.ValidationError{Msg: "you cannot change the provider identifier"}
+	}
+	if !provider.Owner.Equals(user.Id) {
+		// Secrets are bound to their owner: those carried forward would no
+		// longer open.
+		return nil, happydns.ValidationError{Msg: "you cannot change the provider owner"}
+	}
+
+	if err := s.validator.Validate(ctx, provider); err != nil {
+		return nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to validate provider attributes: %s", err.Error())}
+	}
+
+	if err := s.seal(ctx, provider); err != nil {
+		return nil, err
+	}
+
+	return provider, nil
 }
 
 // UpdateProviderFromMessage updates a provider from a ProviderMessage.

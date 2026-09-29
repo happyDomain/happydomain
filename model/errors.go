@@ -54,6 +54,11 @@ var (
 	// created without a well-formed identifier: the caller has to generate
 	// one with NewRandomIdentifier.
 	ErrInvalidIdentifier = errors.New("invalid identifier")
+
+	// ErrChangedMeanwhile is returned by the storage when a conditional
+	// write finds the record changed since it was read: nothing was written,
+	// and reading it again gets the current version.
+	ErrChangedMeanwhile = errors.New("changed meanwhile")
 )
 
 const TryAgainErr = "Sorry, we are currently unable to sent email validation link. Please try again later."
@@ -154,6 +159,32 @@ func (err NotFoundError) ToErrorResponse() ErrorResponse {
 
 func (err NotFoundError) HTTPStatus() int {
 	return http.StatusNotFound
+}
+
+// ConflictError reports a write refused because what it was based on changed
+// in between: reading again, then retrying, is the way out. Msg is shown to
+// the user; Err, the cause, is not.
+type ConflictError struct {
+	Msg string
+	Err error
+}
+
+func (err ConflictError) Error() string {
+	return err.Msg
+}
+
+func (err ConflictError) Unwrap() error {
+	return err.Err
+}
+
+func (err ConflictError) ToErrorResponse() ErrorResponse {
+	return ErrorResponse{
+		Message: err.Msg,
+	}
+}
+
+func (err ConflictError) HTTPStatus() int {
+	return http.StatusConflict
 }
 
 type ValidationError struct {

@@ -25,6 +25,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"slices"
 
 	"git.happydns.org/happyDomain/model"
 )
@@ -132,6 +133,23 @@ func (s *KVStorage) UpdateProvider(prvd *happydns.Provider) error {
 		return err
 	}
 	return batch.Commit()
+}
+
+// ReplaceProvider rewrites a stored provider, unless it changed or was
+// deleted in between. Its identifier and owner cannot change: the owner
+// index is left as it is.
+func (s *KVStorage) ReplaceProvider(id happydns.Identifier, update func(*happydns.ProviderMessage) (*happydns.Provider, error)) error {
+	return replace(s.db, providerPrimaryKey(id), happydns.ErrProviderNotFound, func(old *happydns.ProviderMessage) (*happydns.Provider, error) {
+		owner := slices.Clone(old.Owner)
+		next, err := update(old)
+		if err != nil || next == nil {
+			return next, err
+		}
+		if !next.Id.Equals(id) || !next.Owner.Equals(owner) {
+			return nil, errors.New("the identifier and owner of a provider cannot change")
+		}
+		return next, nil
+	})
 }
 
 func (s *KVStorage) DeleteProvider(prvdId happydns.Identifier) error {

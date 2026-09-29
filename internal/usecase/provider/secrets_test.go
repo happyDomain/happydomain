@@ -406,3 +406,115 @@ func Test_Secret_LegacyPlaintextSealedOnNextWrite(t *testing.T) {
 		t.Errorf("instantiated with %v, want the legacy key", instantiatedWith)
 	}
 }
+
+func seedLegacyProviders(t *testing.T, db storage.Storage, n int) (*happydns.User, []happydns.Identifier) {
+	t.Helper()
+	user := createTestUser(t, db, "reseal@example.com")
+	var ids []happydns.Identifier
+	for i := range n {
+		p := storeRaw(t, db, user.Id, `{"host":"h","apikey":"legacy-`+string(rune('a'+i))+`"}`)
+		ids = append(ids, p.Id)
+	}
+	return user, ids
+}
+
+// racing runs during once, right after the next read of a provider and
+// before whatever is written from that read: another writer landing in
+// between, however the reader reads.
+type racing struct {
+	storage.Storage
+	during func()
+}
+
+func (s *racing) run() {
+	if s.during != nil {
+		during := s.during
+		s.during = nil
+		during()
+	}
+}
+
+func (s *racing) GetProvider(id happydns.Identifier) (*happydns.ProviderMessage, error) {
+	msg, err := s.Storage.GetProvider(id)
+	s.run()
+	return msg, err
+}
+
+func (s *racing) ReplaceProvider(id happydns.Identifier, update func(*happydns.ProviderMessage) (*happydns.Provider, error)) error {
+	return s.Storage.ReplaceProvider(id, func(msg *happydns.ProviderMessage) (*happydns.Provider, error) {
+		s.run()
+		return update(msg)
+	})
+}
+
+// writeProviderBody stores body as the provider id of owner, in clear.
+func writeProviderBody(t *testing.T, db storage.Storage, id, owner happydns.Identifier, body string) {
+	t.Helper()
+	p, err := provider.ParseProvider(&happydns.ProviderMessage{
+		ProviderMeta: happydns.ProviderMeta{Type: "SecretTestProvider", Id: id, Owner: owner},
+		Provider:     json.RawMessage(body),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := plaintextSecrets(t).SealObject(ctx, provider.SecretContext(p), p.Provider); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.UpdateProvider(p); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// A user update carries stored values forward. Written over what a reseal
+// stored in between, it would bring back a token of a safe the reseal just
+// emptied, and that may be dropped next: the update is refused instead.
+func Test_Secret_UpdateDoesNotOverwriteAConcurrentWrite(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	user, ids := seedLegacyProviders(t, db, 1)
+
+	store := &racing{Storage: db, during: func() {
+		writeProviderBody(t, db, ids[0], user.Id, `{"host":"h","apikey":"written-meanwhile"}`)
+	}}
+	svc := provider.NewService(store, &mockValidator{}, nil, plaintextSecrets(t))
+
+	body := `{"host":"h2","apikey":"` + happydns.RedactedSecret + `"}`
+	err := svc.UpdateProviderFromMessage(ctx, ids[0], user, secretMessage(t, "SecretTestProvider", body))
+
+	var conflict happydns.ConflictError
+	if !errors.As(err, &conflict) {
+		t.Fatalf("UpdateProviderFromMessage = %v, want a ConflictError", err)
+	}
+	if got := storedBody(t, db, ids[0]); got != `{"host":"h","apikey":"written-meanwhile"}` {
+		t.Errorf("stored body = %s, want what was written meanwhile", got)
+	}
+
+	// Retrying reads again, and carries forward what is stored now.
+	if err := svc.UpdateProviderFromMessage(ctx, ids[0], user, secretMessage(t, "SecretTestProvider", body)); err != nil {
+		t.Fatalf("retried UpdateProviderFromMessage: %v", err)
+	}
+	if got := storedBody(t, db, ids[0]); got != `{"host":"h2","apikey":"written-meanwhile"}` {
+		t.Errorf("stored body after retry = %s", got)
+	}
+}
+
+// Ownership is checked on what is stored when writing, not on what an
+// earlier read returned.
+func Test_Secret_UpdateOfAProviderDeletedMeanwhile(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	user, ids := seedLegacyProviders(t, db, 1)
+
+	store := &racing{Storage: db, during: func() {
+		if err := db.DeleteProvider(ids[0]); err != nil {
+			t.Fatal(err)
+		}
+	}}
+	svc := provider.NewService(store, &mockValidator{}, nil, plaintextSecrets(t))
+
+	err := svc.UpdateProviderFromMessage(ctx, ids[0], user, secretMessage(t, "SecretTestProvider", `{"host":"h","apikey":"new"}`))
+	if !errors.Is(err, happydns.ErrProviderNotFound) {
+		t.Errorf("UpdateProviderFromMessage = %v, want ErrProviderNotFound", err)
+	}
+	if _, err := db.GetProvider(ids[0]); !errors.Is(err, happydns.ErrProviderNotFound) {
+		t.Errorf("GetProvider = %v, want the provider to stay deleted", err)
+	}
+}

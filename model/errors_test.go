@@ -23,6 +23,7 @@ package happydns_test
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -282,6 +283,32 @@ func TestValidationErrorHTTPStatus(t *testing.T) {
 
 	if validationErr.HTTPStatus() != http.StatusBadRequest {
 		t.Errorf("HTTPStatus() = %d; want %d", validationErr.HTTPStatus(), http.StatusBadRequest)
+	}
+}
+
+func TestConflictError(t *testing.T) {
+	conflictErr := happydns.ConflictError{
+		Msg: "changed since you read it",
+		Err: happydns.ErrChangedMeanwhile,
+	}
+
+	if conflictErr.Error() != "changed since you read it" {
+		t.Errorf("ConflictError.Error() = %q; want the user message", conflictErr.Error())
+	}
+	if resp := conflictErr.ToErrorResponse(); resp.Message != "changed since you read it" || resp.Link != "" {
+		t.Errorf("ToErrorResponse() = %+v; want the user message only", resp)
+	}
+	if conflictErr.HTTPStatus() != http.StatusConflict {
+		t.Errorf("HTTPStatus() = %d; want %d", conflictErr.HTTPStatus(), http.StatusConflict)
+	}
+
+	var wrapped error = fmt.Errorf("updating: %w", conflictErr)
+	if !errors.Is(wrapped, happydns.ErrChangedMeanwhile) {
+		t.Error("errors.Is does not reach the cause of a ConflictError")
+	}
+	var httpErr happydns.HTTPError
+	if !errors.As(wrapped, &httpErr) || httpErr.HTTPStatus() != http.StatusConflict {
+		t.Error("a wrapped ConflictError is not found as an HTTPError")
 	}
 }
 
