@@ -116,6 +116,14 @@ func NewManager(cfg Config) (*Manager, error) {
 	return m, nil
 }
 
+// Policy is how new secrets are sealed.
+func (m *Manager) Policy() Policy {
+	if m == nil {
+		return ""
+	}
+	return m.policy
+}
+
 // SealObject seals every clear Secret of obj, a pointer to a struct, under
 // the current policy. sc tells whose object it is; its Field is filled for
 // each secret. Sealed and opened secrets are left as they are, a redacted one

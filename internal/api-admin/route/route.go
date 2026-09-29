@@ -27,6 +27,7 @@ import (
 	"git.happydns.org/happyDomain/internal/api-admin/controller"
 	adminmw "git.happydns.org/happyDomain/internal/api-admin/middleware"
 	api "git.happydns.org/happyDomain/internal/api/route"
+	"git.happydns.org/happyDomain/internal/usecase"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	happydns "git.happydns.org/happyDomain/model"
 )
@@ -53,6 +54,7 @@ type Dependencies struct {
 	CheckScheduler        *checkerUC.Scheduler
 	TidyUp                happydns.TidyUpUseCase
 	Purge                 happydns.PurgeUsecase
+	Secrets               *usecase.SecretsUsecase
 }
 
 func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, dep Dependencies) {
@@ -76,5 +78,6 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, dep Dependencies) 
 	declareUserAuthsRoutes(apiRoutes, dep)
 	declareUsersRoutes(apiRoutes, dep)
 	declareTidyRoutes(apiRoutes, dep)
+	declareSecretsRoutes(apiRoutes, dep)
 	api.DeclareVersionRoutes(apiRoutes)
 }
