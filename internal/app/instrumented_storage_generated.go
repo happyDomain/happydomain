@@ -282,6 +282,11 @@ func (s *instrumentedStorage) DeleteSafe(id happydns.Identifier) (err error) {
 	return s.inner.DeleteSafe(id)
 }
 
+func (s *instrumentedStorage) DeleteSecretCheck() (err error) {
+	defer observe("delete", "secret_check")(&err)
+	return s.inner.DeleteSecretCheck()
+}
+
 func (s *instrumentedStorage) DeleteSession(sessionid string) (err error) {
 	defer observe("delete", "session")(&err)
 	return s.inner.DeleteSession(sessionid)

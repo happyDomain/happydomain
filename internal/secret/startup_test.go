@@ -24,12 +24,101 @@ package secret
 import (
 	"errors"
 	"testing"
+
+	"git.happydns.org/happyDomain/model"
 )
 
+// Starting under the plaintext policy with a keyset configured, nothing being
+// sealed, must not record that keyset: it would refuse every other one later.
+func TestStartupCheckRecordsNoKeysetWithNothingSealed(t *testing.T) {
+	store := newMemStartupStorage()
+
+	if err := StartupCheck(PolicyPlaintext, testInstanceKey(t), store); err != nil {
+		t.Fatalf("StartupCheck: %v", err)
+	}
+	if store.record != nil || store.puts != 0 {
+		t.Error("a check record was written while nothing is sealed")
+	}
+
+	if err := StartupCheck(PolicyInstance, testInstanceKey(t), store); err != nil {
+		t.Errorf("StartupCheck with another keyset: %v", err)
+	}
+}
+
+// With no instance safe left, a check record is stale: whatever keyset it
+// names opens nothing. It is dropped, so that another keyset can come.
+func TestStartupCheckDropsAStaleRecord(t *testing.T) {
+	old := testInstanceKey(t)
+
+	for name, key := range map[string]*InstanceKey{
+		"without keyset":      nil,
+		"with the old keyset": old,
+		"with another keyset": testInstanceKey(t),
+	} {
+		t.Run(name, func(t *testing.T) {
+			store := newMemStartupStorage()
+			if err := old.VerifyCheck(store); err != nil {
+				t.Fatal(err)
+			}
+
+			if err := StartupCheck(PolicyPlaintext, key, store); err != nil {
+				t.Fatalf("StartupCheck: %v", err)
+			}
+			if store.record != nil {
+				t.Error("the stale check record is still there")
+			}
+
+			next := testInstanceKey(t)
+			if err := StartupCheck(PolicyInstance, next, store); err != nil {
+				t.Fatalf("StartupCheck with a new keyset: %v", err)
+			}
+			if err := next.VerifyCheck(store); err != nil {
+				t.Errorf("the new keyset does not open the check record: %v", err)
+			}
+		})
+	}
+}
+
+// Under the instance policy, a stale record gives way to one for the keyset
+// configured.
+func TestStartupCheckReplacesAStaleRecordUnderInstance(t *testing.T) {
+	store := newMemStartupStorage()
+	if err := testInstanceKey(t).VerifyCheck(store); err != nil {
+		t.Fatal(err)
+	}
+
+	key := testInstanceKey(t)
+	if err := StartupCheck(PolicyInstance, key, store); err != nil {
+		t.Fatalf("StartupCheck: %v", err)
+	}
+	if err := key.VerifyCheck(store); err != nil {
+		t.Errorf("the check record is not the configured keyset's: %v", err)
+	}
+}
+
+// While an instance safe is stored, the record stays, and keeps refusing
+// another keyset, whatever the policy.
+func TestStartupCheckKeepsTheRecordOfInstanceSafes(t *testing.T) {
+	key := testInstanceKey(t)
+	store := newMemStartupStorage()
+	m, _ := NewManager(Config{Policy: PolicyInstance, InstanceKey: key, Safes: store})
+	sealFor(t, m, happydns.Identifier{0x01})
+
+	if err := StartupCheck(PolicyPlaintext, key, store); err != nil {
+		t.Fatalf("StartupCheck: %v", err)
+	}
+	if store.record == nil {
+		t.Error("no check record while an instance safe is stored")
+	}
+	if err := StartupCheck(PolicyPlaintext, testInstanceKey(t), store); !errors.Is(err, ErrWrongInstanceKey) {
+		t.Errorf("StartupCheck with another keyset = %v, want ErrWrongInstanceKey", err)
+	}
+}
+
 // A safe record that does not decode may be an instance safe: while it is
-// there, the keyset the check record names stays required. Starting without
-// it would let the operator lose the keyset while something may still need
-// it.
+// there, the record stays, as DropInstanceSafes keeps it, and the keyset it
+// names stays required. Starting without it would let the operator lose the
+// keyset while something may still need it.
 func TestStartupCheckRequiresTheKeysetWhileASafeIsDamaged(t *testing.T) {
 	old := testInstanceKey(t)
 	store := newUndecodableSafes()

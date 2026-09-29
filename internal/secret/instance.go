@@ -253,6 +253,10 @@ type CheckStorage interface {
 
 	// PutSecretCheck stores the check record.
 	PutSecretCheck(record []byte) error
+
+	// DeleteSecretCheck removes the check record, if any: the next keyset
+	// configured creates a new one.
+	DeleteSecretCheck() error
 }
 
 // VerifyCheck opens the check record stored in store, or creates it under the
@@ -310,11 +314,16 @@ type Storage interface {
 // the instance policy without a keyset, instance safes without a keyset to
 // open them, or a keyset that is not the one the database was used with.
 //
+// The check record only stands for the instance safes: with none left, it is
+// stale and dropped, and none is created unless the instance policy is about
+// to seal. Otherwise, starting once with a keyset configured would refuse
+// every other keyset later, though nothing is sealed under it.
+//
 // A safe record that does not decode may be an instance safe. While one is
-// there, the keyset the check record names stays required, until the record
-// is repaired, or removed by hand if known to be lost. Without a check
-// record, nothing then vouches for a keyset: it is accepted, but not
-// recorded.
+// there, the check record stays, and the keyset it names stays required,
+// until the record is repaired, or removed by hand if known to be lost: `tidy`
+// never deletes a safe record that does not decode. Without a check record,
+// nothing then vouches for a keyset: it is accepted, but not recorded.
 func StartupCheck(policy Policy, key *InstanceKey, store Storage) error {
 	if policy == PolicyInstance && key == nil {
 		return errors.New("the instance secret policy requires an instance keyset: see `happydomain secret-keyset generate`")
@@ -328,6 +337,16 @@ func StartupCheck(policy Policy, key *InstanceKey, store Storage) error {
 		log.Printf("secret: safe record %q does not decode, it may be an instance safe", k)
 	}
 
+	if safe == nil && len(damaged) == 0 {
+		if err := store.DeleteSecretCheck(); err != nil {
+			return fmt.Errorf("unable to delete the stale keyset check record: %w", err)
+		}
+		if key == nil || policy != PolicyInstance {
+			return nil
+		}
+		return key.VerifyCheck(store)
+	}
+
 	_, err = store.GetSecretCheck()
 	recorded := err == nil
 	if err != nil && !errors.Is(err, happydns.ErrNotFound) {
@@ -338,7 +357,7 @@ func StartupCheck(policy Policy, key *InstanceKey, store Storage) error {
 		if safe != nil {
 			return errors.New("secrets are sealed under an instance keyset, but none is configured: set -secret-keyset-file")
 		}
-		if recorded && len(damaged) > 0 {
+		if recorded {
 			return fmt.Errorf("%d safe record(s) do not decode and may be instance safes, and the keyset check record is there: set -secret-keyset-file until they are repaired, or removed by hand if known to be lost", len(damaged))
 		}
 		return nil
@@ -346,16 +365,14 @@ func StartupCheck(policy Policy, key *InstanceKey, store Storage) error {
 
 	if !recorded {
 		// VerifyCheck would record whatever keyset it is given. A safe
-		// already stored tells whether it is the right one; with only
-		// damaged ones, nothing does.
-		if safe == nil && len(damaged) > 0 {
+		// already stored tells whether it is the right one; without one,
+		// nothing does.
+		if safe == nil {
 			log.Printf("secret: no keyset check record, and no instance safe that decodes to check the keyset on: it is not recorded")
 			return nil
 		}
-		if safe != nil {
-			if _, err := key.Unwrap(safe); err != nil {
-				return fmt.Errorf("%w (no check record yet, so safe %s was tried instead)", ErrWrongInstanceKey, safe.Id.String())
-			}
+		if _, err := key.Unwrap(safe); err != nil {
+			return fmt.Errorf("%w (no check record yet, so safe %s was tried instead)", ErrWrongInstanceKey, safe.Id.String())
 		}
 	}
 

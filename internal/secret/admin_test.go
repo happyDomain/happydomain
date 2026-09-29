@@ -561,6 +561,57 @@ func TestValueHelpers(t *testing.T) {
 	}
 }
 
+func TestDropInstanceSafes(t *testing.T) {
+	ctx := context.Background()
+	key := testInstanceKey(t)
+	store := newMemStartupStorage()
+
+	instance, _ := NewManager(Config{Policy: PolicyInstance, InstanceKey: key, Safes: store})
+	plaintext, _ := NewManager(Config{Policy: PolicyPlaintext, InstanceKey: key, Safes: store})
+	noKey, _ := NewManager(Config{Policy: PolicyPlaintext, Safes: store})
+
+	if err := key.VerifyCheck(store); err != nil {
+		t.Fatal(err)
+	}
+	for _, owner := range []happydns.Identifier{{0x01}, InstanceOwner()} {
+		sc := objectContext()
+		sc.Owner = owner
+		sealOne(t, instance, sc, "v")
+	}
+
+	if _, err := instance.DropInstanceSafes(ctx, store); err == nil {
+		t.Error("safes dropped under the instance policy")
+	}
+	if _, err := noKey.DropInstanceSafes(ctx, store); err == nil {
+		t.Error("safes dropped without the keyset")
+	}
+	if store.Creates() != 2 || store.record == nil {
+		t.Fatal("a refused drop changed something")
+	}
+
+	report, err := plaintext.DropInstanceSafes(ctx, store)
+	if err != nil || report.Changed != 2 || report.Failed != 0 {
+		t.Fatalf("DropInstanceSafes = %+v, %v; want 2 dropped", report, err)
+	}
+	if store.record != nil {
+		t.Error("the check record is still there")
+	}
+	if err := StartupCheck(PolicyPlaintext, nil, store); err != nil {
+		t.Errorf("StartupCheck without keyset after the drop: %v", err)
+	}
+
+	// Idempotent.
+	if report, err := plaintext.DropInstanceSafes(ctx, store); err != nil || report.Changed != 0 || report.Failed != 0 {
+		t.Errorf("second DropInstanceSafes = %+v, %v", report, err)
+	}
+
+	// Another keyset can be configured afterwards.
+	okey := testInstanceKey(t)
+	if err := StartupCheck(PolicyInstance, okey, store); err != nil {
+		t.Errorf("StartupCheck with a new keyset: %v", err)
+	}
+}
+
 // The placeholder the API sends in place of a secret is never a credential.
 // Stored by mistake, it is reported as unreadable, and neither sealed, nor
 // resealed, nor handed out as the value it stands for.

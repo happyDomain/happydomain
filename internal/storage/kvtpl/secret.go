@@ -46,3 +46,11 @@ func (s *KVStorage) GetSecretCheck() ([]byte, error) {
 func (s *KVStorage) PutSecretCheck(record []byte) error {
 	return s.db.Put(secretCheckKey, record)
 }
+
+func (s *KVStorage) DeleteSecretCheck() error {
+	err := s.db.Delete(secretCheckKey)
+	if errors.Is(err, happydns.ErrNotFound) {
+		return nil
+	}
+	return err
+}

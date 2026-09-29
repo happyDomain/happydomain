@@ -24,9 +24,12 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"maps"
+	"slices"
 	"sort"
 
 	"git.happydns.org/happyDomain/internal/secret"
+	"git.happydns.org/happyDomain/model"
 )
 
 // SecretHolder is a type of object holding secrets.
@@ -57,10 +60,11 @@ type SecretsStatus struct {
 type SecretsUsecase struct {
 	manager *secret.Manager
 	holders map[string]SecretHolder
+	checks  secret.CheckStorage
 }
 
-func NewSecretsUsecase(manager *secret.Manager, holders map[string]SecretHolder) *SecretsUsecase {
-	return &SecretsUsecase{manager: manager, holders: holders}
+func NewSecretsUsecase(manager *secret.Manager, holders map[string]SecretHolder, checks secret.CheckStorage) *SecretsUsecase {
+	return &SecretsUsecase{manager: manager, holders: holders, checks: checks}
 }
 
 func (u *SecretsUsecase) types() []string {
@@ -117,4 +121,37 @@ func (u *SecretsUsecase) Reseal(ctx context.Context) ([]secret.ResealReport, err
 	}
 
 	return reports, nil
+}
+
+// DropSafes deletes the instance safes once back to clear, so that the
+// instance keyset can be removed from the configuration, and reports what it
+// did. It refuses while a value still opens with them: run Reseal
+// first. It also refuses while an object could not be inspected, as it may
+// hold such values. Values that do not open any more do not stop it, as they
+// are lost already.
+func (u *SecretsUsecase) DropSafes(ctx context.Context) (secret.ResealReport, error) {
+	none := secret.ResealReport{ObjectType: secret.SafeObjectType}
+	if u.manager.Policy() != secret.PolicyPlaintext {
+		return none, happydns.ValidationError{Msg: "switch to the plaintext secret policy first"}
+	}
+
+	status, err := u.Status(ctx)
+	if err != nil {
+		return none, err
+	}
+	// In order, so that the refusal names the same type every time.
+	for _, t := range u.types() {
+		counts := status.Objects[t]
+		for _, kind := range slices.Sorted(maps.Keys(counts.Sealed)) {
+			if n := counts.Sealed[kind]; n > 0 {
+				return none, happydns.ValidationError{Msg: fmt.Sprintf("%d %s secret(s) still sealed: reseal first", n, t)}
+			}
+		}
+		// What could not be looked at may hold values sealed in them.
+		if counts.Undecodable > 0 {
+			return none, happydns.ValidationError{Msg: fmt.Sprintf("%d %s object(s) could not be inspected and may still hold sealed secrets: retry, or repair or delete them, first (see the problems in the status)", counts.Undecodable, t)}
+		}
+	}
+
+	return u.manager.DropInstanceSafes(ctx, u.checks)
 }

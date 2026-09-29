@@ -49,3 +49,22 @@ func TestSecretCheckRecord(t *testing.T) {
 		t.Errorf("GetSecretCheck = %x, want %x", got, record)
 	}
 }
+
+func TestDeleteSecretCheck(t *testing.T) {
+	s := newStorage(t)
+
+	// Deleting an absent record is not an error.
+	if err := s.DeleteSecretCheck(); err != nil {
+		t.Fatalf("DeleteSecretCheck on an empty store: %v", err)
+	}
+
+	if err := s.PutSecretCheck([]byte("check")); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.DeleteSecretCheck(); err != nil {
+		t.Fatalf("DeleteSecretCheck: %v", err)
+	}
+	if _, err := s.GetSecretCheck(); !errors.Is(err, happydns.ErrNotFound) {
+		t.Errorf("GetSecretCheck after delete = %v, want ErrNotFound", err)
+	}
+}

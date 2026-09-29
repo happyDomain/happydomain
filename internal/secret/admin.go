@@ -28,8 +28,10 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"strings"
 
 	"github.com/tink-crypto/tink-go/v2/keyset"
+	tinkpb "github.com/tink-crypto/tink-go/v2/proto/tink_go_proto"
 	"github.com/tink-crypto/tink-go/v2/tink"
 
 	"git.happydns.org/happyDomain/model"
@@ -236,6 +238,9 @@ func (m *Manager) keyUsage() (usage map[uint32]int, unreadable int, err error) {
 // SafeObjectType names safes in the reports.
 const SafeObjectType = "safe"
 
+// safeName names a safe in the reports.
+func safeName(safe *happydns.Safe) string { return "safe " + safe.Id.String() }
+
 // Rewrap wraps again, under the primary instance key, the key of every safe
 // wrapped by another one. The sealed values are not touched. A safe that
 // fails is reported and left as it was; run it again to resume.
@@ -250,7 +255,7 @@ func (m *Manager) Rewrap(ctx context.Context) (ResealReport, error) {
 	}
 
 	return ResealAll(SafeObjectType, iter,
-		func(safe *happydns.Safe) string { return "safe " + safe.Id.String() },
+		safeName,
 		func(safe *happydns.Safe) (bool, error) { return m.rewrapSafe(safe.Id) },
 	)
 }
@@ -319,6 +324,33 @@ func (k *InstanceKey) needsRewrap(safe *happydns.Safe) (bool, error) {
 		}
 	}
 	return false, nil
+}
+
+// checkUnwrappable fails when an instance entry of safe is wrapped by a key
+// the keyset does not hold enabled, or by a key that cannot be told. Such a
+// safe does not open now, but is not lost: putting the key back, or enabling
+// it again, opens it.
+func (k *InstanceKey) checkUnwrappable(safe *happydns.Safe) error {
+	enabled := map[uint32]bool{}
+	for _, info := range k.handle.KeysetInfo().GetKeyInfo() {
+		if info.GetStatus() == tinkpb.KeyStatusType_ENABLED {
+			enabled[info.GetKeyId()] = true
+		}
+	}
+
+	for _, w := range safe.Keyring {
+		if w.KEK != KEKInstance {
+			continue
+		}
+		id, err := wrappingKeyId(w)
+		if err != nil {
+			return fmt.Errorf("the instance key wrapping it cannot be told: %w", err)
+		}
+		if !enabled[id] {
+			return fmt.Errorf("wrapped by the instance key %d, missing from the keyset or not enabled: put it back to open what it holds", id)
+		}
+	}
+	return nil
 }
 
 // wrappingKeyId returns the identifier of the instance key that wrapped w,
@@ -506,4 +538,84 @@ func (m *Manager) ResealValue(ctx context.Context, sc SecretContext, value strin
 		return "", false, err
 	}
 	return out, true, nil
+}
+
+// ErrSafesLeft is returned by DropInstanceSafes when a safe could not be
+// dropped: the keyset is still needed, and must not be removed yet.
+var ErrSafesLeft = errors.New("instance safes left, the keyset check record is kept: keep the keyset, deal with them and run it again")
+
+// DropInstanceSafes deletes every instance safe, then the check record of the
+// instance keyset, and reports what it did. Once done, the keyset can be
+// removed from the configuration. Whatever is still sealed in those safes no
+// longer opens: check before that nothing is.
+//
+// A safe that fails, such as a record that does not decode, or one wrapped by
+// a key the keyset lacks, whose values could open again once the key is back,
+// is reported and left as it was, and the others are deleted. The check
+// record is then kept, keeping startup asking for the keyset, and it fails
+// with ErrSafesLeft: the keyset must not be removed yet.
+//
+// It only runs under the plaintext policy, which never creates a safe, and
+// with the keyset still configured. It can be interrupted and run again.
+func (m *Manager) DropInstanceSafes(ctx context.Context, checks CheckStorage) (ResealReport, error) {
+	report := ResealReport{ObjectType: SafeObjectType}
+	if m == nil || m.safes == nil {
+		return report, errNoManager
+	}
+	if m.policy != PolicyPlaintext {
+		return report, errors.New("the instance safes can only be dropped under the plaintext policy")
+	}
+	if m.safes.key == nil {
+		return report, errors.New("the instance safes can only be dropped with the instance keyset still configured")
+	}
+
+	// Collected before deleting: writing while listing is not safe on every
+	// storage.
+	var safes []*happydns.Safe
+	damaged, err := scanSafes(m.safes.store, func(safe *happydns.Safe) bool {
+		if safe.Kind == KindInstance {
+			safes = append(safes, safe)
+		}
+		return true
+	})
+	if err != nil {
+		return report, err
+	}
+
+	var probs problems
+	for _, key := range damaged {
+		report.Processed++
+		report.Failed++
+		probs.add("%s: does not decode, it may be an instance safe", key)
+	}
+	for _, safe := range safes {
+		report.Processed++
+		// What it holds counts as unreadable, but is not lost.
+		if err := m.safes.key.checkUnwrappable(safe); err != nil {
+			report.Failed++
+			probs.add("%s: %s", safeName(safe), err.Error())
+			continue
+		}
+		deleted, err := m.deleteSafe(safe.Id)
+		if err != nil {
+			report.Failed++
+			probs.add("%s: %s", safeName(safe), err.Error())
+			continue
+		}
+		if deleted {
+			report.Changed++
+		}
+	}
+	report.Errors = probs.list()
+
+	if report.Failed > 0 {
+		return report, fmt.Errorf("%w: %s", ErrSafesLeft, strings.Join(report.Errors, "; "))
+	}
+
+	// Last: interrupted before, the keyset is still checked at startup.
+	if err := checks.DeleteSecretCheck(); err != nil {
+		return report, fmt.Errorf("unable to delete the keyset check record: %w", err)
+	}
+
+	return report, nil
 }

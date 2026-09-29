@@ -82,3 +82,20 @@ func (sc *SecretController) Reseal(c *gin.Context) {
 	reports, err := sc.secrets.Reseal(c.Request.Context())
 	apiResponse(c, reports, err)
 }
+
+// DropSafes deletes the instance safes once back to clear.
+//
+//	@Summary	Drop instance safes
+//	@Schemes
+//	@Description	Deletes the keys of every user and the keyset check record, so that the instance keyset can be removed from the configuration. Only under the plaintext policy, with the keyset still configured, and once no secret is sealed any more (run a reseal first). A safe that cannot be deleted, such as a damaged record, is left as it was, the others are deleted, the check record is kept and the request fails naming it: keep the keyset until it is dealt with. Idempotent. Every happyDomain process sharing the database must run under the plaintext policy.
+//	@Tags		admin
+//	@Produce	json
+//	@Security	securitydefinitions.basic
+//	@Success	200	{object}	secret.ResealReport
+//	@Failure	400	{object}	happydns.ErrorResponse	"Secrets still sealed, wrong policy, or safes left"
+//	@Failure	500	{object}	happydns.ErrorResponse	"Internal server error"
+//	@Router		/secrets/drop-safes [post]
+func (sc *SecretController) DropSafes(c *gin.Context) {
+	report, err := sc.secrets.DropSafes(c.Request.Context())
+	apiResponse(c, report, err)
+}

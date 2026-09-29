@@ -110,7 +110,7 @@ func NewAdmin(app *App) *Admin {
 				providerUC.SecretObjectType:       providerAdminService,
 				notifPkg.SecretObjectType:         notifUC.NewChannelSecrets(app.store, app.usecases.notificationRegistry),
 				checkerUC.OptionsSecretObjectType: checkerUC.NewCheckerOptionsSecrets(app.store, app.secrets),
-			}),
+			}, app.store),
 		},
 	)
 	web.DeclareRoutes(app.cfg, router)

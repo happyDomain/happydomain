@@ -35,7 +35,6 @@ import (
 	"github.com/tink-crypto/tink-go/v2/insecurecleartextkeyset"
 	"github.com/tink-crypto/tink-go/v2/keyset"
 
-	"git.happydns.org/happyDomain/internal/secret/secrettest"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -450,12 +449,9 @@ func TestStartupCheck(t *testing.T) {
 	if err := StartupCheck(PolicyInstance, key, newMemStartupStorage()); err != nil {
 		t.Errorf("instance with a keyset: %v", err)
 	}
+}
 
-	other, _ := GenerateInstanceKeyset()
-	okey, _ := NewInstanceKey(other)
-	store := &memCheckStorage{}
-	_ = key.VerifyCheck(store)
-	if err := StartupCheck(PolicyPlaintext, okey, &memStartupStorage{memCheckStorage: store, Safes: secrettest.NewSafes()}); err == nil {
-		t.Error("a keyset that does not open the check record must refuse to start")
-	}
+func (s *memCheckStorage) DeleteSecretCheck() error {
+	s.record = nil
+	return nil
 }

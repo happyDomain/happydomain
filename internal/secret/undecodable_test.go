@@ -22,6 +22,7 @@
 package secret
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -75,6 +76,44 @@ func TestDeleteOwnerSafesGoesPastAnUndecodableSafe(t *testing.T) {
 	}
 	if _, err := store.GetSafeByOwner(kept, KindInstance); err != nil {
 		t.Errorf("another user's safe was deleted: %v", err)
+	}
+}
+
+// A damaged safe does not stop the others from being dropped, but it keeps
+// the keyset check record, the keyset may still be needed to open it, and the
+// drop fails: whoever runs it must not go on and remove the keyset.
+func TestDropInstanceSafesGoesPastAnUndecodableSafe(t *testing.T) {
+	store := newUndecodableSafes()
+	key := testInstanceKey(t)
+	if err := key.VerifyCheck(store); err != nil {
+		t.Fatal(err)
+	}
+	instance, _ := NewManager(Config{Policy: PolicyInstance, InstanceKey: key, Safes: store})
+	sealFor(t, instance, happydns.Identifier{0x01})
+	sealFor(t, instance, happydns.Identifier{0x02})
+
+	plaintext, _ := NewManager(Config{Policy: PolicyPlaintext, InstanceKey: key, Safes: store})
+	for run := range 2 {
+		report, err := plaintext.DropInstanceSafes(context.Background(), store)
+		if !errors.Is(err, ErrSafesLeft) {
+			t.Fatalf("DropInstanceSafes (run %d) = %v, want ErrSafesLeft", run, err)
+		}
+		containsAll(t, "error", []string{err.Error()}, "safe-corrupt", "check record")
+		wantChanged := 2
+		if run > 0 {
+			wantChanged = 0
+		}
+		if report.Changed != wantChanged || report.Failed != 1 {
+			t.Errorf("DropInstanceSafes (run %d) = %+v, want %d dropped, 1 failure", run, report, wantChanged)
+		}
+		containsAll(t, "errors", report.Errors, "safe-corrupt")
+	}
+
+	if store.Len() != 0 {
+		t.Errorf("%d safes left, want every readable one dropped", store.Len())
+	}
+	if store.record == nil {
+		t.Error("the check record was dropped while a safe could not be read")
 	}
 }
 

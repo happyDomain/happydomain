@@ -142,3 +142,8 @@ func (m *memCheck) PutSecretCheck(b []byte) error {
 	m.record = b
 	return nil
 }
+
+func (m *memCheck) DeleteSecretCheck() error {
+	m.record = nil
+	return nil
+}
