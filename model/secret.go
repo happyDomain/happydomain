@@ -217,9 +217,7 @@ func (s Secret) MarshalJSON() ([]byte, error) {
 // placeholder it stands for.
 const RedactedSecretBase64 = "4oCi4oCi4oCi4oCi4oCi4oCi4oCi4oCi"
 
-// UnmarshalJSON reads a JSON string or null. A value starting with
-// SealedSecretPrefix is sealed, RedactedSecret (or RedactedSecretBase64) is
-// redacted, anything else is clear.
+// UnmarshalJSON reads a JSON string, as ParseSecret does, or null.
 func (s *Secret) UnmarshalJSON(b []byte) error {
 	if string(b) == "null" {
 		*s = Secret{}
@@ -230,18 +228,24 @@ func (s *Secret) UnmarshalJSON(b []byte) error {
 	if err := json.Unmarshal(b, &v); err != nil {
 		return fmt.Errorf("a secret must be a string: %w", err)
 	}
+	*s = ParseSecret(v)
+	return nil
+}
 
+// ParseSecret returns the Secret v stands for, as stored or sent by a client:
+// empty when v is, sealed when it starts with SealedSecretPrefix, redacted when
+// it is RedactedSecret (or RedactedSecretBase64), clear otherwise.
+func ParseSecret(v string) Secret {
 	switch {
 	case v == "":
-		*s = Secret{}
+		return Secret{}
 	case v == RedactedSecret, v == RedactedSecretBase64:
-		*s = Secret{&secretValue{state: secretRedacted, token: RedactedSecret}}
+		return Secret{&secretValue{state: secretRedacted, token: RedactedSecret}}
 	case strings.HasPrefix(v, SealedSecretPrefix):
-		*s = Secret{&secretValue{state: secretSealed, token: v}}
+		return Secret{&secretValue{state: secretSealed, token: v}}
 	default:
-		*s = NewSecret(v)
+		return NewSecret(v)
 	}
-	return nil
 }
 
 func (s Secret) mask() string {

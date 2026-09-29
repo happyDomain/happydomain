@@ -62,5 +62,5 @@ func (cc *AdminCheckerController) GetCheckerOptions(c *gin.Context) {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
 	}
-	c.JSON(http.StatusOK, opts)
+	c.JSON(http.StatusOK, cc.OptionsUC.RedactCheckerOptions(checkerID, opts))
 }

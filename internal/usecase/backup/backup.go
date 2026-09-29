@@ -30,6 +30,7 @@ import (
 	"git.happydns.org/happyDomain/internal/forms"
 	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/internal/storage"
+	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
 	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
 	happydns "git.happydns.org/happyDomain/model"
@@ -277,7 +278,11 @@ func (u *Usecase) BackupUser(user *happydns.User) happydns.Backup {
 		for cfgIter.Next() {
 			cfg := cfgIter.Item()
 			if cfg.UserId != nil && cfg.UserId.Equals(user.Id) {
-				ret.CheckerConfigurations = append(ret.CheckerConfigurations, cfg)
+				// Their secret options, like the provider credentials
+				// above, do not leave. A copy: the item is the store's.
+				redacted := *cfg
+				redacted.Options = checkerUC.RedactOptions(cfg.CheckName, cfg.Options)
+				ret.CheckerConfigurations = append(ret.CheckerConfigurations, &redacted)
 			}
 		}
 	}

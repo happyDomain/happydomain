@@ -24,6 +24,7 @@ package secret
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"slices"
 	"testing"
 
@@ -430,5 +431,100 @@ func TestKeyStatusSurvivesADamagedSafe(t *testing.T) {
 		if unreadable != 1 {
 			t.Errorf("keys = %+v, want the damaged safe reported as unreadable", keys)
 		}
+	}
+}
+
+func TestValueHelpers(t *testing.T) {
+	instance, _, _ := instanceManagers(t)
+	ctx := context.Background()
+	sc := objectContext()
+	sc.Field = "k"
+
+	token, err := instance.SealValue(ctx, sc, "v")
+	if err != nil || !IsSealed(token) {
+		t.Fatalf("SealValue = %q, %v", token, err)
+	}
+	if same, err := instance.SealValue(ctx, sc, token); err != nil || same != token {
+		t.Errorf("SealValue(sealed) = %q, %v; want it unchanged", same, err)
+	}
+
+	if v, err := instance.OpenValue(ctx, sc, token); err != nil || v != "v" {
+		t.Errorf("OpenValue = %q, %v", v, err)
+	}
+	if v, err := instance.OpenValue(ctx, sc, "legacy"); err != nil || v != "legacy" {
+		t.Errorf("OpenValue(clear) = %q, %v", v, err)
+	}
+}
+
+// The placeholder the API sends in place of a secret is never a credential.
+// Stored by mistake, it is neither sealed nor handed out as the value it
+// stands for.
+func TestValueHelpersRefuseAStoredPlaceholder(t *testing.T) {
+	instance, plaintext, _ := instanceManagers(t)
+	ctx := context.Background()
+	sc := objectContext()
+	sc.Field = "k"
+
+	if _, err := instance.SealValue(ctx, sc, happydns.RedactedSecret); !errors.Is(err, ErrRedactedSecret) {
+		t.Errorf("SealValue(placeholder) = %v, want ErrRedactedSecret", err)
+	}
+	if _, err := plaintext.SealValue(ctx, sc, happydns.RedactedSecret); !errors.Is(err, ErrRedactedSecret) {
+		t.Errorf("SealValue(placeholder, plaintext) = %v, want ErrRedactedSecret", err)
+	}
+	if _, err := instance.OpenValue(ctx, sc, happydns.RedactedSecret); !errors.Is(err, ErrRedactedSecret) {
+		t.Errorf("OpenValue(placeholder) = %v, want ErrRedactedSecret", err)
+	}
+}
+
+// countingSafes counts the safes read by identifier.
+type countingSafes struct {
+	*secrettest.Safes
+	gets int
+}
+
+func (s *countingSafes) GetSafe(id happydns.Identifier) (*happydns.Safe, error) {
+	s.gets++
+	return s.Safes.GetSafe(id)
+}
+
+// Opening several values in a row reads each safe once.
+func TestValueOpenerLooksEachSafeUpOnce(t *testing.T) {
+	store := &countingSafes{Safes: secrettest.NewSafes()}
+	m, err := NewManager(Config{Policy: PolicyInstance, InstanceKey: testInstanceKey(t), Safes: store})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+
+	tokens := map[string]string{}
+	for _, field := range []string{"a", "b", "c"} {
+		sc := objectContext()
+		sc.Field = field
+		if tokens[field], err = m.SealValue(ctx, sc, "value-"+field); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	store.gets = 0
+	opener := m.NewValueOpener()
+	for field, token := range tokens {
+		sc := objectContext()
+		sc.Field = field
+		if v, err := opener.Open(ctx, sc, token); err != nil || v != "value-"+field {
+			t.Errorf("Open(%s) = %q, %v", field, v, err)
+		}
+	}
+	if v, err := opener.Open(ctx, objectContext(), "legacy"); err != nil || v != "legacy" {
+		t.Errorf("Open(clear) = %q, %v", v, err)
+	}
+	if _, err := opener.Open(ctx, objectContext(), happydns.RedactedSecret); !errors.Is(err, ErrRedactedSecret) {
+		t.Errorf("Open(placeholder) = %v, want ErrRedactedSecret", err)
+	}
+	if store.gets != 1 {
+		t.Errorf("the safe was read %d times, want once", store.gets)
+	}
+
+	if _, err := (*Manager)(nil).NewValueOpener().Open(ctx, objectContext(), tokens["a"]); err == nil {
+		t.Error("Open without a manager succeeded")
 	}
 }

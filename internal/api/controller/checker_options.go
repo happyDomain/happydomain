@@ -57,6 +57,14 @@ func (cc *CheckerController) GetCheckerOptions(c *gin.Context) {
 		positionals = []*happydns.CheckerOptionsPositional{}
 	}
 
+	// Secret options never go back to the client; copies, so that what the
+	// store handed out is left alone.
+	for i, p := range positionals {
+		redacted := *p
+		redacted.Options = cc.OptionsUC.RedactCheckerOptions(checkerID, p.Options)
+		positionals[i] = &redacted
+	}
+
 	// Append auto-fill resolved values so the frontend can display them.
 	autoFillOpts, err := cc.OptionsUC.GetAutoFillOptions(checkerID, target)
 	if err == nil && autoFillOpts != nil {
@@ -109,7 +117,7 @@ func (cc *CheckerController) AddCheckerOptions(c *gin.Context) {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
 	}
-	c.JSON(http.StatusOK, merged)
+	c.JSON(http.StatusOK, cc.OptionsUC.RedactCheckerOptions(checkerID, merged))
 }
 
 // ChangeCheckerOptions fully replaces options at the current scope.
@@ -144,7 +152,7 @@ func (cc *CheckerController) ChangeCheckerOptions(c *gin.Context) {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
 	}
-	c.JSON(http.StatusOK, opts)
+	c.JSON(http.StatusOK, cc.OptionsUC.RedactCheckerOptions(checkerID, opts))
 }
 
 // GetCheckerOption returns a single option value at the current scope.
@@ -175,7 +183,7 @@ func (cc *CheckerController) GetCheckerOption(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errmsg": "Option not set"})
 		return
 	}
-	c.JSON(http.StatusOK, val)
+	c.JSON(http.StatusOK, cc.OptionsUC.RedactCheckerOptionValue(checkerID, optname, val))
 }
 
 // SetCheckerOption sets a single option value at the current scope.
@@ -204,13 +212,17 @@ func (cc *CheckerController) SetCheckerOption(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
 		return
 	}
-	// Validate the full merged options after inserting the key.
-	existing, err := cc.OptionsUC.GetCheckerOptions(checkerID, happydns.TargetIdentifier(target.UserId), happydns.TargetIdentifier(target.DomainId), happydns.TargetIdentifier(target.ServiceId))
+	// Validate the full merged options after inserting the key, secrets
+	// opened: that is what the checker will see.
+	existing, err := cc.OptionsUC.GetCheckerOptionsForUse(checkerID, happydns.TargetIdentifier(target.UserId), happydns.TargetIdentifier(target.DomainId), happydns.TargetIdentifier(target.ServiceId))
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
 	}
-	existing[optname] = value
+	// The placeholder echoed back keeps what is stored.
+	if value != happydns.RedactedSecret {
+		existing[optname] = value
+	}
 	if err := cc.OptionsUC.ValidateOptions(checkerID, happydns.TargetIdentifier(target.UserId), happydns.TargetIdentifier(target.DomainId), happydns.TargetIdentifier(target.ServiceId), existing, false); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
 		return
@@ -219,5 +231,5 @@ func (cc *CheckerController) SetCheckerOption(c *gin.Context) {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
 	}
-	c.JSON(http.StatusOK, value)
+	c.JSON(http.StatusOK, cc.OptionsUC.RedactCheckerOptionValue(checkerID, optname, value))
 }

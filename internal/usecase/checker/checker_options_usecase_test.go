@@ -24,6 +24,8 @@ package checker_test
 import (
 	"context"
 	"fmt"
+	"maps"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -108,6 +110,31 @@ func (s *optionsStore) GetCheckerConfiguration(checkerName string, userId, domai
 
 func (s *optionsStore) UpdateCheckerConfiguration(checkerName string, userId, domainId, serviceId *happydns.Identifier, opts happydns.CheckerOptions) error {
 	s.data[posKey(checkerName, userId, domainId, serviceId)] = opts
+	return nil
+}
+
+// ReplaceCheckerConfiguration applies update to a copy of the stored options,
+// and stores the result unless they changed or were deleted in between.
+func (s *optionsStore) ReplaceCheckerConfiguration(checkerName string, userId, domainId, serviceId *happydns.Identifier, update func(happydns.CheckerOptions) (happydns.CheckerOptions, error)) error {
+	key := posKey(checkerName, userId, domainId, serviceId)
+	stored, ok := s.data[key]
+	if !ok {
+		return happydns.ErrNotFound
+	}
+
+	next, err := update(maps.Clone(stored))
+	if err != nil || next == nil {
+		return err
+	}
+
+	current, ok := s.data[key]
+	if !ok {
+		return happydns.ErrNotFound
+	}
+	if !reflect.DeepEqual(current, stored) {
+		return happydns.ErrChangedMeanwhile
+	}
+	s.data[key] = next
 	return nil
 }
 

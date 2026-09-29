@@ -142,6 +142,25 @@ func (s *KVStorage) UpdateCheckerConfiguration(checkerName string, userId *happy
 	return batch.Commit()
 }
 
+// ReplaceCheckerConfiguration rewrites the options of one scope, unless they
+// changed or were deleted in between. The name index already exists for a
+// stored scope, and is left as it is.
+func (s *KVStorage) ReplaceCheckerConfiguration(checkerName string, userId *happydns.Identifier, domainId *happydns.Identifier, serviceId *happydns.Identifier, update func(happydns.CheckerOptions) (happydns.CheckerOptions, error)) error {
+	return replace(s.db, checkerOptionsKey(checkerName, userId, domainId, serviceId), happydns.ErrNotFound, func(old *happydns.CheckerOptionsPositional) (*happydns.CheckerOptionsPositional, error) {
+		opts, err := update(old.Options)
+		if err != nil || opts == nil {
+			return nil, err
+		}
+		return &happydns.CheckerOptionsPositional{
+			CheckName: checkerName,
+			UserId:    userId,
+			DomainId:  domainId,
+			ServiceId: serviceId,
+			Options:   opts,
+		}, nil
+	})
+}
+
 func (s *KVStorage) DeleteCheckerConfiguration(checkerName string, userId *happydns.Identifier, domainId *happydns.Identifier, serviceId *happydns.Identifier) error {
 	compoundHash := hash28(checkerOptionsCompound(checkerName, userId, domainId, serviceId))
 	primaryKey := checkerOptionPrimaryPrefix + compoundHash

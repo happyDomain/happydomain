@@ -664,6 +664,11 @@ func (s *instrumentedStorage) ReplaceChannel(id happydns.Identifier, update func
 	return s.inner.ReplaceChannel(id, update)
 }
 
+func (s *instrumentedStorage) ReplaceCheckerConfiguration(checkerName string, userId *happydns.Identifier, domainId *happydns.Identifier, serviceId *happydns.Identifier, update func(happydns.CheckerOptions) (happydns.CheckerOptions, error)) (err error) {
+	defer observe("update", "check_config")(&err)
+	return s.inner.ReplaceCheckerConfiguration(checkerName, userId, domainId, serviceId, update)
+}
+
 func (s *instrumentedStorage) ReplaceDiscoveryEntries(producerID string, target happydns.CheckTarget, entries []happydns.DiscoveryEntry) (err error) {
 	defer observe("update", "discovery_entry")(&err)
 	return s.inner.ReplaceDiscoveryEntries(producerID, target, entries)

@@ -136,7 +136,8 @@ func (app *App) initUsecases() {
 	checkerPkg.SetHTTPTimeout(app.cfg.CheckerHTTPTimeout)
 	app.usecases.checkerOptionsUC = checkerUC.NewCheckerOptionsUsecase(app.store, app.store).
 		WithDiscoveryEntryStore(app.store).
-		WithAdminOptions(app.cfg.CheckerAdminOptions)
+		WithAdminOptions(app.cfg.CheckerAdminOptions).
+		WithSecrets(app.secrets)
 	app.usecases.checkerPlanUC = checkerUC.NewCheckPlanUsecase(app.store)
 	app.usecases.checkerStatusUC = checkerUC.NewCheckStatusUsecase(app.store, app.store, app.store, app.store, app.usecases.checkerOptionsUC)
 	app.usecases.checkerEngine = checkerUC.NewCheckerEngine(

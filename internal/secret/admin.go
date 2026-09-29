@@ -25,6 +25,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"maps"
 	"slices"
 
@@ -366,4 +367,70 @@ func (m *Manager) Policy() Policy {
 		return ""
 	}
 	return m.policy
+}
+
+// refusePlaceholder refuses the placeholder the API sends in place of a
+// secret: stored by mistake, it stands for no credential.
+func refusePlaceholder(sc SecretContext, value string) error {
+	if value == happydns.RedactedSecret {
+		return fmt.Errorf("%s: %w", sc.Field, ErrRedactedSecret)
+	}
+	return nil
+}
+
+// SealValue returns value, a secret stored in a map rather than in a
+// struct, sealed under the current policy. A value already sealed is
+// returned as is. sc must name the field.
+func (m *Manager) SealValue(ctx context.Context, sc SecretContext, value string) (string, error) {
+	if err := refusePlaceholder(sc, value); err != nil {
+		return "", err
+	}
+	if IsSealed(value) {
+		return value, nil
+	}
+	s := happydns.NewSecret(value)
+	if err := m.SealSecret(ctx, sc, &s); err != nil {
+		return "", err
+	}
+	return s.Token(), nil
+}
+
+// OpenValue returns value, as stored, in clear. sc must name the field.
+func (m *Manager) OpenValue(ctx context.Context, sc SecretContext, value string) (string, error) {
+	return m.NewValueOpener().Open(ctx, sc, value)
+}
+
+// ValueOpener opens several values in a row, such as the options of a
+// checker, reading each safe they are sealed in once.
+type ValueOpener struct {
+	m *Manager
+
+	// primitives opens the sealed values met, by safe identifier.
+	primitives map[string]tink.AEAD
+}
+
+// NewValueOpener returns a ValueOpener, to drop once the values are opened.
+func (m *Manager) NewValueOpener() *ValueOpener {
+	return &ValueOpener{m: m, primitives: map[string]tink.AEAD{}}
+}
+
+// Open returns value, as stored, in clear. sc must name the field.
+func (o *ValueOpener) Open(ctx context.Context, sc SecretContext, value string) (string, error) {
+	if err := refusePlaceholder(sc, value); err != nil {
+		return "", err
+	}
+	if !IsSealed(value) {
+		return value, nil
+	}
+	if o.m == nil {
+		return "", errNoManager
+	}
+	if err := sc.Validate(); err != nil {
+		return "", err
+	}
+	s := happydns.ParseSecret(value)
+	if err := o.m.open(sc, &s, o.primitives); err != nil {
+		return "", err
+	}
+	return s.Reveal(), nil
 }

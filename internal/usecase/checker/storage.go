@@ -73,6 +73,12 @@ type CheckerOptionsStorage interface {
 	ListCheckerConfiguration(checkerName string) ([]*happydns.CheckerOptionsPositional, error)
 	GetCheckerConfiguration(checkerName string, userId *happydns.Identifier, domainId *happydns.Identifier, serviceId *happydns.Identifier) ([]*happydns.CheckerOptionsPositional, error)
 	UpdateCheckerConfiguration(checkerName string, userId *happydns.Identifier, domainId *happydns.Identifier, serviceId *happydns.Identifier, opts happydns.CheckerOptions) error
+	// ReplaceCheckerConfiguration rewrites the options of one scope with
+	// what update returns from the stored ones. It writes nothing when
+	// update returns nil, and fails, writing nothing, with
+	// happydns.ErrNotFound or happydns.ErrChangedMeanwhile when they were
+	// deleted or changed in between.
+	ReplaceCheckerConfiguration(checkerName string, userId *happydns.Identifier, domainId *happydns.Identifier, serviceId *happydns.Identifier, update func(happydns.CheckerOptions) (happydns.CheckerOptions, error)) error
 	DeleteCheckerConfiguration(checkerName string, userId *happydns.Identifier, domainId *happydns.Identifier, serviceId *happydns.Identifier) error
 	ClearCheckerConfigurations() error
 }
