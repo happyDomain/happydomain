@@ -22,8 +22,6 @@
 package database
 
 import (
-	"crypto/sha256"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"log"
@@ -37,10 +35,11 @@ const (
 	sessionUserPrefix    = "su|"
 )
 
-// sessionHash returns the base64-RawURLEncoded SHA-256 of the raw session id.
-func sessionHash(id string) string {
-	h := sha256.Sum256([]byte(id))
-	return base64.RawURLEncoding.EncodeToString(h[:])
+// sessionHash returns the public identifier of the session presented with the
+// given token. Storage is keyed by public identifiers only; this is kept for
+// the migrations handling records written when the token itself was stored.
+func sessionHash(token string) string {
+	return happydns.SessionIDFromToken(token)
 }
 
 // sessionShortHash truncates a full session hash to 32 chars (24 bytes of the
@@ -54,9 +53,10 @@ func sessionShortHash(fullHash string) string {
 	return fullHash[:32]
 }
 
-// sessionKey generates a hashed database key for a session ID.
-func sessionKey(id string) string {
-	return sessionPrimaryPrefix + sessionHash(id)
+// sessionKey generates the database key of the session presented with the
+// given token.
+func sessionKey(token string) string {
+	return sessionPrimaryPrefix + sessionHash(token)
 }
 
 // sessionPrimaryKeyFromHash builds the primary key from an already-hashed id.
@@ -89,7 +89,7 @@ func (s *KVStorage) getSession(id string) (*happydns.Session, error) {
 }
 
 func (s *KVStorage) GetSession(id string) (session *happydns.Session, err error) {
-	return s.getSession(sessionKey(id))
+	return s.getSession(sessionPrimaryKeyFromHash(id))
 }
 
 // listSessionsByUserID resolves all sessions for a given user via the
@@ -134,8 +134,8 @@ func (s *KVStorage) ListUserSessions(userid happydns.Identifier) ([]*happydns.Se
 }
 
 func (s *KVStorage) UpdateSession(session *happydns.Session) error {
-	primary := sessionKey(session.Id)
-	hash := sessionHash(session.Id)
+	primary := sessionPrimaryKeyFromHash(session.Id)
+	hash := session.Id
 
 	// If the same primary key already exists under a different user, drop
 	// the stale user index so it doesn't outlive this update.
@@ -163,14 +163,14 @@ func (s *KVStorage) UpdateSession(session *happydns.Session) error {
 }
 
 func (s *KVStorage) DeleteSession(id string) error {
-	primary := sessionKey(id)
+	primary := sessionPrimaryKeyFromHash(id)
 
 	// Load first so we can clean up the user index. If the primary is gone,
 	// fall through to a best-effort delete of the primary key.
 	batch := s.db.NewBatch()
 	if session, err := s.getSession(primary); err == nil {
 		if !session.IdUser.IsEmpty() {
-			batch.Delete(sessionUserIndexKey(session.IdUser, sessionShortHash(sessionHash(id))))
+			batch.Delete(sessionUserIndexKey(session.IdUser, sessionShortHash(id)))
 		}
 	} else if !errors.Is(err, happydns.ErrSessionNotFound) {
 		return err

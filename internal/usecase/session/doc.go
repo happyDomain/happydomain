@@ -28,18 +28,20 @@
 // backend must implement. A concrete implementation is injected at construction
 // time via [NewService], keeping this layer free of storage concerns.
 //
-// Session identifiers are randomly generated, base32-encoded strings (see
-// [NewSessionID]). Sessions carry an expiry timestamp and are automatically
+// Session tokens are randomly generated, base32-encoded strings (see
+// [NewSessionID]). A token is the credential the client presents and is never
+// stored: sessions are stored and named by their public identifier,
+// [happydns.SessionIDFromToken] of the token. Sessions carry an expiry timestamp and are automatically
 // bound to a single user — cross-user access is rejected at the use-case level.
 //
 // Typical usage:
 //
 //	svc := session.NewService(myStorageBackend)
 //
-//	sess, err := svc.CreateUserSession(user, "browser login")
-//	// … store sess.Id in a cookie …
+//	created, err := svc.CreateUserSession(user, "backup script")
+//	// … hand created.Token to the user, it cannot be retrieved later …
 //
-//	sess, err = svc.GetUserSession(user, sessionID)
+//	sess, err := svc.GetUserSession(user, created.Id)
 //
 //	err = svc.UpdateUserSession(user, sessionID, func(s *happydns.Session) {
 //	    s.Description = "renamed"

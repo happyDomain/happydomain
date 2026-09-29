@@ -22,11 +22,16 @@
 package session_test
 
 import (
+	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/gorilla/securecookie"
+
 	"git.happydns.org/happyDomain/internal/session"
+	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	sessionUC "git.happydns.org/happyDomain/internal/usecase/session"
+	"git.happydns.org/happyDomain/model"
 )
 
 func Test_IsValidSessionID_RoundTrip(t *testing.T) {
@@ -66,5 +71,49 @@ func Test_IsValidSessionID_Rejects(t *testing.T) {
 				t.Errorf("IsValidSessionID(%q) = true, want false", tc.in)
 			}
 		})
+	}
+}
+
+// Test_SessionStore_BearerToken checks both ends of the token/identifier split:
+// a machine session is found from the token presented in the Authorization
+// header, and saving it back writes the public identifier, not the token.
+func Test_SessionStore_BearerToken(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	user := &happydns.User{Id: happydns.Identifier([]byte("user")), Email: "user@example.com"}
+
+	created, err := sessionUC.NewService(db).CreateUserSession(user, "script")
+	if err != nil {
+		t.Fatalf("unexpected error creating the session: %v", err)
+	}
+
+	store := session.NewSessionStore(&happydns.Options{}, db, securecookie.GenerateRandomKey(32))
+
+	req := httptest.NewRequest("GET", "/api/sessions", nil)
+	req.Header.Set("Authorization", "Bearer "+created.Token)
+
+	sess, err := store.New(req, session.COOKIE_NAME)
+	if err != nil {
+		t.Fatalf("unexpected error loading the session: %v", err)
+	}
+	if sess.IsNew {
+		t.Fatal("expected the Bearer token to resolve to the existing session")
+	}
+	if iduser, _ := sess.Values["iduser"].(happydns.Identifier); !iduser.Equals(user.Id) {
+		t.Errorf("expected the session of %v, got %v", user.Id, sess.Values["iduser"])
+	}
+
+	if err := store.Save(req, httptest.NewRecorder(), sess); err != nil {
+		t.Fatalf("unexpected error saving the session: %v", err)
+	}
+
+	stored, err := db.GetSession(created.Id)
+	if err != nil {
+		t.Fatalf("expected the session under its public identifier: %v", err)
+	}
+	if stored.Id != created.Id {
+		t.Errorf("stored session Id = %q, want %q", stored.Id, created.Id)
+	}
+	if _, err := db.GetSession(created.Token); err == nil {
+		t.Error("expected nothing stored under the token")
 	}
 }

@@ -62,7 +62,7 @@ func (sc *SessionController) DeleteSessions(c *gin.Context) {
 //	@Schemes
 //	@Description	Middleware that retrieves a session by ID and adds it to the request context.
 //	@Tags			sessions
-//	@Param			sessionid	path	string	true	"Session identifier"
+//	@Param			sessionid	path	string	true	"Session public identifier"
 //	@Failure		404			{object}	happydns.ErrorResponse	"Session not found"
 func (sc *SessionController) SessionHandler(c *gin.Context) {
 	session, err := sc.sessionService.GetSessionByID(c.Param("sessionid"))
@@ -84,7 +84,7 @@ func (sc *SessionController) SessionHandler(c *gin.Context) {
 //	@Tags			sessions
 //	@Accept			json
 //	@Produce		json
-//	@Param			sessionid	path		string	true	"Session identifier"
+//	@Param			sessionid	path		string	true	"Session public identifier"
 //	@Success		200			{object}	happydns.Session
 //	@Failure		404			{object}	happydns.ErrorResponse	"Session not found"
 //	@Router			/sessions/{sessionid} [get]
@@ -100,7 +100,7 @@ func (sc *SessionController) GetSession(c *gin.Context) {
 //	@Tags			sessions
 //	@Accept			json
 //	@Produce		json
-//	@Param			sessionid	path		string	true	"Session identifier"
+//	@Param			sessionid	path		string	true	"Session public identifier"
 //	@Success		200			{object}	bool
 //	@Failure		404			{object}	happydns.ErrorResponse	"Session not found"
 //	@Failure		500			{object}	happydns.ErrorResponse	"Internal server error"

@@ -27,11 +27,15 @@ import (
 
 // SessionStorage is the persistence interface required by [Service]. Any
 // storage backend that implements these methods can be injected via [NewService].
+//
+// Sessions are identified by their public identifier
+// ([happydns.SessionIDFromToken]), never by the token the client presents:
+// the storage never sees a token.
 type SessionStorage interface {
 	// ListAllSessions retrieves the list of known Sessions.
 	ListAllSessions() (happydns.Iterator[happydns.Session], error)
 
-	// GetSession retrieves the Session with the given identifier.
+	// GetSession retrieves the Session with the given public identifier.
 	GetSession(sessionid string) (*happydns.Session, error)
 
 	// ListAuthUserSessions retrieves all Session for the given AuthUser.
@@ -43,7 +47,7 @@ type SessionStorage interface {
 	// UpdateSession updates the fields of the given Session.
 	UpdateSession(session *happydns.Session) error
 
-	// DeleteSession removes the given Session from the database.
+	// DeleteSession removes the Session with the given public identifier.
 	DeleteSession(sessionid string) error
 
 	// ClearSessions deletes all Sessions present in the database.

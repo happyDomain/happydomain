@@ -22,6 +22,9 @@
 package session_test
 
 import (
+	"encoding/json"
+	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -53,8 +56,11 @@ func Test_CreateUserSession(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if sess.Id == "" {
-		t.Error("expected session ID to be set")
+	if len(sess.Token) != session.SessionIDLen {
+		t.Errorf("expected a %d chars token, got %q", session.SessionIDLen, sess.Token)
+	}
+	if sess.Id != happydns.SessionIDFromToken(sess.Token) {
+		t.Errorf("expected session ID to be derived from the token, got %q", sess.Id)
 	}
 	if !sess.IdUser.Equals(user.Id) {
 		t.Errorf("expected session IdUser to be %v, got %v", user.Id, sess.IdUser)
@@ -76,6 +82,58 @@ func Test_CreateUserSession(t *testing.T) {
 	}
 	if stored.Description != "Test session" {
 		t.Errorf("expected stored description to be 'Test session', got %s", stored.Description)
+	}
+}
+
+// Test_CreateUserSession_TokenNotStored guards the reason sessions have a
+// public identifier: the token is a credential, and nothing read back from
+// the storage or the use case may carry it.
+func Test_CreateUserSession_TokenNotStored(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	sessionService := session.NewService(db)
+
+	user := createTestUser(t, db, "test@example.com")
+
+	created, err := sessionService.CreateUserSession(user, "Test session")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var stored []*happydns.Session
+	iter, err := db.ListAllSessions()
+	if err != nil {
+		t.Fatalf("unexpected error listing sessions: %v", err)
+	}
+	for iter.Next() {
+		stored = append(stored, iter.Item())
+	}
+	iter.Close()
+
+	listed, err := sessionService.ListUserSessions(user)
+	if err != nil {
+		t.Fatalf("unexpected error listing user sessions: %v", err)
+	}
+
+	if len(stored) != 1 || len(listed) != 1 {
+		t.Fatalf("expected one session, got %d stored and %d listed", len(stored), len(listed))
+	}
+
+	for _, sess := range append(stored, listed...) {
+		raw, err := json.Marshal(sess)
+		if err != nil {
+			t.Fatalf("unexpected error encoding session: %v", err)
+		}
+		if strings.Contains(string(raw), created.Token) {
+			t.Errorf("session read back carries the token: %s", raw)
+		}
+	}
+
+	// The token names nothing: only the public identifier does.
+	if _, err := sessionService.GetUserSession(user, created.Token); !errors.Is(err, happydns.ErrSessionNotFound) {
+		t.Errorf("expected ErrSessionNotFound when looking up by token, got %v", err)
+	}
+	if _, err := sessionService.GetSessionByID(created.Token); !errors.Is(err, happydns.ErrSessionNotFound) {
+		t.Errorf("expected ErrSessionNotFound when looking up by token as admin, got %v", err)
 	}
 }
 
@@ -402,7 +460,7 @@ func Test_CloseInteractive(t *testing.T) {
 
 	// Interactive sessions are written by the session store at login time
 	browser := &happydns.Session{
-		Id:        session.NewSessionID(),
+		Id:        happydns.SessionIDFromToken(session.NewSessionID()),
 		IdUser:    user.Id,
 		IssuedAt:  time.Now(),
 		ExpiresOn: time.Now().Add(24 * time.Hour),

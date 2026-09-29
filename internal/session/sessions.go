@@ -108,7 +108,7 @@ func (s *SessionStore) Save(r *http.Request, w http.ResponseWriter, session *ses
 	var cookieValue string
 
 	if s.options.MaxAge < 0 || session.Options.MaxAge < 0 {
-		if err := s.storage.DeleteSession(session.ID); err != nil {
+		if err := s.storage.DeleteSession(happydns.SessionIDFromToken(session.ID)); err != nil {
 			return err
 		}
 	} else {
@@ -149,7 +149,7 @@ func (s *SessionStore) Options(options ginsessions.Options) {
 }
 
 func (s *SessionStore) load(session *sessions.Session) error {
-	mysession, err := s.storage.GetSession(session.ID)
+	mysession, err := s.storage.GetSession(happydns.SessionIDFromToken(session.ID))
 	if err != nil {
 		return err
 	}
@@ -179,7 +179,7 @@ func (s *SessionStore) load(session *sessions.Session) error {
 	if !mysession.ExpiresOn.IsZero() {
 		if mysession.ExpiresOn.Before(time.Now()) {
 			// Session has expired; delete it and treat this as a new session.
-			_ = s.storage.DeleteSession(session.ID)
+			_ = s.storage.DeleteSession(mysession.Id)
 			return fmt.Errorf("session has expired")
 		}
 		session.Values["expires_on"] = mysession.ExpiresOn
@@ -239,7 +239,7 @@ func (s *SessionStore) save(session *sessions.Session, ua string) error {
 	}
 
 	mysession := &happydns.Session{
-		Id:          session.ID,
+		Id:          happydns.SessionIDFromToken(session.ID),
 		IdUser:      iduser,
 		Content:     encoded,
 		Description: description,

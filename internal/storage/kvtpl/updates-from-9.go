@@ -24,6 +24,8 @@ package database
 import (
 	"fmt"
 	"log"
+
+	"git.happydns.org/happyDomain/model"
 )
 
 func migrateFrom9(s *KVStorage) (err error) {
@@ -34,6 +36,13 @@ func migrateFrom9(s *KVStorage) (err error) {
 
 	for sessions.Next() {
 		session := sessions.Item()
+
+		// Records written by this very migration live under the same
+		// prefix, already keyed by their public identifier.
+		if happydns.IsValidSessionPublicID(session.Id) && sessions.Key() == sessionPrimaryKeyFromHash(session.Id) {
+			continue
+		}
+
 		if len(session.Id) != 103 {
 			err = sessions.DropItem()
 			if err != nil {
@@ -43,7 +52,12 @@ func migrateFrom9(s *KVStorage) (err error) {
 			continue
 		}
 
-		err := s.UpdateSession(session)
+		// Session.Id held the token when this migration was written; store
+		// the record under its public identifier instead, as it is now.
+		migrated := *session
+		migrated.Id = happydns.SessionIDFromToken(session.Id)
+
+		err := s.UpdateSession(&migrated)
 		if err != nil {
 			return err
 		}

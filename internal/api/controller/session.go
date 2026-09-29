@@ -79,9 +79,11 @@ func (sc *SessionController) GetSession(c *gin.Context) {
 		middleware.ErrorResponse(c, http.StatusBadRequest, fmt.Errorf("User not defined."))
 		return
 	}
+	// The session store holds the token the client presented; the session is
+	// named by its public identifier.
 	session := sessions.Default(c)
 
-	s, err := sc.sessionService.GetUserSession(myuser, session.ID())
+	s, err := sc.sessionService.GetUserSession(myuser, happydns.SessionIDFromToken(session.ID()))
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
@@ -170,13 +172,13 @@ func (sc *SessionController) GetSessions(c *gin.Context) {
 //
 //	@Summary	Create a new session for the current user.
 //	@Schemes
-//	@Description	Create a new session for the current user.
+//	@Description	Create a new session for the current user. The response is the only place the session token appears: it is not stored and cannot be retrieved later.
 //	@Tags			users
 //	@Accept			json
 //	@Produce		json
 //	@Security		securitydefinitions.basic
 //	@Param			body	body		happydns.SessionInput	true	"Session to create"
-//	@Success		200		{object}	happydns.Session
+//	@Success		200		{object}	happydns.SessionWithToken
 //	@Failure		401		{object}	happydns.ErrorResponse	"Authentication failure"
 //	@Router			/sessions [post]
 func (sc *SessionController) CreateSession(c *gin.Context) {
@@ -212,7 +214,7 @@ func (sc *SessionController) CreateSession(c *gin.Context) {
 //	@Accept			json
 //	@Produce		json
 //	@Security		securitydefinitions.basic
-//	@Param			sessionId	path		string					true	"Session identifier"
+//	@Param			sessionId	path		string					true	"Session public identifier"
 //	@Param			body		body		happydns.SessionInput	true	"Session fields to update"
 //	@Success		200			{object}	happydns.Session
 //	@Failure		401			{object}	happydns.ErrorResponse	"Authentication failure"
@@ -257,7 +259,7 @@ func (sc *SessionController) UpdateSession(c *gin.Context) {
 //	@Description	Delete	a session owned	by the current user.
 //	@Tags			users
 //	@Accept			json
-//	@Param			sessionId	path		string					true	"Session identifier"
+//	@Param			sessionId	path		string					true	"Session public identifier"
 //	@Security		securitydefinitions.basic
 //	@Success		204	{null}		null
 //	@Failure		401	{object}	happydns.ErrorResponse	"Authentication failure"

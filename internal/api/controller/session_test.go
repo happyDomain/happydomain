@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -41,7 +42,7 @@ type stubSessionUsecase struct {
 	getErr       error
 	listSessions []*happydns.Session
 	listErr      error
-	createResult *happydns.Session
+	createResult *happydns.SessionWithToken
 	createErr    error
 	updateErr    error
 	deleteErr    error
@@ -56,7 +57,7 @@ type stubSessionUsecase struct {
 func (s *stubSessionUsecase) CloseUserSessions(user *happydns.User) error {
 	return s.closeErr
 }
-func (s *stubSessionUsecase) CreateUserSession(user *happydns.User, description string) (*happydns.Session, error) {
+func (s *stubSessionUsecase) CreateUserSession(user *happydns.User, description string) (*happydns.SessionWithToken, error) {
 	s.createdDescription = description
 	if s.createErr != nil {
 		return nil, s.createErr
@@ -248,6 +249,11 @@ func TestGetSessions(t *testing.T) {
 			if len(got) != tt.wantLen {
 				t.Errorf("len = %d, want %d", len(got), tt.wantLen)
 			}
+			// Listed sessions are named by their public identifier only: a
+			// token must never come back once the session is created.
+			if strings.Contains(w.Body.String(), `"token"`) {
+				t.Errorf("session list exposes a token: %s", w.Body.String())
+			}
 		})
 	}
 }
@@ -256,7 +262,10 @@ func TestGetSessions(t *testing.T) {
 
 func TestCreateSession(t *testing.T) {
 	user := newTestUser(t)
-	created := &happydns.Session{Id: "new", IdUser: user.Id, Description: "fresh"}
+	created := &happydns.SessionWithToken{
+		Session: happydns.Session{Id: "new", IdUser: user.Id, Description: "fresh"},
+		Token:   "secret-token",
+	}
 
 	validBody, _ := json.Marshal(happydns.SessionInput{Description: "fresh"})
 
@@ -289,12 +298,15 @@ func TestCreateSession(t *testing.T) {
 				t.Errorf("createdDescription = %q, want %q", stub.createdDescription, tt.wantDesc)
 			}
 			if tt.wantStatus == http.StatusOK {
-				var got happydns.Session
+				var got happydns.SessionWithToken
 				if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil {
 					t.Fatalf("unmarshal: %v", err)
 				}
 				if got.Id != created.Id {
 					t.Errorf("session id = %q, want %q", got.Id, created.Id)
+				}
+				if got.Token != created.Token {
+					t.Errorf("session token = %q, want %q", got.Token, created.Token)
 				}
 			}
 		})

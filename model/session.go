@@ -22,12 +22,16 @@
 package happydns
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
 	"time"
 )
 
 // Session holds information about a User's currently connected.
 type Session struct {
-	// Id is the Session's identifier.
+	// Id is the Session's public identifier: SessionIDFromToken of the token
+	// the client presents. It names the session in the API and in storage,
+	// but is not a credential: the token itself is never stored.
 	Id string `json:"id" binding:"required" readonly:"true"`
 
 	// IdUser is the User's identifier of the Session.
@@ -79,9 +83,41 @@ type SessionCloserUsecase interface {
 	ByID(userID Identifier) error
 }
 
+// SessionWithToken is returned once, when a machine session is created: it is
+// the only time the token is handed out, as it is never stored.
+type SessionWithToken struct {
+	Session
+
+	// Token is the credential to present as a Bearer token.
+	Token string `json:"token" binding:"required" readonly:"true"`
+}
+
+// SessionPublicIDLen is the length of a session public identifier, as
+// returned by SessionIDFromToken.
+const SessionPublicIDLen = 43
+
+// SessionIDFromToken derives the public identifier of a session from the token
+// the client presents: the base64url-encoded SHA-256 of the token. Whoever
+// reads the identifier (a database dump, an access log, the API) cannot turn
+// it back into a token.
+func SessionIDFromToken(token string) string {
+	h := sha256.Sum256([]byte(token))
+	return base64.RawURLEncoding.EncodeToString(h[:])
+}
+
+// IsValidSessionPublicID reports whether s looks like a public identifier produced
+// by SessionIDFromToken.
+func IsValidSessionPublicID(s string) bool {
+	if len(s) != SessionPublicIDLen {
+		return false
+	}
+	_, err := base64.RawURLEncoding.DecodeString(s)
+	return err == nil
+}
+
 type SessionUsecase interface {
 	CloseUserSessions(user *User) error
-	CreateUserSession(*User, string) (*Session, error)
+	CreateUserSession(*User, string) (*SessionWithToken, error)
 	DeleteUserSession(*User, string) error
 	GetUserSession(*User, string) (*Session, error)
 	ListUserSessions(*User) ([]*Session, error)

@@ -61,11 +61,14 @@ func NewService(store SessionStorage) *Service {
 // long lived tokens by scripts and third party tools, and are therefore not
 // revoked when the user changes their password. Interactive sessions are
 // created by the session store during login instead.
-func (s *Service) CreateUserSession(user *happydns.User, description string) (*happydns.Session, error) {
-	sessid := NewSessionID()
+//
+// The returned token is the only credential of the session and is not stored:
+// this is the one time it can be handed to the user.
+func (s *Service) CreateUserSession(user *happydns.User, description string) (*happydns.SessionWithToken, error) {
+	token := NewSessionID()
 
 	newsession := &happydns.Session{
-		Id:          sessid,
+		Id:          happydns.SessionIDFromToken(token),
 		IdUser:      user.Id,
 		Description: description,
 		IssuedAt:    time.Now(),
@@ -77,14 +80,14 @@ func (s *Service) CreateUserSession(user *happydns.User, description string) (*h
 		return nil, fmt.Errorf("unable to create new user session: %w", err)
 	}
 
-	return newsession, nil
+	return &happydns.SessionWithToken{Session: *newsession, Token: token}, nil
 }
 
 // GetUserSession retrieves the session identified by sessionID and verifies
 // that it belongs to user. Returns [happydns.ErrSessionNotFound] if the
 // session does not exist or belongs to a different user.
 func (s *Service) GetUserSession(user *happydns.User, sessionID string) (*happydns.Session, error) {
-	session, err := s.store.GetSession(sessionID)
+	session, err := s.getSession(sessionID)
 	if err != nil {
 		return nil, err
 	}
@@ -226,23 +229,37 @@ func (s *Service) ClearAllSessions() error {
 // GetSessionByID retrieves a session by its identifier without verifying
 // ownership. It is intended for administrative operations only.
 func (s *Service) GetSessionByID(sessionID string) (*happydns.Session, error) {
-	return s.store.GetSession(sessionID)
+	return s.getSession(sessionID)
 }
 
 // DeleteSessionByID removes a session by its identifier without verifying
 // ownership. It is intended for administrative operations only.
 func (s *Service) DeleteSessionByID(sessionID string) error {
+	if !happydns.IsValidSessionPublicID(sessionID) {
+		return happydns.ErrSessionNotFound
+	}
 	return s.store.DeleteSession(sessionID)
 }
 
-// sessionIDKeyLen is the number of random bytes used to generate a session ID.
+// getSession retrieves a session by its public identifier, refusing anything
+// that is not shaped like one before it reaches the storage.
+func (s *Service) getSession(sessionID string) (*happydns.Session, error) {
+	if !happydns.IsValidSessionPublicID(sessionID) {
+		return nil, happydns.ErrSessionNotFound
+	}
+	return s.store.GetSession(sessionID)
+}
+
+// sessionIDKeyLen is the number of random bytes used to generate a session token.
 const sessionIDKeyLen = 64
 
-// SessionIDLen is the length of a session ID string (base32, no padding).
+// SessionIDLen is the length of a session token string (base32, no padding).
 const SessionIDLen = (sessionIDKeyLen*8 + 4) / 5
 
-// NewSessionID generates a random session identifier encoded
-// as a base32 string without padding characters.
+// NewSessionID generates a random session token encoded as a base32 string
+// without padding characters. The token is the credential the client
+// presents; the session is stored and named by
+// [happydns.SessionIDFromToken] of it.
 func NewSessionID() string {
 	return base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(securecookie.GenerateRandomKey(sessionIDKeyLen))
 }
