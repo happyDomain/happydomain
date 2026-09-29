@@ -89,6 +89,11 @@ func GenField(field reflect.StructField) (f *happydns.Field) {
 				f.Secret = true
 			case "textarea":
 				f.Textarea = true
+			case "base64":
+				// Key material encoded in base64, held in a string (a Secret)
+				// rather than a []byte: the client checks the encoding, and
+				// keeps the plain RedactedSecret as placeholder.
+				f.Type = "base64"
 			case "endpoint":
 				// Needed even though it looks like a no-op next to the
 				// key=value form above: without a case here, the default below

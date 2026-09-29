@@ -30,8 +30,8 @@ import (
 )
 
 type CloudflareAPI struct {
-	AccountID string `json:"AccountID,omitempty" happydomain:"label=Account ID,placeholder=xxxxxxxx,required,description=Your Cloudflare account ID"`
-	ApiToken  string `json:"ApiToken,omitempty" happydomain:"label=API Token,placeholder=xxxxxxxx,required,secret,description=Your Cloudflare API token"`
+	AccountID string          `json:"AccountID,omitempty" happydomain:"label=Account ID,placeholder=xxxxxxxx,required,description=Your Cloudflare account ID"`
+	ApiToken  happydns.Secret `json:"ApiToken,omitzero" happydomain:"label=API Token,placeholder=xxxxxxxx,required,secret,description=Your Cloudflare API token"`
 }
 
 func (s *CloudflareAPI) DNSControlName() string {
@@ -45,7 +45,7 @@ func (s *CloudflareAPI) InstantiateProvider() (happydns.ProviderActuator, error)
 func (s *CloudflareAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
 		"accountid": s.AccountID,
-		"apitoken":  s.ApiToken,
+		"apitoken":  s.ApiToken.Reveal(),
 	}, nil
 }
 

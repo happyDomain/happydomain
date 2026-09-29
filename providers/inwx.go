@@ -30,9 +30,9 @@ import (
 )
 
 type INWXAPI struct {
-	Username string `json:"username,omitempty" happydomain:"label=Username,placeholder=xxxxxxxx,required,description=The username you usually use to log on INWX services."`
-	Password string `json:"password,omitempty" happydomain:"label=Password,placeholder=xxxxxxxx,required,secret,description=The password associated with you INWX account."`
-	TOTPKey  string `json:"totp-key,omitempty" happydomain:"label=TOTP key,placeholder=xxxxxxxx,secret,description=Shared TOTP secret used to automatically generate TOTP codes if 2FA is enabled on your INWX account."`
+	Username string          `json:"username,omitempty" happydomain:"label=Username,placeholder=xxxxxxxx,required,description=The username you usually use to log on INWX services."`
+	Password happydns.Secret `json:"password,omitzero" happydomain:"label=Password,placeholder=xxxxxxxx,required,secret,description=The password associated with you INWX account."`
+	TOTPKey  happydns.Secret `json:"totp-key,omitzero" happydomain:"label=TOTP key,placeholder=xxxxxxxx,secret,description=Shared TOTP secret used to automatically generate TOTP codes if 2FA is enabled on your INWX account."`
 }
 
 func (s *INWXAPI) DNSControlName() string {
@@ -46,10 +46,10 @@ func (s *INWXAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 func (s *INWXAPI) ToDNSControlConfig() (map[string]string, error) {
 	m := map[string]string{
 		"username": s.Username,
-		"password": s.Password,
+		"password": s.Password.Reveal(),
 	}
-	if s.TOTPKey != "" {
-		m["totp-key"] = s.TOTPKey
+	if v := s.TOTPKey.Reveal(); v != "" {
+		m["totp-key"] = v
 	}
 	return m, nil
 }

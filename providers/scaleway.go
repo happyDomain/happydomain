@@ -30,9 +30,9 @@ import (
 )
 
 type ScalewayAPI struct {
-	AccessKey      string `json:"access_key,omitempty" happydomain:"label=Access Key,placeholder=SCWXXXXXXXXXXXXXXXXX,required,description=Your Scaleway API access key"`
-	SecretKey      string `json:"secret_key,omitempty" happydomain:"label=Secret Key,secret,required,description=Your Scaleway API secret key"`
-	OrganizationID string `json:"organization_id,omitempty" happydomain:"label=Project ID,description=Your Scaleway Project ID (optional)"`
+	AccessKey      string          `json:"access_key,omitempty" happydomain:"label=Access Key,placeholder=SCWXXXXXXXXXXXXXXXXX,required,description=Your Scaleway API access key"`
+	SecretKey      happydns.Secret `json:"secret_key,omitzero" happydomain:"label=Secret Key,secret,required,description=Your Scaleway API secret key"`
+	OrganizationID string          `json:"organization_id,omitempty" happydomain:"label=Project ID,description=Your Scaleway Project ID (optional)"`
 }
 
 func (s *ScalewayAPI) DNSControlName() string {
@@ -46,7 +46,7 @@ func (s *ScalewayAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 func (s *ScalewayAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
 		"access_key": s.AccessKey,
-		"secret_key": s.SecretKey,
+		"secret_key": s.SecretKey.Reveal(),
 		"project_id": s.OrganizationID,
 	}, nil
 }

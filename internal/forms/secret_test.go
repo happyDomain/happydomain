@@ -300,6 +300,24 @@ func TestGenFieldSecretType(t *testing.T) {
 	}
 }
 
+// A Secret holding base64 key material says so, for the client to check the
+// encoding as it did when such fields were []byte. The type is not "[]byte":
+// the placeholder of a Secret is the plain RedactedSecret, not its base64.
+func TestGenFieldSecretBase64(t *testing.T) {
+	type keyed struct {
+		Key happydns.Secret `json:"key" happydomain:"label=Secret Key,required,secret,base64"`
+	}
+
+	sf, _ := reflect.TypeOf(keyed{}).FieldByName("Key")
+	f := GenField(sf)
+	if f.Type != "base64" {
+		t.Errorf("Type = %q, want base64", f.Type)
+	}
+	if !f.Secret || !f.Required || f.Label != "Secret Key" {
+		t.Errorf("tag options lost: %+v", f)
+	}
+}
+
 func TestRedactSecretsSecretType(t *testing.T) {
 	opened := sealedSecret(t, "hds:1:AQ:b3BlbmVk")
 	opened.SetOpened(opened.Token(), []byte("opened-value"), "")

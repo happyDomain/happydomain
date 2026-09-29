@@ -30,7 +30,7 @@ import (
 )
 
 type VultrAPI struct {
-	Token string `json:"token,omitempty" happydomain:"label=API Token,placeholder=xxxxxxxxxx,required,secret,description=Vultr account API token"`
+	Token happydns.Secret `json:"token,omitzero" happydomain:"label=API Token,placeholder=xxxxxxxxxx,required,secret,description=Vultr account API token"`
 }
 
 func (s *VultrAPI) DNSControlName() string {
@@ -43,7 +43,7 @@ func (s *VultrAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 
 func (s *VultrAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"token": s.Token,
+		"token": s.Token.Reveal(),
 	}, nil
 }
 

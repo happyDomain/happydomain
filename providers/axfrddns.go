@@ -23,6 +23,7 @@ package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
 	"encoding/base64"
+	"fmt"
 	"strings"
 
 	_ "github.com/DNSControl/dnscontrol/v4/providers/axfrddns"
@@ -39,7 +40,9 @@ type DDNSServer struct {
 	Server  string `json:"server,omitempty" happydomain:"label=Server,placeholder=127.0.0.1,endpoint=127.0.0.1"`
 	KeyName string `json:"keyname,omitempty" happydomain:"label=Key Name,placeholder=ddns,required"`
 	KeyAlgo string `json:"algorithm,omitempty" happydomain:"label=Key Algorithm,default=hmac-sha256,choices=hmac-md5;hmac-sha1;hmac-sha256;hmac-sha512,required"`
-	KeyBlob []byte `json:"keyblob,omitempty" happydomain:"label=Secret Key,placeholder=a0b1c2d3e4f5==,required,secret"`
+	// KeyBlob is the base64 of the key, as []byte fields used to be encoded:
+	// records stored before it became a Secret read the same.
+	KeyBlob happydns.Secret `json:"keyblob,omitzero" happydomain:"label=Secret Key,placeholder=a0b1c2d3e4f5a6==,required,secret,base64"`
 }
 
 func (s *DDNSServer) DNSControlName() string {
@@ -60,7 +63,19 @@ func (s *DDNSServer) ToDNSControlConfig() (map[string]string, error) {
 	}
 
 	if s.KeyName != "" {
-		config["transfer-key"] = strings.Join([]string{s.KeyAlgo, s.KeyName, base64.StdEncoding.EncodeToString(s.KeyBlob)}, ":")
+		// Not opened, or not filled in: signing with an empty key would only
+		// fail later, with BADSIG and no hint of the cause.
+		blob := s.KeyBlob.Reveal()
+		if blob == "" {
+			return nil, fmt.Errorf("the secret key is missing")
+		}
+
+		key, err := base64.StdEncoding.DecodeString(blob)
+		if err != nil {
+			return nil, fmt.Errorf("the secret key is not valid base64: %w", err)
+		}
+
+		config["transfer-key"] = strings.Join([]string{s.KeyAlgo, s.KeyName, base64.StdEncoding.EncodeToString(key)}, ":")
 		config["update-key"] = config["transfer-key"]
 	}
 

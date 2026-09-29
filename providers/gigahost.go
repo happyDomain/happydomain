@@ -30,7 +30,7 @@ import (
 )
 
 type GigahostAPI struct {
-	APIKey string `json:"apikey,omitempty" happydomain:"label=API Key,placeholder=flux_live_xxxxxxxxxx,required,secret,description=Gigahost API key with DNS read-write permission (flux_live_...)"`
+	APIKey happydns.Secret `json:"apikey,omitzero" happydomain:"label=API Key,placeholder=flux_live_xxxxxxxxxx,required,secret,description=Gigahost API key with DNS read-write permission (flux_live_...)"`
 }
 
 func (s *GigahostAPI) DNSControlName() string {
@@ -43,7 +43,7 @@ func (s *GigahostAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 
 func (s *GigahostAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"apikey": s.APIKey,
+		"apikey": s.APIKey.Reveal(),
 	}, nil
 }
 

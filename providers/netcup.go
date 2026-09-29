@@ -30,9 +30,9 @@ import (
 )
 
 type NetcupAPI struct {
-	ApiKey         string `json:"api_key,omitempty" happydomain:"label=API key,placeholder=your-api-key,required,description=Netcup API key."`
-	ApiPassword    string `json:"api_password,omitempty" happydomain:"label=Password,placeholder=api-password,required,secret,description=Netcup API password."`
-	CustomerNumber string `json:"customer_number,omitempty" happydomain:"label=Customer number,placeholder=123456,required,description=Netcup customer number."`
+	ApiKey         happydns.Secret `json:"api_key,omitzero" happydomain:"label=API key,placeholder=your-api-key,required,description=Netcup API key."`
+	ApiPassword    happydns.Secret `json:"api_password,omitzero" happydomain:"label=Password,placeholder=api-password,required,secret,description=Netcup API password."`
+	CustomerNumber string          `json:"customer_number,omitempty" happydomain:"label=Customer number,placeholder=123456,required,description=Netcup customer number."`
 }
 
 func (s *NetcupAPI) DNSControlName() string {
@@ -45,8 +45,8 @@ func (s *NetcupAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 
 func (s *NetcupAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"api-key":         s.ApiKey,
-		"api-password":    s.ApiPassword,
+		"api-key":         s.ApiKey.Reveal(),
+		"api-password":    s.ApiPassword.Reveal(),
 		"customer-number": s.CustomerNumber,
 	}, nil
 }

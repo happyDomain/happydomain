@@ -22,6 +22,7 @@
 package happydns_test
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -178,6 +179,32 @@ func TestSecretRedacted(t *testing.T) {
 	}
 	if string(b) != string(raw) {
 		t.Errorf("json.Marshal(redacted) = %s, want %s", b, raw)
+	}
+}
+
+// The sentinel as a []byte field used to encode it, in base64: user exports
+// and clients from before credentials became Secrets carry it that way. It
+// still means "no value here", never a key made of those bytes.
+func TestSecretRedactedBase64(t *testing.T) {
+	if want := base64.StdEncoding.EncodeToString([]byte(happydns.RedactedSecret)); happydns.RedactedSecretBase64 != want {
+		t.Fatalf("RedactedSecretBase64 = %q, want %q", happydns.RedactedSecretBase64, want)
+	}
+
+	s := unmarshalSecret(t, `"`+happydns.RedactedSecretBase64+`"`)
+	if !s.IsRedacted() {
+		t.Fatal("unmarshal of the base64 sentinel: IsRedacted() = false, want true")
+	}
+	if s.Reveal() != "" {
+		t.Errorf("Reveal() = %q, want empty", s.Reveal())
+	}
+
+	// Once read, it is the one sentinel of a Secret.
+	b, err := json.Marshal(s)
+	if err != nil {
+		t.Fatalf("json.Marshal error = %v", err)
+	}
+	if want, _ := json.Marshal(happydns.RedactedSecret); string(b) != string(want) {
+		t.Errorf("json.Marshal = %s, want %s", b, want)
 	}
 }
 

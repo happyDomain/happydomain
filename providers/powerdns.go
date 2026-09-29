@@ -30,11 +30,11 @@ import (
 )
 
 type PowerdnsAPI struct {
-	ApiUrl        string `json:"apiurl,omitempty" happydomain:"label=API Server Endpoint,placeholder=http://12.34.56.78,endpoint"`
-	ApiKey        string `json:"apikey,omitempty" happydomain:"label=API Key,secret,placeholder=a0b1c2d3e4f5=="`
-	ServerID      string `json:"server_id,omitempty" happydomain:"label=Server ID,placeholder=localhost,description=Unless you are using a specially configured reverse proxy leave blank"`
-	Certificate   string `json:"certificate,omitempty" happydomain:"label=Certificate,placeholder=-----BEGIN CERTIFICATE-----,description=If you use a self-signed certificate paste it here,textarea"`
-	SkipTLSVerify bool   `json:"skip_tls_verify,omitempty" happydomain:"label=Skip TLS Verify,description=Don't check the validity of the presented certificate (THIS IS INSECURE)"`
+	ApiUrl        string          `json:"apiurl,omitempty" happydomain:"label=API Server Endpoint,placeholder=http://12.34.56.78,endpoint"`
+	ApiKey        happydns.Secret `json:"apikey,omitzero" happydomain:"label=API Key,secret,placeholder=a0b1c2d3e4f5=="`
+	ServerID      string          `json:"server_id,omitempty" happydomain:"label=Server ID,placeholder=localhost,description=Unless you are using a specially configured reverse proxy leave blank"`
+	Certificate   string          `json:"certificate,omitempty" happydomain:"label=Certificate,placeholder=-----BEGIN CERTIFICATE-----,description=If you use a self-signed certificate paste it here,textarea"`
+	SkipTLSVerify bool            `json:"skip_tls_verify,omitempty" happydomain:"label=Skip TLS Verify,description=Don't check the validity of the presented certificate (THIS IS INSECURE)"`
 }
 
 func (s *PowerdnsAPI) DNSControlName() string {
@@ -47,7 +47,7 @@ func (s *PowerdnsAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 
 func (s *PowerdnsAPI) ToDNSControlConfig() (map[string]string, error) {
 	config := map[string]string{
-		"apiKey":     s.ApiKey,
+		"apiKey":     s.ApiKey.Reveal(),
 		"apiUrl":     s.ApiUrl,
 		"serverName": s.ServerID,
 	}

@@ -30,9 +30,9 @@ import (
 )
 
 type HuaweiCloudAPI struct {
-	KeyID     string `json:"KeyId,omitempty" happydomain:"label=Access Key ID,required"`
-	SecretKey string `json:"SecretKey,omitempty" happydomain:"label=Secret Access Key,required,secret"`
-	Region    string `json:"Region,omitempty" happydomain:"label=Region,placeholder=cn-north-1,required"`
+	KeyID     string          `json:"KeyId,omitempty" happydomain:"label=Access Key ID,required"`
+	SecretKey happydns.Secret `json:"SecretKey,omitzero" happydomain:"label=Secret Access Key,required,secret"`
+	Region    string          `json:"Region,omitempty" happydomain:"label=Region,placeholder=cn-north-1,required"`
 }
 
 func (s *HuaweiCloudAPI) DNSControlName() string {
@@ -46,7 +46,7 @@ func (s *HuaweiCloudAPI) InstantiateProvider() (happydns.ProviderActuator, error
 func (s *HuaweiCloudAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
 		"KeyId":     s.KeyID,
-		"SecretKey": s.SecretKey,
+		"SecretKey": s.SecretKey.Reveal(),
 		"Region":    s.Region,
 	}, nil
 }

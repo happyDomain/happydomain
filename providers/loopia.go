@@ -30,8 +30,8 @@ import (
 )
 
 type LoopiaAPI struct {
-	Username string `json:"username,omitempty" happydomain:"label=Username,placeholder=username@loopiaapi,required,description=Your Loopia API user name."`
-	Password string `json:"password,omitempty" happydomain:"label=Password,placeholder=xxxxxxxx,required,secret,description=Your Loopia API password."`
+	Username string          `json:"username,omitempty" happydomain:"label=Username,placeholder=username@loopiaapi,required,description=Your Loopia API user name."`
+	Password happydns.Secret `json:"password,omitzero" happydomain:"label=Password,placeholder=xxxxxxxx,required,secret,description=Your Loopia API password."`
 }
 
 func (s *LoopiaAPI) DNSControlName() string {
@@ -45,7 +45,7 @@ func (s *LoopiaAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 func (s *LoopiaAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
 		"username": s.Username,
-		"password": s.Password,
+		"password": s.Password.Reveal(),
 	}, nil
 }
 

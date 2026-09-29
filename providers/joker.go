@@ -30,9 +30,9 @@ import (
 )
 
 type JokerAPI struct {
-	Username string `json:"username,omitempty" happydomain:"label=Username,description=Required if not using API key"`
-	Password string `json:"password,omitempty" happydomain:"label=Password,secret,description=Required if not using API key"`
-	APIKey   string `json:"api-key,omitempty" happydomain:"label=API Key,secret,description=Alternative to username/password authentication"`
+	Username string          `json:"username,omitempty" happydomain:"label=Username,description=Required if not using API key"`
+	Password happydns.Secret `json:"password,omitzero" happydomain:"label=Password,secret,description=Required if not using API key"`
+	APIKey   happydns.Secret `json:"api-key,omitzero" happydomain:"label=API Key,secret,description=Alternative to username/password authentication"`
 }
 
 func (s *JokerAPI) DNSControlName() string {
@@ -49,11 +49,11 @@ func (s *JokerAPI) ToDNSControlConfig() (map[string]string, error) {
 	if s.Username != "" {
 		config["username"] = s.Username
 	}
-	if s.Password != "" {
-		config["password"] = s.Password
+	if v := s.Password.Reveal(); v != "" {
+		config["password"] = v
 	}
-	if s.APIKey != "" {
-		config["api-key"] = s.APIKey
+	if v := s.APIKey.Reveal(); v != "" {
+		config["api-key"] = v
 	}
 
 	return config, nil

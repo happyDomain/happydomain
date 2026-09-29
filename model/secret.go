@@ -211,9 +211,15 @@ func (s Secret) MarshalJSON() ([]byte, error) {
 	}
 }
 
+// RedactedSecretBase64 is RedactedSecret as a []byte field encodes it in JSON.
+// Credentials held in []byte fields before becoming Secrets were redacted that
+// way, so user exports and clients from that time carry it: it is read as the
+// placeholder it stands for.
+const RedactedSecretBase64 = "4oCi4oCi4oCi4oCi4oCi4oCi4oCi4oCi"
+
 // UnmarshalJSON reads a JSON string or null. A value starting with
-// SealedSecretPrefix is sealed, RedactedSecret is redacted, anything else is
-// clear.
+// SealedSecretPrefix is sealed, RedactedSecret (or RedactedSecretBase64) is
+// redacted, anything else is clear.
 func (s *Secret) UnmarshalJSON(b []byte) error {
 	if string(b) == "null" {
 		*s = Secret{}
@@ -228,7 +234,7 @@ func (s *Secret) UnmarshalJSON(b []byte) error {
 	switch {
 	case v == "":
 		*s = Secret{}
-	case v == RedactedSecret:
+	case v == RedactedSecret, v == RedactedSecretBase64:
 		*s = Secret{&secretValue{state: secretRedacted, token: RedactedSecret}}
 	case strings.HasPrefix(v, SealedSecretPrefix):
 		*s = Secret{&secretValue{state: secretSealed, token: v}}

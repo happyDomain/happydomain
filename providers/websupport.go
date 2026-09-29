@@ -30,8 +30,8 @@ import (
 )
 
 type WebsupportAPI struct {
-	APIKey string `json:"api_key,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxxxx,required,secret,description=WebSupport API key (generated in the Security section of the admin console)."`
-	Secret string `json:"secret,omitempty" happydomain:"label=API Secret,placeholder=xxxxxxxxxx,required,secret,description=WebSupport API secret used to sign requests."`
+	APIKey happydns.Secret `json:"api_key,omitzero" happydomain:"label=API Key,placeholder=xxxxxxxxxx,required,secret,description=WebSupport API key (generated in the Security section of the admin console)."`
+	Secret happydns.Secret `json:"secret,omitzero" happydomain:"label=API Secret,placeholder=xxxxxxxxxx,required,secret,description=WebSupport API secret used to sign requests."`
 }
 
 func (s *WebsupportAPI) DNSControlName() string {
@@ -44,8 +44,8 @@ func (s *WebsupportAPI) InstantiateProvider() (happydns.ProviderActuator, error)
 
 func (s *WebsupportAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"api_key": s.APIKey,
-		"secret":  s.Secret,
+		"api_key": s.APIKey.Reveal(),
+		"secret":  s.Secret.Reveal(),
 	}, nil
 }
 

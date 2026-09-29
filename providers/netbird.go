@@ -30,7 +30,7 @@ import (
 )
 
 type NetbirdAPI struct {
-	Token string `json:"token,omitempty" happydomain:"label=API Token,placeholder=xxxxxxxxxx,required,secret,description=NetBird API token from https://app.netbird.io/settings"`
+	Token happydns.Secret `json:"token,omitzero" happydomain:"label=API Token,placeholder=xxxxxxxxxx,required,secret,description=NetBird API token from https://app.netbird.io/settings"`
 }
 
 func (s *NetbirdAPI) DNSControlName() string {
@@ -43,7 +43,7 @@ func (s *NetbirdAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 
 func (s *NetbirdAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"token": s.Token,
+		"token": s.Token.Reveal(),
 	}, nil
 }
 

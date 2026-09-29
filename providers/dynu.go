@@ -30,7 +30,7 @@ import (
 )
 
 type DynuAPI struct {
-	APIKey string `json:"api_key,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxxxx,required,secret,description=Get your API Key in the API Credentials section at https://www.dynu.com/en-US/ControlPanel/APICredentials"`
+	APIKey happydns.Secret `json:"api_key,omitzero" happydomain:"label=API Key,placeholder=xxxxxxxxxx,required,secret,description=Get your API Key in the API Credentials section at https://www.dynu.com/en-US/ControlPanel/APICredentials"`
 }
 
 func (s *DynuAPI) DNSControlName() string {
@@ -43,7 +43,7 @@ func (s *DynuAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 
 func (s *DynuAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"api_key": s.APIKey,
+		"api_key": s.APIKey.Reveal(),
 	}, nil
 }
 

@@ -180,6 +180,33 @@ describe("Raw input", () => {
         expect(state.current()).toBe(REDACTED_SECRET_B64);
     });
 
+    it("flags an invalid base64 value for a base64 secret", async () => {
+        const user = userEvent.setup();
+        const specs = field({ id: "keyblob", type: "base64", secret: true });
+        mount({ specs, value: "" });
+
+        await user.type(screen.getByRole("textbox"), "YQ=");
+
+        expect(screen.getByText(/Did you mean: YQ==/)).toBeVisible();
+    });
+
+    it("keeps a redacted base64 secret read-only using the plain sentinel", async () => {
+        const user = userEvent.setup();
+        const specs = field({ id: "keyblob", type: "base64", secret: true });
+        const state = mount({ specs, value: REDACTED_SECRET });
+
+        expect(screen.getByRole("button", { name: "Hidden by the server" })).toBeDisabled();
+        // The sentinel is not base64, and is not the user's to fix.
+        expect(screen.queryByText(/Invalid base64 string\./)).toBeNull();
+
+        await user.click(screen.getByRole("button", { name: "Replace this secret" }));
+        expect(state.current()).toBe("");
+
+        await user.click(screen.getByRole("button", { name: "Keep the current secret" }));
+        expect(state.current()).toBe(REDACTED_SECRET);
+        expect(screen.queryByText(/Invalid base64 string\./)).toBeNull();
+    });
+
     it("allows non-numeric duration shorthand like 1m", async () => {
         const user = userEvent.setup();
         const specs = field({ id: "timeout", type: "time.Duration" });

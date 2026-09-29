@@ -30,8 +30,8 @@ import (
 )
 
 type DNSMadeEasyAPI struct {
-	ApiKey    string `json:"api_key,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx,required,secret,description=API Key to retrieve from your account: See https://api-docs.dnsmadeeasy.com/."`
-	SecretKey string `json:"secret_key,omitempty" happydomain:"label=Secret Key,placeholder=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx,required,secret,description=Secret key that comes with your API Key."`
+	ApiKey    happydns.Secret `json:"api_key,omitzero" happydomain:"label=API Key,placeholder=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx,required,secret,description=API Key to retrieve from your account: See https://api-docs.dnsmadeeasy.com/."`
+	SecretKey happydns.Secret `json:"secret_key,omitzero" happydomain:"label=Secret Key,placeholder=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx,required,secret,description=Secret key that comes with your API Key."`
 }
 
 func (s *DNSMadeEasyAPI) DNSControlName() string {
@@ -44,8 +44,8 @@ func (s *DNSMadeEasyAPI) InstantiateProvider() (happydns.ProviderActuator, error
 
 func (s *DNSMadeEasyAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"api_key":    s.ApiKey,
-		"secret_key": s.SecretKey,
+		"api_key":    s.ApiKey.Reveal(),
+		"secret_key": s.SecretKey.Reveal(),
 	}, nil
 }
 

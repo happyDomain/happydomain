@@ -176,7 +176,8 @@
         if (
             typeof val === "string" &&
             specs.type &&
-            (specs.type === "[]uint8" || specs.type === "[]byte") &&
+            (specs.type === "[]uint8" || specs.type === "[]byte" || specs.type === "base64") &&
+            !isRedacted &&
             !checkBase64(val)
         ) {
             if (checkBase64(val + "==")) {

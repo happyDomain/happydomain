@@ -91,16 +91,16 @@ func ovh_settingsAskCredentials(fu happydns.FormUsecase, recallid string) (*happ
 func (s *OVHAPI) DisplaySettingsForm(state int32, genRecallId happydns.GenRecallID, fu happydns.FormUsecase) (*happydns.CustomForm, map[string]any, error) {
 	switch state {
 	case 0:
-		return ovh_settingsForm(s.ConsumerKey != ""), nil, nil
+		return ovh_settingsForm(!s.ConsumerKey.IsEmpty()), nil, nil
 	case 1:
-		if s.ConsumerKey == "" {
+		if s.ConsumerKey.IsEmpty() {
 			recallid := genRecallId()
 			return ovh_settingsAskCredentials(fu, recallid)
 		} else {
 			return nil, nil, happydns.DoneForm
 		}
 	case 2:
-		if s.ConsumerKey == "" {
+		if s.ConsumerKey.IsEmpty() {
 			return nil, nil, errors.New("Something wierd has happend, as you were not in a consumer key registration process. Please retry.")
 		} else {
 			return nil, nil, happydns.DoneForm

@@ -30,13 +30,13 @@ import (
 )
 
 type GoDaddyAPI struct {
-	APIKey    string `json:"api_key,omitempty" happydomain:"label=API Key,required,description=The key part of your GoDaddy API credentials"`
-	APISecret string `json:"api_secret,omitempty" happydomain:"label=API Secret,secret,required,description=The secret part of your GoDaddy API credentials"`
+	APIKey    string          `json:"api_key,omitempty" happydomain:"label=API Key,required,description=The key part of your GoDaddy API credentials"`
+	APISecret happydns.Secret `json:"api_secret,omitzero" happydomain:"label=API Secret,secret,required,description=The secret part of your GoDaddy API credentials"`
 }
 
 func (s *GoDaddyAPI) LibdnsProvider() any {
 	return &godaddy.Provider{
-		APIToken: s.APIKey + ":" + s.APISecret,
+		APIToken: s.APIKey + ":" + s.APISecret.Reveal(),
 	}
 }
 
