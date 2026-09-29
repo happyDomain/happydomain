@@ -38,6 +38,9 @@ type Policy string
 const (
 	// PolicyPlaintext stores secrets in clear, as happyDomain always did.
 	PolicyPlaintext Policy = "plaintext"
+
+	// PolicyInstance encrypts secrets under a key held by the instance.
+	PolicyInstance Policy = "instance"
 )
 
 var (

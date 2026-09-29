@@ -1,0 +1,110 @@
+// This file is part of the happyDomain (R) project.
+// Copyright (c) 2020-2026 happyDomain
+// Authors: Pierre-Olivier Mercier, et al.
+//
+// This program is offered under a commercial and under the AGPL license.
+// For commercial licensing, contact us at <contact@happydomain.org>.
+//
+// For AGPL licensing:
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+package main
+
+import (
+	"bytes"
+	"encoding/base64"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/tink-crypto/tink-go/v2/insecurecleartextkeyset"
+
+	"git.happydns.org/happyDomain/internal/secret"
+)
+
+func runKeyset(t *testing.T, args ...string) (int, string, string) {
+	t.Helper()
+	var stdout, stderr bytes.Buffer
+	code := runSecretKeyset(args, &stdout, &stderr)
+	return code, stdout.String(), stderr.String()
+}
+
+func TestSecretKeysetGenerate(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "keyset.json")
+
+	if code, _, stderr := runKeyset(t, "generate", path); code != 0 {
+		t.Fatalf("generate exited %d: %s", code, stderr)
+	}
+
+	h, err := secret.ReadKeysetFile(path)
+	if err != nil {
+		t.Fatalf("the generated file is not a keyset: %v", err)
+	}
+	if n := len(secret.DescribeKeyset(h)); n != 1 {
+		t.Errorf("%d keys, want 1", n)
+	}
+
+	before, _ := os.ReadFile(path)
+	if code, _, _ := runKeyset(t, "generate", path); code == 0 {
+		t.Error("generate overwrote an existing keyset")
+	}
+	if after, _ := os.ReadFile(path); !bytes.Equal(before, after) {
+		t.Error("the existing keyset was changed")
+	}
+}
+
+func TestSecretKeysetInfo(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "keyset.json")
+	if code, _, stderr := runKeyset(t, "generate", path); code != 0 {
+		t.Fatal(stderr)
+	}
+
+	code, stdout, stderr := runKeyset(t, "info", path)
+	if code != 0 {
+		t.Fatalf("info exited %d: %s", code, stderr)
+	}
+
+	h, _ := secret.ReadKeysetFile(path)
+	if !strings.Contains(stdout, "primary") || strings.Count(stdout, "ENABLED") != 1 {
+		t.Errorf("info = %q, want the key, primary", stdout)
+	}
+	for _, key := range insecurecleartextkeyset.KeysetMaterial(h).Key {
+		value := key.GetKeyData().GetValue()
+		if strings.Contains(stdout+stderr, base64.StdEncoding.EncodeToString(value)) || strings.Contains(stdout+stderr, string(value)) {
+			t.Fatalf("info shows key material: %s", stdout)
+		}
+	}
+}
+
+func TestSecretKeysetInfoRefusesNonKeyset(t *testing.T) {
+	dir := t.TempDir()
+	bad := filepath.Join(dir, "bad.json")
+	if err := os.WriteFile(bad, []byte("not a keyset"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range []string{bad, filepath.Join(dir, "missing.json")} {
+		if code, stdout, _ := runKeyset(t, "info", path); code != 1 || stdout != "" {
+			t.Errorf("info %s = %d, %q; want exit 1 and no output", path, code, stdout)
+		}
+	}
+}
+
+func TestSecretKeysetUsage(t *testing.T) {
+	for _, args := range [][]string{nil, {"generate"}, {"bogus", "file"}, {"info", "a", "b"}} {
+		if code, _, _ := runKeyset(t, args...); code == 0 {
+			t.Errorf("secret-keyset %v succeeded, want a usage error", args)
+		}
+	}
+}
