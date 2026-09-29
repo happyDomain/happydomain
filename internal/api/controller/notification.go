@@ -172,9 +172,10 @@ func (nc *NotificationController) GetChannel(c *gin.Context) {
 func (nc *NotificationController) UpdateChannel(c *gin.Context) {
 	existing := middleware.MyNotificationChannel(c)
 
-	// Bind onto a copy so json.Unmarshal only overwrites present fields; identity fields are forced back below.
-	ch := *existing
-	if err := c.ShouldBindJSON(&ch); err != nil {
+	// Bind onto a clone so json.Unmarshal only overwrites present fields; identity fields are forced back below.
+	// A clone, not a copy: decoding reuses the slices it finds, and the merge below reads existing.
+	ch := existing.Clone()
+	if err := c.ShouldBindJSON(ch); err != nil {
 		middleware.ErrorResponse(c, http.StatusBadRequest, err)
 		return
 	}
@@ -183,24 +184,24 @@ func (nc *NotificationController) UpdateChannel(c *gin.Context) {
 	ch.UserId = existing.UserId
 
 	// Carry forward stored secrets so a GET → PUT round-trip does not wipe them.
-	merged, err := nc.registry.MergeChannelForUpdate(existing, &ch)
+	merged, err := nc.registry.MergeChannelForUpdate(existing, ch)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusBadRequest, err)
 		return
 	}
 	ch.Config = merged
 
-	if _, err := nc.registry.AcceptChannelConfig(c.Request.Context(), &ch); err != nil {
+	if _, err := nc.registry.AcceptChannelConfig(c.Request.Context(), ch); err != nil {
 		middleware.ErrorResponse(c, http.StatusBadRequest, err)
 		return
 	}
 
-	if err := nc.channelStore.UpdateChannel(&ch); err != nil {
+	if err := nc.channelStore.UpdateChannel(ch); err != nil {
 		internalError(c, err)
 		return
 	}
 
-	redacted, err := nc.registry.RedactChannel(&ch)
+	redacted, err := nc.registry.RedactChannel(ch)
 	if err != nil {
 		internalError(c, err)
 		return
@@ -399,11 +400,10 @@ func (nc *NotificationController) GetPreference(c *gin.Context) {
 func (nc *NotificationController) UpdatePreference(c *gin.Context) {
 	existing := middleware.MyNotificationPreference(c)
 
-	// Before binding, which may reuse the stored slice.
 	listed := channelIdSet(existing.ChannelIds)
 
-	pref := *existing
-	if err := c.ShouldBindJSON(&pref); err != nil {
+	pref := existing.Clone()
+	if err := c.ShouldBindJSON(pref); err != nil {
 		middleware.ErrorResponse(c, http.StatusBadRequest, err)
 		return
 	}
@@ -411,17 +411,17 @@ func (nc *NotificationController) UpdatePreference(c *gin.Context) {
 	pref.Id = existing.Id
 	pref.UserId = existing.UserId
 
-	if err := validateQuietHours(&pref); err != nil {
+	if err := validateQuietHours(pref); err != nil {
 		middleware.ErrorResponse(c, http.StatusBadRequest, err)
 		return
 	}
 
-	if err := nc.checkAddedChannels(&pref, listed); err != nil {
+	if err := nc.checkAddedChannels(pref, listed); err != nil {
 		preferenceChannelsError(c, err)
 		return
 	}
 
-	if err := nc.prefStore.UpdatePreference(&pref); err != nil {
+	if err := nc.prefStore.UpdatePreference(pref); err != nil {
 		internalError(c, err)
 		return
 	}

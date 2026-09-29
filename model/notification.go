@@ -23,6 +23,7 @@ package happydns
 
 import (
 	"encoding/json"
+	"slices"
 	"time"
 )
 
@@ -37,6 +38,15 @@ type NotificationChannel struct {
 	Name    string                  `json:"name"`
 	Enabled bool                    `json:"enabled"`
 	Config  json.RawMessage         `json:"config" swaggertype:"object"`
+}
+
+// Clone returns a deep copy: decoding into it, as updates do, leaves ch as it was.
+func (ch *NotificationChannel) Clone() *NotificationChannel {
+	c := *ch
+	c.Id = slices.Clone(ch.Id)
+	c.UserId = slices.Clone(ch.UserId)
+	c.Config = slices.Clone(ch.Config)
+	return &c
 }
 
 // Scope resolution: ServiceId set > DomainId set > global (both nil).
@@ -54,6 +64,40 @@ type NotificationPreference struct {
 	QuietEnd   *int   `json:"quietEnd,omitempty"`
 	Timezone   string `json:"timezone,omitempty"`
 	Enabled    bool   `json:"enabled"`
+}
+
+// Clone returns a deep copy: decoding into it, as updates do, leaves p as it was.
+func (p *NotificationPreference) Clone() *NotificationPreference {
+	c := *p
+	c.Id = slices.Clone(p.Id)
+	c.UserId = slices.Clone(p.UserId)
+	c.DomainId = cloneIdentifierPtr(p.DomainId)
+	c.ServiceId = cloneIdentifierPtr(p.ServiceId)
+	if p.ChannelIds != nil {
+		c.ChannelIds = make([]Identifier, len(p.ChannelIds))
+		for i, id := range p.ChannelIds {
+			c.ChannelIds[i] = slices.Clone(id)
+		}
+	}
+	c.QuietStart = cloneIntPtr(p.QuietStart)
+	c.QuietEnd = cloneIntPtr(p.QuietEnd)
+	return &c
+}
+
+func cloneIdentifierPtr(id *Identifier) *Identifier {
+	if id == nil {
+		return nil
+	}
+	c := slices.Clone(*id)
+	return &c
+}
+
+func cloneIntPtr(v *int) *int {
+	if v == nil {
+		return nil
+	}
+	c := *v
+	return &c
 }
 
 // Used for deduplication: only state transitions trigger notifications.
