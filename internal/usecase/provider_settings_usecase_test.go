@@ -52,7 +52,7 @@ func (acceptAll) Validate(context.Context, *happydns.Provider) error { return ni
 
 func plaintextManager(t *testing.T) *secret.Manager {
 	t.Helper()
-	m, err := secret.NewManager(secret.PolicyPlaintext)
+	m, err := secret.NewManager(secret.Config{Policy: secret.PolicyPlaintext})
 	if err != nil {
 		t.Fatal(err)
 	}

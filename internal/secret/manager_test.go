@@ -59,7 +59,7 @@ func redacted() happydns.Secret {
 
 func plaintextManager(t *testing.T) *Manager {
 	t.Helper()
-	m, err := NewManager(PolicyPlaintext)
+	m, err := NewManager(Config{Policy: PolicyPlaintext})
 	if err != nil {
 		t.Fatalf("NewManager(plaintext): %v", err)
 	}
@@ -76,7 +76,7 @@ func objectContext() SecretContext {
 
 func TestNewManagerRejectsUnknownPolicy(t *testing.T) {
 	for _, p := range []Policy{"", "bogus", "Plaintext"} {
-		if _, err := NewManager(p); err == nil {
+		if _, err := NewManager(Config{Policy: p}); err == nil {
 			t.Errorf("NewManager(%q) succeeded, want an error", p)
 		}
 	}

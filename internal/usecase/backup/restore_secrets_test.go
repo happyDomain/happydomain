@@ -22,14 +22,17 @@
 package backup_test
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"testing"
 
 	providerReg "git.happydns.org/happyDomain/internal/providerregistry"
 	"git.happydns.org/happyDomain/internal/secret"
+	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	"git.happydns.org/happyDomain/internal/usecase/backup"
+	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
 	happydns "git.happydns.org/happyDomain/model"
 )
 
@@ -49,11 +52,43 @@ func init() {
 
 func plaintextSecrets(t *testing.T) *secret.Manager {
 	t.Helper()
-	m, err := secret.NewManager(secret.PolicyPlaintext)
+	m, err := secret.NewManager(secret.Config{Policy: secret.PolicyPlaintext})
 	if err != nil {
 		t.Fatal(err)
 	}
 	return m
+}
+
+// keyedSecrets returns two Managers sharing a fresh instance keyset and the
+// safes of db: one sealing under the instance policy, one back to plaintext.
+func keyedSecrets(t *testing.T, db storage.Storage) (instance, plaintext *secret.Manager) {
+	t.Helper()
+	h, err := secret.GenerateInstanceKeyset()
+	if err != nil {
+		t.Fatal(err)
+	}
+	key, err := secret.NewInstanceKey(h)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if instance, err = secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db}); err != nil {
+		t.Fatal(err)
+	}
+	if plaintext, err = secret.NewManager(secret.Config{Policy: secret.PolicyPlaintext, InstanceKey: key, Safes: db}); err != nil {
+		t.Fatal(err)
+	}
+	return
+}
+
+// sealedFor returns value sealed by m for the provider id of owner.
+func sealedFor(t *testing.T, m *secret.Manager, owner happydns.Identifier, id byte, value string) string {
+	t.Helper()
+	body := &BackupSecretProvider{Host: "h", ApiKey: happydns.NewSecret(value)}
+	p := &happydns.Provider{ProviderMeta: happydns.ProviderMeta{Id: happydns.Identifier{id}, Owner: owner}}
+	if err := m.SealObject(context.Background(), providerUC.SecretContext(p), body); err != nil {
+		t.Fatal(err)
+	}
+	return body.ApiKey.Token()
 }
 
 func secretProviderMessage(owner happydns.Identifier, id byte, body string) *happydns.ProviderMessage {
@@ -69,22 +104,26 @@ func secretProviderMessage(owner happydns.Identifier, id byte, body string) *hap
 
 func TestBackupCopiesStoredSecretsVerbatim(t *testing.T) {
 	db, user := seed(t)
-	uc := backup.NewUsecase(db, plaintextSecrets(t))
+	instance, plaintext := keyedSecrets(t, db)
+	uc := backup.NewUsecase(db, plaintext)
+	token := sealedFor(t, instance, user.Id, 2, "sealed-key")
 
 	// Restore puts the records in place; Backup must give them back as is.
 	in := &happydns.Backup{
 		Version: db.SchemaVersion(),
 		Providers: []*happydns.ProviderMessage{
 			secretProviderMessage(user.Id, 1, `{"host":"h","apikey":"legacy"}`),
+			secretProviderMessage(user.Id, 2, `{"host":"h","apikey":"`+token+`"}`),
 		},
 	}
 	if err := uc.Restore(in); err != nil {
 		t.Fatalf("Restore: %v", err)
 	}
 
-	id1 := happydns.Identifier{1}
+	id1, id2 := happydns.Identifier{1}, happydns.Identifier{2}
 	want := map[string]string{
 		id1.String(): `{"host":"h","apikey":"legacy"}`,
+		id2.String(): `{"host":"h","apikey":"` + token + `"}`,
 	}
 
 	ret := uc.Backup()
@@ -104,17 +143,20 @@ func TestBackupCopiesStoredSecretsVerbatim(t *testing.T) {
 	}
 }
 
-func TestRestoreSealsClear(t *testing.T) {
+func TestRestoreSealsClearAndKeepsSealed(t *testing.T) {
 	db, err := inmemory.Instantiate()
 	if err != nil {
 		t.Fatal(err)
 	}
 	owner := happydns.Identifier{0xaa}
-	uc := backup.NewUsecase(db, plaintextSecrets(t))
+	instance, plaintext := keyedSecrets(t, db)
+	uc := backup.NewUsecase(db, plaintext)
+	token := sealedFor(t, instance, owner, 2, "sealed-key")
 
 	in := &happydns.Backup{
 		Providers: []*happydns.ProviderMessage{
 			secretProviderMessage(owner, 1, `{"host":"h","apikey":"legacy"}`),
+			secretProviderMessage(owner, 2, `{"host":"h","apikey":"`+token+`"}`),
 		},
 	}
 	if err := uc.Restore(in); err != nil {
@@ -123,6 +165,7 @@ func TestRestoreSealsClear(t *testing.T) {
 
 	for id, want := range map[byte]string{
 		1: `{"host":"h","apikey":"legacy"}`,
+		2: `{"host":"h","apikey":"` + token + `"}`,
 	} {
 		got, err := db.GetProvider(happydns.Identifier{id})
 		if err != nil {
@@ -141,18 +184,24 @@ func TestRestoreRefusesSealedThatDoesNotOpen(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	uc := backup.NewUsecase(db, plaintextSecrets(t))
+	owner := happydns.Identifier{0xaa}
+	instance, plaintext := keyedSecrets(t, db)
+	uc := backup.NewUsecase(db, plaintext)
 
 	in := &happydns.Backup{
 		Providers: []*happydns.ProviderMessage{
-			secretProviderMessage(happydns.Identifier{0xaa}, 1, `{"host":"h","apikey":"hds:1:AQ:c2VhbGVk"}`),
+			secretProviderMessage(owner, 1, `{"host":"h","apikey":"hds:1:AQ:c2VhbGVk"}`),
+			// Sealed for provider 3, restored as provider 2.
+			secretProviderMessage(owner, 2, `{"host":"h","apikey":"`+sealedFor(t, instance, owner, 3, "sealed-key")+`"}`),
 		},
 	}
 	if err := uc.Restore(in); !errors.Is(err, secret.ErrUnknownSafe) {
 		t.Errorf("Restore = %v, want it to report the unknown safe", err)
 	}
-	if _, err := db.GetProvider(happydns.Identifier{1}); err == nil {
-		t.Error("the provider whose secret does not open was stored")
+	for _, id := range []byte{1, 2} {
+		if _, err := db.GetProvider(happydns.Identifier{id}); err == nil {
+			t.Errorf("provider %d, whose secret does not open, was stored", id)
+		}
 	}
 }
 
@@ -272,12 +321,14 @@ func TestRestoreSkipsUnparsableProvider(t *testing.T) {
 // than make the encoding fail.
 func TestBackupUserRedactsSecretType(t *testing.T) {
 	db, user := seed(t)
-	uc := backup.NewUsecase(db, plaintextSecrets(t))
+	instance, plaintext := keyedSecrets(t, db)
+	uc := backup.NewUsecase(db, plaintext)
 
 	in := &happydns.Backup{
 		Version: db.SchemaVersion(),
 		Providers: []*happydns.ProviderMessage{
 			secretProviderMessage(user.Id, 1, `{"host":"h","apikey":"legacy"}`),
+			secretProviderMessage(user.Id, 2, `{"host":"h","apikey":"`+sealedFor(t, instance, user.Id, 2, "sealed-key")+`"}`),
 		},
 	}
 	if err := uc.Restore(in); err != nil {
@@ -300,7 +351,7 @@ func TestBackupUserRedactsSecretType(t *testing.T) {
 			t.Errorf("exported %s = %s, want %s", pm.Id.String(), pm.Provider, want)
 		}
 	}
-	if found != 1 {
-		t.Errorf("exported %d secret providers, want 1", found)
+	if found != 2 {
+		t.Errorf("exported %d secret providers, want 2", found)
 	}
 }

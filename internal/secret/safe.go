@@ -118,6 +118,9 @@ type safeRegistry struct {
 	store SafeStorage
 	key   *InstanceKey
 
+	// owners, when set, is checked before a safe is created.
+	owners OwnerStorage
+
 	// locks holds one mutex per owner, so that two requests of the same
 	// user do not both create their instance safe.
 	locks sync.Map
@@ -157,6 +160,10 @@ func (r *safeRegistry) instanceSafe(owner happydns.Identifier) (*happydns.Safe, 
 		return nil, err
 	}
 
+	if err := r.checkOwner(owner); err != nil {
+		return nil, err
+	}
+
 	id, err := happydns.NewRandomIdentifier()
 	if err != nil {
 		return nil, err
@@ -185,6 +192,25 @@ func (r *safeRegistry) instanceSafe(owner happydns.Identifier) (*happydns.Safe, 
 		return nil, fmt.Errorf("unable to create the safe of %s: %w", owner.String(), err)
 	}
 	return safe, nil
+}
+
+// checkOwner refuses owner unless it is an existing user.
+//
+// It narrows, without closing, the window in which a user deleted while one
+// of their objects is being sealed gets a safe: such a safe is left to
+// TidySafes.
+func (r *safeRegistry) checkOwner(owner happydns.Identifier) error {
+	if r.owners == nil {
+		return nil
+	}
+	_, err := r.owners.GetUser(owner)
+	if errors.Is(err, happydns.ErrUserNotFound) {
+		return fmt.Errorf("%w: %s", ErrUnknownOwner, owner.String())
+	}
+	if err != nil {
+		return fmt.Errorf("unable to check the owner %s: %w", owner.String(), err)
+	}
+	return nil
 }
 
 // aead returns the primitive sealing and opening the values of safe.

@@ -202,7 +202,7 @@ func configOf(t *testing.T, body happydns.ProviderBody) (string, bool) {
 // Records stored before Secret existed hold plain strings. They must still
 // decode, and reach the backend library in clear once opened.
 func TestProviderLegacyRecordsReachBackend(t *testing.T) {
-	secrets, err := secret.NewManager(secret.PolicyPlaintext)
+	secrets, err := secret.NewManager(secret.Config{Policy: secret.PolicyPlaintext})
 	if err != nil {
 		t.Fatal(err)
 	}
