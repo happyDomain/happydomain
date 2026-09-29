@@ -24,6 +24,7 @@ package config // import "git.happydns.org/happyDomain/config"
 import (
 	"flag"
 	"fmt"
+	"net"
 	"os"
 	"strings"
 
@@ -38,6 +39,27 @@ func parseEnvironmentVariables(o *happydns.Options) (err error) {
 	if value := strings.TrimSpace(os.Getenv("DO_NOT_TRACK")); value != "" {
 		if err := flag.Set("opt-out-insights", value); err != nil {
 			return fmt.Errorf("error in environment (DO_NOT_TRACK): %w", err)
+		}
+	}
+
+	// Honor the conventional HOST and PORT variables, before HAPPYDOMAIN_
+	// variables so they can still override it.
+	envHost := strings.TrimSpace(os.Getenv("HOST"))
+	envPort := strings.TrimSpace(os.Getenv("PORT"))
+	if envHost != "" || envPort != "" {
+		host, port, err := net.SplitHostPort(o.Bind)
+		if err != nil {
+			// Current bind is not a host:port (eg. a unix socket)
+			host, port = "", "8081"
+		}
+		if envHost != "" {
+			host = envHost
+		}
+		if envPort != "" {
+			port = envPort
+		}
+		if err := flag.Set("bind", net.JoinHostPort(host, port)); err != nil {
+			return fmt.Errorf("error in environment (HOST/PORT): %w", err)
 		}
 	}
 

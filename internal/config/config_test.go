@@ -112,6 +112,42 @@ func TestParseLine(t *testing.T) {
 	if cfg.OptOutInsights {
 		t.Fatalf(`parseEnvironmentVariables() with HAPPYDOMAIN_OPT_OUT_INSIGHTS=false: OptOutInsights = %v, want false`, cfg.OptOutInsights)
 	}
+
+	t.Setenv("PORT", "3000")
+	err = parseEnvironmentVariables(cfg)
+	if err != nil {
+		t.Fatalf(`parseEnvironmentVariables() with PORT=3000 => %v`, err.Error())
+	}
+	if cfg.Bind != ":3000" {
+		t.Fatalf(`parseEnvironmentVariables() with PORT=3000: Bind = %q, want ":3000"`, cfg.Bind)
+	}
+
+	t.Setenv("HOST", "127.0.0.1")
+	err = parseEnvironmentVariables(cfg)
+	if err != nil {
+		t.Fatalf(`parseEnvironmentVariables() with HOST=127.0.0.1 => %v`, err.Error())
+	}
+	if cfg.Bind != "127.0.0.1:3000" {
+		t.Fatalf(`parseEnvironmentVariables() with HOST=127.0.0.1: Bind = %q, want "127.0.0.1:3000"`, cfg.Bind)
+	}
+
+	t.Setenv("HOST", "::1")
+	err = parseEnvironmentVariables(cfg)
+	if err != nil {
+		t.Fatalf(`parseEnvironmentVariables() with HOST=::1 => %v`, err.Error())
+	}
+	if cfg.Bind != "[::1]:3000" {
+		t.Fatalf(`parseEnvironmentVariables() with HOST=::1: Bind = %q, want "[::1]:3000"`, cfg.Bind)
+	}
+
+	t.Setenv("HAPPYDOMAIN_BIND", ":9999")
+	err = parseEnvironmentVariables(cfg)
+	if err != nil {
+		t.Fatalf(`parseEnvironmentVariables() with HAPPYDOMAIN_BIND=:9999 => %v`, err.Error())
+	}
+	if cfg.Bind != ":9999" {
+		t.Fatalf(`parseEnvironmentVariables() with HAPPYDOMAIN_BIND=:9999: Bind = %q, want ":9999"`, cfg.Bind)
+	}
 }
 
 func TestGetBaseURL(t *testing.T) {
