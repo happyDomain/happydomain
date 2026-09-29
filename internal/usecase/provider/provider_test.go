@@ -81,7 +81,7 @@ func (v *mockValidator) Validate(_ context.Context, p *happydns.Provider) error 
 
 func newTestService(t *testing.T) (*provider.Service, storage.Storage) {
 	db, _ := inmemory.Instantiate()
-	return provider.NewService(db, &mockValidator{}, nil), db
+	return provider.NewService(db, &mockValidator{}, nil, plaintextSecrets(t)), db
 }
 
 func Test_CreateProvider(t *testing.T) {
@@ -448,7 +448,7 @@ func Test_RestrictedService_CreateProvider_Disabled(t *testing.T) {
 	config := &happydns.Options{
 		DisableProviders: true,
 	}
-	providerService := provider.NewRestrictedService(config, db, nil)
+	providerService := provider.NewRestrictedService(config, db, nil, plaintextSecrets(t))
 
 	user := createTestUser(t, db, "test@example.com")
 	msg := createTestProviderMessage(t, "DDNSServer", "Test Provider")
@@ -466,7 +466,7 @@ func Test_RestrictedService_UpdateProvider_Disabled(t *testing.T) {
 	db, _ := inmemory.Instantiate()
 
 	// First create a provider without restrictions
-	unrestricted := provider.NewService(db, &mockValidator{}, nil)
+	unrestricted := provider.NewService(db, &mockValidator{}, nil, plaintextSecrets(t))
 	user := createTestUser(t, db, "test@example.com")
 	msg := createTestProviderMessage(t, "DDNSServer", "Test Provider")
 	createdProvider, err := unrestricted.CreateProvider(ctx, user, msg)
@@ -478,7 +478,7 @@ func Test_RestrictedService_UpdateProvider_Disabled(t *testing.T) {
 	config := &happydns.Options{
 		DisableProviders: true,
 	}
-	restrictedService := provider.NewRestrictedService(config, db, nil)
+	restrictedService := provider.NewRestrictedService(config, db, nil, plaintextSecrets(t))
 
 	err = restrictedService.UpdateProvider(ctx, createdProvider.Id, user, func(p *happydns.Provider) {
 		p.Comment = "Updated"
@@ -495,7 +495,7 @@ func Test_RestrictedService_DeleteProvider_Disabled(t *testing.T) {
 	db, _ := inmemory.Instantiate()
 
 	// First create a provider without restrictions
-	unrestricted := provider.NewService(db, &mockValidator{}, nil)
+	unrestricted := provider.NewService(db, &mockValidator{}, nil, plaintextSecrets(t))
 	user := createTestUser(t, db, "test@example.com")
 	msg := createTestProviderMessage(t, "DDNSServer", "Test Provider")
 	createdProvider, err := unrestricted.CreateProvider(ctx, user, msg)
@@ -507,7 +507,7 @@ func Test_RestrictedService_DeleteProvider_Disabled(t *testing.T) {
 	config := &happydns.Options{
 		DisableProviders: true,
 	}
-	restrictedService := provider.NewRestrictedService(config, db, nil)
+	restrictedService := provider.NewRestrictedService(config, db, nil, plaintextSecrets(t))
 
 	err = restrictedService.DeleteProvider(ctx, user, createdProvider.Id)
 	if err == nil {
@@ -668,7 +668,7 @@ func (s *idRecordingStorage) CreateProvider(p *happydns.Provider) error {
 func Test_CreateProviderAssignsIdBeforeStoring(t *testing.T) {
 	db, _ := inmemory.Instantiate()
 	rec := &idRecordingStorage{Storage: db}
-	providerService := provider.NewService(rec, &mockValidator{}, nil)
+	providerService := provider.NewService(rec, &mockValidator{}, nil, plaintextSecrets(t))
 
 	user := createTestUser(t, db, "test@example.com")
 	msg := createTestProviderMessage(t, "DDNSServer", "Test DDNS Provider")

@@ -23,9 +23,9 @@ package provider
 
 import (
 	"context"
-	"fmt"
 
 	"git.happydns.org/happyDomain/internal/netguard"
+	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -36,28 +36,17 @@ type ProviderValidator interface {
 
 // DefaultProviderValidator instantiates the provider and, when zone listing is supported, performs a live check.
 type DefaultProviderValidator struct {
-	guard *netguard.Guard
+	instantiator
 }
 
-// NewValidator returns the default validator, refusing providers pointing at a
-// destination guard does not allow.
-func NewValidator(guard *netguard.Guard) *DefaultProviderValidator {
-	return &DefaultProviderValidator{guard: guard}
+func NewValidator(guard *netguard.Guard, secrets *secret.Manager) *DefaultProviderValidator {
+	return &DefaultProviderValidator{instantiator{guard: guard, secrets: secrets}}
 }
 
-// Validate instantiates the provider and, if it supports zone listing, calls ListZones to confirm credentials are valid.
-//
-// The endpoint check comes first, and has to: the live check is what carries
-// the configured API key to the endpoint, so validating a provider is itself
-// the request an attacker wants made.
 func (v *DefaultProviderValidator) Validate(ctx context.Context, p *happydns.Provider) error {
-	if err := checkEndpoints(ctx, v.guard, p.Provider); err != nil {
-		return err
-	}
-
-	instance, err := p.InstantiateProvider()
+	instance, err := v.instantiate(ctx, p)
 	if err != nil {
-		return fmt.Errorf("instantiation failed: %w", err)
+		return err
 	}
 
 	if instance.CanListZones() {

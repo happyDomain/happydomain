@@ -29,33 +29,28 @@ import (
 	"git.happydns.org/happyDomain/internal/forms"
 	"git.happydns.org/happyDomain/internal/netguard"
 	providerReg "git.happydns.org/happyDomain/internal/providerregistry"
+	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/model"
 )
 
 // Service handles CRUD operations on DNS providers, with ownership enforcement.
 type Service struct {
+	instantiator
 	store     ProviderStorage
 	validator ProviderValidator
-
-	// guard decides which endpoints a provider may be pointed at. A nil guard
-	// still refuses non-public destinations: see netguard.Guard.
-	guard *netguard.Guard
 }
 
-// NewService creates a new provider Service. If validator is nil,
-// the DefaultProviderValidator is used, guarded by the same guard.
-func NewService(store ProviderStorage, validator ProviderValidator, guard *netguard.Guard) *Service {
+func NewService(store ProviderStorage, validator ProviderValidator, guard *netguard.Guard, secrets *secret.Manager) *Service {
 	if validator == nil {
-		validator = NewValidator(guard)
+		validator = NewValidator(guard, secrets)
 	}
 	return &Service{
-		store:     store,
-		validator: validator,
-		guard:     guard,
+		instantiator: instantiator{guard: guard, secrets: secrets},
+		store:        store,
+		validator:    validator,
 	}
 }
 
-// ParseProvider converts a ProviderMessage to a Provider.
 func ParseProvider(msg *happydns.ProviderMessage) (p *happydns.Provider, err error) {
 	p = &happydns.Provider{}
 
@@ -76,33 +71,14 @@ func ParseProvider(msg *happydns.ProviderMessage) (p *happydns.Provider, err err
 // DefaultProviderValidator, so these two are the only places the endpoint check
 // has to be made: creating a provider, editing it, and every later apply all
 // funnel through one of them.
-func (s *Service) instantiate(ctx context.Context, p *happydns.Provider) (happydns.ProviderActuator, error) {
-	if err := checkEndpoints(ctx, s.guard, p.Provider); err != nil {
-		return nil, err
-	}
-
-	instance, err := p.InstantiateProvider()
-	if err != nil {
-		return nil, fmt.Errorf("unable to instantiate provider: %w", err)
-	}
-	return instance, nil
-}
-
-// CreateProvider creates a new provider for the given user.
 func (s *Service) CreateProvider(ctx context.Context, user *happydns.User, msg *happydns.ProviderMessage) (*happydns.Provider, error) {
 	provider, err := ParseProvider(msg)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse provider: %w", err)
 	}
 
-	// Nothing is stored yet, so a secret still holding happydns.RedactedSecret
-	// has no value behind it. Clear it rather than let the placeholder reach a
-	// provider API as if it were a credential: Validate below dials for real,
-	// and `required` should report the field as empty.
-	forms.MergeSecrets(nil, provider.Provider)
-
-	if err := s.validator.Validate(ctx, provider); err != nil {
-		return nil, fmt.Errorf("invalid provider: %w", err)
+	if err := checkIncoming(provider); err != nil {
+		return nil, err
 	}
 
 	provider.Owner = user.Id
@@ -115,6 +91,20 @@ func (s *Service) CreateProvider(ctx context.Context, user *happydns.User, msg *
 			Err:         fmt.Errorf("unable to generate provider identifier: %w", err),
 			UserMessage: "Sorry, we are currently unable to create the given provider. Please try again later.",
 		}
+	}
+
+	// Nothing is stored yet, so a secret still holding happydns.RedactedSecret
+	// has no value behind it. Clear it rather than let the placeholder reach a
+	// provider API as if it were a credential: Validate below dials for real,
+	// and `required` should report the field as empty.
+	forms.MergeSecrets(nil, provider.Provider)
+
+	if err := s.validator.Validate(ctx, provider); err != nil {
+		return nil, fmt.Errorf("invalid provider: %w", err)
+	}
+
+	if err := s.seal(ctx, provider); err != nil {
+		return nil, err
 	}
 
 	if err := s.store.CreateProvider(provider); err != nil {
@@ -191,10 +181,19 @@ func (s *Service) UpdateProvider(ctx context.Context, providerID happydns.Identi
 	if !provider.Id.Equals(providerID) {
 		return happydns.ValidationError{Msg: "you cannot change the provider identifier"}
 	}
+	if !provider.Owner.Equals(user.Id) {
+		// Secrets are bound to their owner: those carried forward would no
+		// longer open.
+		return happydns.ValidationError{Msg: "you cannot change the provider owner"}
+	}
 
 	err = s.validator.Validate(ctx, provider)
 	if err != nil {
 		return happydns.ValidationError{Msg: fmt.Sprintf("unable to validate provider attributes: %s", err.Error())}
+	}
+
+	if err := s.seal(ctx, provider); err != nil {
+		return err
 	}
 
 	err = s.store.UpdateProvider(provider)
@@ -212,6 +211,12 @@ func (s *Service) UpdateProvider(ctx context.Context, providerID happydns.Identi
 func (s *Service) UpdateProviderFromMessage(ctx context.Context, providerID happydns.Identifier, user *happydns.User, p *happydns.ProviderMessage) error {
 	newprovider, err := ParseProvider(p)
 	if err != nil {
+		return err
+	}
+
+	// Before merging: the stored values carried forward are sealed, and
+	// legitimately so.
+	if err := checkIncoming(newprovider); err != nil {
 		return err
 	}
 
@@ -260,9 +265,9 @@ type RestrictedService struct {
 }
 
 // NewRestrictedService creates a RestrictedService backed by the given configuration and storage.
-func NewRestrictedService(cfg *happydns.Options, store ProviderStorage, guard *netguard.Guard) *RestrictedService {
+func NewRestrictedService(cfg *happydns.Options, store ProviderStorage, guard *netguard.Guard, secrets *secret.Manager) *RestrictedService {
 	return &RestrictedService{
-		inner:  NewService(store, nil, guard),
+		inner:  NewService(store, nil, guard, secrets),
 		config: cfg,
 	}
 }
