@@ -26,6 +26,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -299,19 +300,105 @@ func ciphertextKeyId(ct []byte) (uint32, error) {
 	return binary.BigEndian.Uint32(ct[1:5]), nil
 }
 
+// Storage is what secret management keeps in the database.
+type Storage interface {
+	CheckStorage
+	SafeStorage
+}
+
 // StartupCheck refuses a configuration that would leave secrets unreadable:
-// the instance policy without a keyset, or a keyset that is not the one the
-// database was used with.
-func StartupCheck(policy Policy, key *InstanceKey, store CheckStorage) error {
+// the instance policy without a keyset, instance safes without a keyset to
+// open them, or a keyset that is not the one the database was used with.
+//
+// A safe record that does not decode may be an instance safe. While one is
+// there, the keyset the check record names stays required, until the record
+// is repaired, or removed by hand if known to be lost. Without a check
+// record, nothing then vouches for a keyset: it is accepted, but not
+// recorded.
+func StartupCheck(policy Policy, key *InstanceKey, store Storage) error {
 	if policy == PolicyInstance && key == nil {
 		return errors.New("the instance secret policy requires an instance keyset: see `happydomain secret-keyset generate`")
 	}
 
-	if key != nil {
-		if err := key.VerifyCheck(store); err != nil {
-			return err
+	safe, damaged, err := firstSafeOfKind(store, KindInstance)
+	if err != nil {
+		return fmt.Errorf("unable to list safes: %w", err)
+	}
+	for _, k := range damaged {
+		log.Printf("secret: safe record %q does not decode, it may be an instance safe", k)
+	}
+
+	_, err = store.GetSecretCheck()
+	recorded := err == nil
+	if err != nil && !errors.Is(err, happydns.ErrNotFound) {
+		return fmt.Errorf("unable to read the keyset check record: %w", err)
+	}
+
+	if key == nil {
+		if safe != nil {
+			return errors.New("secrets are sealed under an instance keyset, but none is configured: set -secret-keyset-file")
+		}
+		if recorded && len(damaged) > 0 {
+			return fmt.Errorf("%d safe record(s) do not decode and may be instance safes, and the keyset check record is there: set -secret-keyset-file until they are repaired, or removed by hand if known to be lost", len(damaged))
+		}
+		return nil
+	}
+
+	if !recorded {
+		// VerifyCheck would record whatever keyset it is given. A safe
+		// already stored tells whether it is the right one; with only
+		// damaged ones, nothing does.
+		if safe == nil && len(damaged) > 0 {
+			log.Printf("secret: no keyset check record, and no instance safe that decodes to check the keyset on: it is not recorded")
+			return nil
+		}
+		if safe != nil {
+			if _, err := key.Unwrap(safe); err != nil {
+				return fmt.Errorf("%w (no check record yet, so safe %s was tried instead)", ErrWrongInstanceKey, safe.Id.String())
+			}
 		}
 	}
 
-	return nil
+	return key.VerifyCheck(store)
+}
+
+// firstSafeOfKind returns a safe of kind, or nil when there is none, along
+// with the keys of the records met that do not decode. Those are only all of
+// them when no safe of kind is found.
+func firstSafeOfKind(store SafeStorage, kind string) (safe *happydns.Safe, damaged []string, err error) {
+	damaged, err = scanSafes(store, func(s *happydns.Safe) bool {
+		if s.Kind == kind {
+			safe = s
+			return false
+		}
+		return true
+	})
+	return safe, damaged, err
+}
+
+// SafeStorage keeps the safes.
+type SafeStorage interface {
+	// ListAllSafes lists every safe.
+	ListAllSafes() (happydns.Iterator[happydns.Safe], error)
+
+	// GetSafe returns the safe with the given identifier, or
+	// happydns.ErrSafeNotFound.
+	GetSafe(id happydns.Identifier) (*happydns.Safe, error)
+
+	// GetSafeByOwner returns the safe of the given kind owned by owner, or
+	// happydns.ErrSafeNotFound.
+	GetSafeByOwner(owner happydns.Identifier, kind string) (*happydns.Safe, error)
+
+	// CreateSafe stores a new safe under the identifier it carries, which the
+	// caller generates with happydns.NewRandomIdentifier. Fails with
+	// happydns.ErrInvalidIdentifier, or happydns.ErrAlreadyExists when the
+	// identifier is taken or its owner already has a safe of its kind.
+	CreateSafe(safe *happydns.Safe) error
+
+	// UpdateSafe replaces a stored safe.
+	UpdateSafe(safe *happydns.Safe) error
+
+	// DeleteSafe removes a safe: every value sealed in it becomes
+	// unreadable.
+	DeleteSafe(id happydns.Identifier) error
 }
