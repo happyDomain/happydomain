@@ -23,6 +23,7 @@ package checker
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 
@@ -368,4 +369,89 @@ func (u *CheckerOptionsUsecase) GetCheckerOptionsForUse(
 	merged, _ := u.mergeStoredOptions(checkerName, positionals)
 	u.overlayCLIAdmin(checkerName, merged)
 	return merged, nil
+}
+
+// CheckerOptionsSecrets lets the administrator follow and migrate how the
+// secret checker options are stored.
+type CheckerOptionsSecrets struct {
+	store   CheckerOptionsStorage
+	secrets *secret.Manager
+}
+
+func NewCheckerOptionsSecrets(store CheckerOptionsStorage, secrets *secret.Manager) *CheckerOptionsSecrets {
+	return &CheckerOptionsSecrets{store: store, secrets: secrets}
+}
+
+// scopeName names a scope of options in the reports.
+func scopeName(p *happydns.CheckerOptionsPositional) string {
+	return "options " + optionsObjectId(p.CheckName, p.UserId, p.DomainId, p.ServiceId)
+}
+
+// InspectSecrets tells how the secret options of every scope are stored.
+func (cs *CheckerOptionsSecrets) InspectSecrets(ctx context.Context) (secret.Counts, error) {
+	iter, err := cs.store.ListAllCheckerConfigurations()
+	if err != nil {
+		return secret.Counts{}, err
+	}
+
+	return secret.InspectAll(iter, scopeName, func(p *happydns.CheckerOptionsPositional, c *secret.Counts) error {
+		return eachSecretSet(p.CheckName, p.UserId, p.DomainId, p.ServiceId, p.Options, func(_, s string, sc secret.SecretContext) error {
+			return cs.secrets.InspectValue(ctx, sc, s, c)
+		})
+	})
+}
+
+// ResealSecrets stores the secret options of every scope the way the current
+// policy stores new secrets. A scope that fails is reported and skipped; run
+// it again to resume.
+func (cs *CheckerOptionsSecrets) ResealSecrets(ctx context.Context) (secret.ResealReport, error) {
+	iter, err := cs.store.ListAllCheckerConfigurations()
+	if err != nil {
+		return secret.ResealReport{ObjectType: OptionsSecretObjectType}, err
+	}
+
+	return secret.ResealAll(OptionsSecretObjectType, iter, scopeName, func(p *happydns.CheckerOptionsPositional) (bool, error) {
+		if len(secretKeys(p.CheckName, p.Options)) == 0 {
+			return false, nil
+		}
+		return cs.resealScope(ctx, p.CheckName, p.UserId, p.DomainId, p.ServiceId)
+	})
+}
+
+// resealScope reseals the options of one scope as stored now. The write is
+// conditional: whatever another writer did in between wins, and the scope is
+// left for the next run.
+func (cs *CheckerOptionsSecrets) resealScope(ctx context.Context, checkerName string, userId, domainId, serviceId *happydns.Identifier) (bool, error) {
+	changed := false
+	err := cs.store.ReplaceCheckerConfiguration(checkerName, userId, domainId, serviceId, func(opts happydns.CheckerOptions) (happydns.CheckerOptions, error) {
+		out := maps.Clone(opts)
+		c := false
+		err := eachSecretSet(checkerName, userId, domainId, serviceId, opts, func(k, s string, sc secret.SecretContext) error {
+			v, ch, err := cs.secrets.ResealValue(ctx, sc, s)
+			if err != nil {
+				return err
+			}
+			if ch {
+				out[k] = v
+				c = true
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+		if !c {
+			return nil, nil
+		}
+		changed = true
+		return out, nil
+	})
+	if errors.Is(err, happydns.ErrNotFound) {
+		// Deleted since it was listed.
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return changed, nil
 }

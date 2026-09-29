@@ -435,7 +435,7 @@ func TestKeyStatusSurvivesADamagedSafe(t *testing.T) {
 }
 
 func TestValueHelpers(t *testing.T) {
-	instance, _, _ := instanceManagers(t)
+	instance, plaintext, _ := instanceManagers(t)
 	ctx := context.Background()
 	sc := objectContext()
 	sc.Field = "k"
@@ -454,11 +454,34 @@ func TestValueHelpers(t *testing.T) {
 	if v, err := instance.OpenValue(ctx, sc, "legacy"); err != nil || v != "legacy" {
 		t.Errorf("OpenValue(clear) = %q, %v", v, err)
 	}
+
+	var c Counts
+	for _, v := range []string{token, "legacy", FormatSealed(happydns.Identifier{0x42}, []byte("x")), ""} {
+		if err := instance.InspectValue(ctx, sc, v, &c); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if c.Clear != 1 || c.Sealed[KindInstance] != 1 || c.Unreadable != 1 {
+		t.Errorf("counts = %+v", c)
+	}
+
+	if out, changed, err := instance.ResealValue(ctx, sc, "legacy"); err != nil || !changed || !IsSealed(out) {
+		t.Errorf("ResealValue(clear, instance) = %q, %v, %v", out, changed, err)
+	}
+	if out, changed, err := instance.ResealValue(ctx, sc, token); err != nil || changed || out != token {
+		t.Errorf("ResealValue(sealed, instance) = %q, %v, %v", out, changed, err)
+	}
+	if out, changed, err := plaintext.ResealValue(ctx, sc, token); err != nil || !changed || out != "v" {
+		t.Errorf("ResealValue(sealed, plaintext) = %q, %v, %v", out, changed, err)
+	}
+	if out, changed, err := plaintext.ResealValue(ctx, sc, "legacy"); err != nil || changed || out != "legacy" {
+		t.Errorf("ResealValue(clear, plaintext) = %q, %v, %v", out, changed, err)
+	}
 }
 
 // The placeholder the API sends in place of a secret is never a credential.
-// Stored by mistake, it is neither sealed nor handed out as the value it
-// stands for.
+// Stored by mistake, it is reported as unreadable, and neither sealed, nor
+// resealed, nor handed out as the value it stands for.
 func TestValueHelpersRefuseAStoredPlaceholder(t *testing.T) {
 	instance, plaintext, _ := instanceManagers(t)
 	ctx := context.Background()
@@ -473,6 +496,19 @@ func TestValueHelpersRefuseAStoredPlaceholder(t *testing.T) {
 	}
 	if _, err := instance.OpenValue(ctx, sc, happydns.RedactedSecret); !errors.Is(err, ErrRedactedSecret) {
 		t.Errorf("OpenValue(placeholder) = %v, want ErrRedactedSecret", err)
+	}
+	for name, m := range map[string]*Manager{"instance": instance, "plaintext": plaintext} {
+		if _, changed, err := m.ResealValue(ctx, sc, happydns.RedactedSecret); !errors.Is(err, ErrRedactedSecret) || changed {
+			t.Errorf("ResealValue(placeholder, %s) = %v, %v; want ErrRedactedSecret, unchanged", name, changed, err)
+		}
+	}
+
+	var c Counts
+	if err := instance.InspectValue(ctx, sc, happydns.RedactedSecret, &c); err != nil {
+		t.Fatal(err)
+	}
+	if c.Unreadable != 1 {
+		t.Errorf("counts = %+v, want the placeholder unreadable", c)
 	}
 }
 

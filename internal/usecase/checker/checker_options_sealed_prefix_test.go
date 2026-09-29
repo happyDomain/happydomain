@@ -38,9 +38,10 @@ import (
 const goneChecker = "secret_opts_gone_checker"
 
 // A value stored sealed is a secret, whatever the documentation of its
-// checker says now: it is opened for runs, and never sent out.
+// checker says now: it is opened for runs, never sent out, and seen by the
+// inspection and the reseal.
 func TestSealedOptionsAreFoundByTheirPrefix(t *testing.T) {
-	instance, _ := optionsManagers(t, secrettest.NewSafes(), nil)
+	instance, plaintext := optionsManagers(t, secrettest.NewSafes(), nil)
 
 	store := newListableOptionsStore()
 	uc := checkerUC.NewCheckerOptionsUsecase(store, nil).WithSecrets(instance)
@@ -75,6 +76,18 @@ func TestSealedOptionsAreFoundByTheirPrefix(t *testing.T) {
 	}
 	if v := uc.RedactCheckerOptionValue(goneChecker, "plain", ""); v != "" {
 		t.Errorf("RedactCheckerOptionValue(empty) = %v, want it left unset", v)
+	}
+
+	counts, err := checkerUC.NewCheckerOptionsSecrets(store, instance).InspectSecrets(context.Background())
+	if err != nil || counts.Sealed[secret.KindInstance] != 1 {
+		t.Errorf("InspectSecrets = %+v, %v; want the sealed value counted", counts, err)
+	}
+	report, err := checkerUC.NewCheckerOptionsSecrets(store, plaintext).ResealSecrets(context.Background())
+	if err != nil || report.Changed != 1 {
+		t.Fatalf("ResealSecrets(plaintext) = %+v, %v; want the sealed value resealed", report, err)
+	}
+	if v, _ := store.data[posKey(goneChecker, user, nil, nil)]["old_key"].(string); v != "the-key" {
+		t.Errorf("stored after reseal = %q, want it back in clear", v)
 	}
 }
 

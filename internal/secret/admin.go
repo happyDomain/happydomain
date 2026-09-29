@@ -434,3 +434,44 @@ func (o *ValueOpener) Open(ctx context.Context, sc SecretContext, value string) 
 	}
 	return s.Reveal(), nil
 }
+
+// InspectValue adds how value, as stored, is protected to c.
+func (m *Manager) InspectValue(ctx context.Context, sc SecretContext, value string, c *Counts) error {
+	if m == nil {
+		return errNoManager
+	}
+	if err := sc.Validate(); err != nil {
+		return err
+	}
+	s := happydns.ParseSecret(value)
+	return m.inspectOne(sc, &s, map[string]tink.AEAD{}, c)
+}
+
+// ResealValue returns value, as stored, the way the current policy stores new
+// secrets, and whether that differs from what is stored.
+func (m *Manager) ResealValue(ctx context.Context, sc SecretContext, value string) (string, bool, error) {
+	if m == nil {
+		return "", false, errNoManager
+	}
+	if err := refusePlaceholder(sc, value); err != nil {
+		return "", false, err
+	}
+
+	sealed := IsSealed(value)
+	switch {
+	case value == "":
+		return value, false, nil
+	case sealed && m.policy != PolicyPlaintext, !sealed && m.policy == PolicyPlaintext:
+		return value, false, nil
+	}
+
+	clear, err := m.OpenValue(ctx, sc, value)
+	if err != nil {
+		return "", false, err
+	}
+	out, err := m.SealValue(ctx, sc, clear)
+	if err != nil {
+		return "", false, err
+	}
+	return out, true, nil
+}

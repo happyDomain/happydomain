@@ -22,6 +22,7 @@
 package checker_test
 
 import (
+	"context"
 	"errors"
 	"reflect"
 	"strings"
@@ -297,6 +298,41 @@ func TestSecretOptionsFailClosedWithoutManager(t *testing.T) {
 	}
 }
 
+func TestSecretOptionsResealAndInspect(t *testing.T) {
+	instance, plaintext := optionsManagers(t, secrettest.NewSafes(), nil)
+
+	store := newListableOptionsStore()
+	user := idPtr()
+	store.data[posKey(secretChecker, user, nil, nil)] = happydns.CheckerOptions{"user_token": "legacy", "plain": "p"}
+	store.data[posKey(secretChecker, nil, nil, nil)] = happydns.CheckerOptions{"api_key": "operator"}
+
+	holder := checkerUC.NewCheckerOptionsSecrets(store, instance)
+	counts, err := holder.InspectSecrets(context.Background())
+	if err != nil || counts.Clear != 2 {
+		t.Fatalf("InspectSecrets = %+v, %v; want 2 clear", counts, err)
+	}
+
+	report, err := holder.ResealSecrets(context.Background())
+	if err != nil || report.Changed != 2 || report.Failed != 0 {
+		t.Fatalf("ResealSecrets = %+v, %v", report, err)
+	}
+	if v := storedString(t, store.optionsStore, user, "user_token"); !strings.HasPrefix(v, "hds:1:") {
+		t.Errorf("user option after reseal = %q", v)
+	}
+	counts, _ = holder.InspectSecrets(context.Background())
+	if counts.Sealed[secret.KindInstance] != 2 || counts.Clear != 0 {
+		t.Errorf("InspectSecrets after = %+v", counts)
+	}
+
+	report, err = checkerUC.NewCheckerOptionsSecrets(store, plaintext).ResealSecrets(context.Background())
+	if err != nil || report.Changed != 2 {
+		t.Fatalf("ResealSecrets(plaintext) = %+v, %v", report, err)
+	}
+	if v := storedString(t, store.optionsStore, user, "user_token"); v != "legacy" {
+		t.Errorf("user option back in clear = %q", v)
+	}
+}
+
 // listableOptionsStore also lists every stored configuration.
 type listableOptionsStore struct {
 	*optionsStore
@@ -335,6 +371,52 @@ func (it *positionalIterator) Key() string                              { return
 func (it *positionalIterator) Raw() any                                 { return nil }
 func (it *positionalIterator) Err() error                               { return nil }
 func (it *positionalIterator) Close()                                   {}
+
+// knownUsers answers for the users that exist.
+type knownUsers map[string]bool
+
+func (k knownUsers) GetUser(id happydns.Identifier) (*happydns.User, error) {
+	if k[id.String()] {
+		return &happydns.User{Id: id}, nil
+	}
+	return nil, happydns.ErrUserNotFound
+}
+
+// A scope that fails, or whose user was deleted, keeps neither the others
+// from being resealed nor the status from being told.
+func TestSecretOptionsResealGoesPastWhatItCannotReseal(t *testing.T) {
+	user, gone := idPtr(), idPtr()
+	instance, plaintext := optionsManagers(t, secrettest.NewSafes(), knownUsers{user.String(): true})
+
+	store := newListableOptionsStore()
+	store.data[posKey(secretChecker, user, nil, nil)] = happydns.CheckerOptions{"user_token": "legacy"}
+	store.data[posKey(secretChecker, gone, nil, nil)] = happydns.CheckerOptions{"user_token": "orphan"}
+
+	report, err := checkerUC.NewCheckerOptionsSecrets(store, instance).ResealSecrets(context.Background())
+	if err != nil || report.Changed != 1 || report.Skipped != 1 || report.Failed != 0 {
+		t.Errorf("ResealSecrets = %+v, %v; want 1 resealed, the orphan skipped", report, err)
+	}
+	if v := storedString(t, store.optionsStore, gone, "user_token"); v != "orphan" {
+		t.Errorf("orphan option = %q, want it left as it was", v)
+	}
+
+	// A value that no safe opens fails on its own, back to clear.
+	delete(store.data, posKey(secretChecker, gone, nil, nil))
+	store.data[posKey(secretChecker, nil, nil, nil)] = happydns.CheckerOptions{"api_key": "hds:1:AQ:c2VhbGVk"}
+
+	holder := checkerUC.NewCheckerOptionsSecrets(store, plaintext)
+	counts, err := holder.InspectSecrets(context.Background())
+	if err != nil || counts.Unreadable != 1 || counts.Sealed[secret.KindInstance] != 1 {
+		t.Errorf("InspectSecrets = %+v, %v; want 1 sealed, 1 unreadable", counts, err)
+	}
+	report, err = holder.ResealSecrets(context.Background())
+	if err != nil || report.Changed != 1 || report.Failed != 1 {
+		t.Errorf("ResealSecrets(plaintext) = %+v, %v; want 1 back in clear, 1 failure", report, err)
+	}
+	if v := storedString(t, store.optionsStore, user, "user_token"); v != "legacy" {
+		t.Errorf("user option = %q, want it back in clear", v)
+	}
+}
 
 // racingOptions runs during once, right after the next read of the options
 // of a scope and before whatever is written from that read: another writer
@@ -415,5 +497,25 @@ func TestSecretOptionsSaveDoesNotOverwriteAConcurrentWrite(t *testing.T) {
 				t.Errorf("plain after retry = %q", v)
 			}
 		})
+	}
+}
+
+// A user saving their options while they are resealed keeps what they saved.
+func TestSecretOptionsResealLosesToConcurrentWrites(t *testing.T) {
+	instance := instanceOptionsManager(t)
+
+	user := idPtr()
+	listable := newListableOptionsStore()
+	listable.data[posKey(secretChecker, user, nil, nil)] = happydns.CheckerOptions{"user_token": "legacy"}
+	store := &racingOptions{listableOptionsStore: listable, during: func() {
+		listable.data[posKey(secretChecker, user, nil, nil)] = happydns.CheckerOptions{"user_token": "hds:1:AQ:c2F2ZWQ"}
+	}}
+
+	report, err := checkerUC.NewCheckerOptionsSecrets(store, instance).ResealSecrets(context.Background())
+	if err != nil || report.Skipped != 1 || report.Changed != 0 {
+		t.Errorf("ResealSecrets = %+v, %v; want the scope skipped", report, err)
+	}
+	if v := storedString(t, listable.optionsStore, user, "user_token"); v != "hds:1:AQ:c2F2ZWQ" {
+		t.Errorf("stored = %q, want the user's save kept", v)
 	}
 }

@@ -107,8 +107,9 @@ func NewAdmin(app *App) *Admin {
 			CheckScheduler:        app.usecases.checkerScheduler,
 			TidyUp:                usecase.NewTidyUpUsecase(app.store),
 			Secrets: usecase.NewSecretsUsecase(app.secrets, map[string]usecase.SecretHolder{
-				providerUC.SecretObjectType: providerAdminService,
-				notifPkg.SecretObjectType:   notifUC.NewChannelSecrets(app.store, app.usecases.notificationRegistry),
+				providerUC.SecretObjectType:       providerAdminService,
+				notifPkg.SecretObjectType:         notifUC.NewChannelSecrets(app.store, app.usecases.notificationRegistry),
+				checkerUC.OptionsSecretObjectType: checkerUC.NewCheckerOptionsSecrets(app.store, app.secrets),
 			}),
 		},
 	)
