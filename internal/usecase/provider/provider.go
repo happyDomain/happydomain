@@ -171,6 +171,8 @@ func (s *Service) ListUserProviders(_ context.Context, user *happydns.User) ([]*
 
 // UpdateProvider updates a provider using the provided update function.
 func (s *Service) UpdateProvider(ctx context.Context, providerID happydns.Identifier, user *happydns.User, updateFn func(*happydns.Provider)) error {
+	defer lockProvider(providerID)()
+
 	provider, err := s.GetUserProvider(ctx, user, providerID)
 	if err != nil {
 		return err
@@ -243,6 +245,8 @@ func (s *Service) UpdateProviderFromMessage(ctx context.Context, providerID happ
 
 // DeleteProvider deletes a provider for the given user.
 func (s *Service) DeleteProvider(_ context.Context, user *happydns.User, providerID happydns.Identifier) error {
+	defer lockProvider(providerID)()
+
 	// Verify ownership before deleting
 	if _, err := s.getUserProvider(user, providerID); err != nil {
 		return err

@@ -116,3 +116,8 @@ func replaceWithClone(dst, ptr reflect.Value) error {
 	dst.Set(cp)
 	return nil
 }
+
+// reflectElem returns the struct obj, a pointer to a struct, points at.
+func reflectElem(obj any) reflect.Value {
+	return reflect.ValueOf(obj).Elem()
+}

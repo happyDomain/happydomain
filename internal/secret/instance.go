@@ -116,10 +116,10 @@ func KeysetFileTooOpen(path string) (bool, error) {
 
 // KeyInfo describes a key of a keyset, without its material.
 type KeyInfo struct {
-	Id      uint32
-	Primary bool
-	Status  string
-	Type    string
+	Id      uint32 `json:"id"`
+	Primary bool   `json:"primary"`
+	Status  string `json:"status"`
+	Type    string `json:"type,omitempty"`
 }
 
 func (k KeyInfo) String() string {

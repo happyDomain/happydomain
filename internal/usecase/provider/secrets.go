@@ -25,6 +25,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 
 	"git.happydns.org/happyDomain/internal/netguard"
 	"git.happydns.org/happyDomain/internal/secret"
@@ -96,4 +97,116 @@ func checkIncoming(p *happydns.Provider) error {
 		return err
 	}
 	return nil
+}
+
+// providerLocks serializes the read-modify-write of one provider across every
+// Service of the process: the user API and the admin API each have their own,
+// and a reseal must not write back a body read before a user's update.
+var providerLocks sync.Map
+
+// lockProvider locks the provider id and returns the function unlocking it.
+func lockProvider(id happydns.Identifier) func() {
+	mu, _ := providerLocks.LoadOrStore(id.String(), &sync.Mutex{})
+	mu.(*sync.Mutex).Lock()
+	return mu.(*sync.Mutex).Unlock
+}
+
+// InspectSecrets tells how the secrets of every provider are stored.
+func (s *Service) InspectSecrets(ctx context.Context) (secret.Counts, error) {
+	var counts secret.Counts
+
+	iter, err := s.store.ListAllProviders()
+	if err != nil {
+		return counts, err
+	}
+	defer iter.Close()
+
+	// One provider that cannot be looked at must not hide the others.
+	for iter.NextWithError() {
+		if iter.Err() != nil {
+			counts.Undecodable++
+			continue
+		}
+		p, err := ParseProvider(iter.Item())
+		if err != nil {
+			counts.Undecodable++
+			continue
+		}
+		if err := s.secrets.Inspect(ctx, SecretContext(p), p.Provider, &counts); err != nil {
+			counts.Undecodable++
+		}
+	}
+
+	return counts, iter.Err()
+}
+
+// ResealSecrets stores the secrets of every provider the way the current
+// policy stores new ones. A provider that fails is reported and skipped; run
+// it again to resume.
+func (s *Service) ResealSecrets(ctx context.Context) (secret.ResealReport, error) {
+	report := secret.ResealReport{ObjectType: SecretObjectType}
+
+	iter, err := s.store.ListAllProviders()
+	if err != nil {
+		return report, err
+	}
+
+	// Collected first: writing while iterating is not safe on every storage.
+	// A record that does not decode is reported, and the others resealed.
+	var ids []happydns.Identifier
+	for iter.NextWithError() {
+		if err := iter.Err(); err != nil {
+			report.Processed++
+			report.Failed++
+			report.Errors = append(report.Errors, fmt.Sprintf("record %s: %s", iter.Key(), err.Error()))
+			continue
+		}
+		ids = append(ids, iter.Item().Id)
+	}
+	err = iter.Err()
+	iter.Close()
+	if err != nil {
+		return report, err
+	}
+
+	for _, id := range ids {
+		report.Processed++
+
+		changed, err := s.resealProvider(ctx, id)
+		if err != nil {
+			report.Failed++
+			report.Errors = append(report.Errors, fmt.Sprintf("provider %s: %s", id.String(), err.Error()))
+			continue
+		}
+		if changed {
+			report.Changed++
+		}
+	}
+
+	return report, nil
+}
+
+func (s *Service) resealProvider(ctx context.Context, id happydns.Identifier) (bool, error) {
+	defer lockProvider(id)()
+
+	msg, err := s.store.GetProvider(id)
+	if errors.Is(err, happydns.ErrProviderNotFound) {
+		// Deleted since it was listed.
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+
+	p, err := ParseProvider(msg)
+	if err != nil {
+		return false, err
+	}
+
+	changed, err := s.secrets.ResealObject(ctx, SecretContext(p), p.Provider)
+	if err != nil || !changed {
+		return false, err
+	}
+
+	return true, s.store.UpdateProvider(p)
 }

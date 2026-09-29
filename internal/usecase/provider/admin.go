@@ -46,6 +46,8 @@ func (s *Service) ListAllProviderMetas() ([]*happydns.ProviderMeta, error) {
 // DeleteProviderByID force-removes the provider identified by providerID
 // without ownership verification. Intended for administrative callers.
 func (s *Service) DeleteProviderByID(providerID happydns.Identifier) error {
+	defer lockProvider(providerID)()
+
 	return s.store.DeleteProvider(providerID)
 }
 
