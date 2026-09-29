@@ -96,7 +96,7 @@ func createTestService(t *testing.T) (*user.Service, storage.Storage, *mockNewsl
 	newsletter := &mockNewsletterSubscriptor{}
 	sessionCloser := &mockSessionCloser{}
 
-	service := user.NewUserUsecases(db, newsletter, authUserService, sessionCloser)
+	service := user.NewUserUsecases(db, newsletter, authUserService, sessionCloser, nil)
 
 	return service, db, newsletter, sessionCloser
 }

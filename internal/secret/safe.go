@@ -26,6 +26,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -160,4 +161,56 @@ func (r *safeRegistry) aead(safe *happydns.Safe) (tink.AEAD, error) {
 		return nil, err
 	}
 	return aead.New(dek)
+}
+
+// CheckSafe returns an error when this instance cannot open safe, one coming
+// from elsewhere such as a backup: stored, it would only hold values that
+// never open here.
+func (m *Manager) CheckSafe(safe *happydns.Safe) error {
+	if m == nil {
+		return errNoManager
+	}
+	if m.safes == nil {
+		return fmt.Errorf("safe %s needs the instance keyset, which is not configured", safe.Id.String())
+	}
+	_, err := m.safes.aead(safe)
+	return err
+}
+
+// DeleteOwnerSafes deletes every safe owned by owner: whatever was sealed in
+// them no longer opens, copies and backups included.
+func (m *Manager) DeleteOwnerSafes(owner happydns.Identifier) error {
+	if m == nil || m.safes == nil {
+		return errNoManager
+	}
+
+	iter, err := m.safes.store.ListAllSafes()
+	if err != nil {
+		return err
+	}
+
+	// A record that does not decode tells no owner: it is left as it is,
+	// rather than keep every account from being deleted.
+	var ids []happydns.Identifier
+	for iter.NextWithError() {
+		if err := iter.Err(); err != nil {
+			log.Printf("secret: safe record %q does not decode, left as it is while deleting the safes of %s: %s", iter.Key(), owner.String(), err)
+			continue
+		}
+		if iter.Item().Owner.Equals(owner) {
+			ids = append(ids, iter.Item().Id)
+		}
+	}
+	err = iter.Err()
+	iter.Close()
+	if err != nil {
+		return err
+	}
+
+	for _, id := range ids {
+		if err := m.safes.store.DeleteSafe(id); err != nil {
+			return fmt.Errorf("unable to delete safe %s: %w", id.String(), err)
+		}
+	}
+	return nil
 }

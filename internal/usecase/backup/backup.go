@@ -120,6 +120,20 @@ func (u *Usecase) Backup() happydns.Backup {
 		}
 	}
 
+	// Safes: the sealed values of the providers above only open with them,
+	// and with the instance keyset, which is not part of the backup.
+	if safeIter, err := u.store.ListAllSafes(); err != nil {
+		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve Safes: %s", err.Error()))
+	} else {
+		defer safeIter.Close()
+		for safeIter.Next() {
+			ret.Safes = append(ret.Safes, safeIter.Item())
+		}
+		if err := safeIter.Err(); err != nil {
+			ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve every Safe: %s", err.Error()))
+		}
+	}
+
 	// Checker configurations (positional, one entry per (checker, user?, domain?, service?)).
 	if cfgIter, err := u.store.ListAllCheckerConfigurations(); err != nil {
 		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve CheckerConfigurations: %s", err.Error()))
@@ -343,6 +357,12 @@ func (u *Usecase) Restore(backup *happydns.Backup) error {
 		}
 	}
 
+	// Safes, before the providers: sealing a clear value restored below
+	// must find the owner's safe rather than create another one.
+	for _, safe := range backup.Safes {
+		errs = errors.Join(errs, u.restoreSafe(safe))
+	}
+
 	// Providers
 	for _, provider := range backup.Providers {
 		p, err := providerUC.ParseProvider(provider)
@@ -443,4 +463,24 @@ func (u *Usecase) Restore(backup *happydns.Backup) error {
 	}
 
 	return errs
+}
+
+func (u *Usecase) restoreSafe(safe *happydns.Safe) error {
+	if safe == nil {
+		return nil
+	}
+
+	// Restored with another keyset, or none, it would never open.
+	if err := u.secrets.CheckSafe(safe); err != nil {
+		return fmt.Errorf("safe %s not restored: %w", safe.Id.String(), err)
+	}
+
+	_, err := u.store.GetSafe(safe.Id)
+	if errors.Is(err, happydns.ErrSafeNotFound) {
+		return u.store.CreateSafe(safe)
+	}
+	if err != nil {
+		return err
+	}
+	return u.store.UpdateSafe(safe)
 }

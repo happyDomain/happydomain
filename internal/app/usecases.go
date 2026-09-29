@@ -107,6 +107,7 @@ func (app *App) initUsecases() {
 		app.newsletter,
 		authUserService,
 		sessionService,
+		app.secrets,
 	)
 	app.usecases.user = userService
 	app.usecases.userAdmin = userService

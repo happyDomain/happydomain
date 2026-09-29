@@ -23,7 +23,7 @@ func (u testUserInfo) JoinNewsletter() bool           { return u.newsletter }
 
 func Test_CompleteAuthentication(t *testing.T) {
 	db, _ := inmemory.Instantiate()
-	userUsecase := userUC.NewUserUsecases(db, nil, nil, nil)
+	userUsecase := userUC.NewUserUsecases(db, nil, nil, nil, nil)
 	authenticationUsecase := usecase.NewAuthenticationUsecase(&happydns.Options{}, db, userUsecase)
 
 	uinfo := testUserInfo{
@@ -63,7 +63,7 @@ func (ds *testNewsletterSubscription) SubscribeToNewsletter(u happydns.UserInfo)
 func Test_CompleteAuthentication_WithNewsletter(t *testing.T) {
 	db, _ := inmemory.Instantiate()
 	mockNewsletterSubscription := &testNewsletterSubscription{}
-	userUsecase := userUC.NewUserUsecases(db, mockNewsletterSubscription, nil, nil)
+	userUsecase := userUC.NewUserUsecases(db, mockNewsletterSubscription, nil, nil, nil)
 	authenticationUsecase := usecase.NewAuthenticationUsecase(&happydns.Options{}, db, userUsecase)
 
 	uinfo := testUserInfo{
@@ -112,7 +112,7 @@ func Test_AuthenticateUserWithPassword_WrongPassword(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	userUsecase := userUC.NewUserUsecases(db, nil, nil, nil)
+	userUsecase := userUC.NewUserUsecases(db, nil, nil, nil, nil)
 	authenticationUsecase := usecase.NewAuthenticationUsecase(&happydns.Options{}, db, userUsecase)
 
 	_, err = authenticationUsecase.AuthenticateUserWithPassword(happydns.LoginRequest{
@@ -140,7 +140,7 @@ func Test_AuthenticateUserWithPassword_WeakPassword(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	userUsecase := userUC.NewUserUsecases(db, nil, nil, nil)
+	userUsecase := userUC.NewUserUsecases(db, nil, nil, nil, nil)
 	authenticationUsecase := usecase.NewAuthenticationUsecase(&happydns.Options{}, db, userUsecase)
 
 	_, err = authenticationUsecase.AuthenticateUserWithPassword(happydns.LoginRequest{
@@ -168,7 +168,7 @@ func Test_AuthenticateUserWithPassword_UnverifiedEmail(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	userUsecase := userUC.NewUserUsecases(db, nil, nil, nil)
+	userUsecase := userUC.NewUserUsecases(db, nil, nil, nil, nil)
 	authenticationUsecase := usecase.NewAuthenticationUsecase(&happydns.Options{}, db, userUsecase)
 
 	_, err = authenticationUsecase.AuthenticateUserWithPassword(happydns.LoginRequest{
@@ -196,7 +196,7 @@ func Test_AuthenticateUserWithPassword_NoEmail(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	userUsecase := userUC.NewUserUsecases(db, nil, nil, nil)
+	userUsecase := userUC.NewUserUsecases(db, nil, nil, nil, nil)
 	authenticationUsecase := usecase.NewAuthenticationUsecase(&happydns.Options{NoMail: true}, db, userUsecase)
 
 	_, err = authenticationUsecase.AuthenticateUserWithPassword(happydns.LoginRequest{
@@ -226,7 +226,7 @@ func Test_AuthenticateUserWithPassword(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	userUsecase := userUC.NewUserUsecases(db, nil, nil, nil)
+	userUsecase := userUC.NewUserUsecases(db, nil, nil, nil, nil)
 	authenticationUsecase := usecase.NewAuthenticationUsecase(&happydns.Options{}, db, userUsecase)
 
 	_, err = authenticationUsecase.AuthenticateUserWithPassword(happydns.LoginRequest{

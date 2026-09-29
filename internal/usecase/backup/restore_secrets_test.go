@@ -22,13 +22,16 @@
 package backup_test
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"testing"
 
 	providerReg "git.happydns.org/happyDomain/internal/providerregistry"
 	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	"git.happydns.org/happyDomain/internal/usecase/backup"
+	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
 	happydns "git.happydns.org/happyDomain/model"
 )
 
@@ -210,5 +213,145 @@ func TestBackupUserRedactsSecretType(t *testing.T) {
 	}
 	if found != 2 {
 		t.Errorf("exported %d secret providers, want 2", found)
+	}
+}
+
+// The administrative backup carries the safes with the sealed values: restored
+// on an instance holding the same keyset, everything opens; without it, the
+// instance refuses to start.
+func TestBackupRestoreSafes(t *testing.T) {
+	ctx := context.Background()
+	src, err := inmemory.Instantiate()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	srcSecrets, _ := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: src})
+
+	owner := happydns.Identifier{0xaa}
+	if err := src.CreateOrUpdateUser(&happydns.User{Id: owner, Email: "owner@example.com"}); err != nil {
+		t.Fatal(err)
+	}
+	p, err := providerUC.ParseProvider(secretProviderMessage(owner, 1, `{"host":"h","apikey":"precious"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := srcSecrets.SealObject(ctx, providerUC.SecretContext(p), p.Provider); err != nil {
+		t.Fatal(err)
+	}
+	if err := src.UpdateProvider(p); err != nil {
+		t.Fatal(err)
+	}
+
+	dump := backup.NewUsecase(src, srcSecrets).Backup()
+	if len(dump.Safes) != 1 || !dump.Safes[0].Owner.Equals(owner) {
+		t.Fatalf("backup safes = %+v, want the owner's safe", dump.Safes)
+	}
+
+	// Through JSON, as the admin API hands it out.
+	raw, err := json.Marshal(dump)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var restored happydns.Backup
+	if err := json.Unmarshal(raw, &restored); err != nil {
+		t.Fatal(err)
+	}
+
+	dst, err := inmemory.Instantiate()
+	if err != nil {
+		t.Fatal(err)
+	}
+	dstSecrets, _ := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: dst})
+	if err := backup.NewUsecase(dst, dstSecrets).Restore(&restored); err != nil {
+		t.Fatalf("Restore: %v", err)
+	}
+
+	msg, err := dst.GetProvider(happydns.Identifier{1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	back, err := providerUC.ParseProvider(msg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := dstSecrets.OpenObject(ctx, providerUC.SecretContext(back), back.Provider); err != nil {
+		t.Fatalf("the restored provider does not open: %v", err)
+	}
+	if got := back.Provider.(*BackupSecretProvider).ApiKey.Reveal(); got != "precious" {
+		t.Errorf("restored key = %q", got)
+	}
+
+	// The same database without the keyset: refuse to start.
+	if err := secret.StartupCheck(secret.PolicyPlaintext, nil, dst); err == nil {
+		t.Error("an instance holding restored safes started without the keyset")
+	}
+
+	// The user export carries no safe.
+	if u := backup.NewUsecase(src, srcSecrets).BackupUser(&happydns.User{Id: owner}); len(u.Safes) != 0 {
+		t.Error("the user export carries safes")
+	}
+}
+
+// A safe the keyset of this instance does not open is refused: restored, it
+// would only hold credentials that never open, and keep the instance
+// requiring a keyset at startup.
+func TestRestoreRefusesSafesOfAnotherKeyset(t *testing.T) {
+	ctx := context.Background()
+	src, err := inmemory.Instantiate()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	srcSecrets, _ := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: src})
+
+	owner := happydns.Identifier{0xaa}
+	if err := src.CreateOrUpdateUser(&happydns.User{Id: owner, Email: "owner@example.com"}); err != nil {
+		t.Fatal(err)
+	}
+	p, err := providerUC.ParseProvider(secretProviderMessage(owner, 1, `{"host":"h","apikey":"precious"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := srcSecrets.SealObject(ctx, providerUC.SecretContext(p), p.Provider); err != nil {
+		t.Fatal(err)
+	}
+	if err := src.UpdateProvider(p); err != nil {
+		t.Fatal(err)
+	}
+	dump := backup.NewUsecase(src, srcSecrets).Backup()
+	if len(dump.Safes) != 1 {
+		t.Fatalf("backup safes = %+v, want the owner's safe", dump.Safes)
+	}
+
+	other, _ := secret.GenerateInstanceKeyset()
+	otherKey, _ := secret.NewInstanceKey(other)
+
+	for name, cfg := range map[string]secret.Config{
+		"another keyset": {Policy: secret.PolicyInstance, InstanceKey: otherKey},
+		"no keyset":      {Policy: secret.PolicyPlaintext},
+	} {
+		t.Run(name, func(t *testing.T) {
+			dst, err := inmemory.Instantiate()
+			if err != nil {
+				t.Fatal(err)
+			}
+			cfg.Safes = dst
+			dstSecrets, err := secret.NewManager(cfg)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if err := backup.NewUsecase(dst, dstSecrets).Restore(&dump); err == nil {
+				t.Error("Restore succeeded, want the safe refused")
+			}
+			if _, err := dst.GetSafe(dump.Safes[0].Id); !errors.Is(err, happydns.ErrSafeNotFound) {
+				t.Errorf("GetSafe = %v, want the safe left out", err)
+			}
+		})
 	}
 }
