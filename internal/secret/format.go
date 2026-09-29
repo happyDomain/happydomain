@@ -132,6 +132,17 @@ type SecretContext struct {
 // Validate refuses a context missing any component: associated data built
 // from it would bind the secret to less than it should.
 func (sc SecretContext) Validate() error {
+	if err := sc.validateObject(); err != nil {
+		return err
+	}
+	if sc.Field == "" {
+		return errors.New("secret context: missing field")
+	}
+	return nil
+}
+
+// validateObject is Validate without the field, which Walk fills.
+func (sc SecretContext) validateObject() error {
 	switch {
 	case len(sc.Owner) == 0:
 		return errors.New("secret context: missing owner")
@@ -139,8 +150,6 @@ func (sc SecretContext) Validate() error {
 		return errors.New("secret context: missing object type")
 	case sc.ObjectId == "":
 		return errors.New("secret context: missing object identifier")
-	case sc.Field == "":
-		return errors.New("secret context: missing field")
 	}
 	return nil
 }
