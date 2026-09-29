@@ -30,9 +30,9 @@ import (
 )
 
 type TransIpAPI struct {
-	AccountName string `json:"account_name,omitempty" happydomain:"label=Account name,placeholder=xxxxxxxx,description=Your account name."`
-	PrivateKey  string `json:"private_key,omitempty" happydomain:"label=Private key,placeholder=xxxxxxxx,secret,description=Your account private key."`
-	AccessToken string `json:"access_token,omitempty" happydomain:"label=Access token,placeholder=xxxxxxxx,secret,description=Your access roken."`
+	AccountName string          `json:"account_name,omitempty" happydomain:"label=Account name,placeholder=xxxxxxxx,description=Your account name."`
+	PrivateKey  happydns.Secret `json:"private_key,omitzero" happydomain:"label=Private key,placeholder=xxxxxxxx,secret,description=Your account private key."`
+	AccessToken happydns.Secret `json:"access_token,omitzero" happydomain:"label=Access token,placeholder=xxxxxxxx,secret,description=Your access roken."`
 }
 
 func (s *TransIpAPI) DNSControlName() string {
@@ -46,8 +46,8 @@ func (s *TransIpAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 func (s *TransIpAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
 		"AccountName": s.AccountName,
-		"PrivateKey":  s.PrivateKey,
-		"AccessToken": s.AccessToken,
+		"PrivateKey":  s.PrivateKey.Reveal(),
+		"AccessToken": s.AccessToken.Reveal(),
 	}, nil
 }
 

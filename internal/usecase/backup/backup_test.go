@@ -23,17 +23,19 @@ package backup_test
 
 import (
 	"bytes"
-	"encoding/base64"
+	"context"
 	"testing"
 
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	"git.happydns.org/happyDomain/internal/usecase/backup"
+	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
 	happydns "git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/providers"
 )
 
-const keyMaterial = "raw-key-material"
+// keyMaterial is the base64 of the key, as KeyBlob holds it.
+const keyMaterial = "cmF3LWtleS1tYXRlcmlhbA=="
 
 func seed(t *testing.T) (storage.Storage, *happydns.User) {
 	t.Helper()
@@ -54,6 +56,7 @@ func seed(t *testing.T) (storage.Storage, *happydns.User) {
 	p := &happydns.Provider{
 		ProviderMeta: happydns.ProviderMeta{
 			Type:    "DDNSServer",
+			Id:      happydns.Identifier([]byte("backup-provider")),
 			Owner:   user.Id,
 			Comment: "Exported provider",
 		},
@@ -61,8 +64,11 @@ func seed(t *testing.T) (storage.Storage, *happydns.User) {
 			Server:  "127.0.0.1",
 			KeyName: "exportkey",
 			KeyAlgo: "hmac-sha256",
-			KeyBlob: []byte(keyMaterial),
+			KeyBlob: happydns.NewSecret(keyMaterial),
 		},
+	}
+	if err := plaintextSecrets(t).SealObject(context.Background(), providerUC.SecretContext(p), p.Provider); err != nil {
+		t.Fatalf("failed to seal provider: %v", err)
 	}
 	if err := db.CreateProvider(p); err != nil {
 		t.Fatalf("failed to create provider: %v", err)
@@ -87,12 +93,10 @@ func TestBackupUserRedactsProviderSecrets(t *testing.T) {
 
 	body := ret.Providers[0].Provider
 
-	// KeyBlob is a []byte, so both the credential and the sentinel travel
-	// base64-encoded.
-	if bytes.Contains(body, []byte(base64.StdEncoding.EncodeToString([]byte(keyMaterial)))) {
+	if bytes.Contains(body, []byte(keyMaterial)) {
 		t.Errorf("export still carries the key material: %s", body)
 	}
-	if !bytes.Contains(body, []byte(base64.StdEncoding.EncodeToString([]byte(happydns.RedactedSecret)))) {
+	if !bytes.Contains(body, []byte(happydns.RedactedSecret)) {
 		t.Errorf("export carries no sentinel in place of the secret: %s", body)
 	}
 
@@ -119,7 +123,7 @@ func TestBackupKeepsProviderSecrets(t *testing.T) {
 		t.Fatalf("exported %d providers, want 1", len(ret.Providers))
 	}
 
-	if !bytes.Contains(ret.Providers[0].Provider, []byte(base64.StdEncoding.EncodeToString([]byte(keyMaterial)))) {
+	if !bytes.Contains(ret.Providers[0].Provider, []byte(keyMaterial)) {
 		t.Errorf("admin backup lost the key material: %s", ret.Providers[0].Provider)
 	}
 }

@@ -30,12 +30,12 @@ import (
 )
 
 type Route53API struct {
-	KeyId         string `json:"key_id,omitempty" happydomain:"label=AWS Access Key ID,placeholder=AKIAIOSFODNN7EXAMPLE,description=AWS IAM access key ID (leave empty to use environment/instance credentials)"`
-	SecretKey     string `json:"secret_key,omitempty" happydomain:"label=AWS Secret Access Key,placeholder=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY,secret,description=AWS IAM secret access key"`
-	Token         string `json:"token,omitempty" happydomain:"label=Session Token,placeholder=,secret,description=Optional AWS STS session token"`
-	RoleArn       string `json:"role_arn,omitempty" happydomain:"label=Role ARN,placeholder=arn:aws:iam::123456789012:role/DnsControlRole,description=Optional IAM role ARN to assume"`
-	ExternalId    string `json:"external_id,omitempty" happydomain:"label=External ID,placeholder=,description=Optional external ID for role assumption"`
-	DelegationSet string `json:"delegation_set,omitempty" happydomain:"label=Delegation Set ID,placeholder=N1PA6795SAMPLE,description=Optional reusable delegation set ID"`
+	KeyId         string          `json:"key_id,omitempty" happydomain:"label=AWS Access Key ID,placeholder=AKIAIOSFODNN7EXAMPLE,description=AWS IAM access key ID (leave empty to use environment/instance credentials)"`
+	SecretKey     happydns.Secret `json:"secret_key,omitzero" happydomain:"label=AWS Secret Access Key,placeholder=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY,secret,description=AWS IAM secret access key"`
+	Token         happydns.Secret `json:"token,omitzero" happydomain:"label=Session Token,placeholder=,secret,description=Optional AWS STS session token"`
+	RoleArn       string          `json:"role_arn,omitempty" happydomain:"label=Role ARN,placeholder=arn:aws:iam::123456789012:role/DnsControlRole,description=Optional IAM role ARN to assume"`
+	ExternalId    string          `json:"external_id,omitempty" happydomain:"label=External ID,placeholder=,description=Optional external ID for role assumption"`
+	DelegationSet string          `json:"delegation_set,omitempty" happydomain:"label=Delegation Set ID,placeholder=N1PA6795SAMPLE,description=Optional reusable delegation set ID"`
 }
 
 func (s *Route53API) DNSControlName() string {
@@ -52,11 +52,11 @@ func (s *Route53API) ToDNSControlConfig() (map[string]string, error) {
 	if s.KeyId != "" {
 		config["KeyId"] = s.KeyId
 	}
-	if s.SecretKey != "" {
-		config["SecretKey"] = s.SecretKey
+	if !s.SecretKey.IsEmpty() {
+		config["SecretKey"] = s.SecretKey.Reveal()
 	}
-	if s.Token != "" {
-		config["Token"] = s.Token
+	if !s.Token.IsEmpty() {
+		config["Token"] = s.Token.Reveal()
 	}
 	if s.RoleArn != "" {
 		config["RoleArn"] = s.RoleArn

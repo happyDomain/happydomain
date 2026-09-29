@@ -30,8 +30,8 @@ import (
 )
 
 type LuaDnsAPI struct {
-	Email  string `json:"email,omitempty" happydomain:"label=E-mail,placeholder=xxxxxxxx,required,description=Your email."`
-	ApiKey string `json:"apikey,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxx,required,secret,description=Your API key."`
+	Email  string          `json:"email,omitempty" happydomain:"label=E-mail,placeholder=xxxxxxxx,required,description=Your email."`
+	ApiKey happydns.Secret `json:"apikey,omitzero" happydomain:"label=API Key,placeholder=xxxxxxxx,required,secret,description=Your API key."`
 }
 
 func (s *LuaDnsAPI) DNSControlName() string {
@@ -45,7 +45,7 @@ func (s *LuaDnsAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 func (s *LuaDnsAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
 		"email":  s.Email,
-		"apikey": s.ApiKey,
+		"apikey": s.ApiKey.Reveal(),
 	}, nil
 }
 

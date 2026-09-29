@@ -30,8 +30,8 @@ import (
 )
 
 type NamedotcomAPI struct {
-	APIKey  string `json:"apikey,omitempty" happydomain:"label=API Key,placeholder=yourApiKeyFromNamedotcom,required,secret"`
-	APIUser string `json:"apiuser,omitempty" happydomain:"label=API User,placeholder=yourUsername,required"`
+	APIKey  happydns.Secret `json:"apikey,omitzero" happydomain:"label=API Key,placeholder=yourApiKeyFromNamedotcom,required,secret"`
+	APIUser string          `json:"apiuser,omitempty" happydomain:"label=API User,placeholder=yourUsername,required"`
 }
 
 func (s *NamedotcomAPI) DNSControlName() string {
@@ -44,7 +44,7 @@ func (s *NamedotcomAPI) InstantiateProvider() (happydns.ProviderActuator, error)
 
 func (s *NamedotcomAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"apikey":  s.APIKey,
+		"apikey":  s.APIKey.Reveal(),
 		"apiuser": s.APIUser,
 	}, nil
 }

@@ -30,8 +30,8 @@ import (
 )
 
 type MythicBeastsAPI struct {
-	KeyID  string `json:"keyID,omitempty" happydomain:"label=API key ID,placeholder=xxxxxxxx,required,description=Your API key ID."`
-	Secret string `json:"secret,omitempty" happydomain:"label=Secret,placeholder=xxxxxxxx,required,secret,description=Your API secret."`
+	KeyID  string          `json:"keyID,omitempty" happydomain:"label=API key ID,placeholder=xxxxxxxx,required,description=Your API key ID."`
+	Secret happydns.Secret `json:"secret,omitzero" happydomain:"label=Secret,placeholder=xxxxxxxx,required,secret,description=Your API secret."`
 }
 
 func (s *MythicBeastsAPI) DNSControlName() string {
@@ -45,7 +45,7 @@ func (s *MythicBeastsAPI) InstantiateProvider() (happydns.ProviderActuator, erro
 func (s *MythicBeastsAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
 		"keyID":  s.KeyID,
-		"secret": s.Secret,
+		"secret": s.Secret.Reveal(),
 	}, nil
 }
 

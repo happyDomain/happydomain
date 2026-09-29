@@ -30,8 +30,8 @@ import (
 )
 
 type NetnodAPI struct {
-	APIKey string `json:"apiKey,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxxxx,required,secret,description=API key for the Netnod Primary DNS API."`
-	APIUrl string `json:"apiUrl,omitempty" happydomain:"label=API URL,placeholder=https://primarydnsapi.netnod.se,description=Base URL of the Netnod Primary DNS API. Leave blank to use the default.,endpoint"`
+	APIKey happydns.Secret `json:"apiKey,omitzero" happydomain:"label=API Key,placeholder=xxxxxxxxxx,required,secret,description=API key for the Netnod Primary DNS API."`
+	APIUrl string          `json:"apiUrl,omitempty" happydomain:"label=API URL,placeholder=https://primarydnsapi.netnod.se,description=Base URL of the Netnod Primary DNS API. Leave blank to use the default.,endpoint"`
 }
 
 func (s *NetnodAPI) DNSControlName() string {
@@ -44,7 +44,7 @@ func (s *NetnodAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 
 func (s *NetnodAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"apiKey": s.APIKey,
+		"apiKey": s.APIKey.Reveal(),
 		"apiUrl": s.APIUrl,
 	}, nil
 }

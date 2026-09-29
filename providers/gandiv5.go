@@ -30,8 +30,8 @@ import (
 )
 
 type GandiAPI struct {
-	APIKey    string `json:"api_key,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxxxx,required,secret,description=Get your API Key in the Security section at https://account.gandi.net/"`
-	SharingID string `json:"sharing_id,omitempty" happydomain:"label=Sharing ID,placeholder=xxxxxxxxxx,description=Organization sharing ID (required if member of multiple organizations)"`
+	APIKey    happydns.Secret `json:"api_key,omitzero" happydomain:"label=API Key,placeholder=xxxxxxxxxx,required,secret,description=Get your API Key in the Security section at https://account.gandi.net/"`
+	SharingID string          `json:"sharing_id,omitempty" happydomain:"label=Sharing ID,placeholder=xxxxxxxxxx,description=Organization sharing ID (required if member of multiple organizations)"`
 }
 
 func (s *GandiAPI) DNSControlName() string {
@@ -44,7 +44,7 @@ func (s *GandiAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 
 func (s *GandiAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"apikey":     s.APIKey,
+		"apikey":     s.APIKey.Reveal(),
 		"sharing_id": s.SharingID,
 	}, nil
 }

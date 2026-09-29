@@ -30,8 +30,8 @@ import (
 )
 
 type NexDNSAPI struct {
-	ApiToken string `json:"api_token,omitempty" happydomain:"label=API Token,placeholder=xxxxxxxx,required,secret,description=An API key carrying the zones.read zones.write records.read and records.write scopes."`
-	ApiURL   string `json:"api_url,omitempty" happydomain:"label=API URL,placeholder=https://api.nexdns.tech/v1,description=Custom API endpoint if needed,endpoint=https://api.nexdns.tech/v1"`
+	ApiToken happydns.Secret `json:"api_token,omitzero" happydomain:"label=API Token,placeholder=xxxxxxxx,required,secret,description=An API key carrying the zones.read zones.write records.read and records.write scopes."`
+	ApiURL   string          `json:"api_url,omitempty" happydomain:"label=API URL,placeholder=https://api.nexdns.tech/v1,description=Custom API endpoint if needed,endpoint=https://api.nexdns.tech/v1"`
 }
 
 func (s *NexDNSAPI) DNSControlName() string {
@@ -44,7 +44,7 @@ func (s *NexDNSAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 
 func (s *NexDNSAPI) ToDNSControlConfig() (map[string]string, error) {
 	config := map[string]string{
-		"api_token": s.ApiToken,
+		"api_token": s.ApiToken.Reveal(),
 	}
 
 	if s.ApiURL != "" {

@@ -30,7 +30,7 @@ import (
 )
 
 type LinodeAPI struct {
-	Token string `json:"token,omitempty" happydomain:"label=Personal Access Token,placeholder=xxxxxxxx,required,secret,description=Linode Personal Access Token with DNS read/write permissions"`
+	Token happydns.Secret `json:"token,omitzero" happydomain:"label=Personal Access Token,placeholder=xxxxxxxx,required,secret,description=Linode Personal Access Token with DNS read/write permissions"`
 }
 
 func (s *LinodeAPI) DNSControlName() string {
@@ -43,7 +43,7 @@ func (s *LinodeAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 
 func (s *LinodeAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"token": s.Token,
+		"token": s.Token.Reveal(),
 	}, nil
 }
 

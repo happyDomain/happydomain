@@ -30,7 +30,7 @@ import (
 )
 
 type HetznerAPI struct {
-	APIToken string `json:"api_token,omitempty" happydomain:"label=API Token,placeholder=xxxxxxxxxx,required,secret,description=Hetzner API token from the Cloud Console"`
+	APIToken happydns.Secret `json:"api_token,omitzero" happydomain:"label=API Token,placeholder=xxxxxxxxxx,required,secret,description=Hetzner API token from the Cloud Console"`
 }
 
 func (s *HetznerAPI) DNSControlName() string {
@@ -43,7 +43,7 @@ func (s *HetznerAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 
 func (s *HetznerAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"api_token": s.APIToken,
+		"api_token": s.APIToken.Reveal(),
 	}, nil
 }
 

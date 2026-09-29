@@ -30,7 +30,7 @@ import (
 )
 
 type DNSimpleAPI struct {
-	Token string `json:"token,omitempty" happydomain:"label=Token,placeholder=xxxxxxxxxx,required,secret,description=Provide a DNSimple account access token."`
+	Token happydns.Secret `json:"token,omitzero" happydomain:"label=Token,placeholder=xxxxxxxxxx,required,secret,description=Provide a DNSimple account access token."`
 }
 
 func (s *DNSimpleAPI) DNSControlName() string {
@@ -43,7 +43,7 @@ func (s *DNSimpleAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 
 func (s *DNSimpleAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"token": s.Token,
+		"token": s.Token.Reveal(),
 	}, nil
 }
 

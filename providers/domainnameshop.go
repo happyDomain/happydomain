@@ -30,8 +30,8 @@ import (
 )
 
 type DomainnameshopAPI struct {
-	Token  string `json:"token,omitempty" happydomain:"label=Token,placeholder=your-domainnameshop-token,required,secret,description=Domainnameshop API Token."`
-	Secret string `json:"secret,omitempty" happydomain:"label=Secret,placeholder=your-domainnameshop-secret,required,secret,description=Domainnameshop API Secret."`
+	Token  happydns.Secret `json:"token,omitzero" happydomain:"label=Token,placeholder=your-domainnameshop-token,required,secret,description=Domainnameshop API Token."`
+	Secret happydns.Secret `json:"secret,omitzero" happydomain:"label=Secret,placeholder=your-domainnameshop-secret,required,secret,description=Domainnameshop API Secret."`
 }
 
 func (s *DomainnameshopAPI) DNSControlName() string {
@@ -44,8 +44,8 @@ func (s *DomainnameshopAPI) InstantiateProvider() (happydns.ProviderActuator, er
 
 func (s *DomainnameshopAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"token":  s.Token,
-		"secret": s.Secret,
+		"token":  s.Token.Reveal(),
+		"secret": s.Secret.Reveal(),
 	}, nil
 }
 

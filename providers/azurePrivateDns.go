@@ -30,11 +30,11 @@ import (
 )
 
 type AzurePrivateDnsAPI struct {
-	SubscriptionID string `json:"SubscriptionID,omitempty" happydomain:"label=Subscription ID,placeholder=xxxxxxxx,required,description=Your Azure Client Subscription ID."`
-	ResourceGroup  string `json:"ResourceGroup,omitempty" happydomain:"label=Resource Group,placeholder=xxxxxxxx,required,description=Your Azure Resource Group."`
-	TenantID       string `json:"TenantID,omitempty" happydomain:"label=Tenant ID,placeholder=xxxxxxxx,description=Your Azure Tenant ID."`
-	ClientID       string `json:"ClientID,omitempty" happydomain:"label=Client ID,placeholder=xxxxxxxx,description=Your Azure Client ID."`
-	ClientSecret   string `json:"ClientSecret,omitempty" happydomain:"label=Client Secret,placeholder=xxxxxxxx,secret,description=Your Azure Client Secret."`
+	SubscriptionID string          `json:"SubscriptionID,omitempty" happydomain:"label=Subscription ID,placeholder=xxxxxxxx,required,description=Your Azure Client Subscription ID."`
+	ResourceGroup  string          `json:"ResourceGroup,omitempty" happydomain:"label=Resource Group,placeholder=xxxxxxxx,required,description=Your Azure Resource Group."`
+	TenantID       string          `json:"TenantID,omitempty" happydomain:"label=Tenant ID,placeholder=xxxxxxxx,description=Your Azure Tenant ID."`
+	ClientID       string          `json:"ClientID,omitempty" happydomain:"label=Client ID,placeholder=xxxxxxxx,description=Your Azure Client ID."`
+	ClientSecret   happydns.Secret `json:"ClientSecret,omitzero" happydomain:"label=Client Secret,placeholder=xxxxxxxx,secret,description=Your Azure Client Secret."`
 }
 
 func (s *AzurePrivateDnsAPI) DNSControlName() string {
@@ -51,7 +51,7 @@ func (s *AzurePrivateDnsAPI) ToDNSControlConfig() (map[string]string, error) {
 		"ResourceGroup":  s.ResourceGroup,
 		"TenantID":       s.TenantID,
 		"ClientID":       s.ClientID,
-		"ClientSecret":   s.ClientSecret,
+		"ClientSecret":   s.ClientSecret.Reveal(),
 	}, nil
 }
 

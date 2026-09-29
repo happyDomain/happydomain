@@ -30,8 +30,8 @@ import (
 )
 
 type NetlifyAPI struct {
-	Token string `json:"token,omitempty" happydomain:"label=Netlify Access Token,placeholder=xxxxxxxxxx,required,secret,description=Get your token on https://app.netlify.com/user/applications#personal-access-tokens."`
-	Slug  string `json:"slug,omitempty" happydomain:"label=Account Slug,description=Optional account slug (help us to understand how it is used)."`
+	Token happydns.Secret `json:"token,omitzero" happydomain:"label=Netlify Access Token,placeholder=xxxxxxxxxx,required,secret,description=Get your token on https://app.netlify.com/user/applications#personal-access-tokens."`
+	Slug  string          `json:"slug,omitempty" happydomain:"label=Account Slug,description=Optional account slug (help us to understand how it is used)."`
 }
 
 func (s *NetlifyAPI) DNSControlName() string {
@@ -44,7 +44,7 @@ func (s *NetlifyAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 
 func (s *NetlifyAPI) ToDNSControlConfig() (map[string]string, error) {
 	config := map[string]string{
-		"token": s.Token,
+		"token": s.Token.Reveal(),
 	}
 
 	if len(s.Slug) > 0 {

@@ -24,11 +24,11 @@ package provider_test
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"testing"
 
 	"git.happydns.org/happyDomain/internal/forms"
+	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	"git.happydns.org/happyDomain/internal/usecase/provider"
@@ -50,18 +50,9 @@ func createTestUser(t *testing.T, store storage.Storage, email string) *happydns
 }
 
 func createTestProviderMessage(t *testing.T, providerType string, comment string) *happydns.ProviderMessage {
-	// Create a simple DDNS provider for testing
-	ddnsProvider := &providers.DDNSServer{
-		Server:  "127.0.0.1",
-		KeyName: "testkey",
-		KeyAlgo: "hmac-sha256",
-		KeyBlob: []byte("testkey"),
-	}
-
-	providerJSON, err := json.Marshal(ddnsProvider)
-	if err != nil {
-		t.Fatalf("failed to marshal provider: %v", err)
-	}
+	// A simple DDNS provider, as a client sends it: the key in clear, base64
+	// encoded.
+	providerJSON := []byte(`{"server":"127.0.0.1","keyname":"testkey","algorithm":"hmac-sha256","keyblob":"` + testKeyBlob + `"}`)
 
 	return &happydns.ProviderMessage{
 		ProviderMeta: happydns.ProviderMeta{
@@ -71,6 +62,9 @@ func createTestProviderMessage(t *testing.T, providerType string, comment string
 		Provider: providerJSON,
 	}
 }
+
+// testKeyBlob is the base64 of "testkey".
+const testKeyBlob = "dGVzdGtleQ=="
 
 // mockValidator is a validator that always succeeds
 type mockValidator struct{}
@@ -531,11 +525,10 @@ func readBackAsClient(t *testing.T, p *happydns.Provider) *happydns.ProviderMess
 		t.Fatalf("failed to serialise provider: %v", err)
 	}
 
-	// KeyBlob is a []byte, so the sentinel travels base64-encoded.
-	if !bytes.Contains(msg.Provider, []byte(base64.StdEncoding.EncodeToString([]byte(happydns.RedactedSecret)))) {
+	if !bytes.Contains(msg.Provider, []byte(happydns.RedactedSecret)) {
 		t.Fatalf("redacted body carries no sentinel: %s", msg.Provider)
 	}
-	if bytes.Contains(msg.Provider, []byte(base64.StdEncoding.EncodeToString([]byte("testkey")))) {
+	if bytes.Contains(msg.Provider, []byte(testKeyBlob)) {
 		t.Fatalf("redacted body still carries the key material: %s", msg.Provider)
 	}
 
@@ -575,8 +568,8 @@ func Test_UpdateProvider_RedactedRoundTripKeepsSecret(t *testing.T) {
 		t.Fatalf("unexpected provider body type %T", updated.Provider)
 	}
 
-	if !bytes.Equal(body.KeyBlob, []byte("testkey")) {
-		t.Errorf("KeyBlob = %q, want the stored key material carried forward", body.KeyBlob)
+	if body.KeyBlob.Reveal() != testKeyBlob {
+		t.Errorf("KeyBlob = %q, want the stored key material carried forward", body.KeyBlob.Reveal())
 	}
 	if updated.Comment != "Renamed" {
 		t.Errorf("Comment = %q, want the submitted change applied", updated.Comment)
@@ -604,8 +597,8 @@ func Test_UpdateProvider_NewSecretWins(t *testing.T) {
 	if err := json.Unmarshal(msg.Provider, &submitted); err != nil {
 		t.Fatalf("failed to decode submitted body: %v", err)
 	}
-	submitted.KeyBlob = []byte("rotated")
-	if msg.Provider, err = json.Marshal(&submitted); err != nil {
+	submitted.KeyBlob = happydns.NewSecret("cm90YXRlZA==")
+	if msg.Provider, err = secret.MarshalIncoming(&submitted); err != nil {
 		t.Fatalf("failed to encode submitted body: %v", err)
 	}
 
@@ -619,8 +612,8 @@ func Test_UpdateProvider_NewSecretWins(t *testing.T) {
 	}
 
 	body := updated.Provider.(*providers.DDNSServer)
-	if !bytes.Equal(body.KeyBlob, []byte("rotated")) {
-		t.Errorf("KeyBlob = %q, want the newly submitted value", body.KeyBlob)
+	if body.KeyBlob.Reveal() != "cm90YXRlZA==" {
+		t.Errorf("KeyBlob = %q, want the newly submitted value", body.KeyBlob.Reveal())
 	}
 }
 
@@ -636,7 +629,7 @@ func Test_CreateProvider_ClearsSentinel(t *testing.T) {
 	if err := json.Unmarshal(msg.Provider, &body); err != nil {
 		t.Fatalf("failed to decode body: %v", err)
 	}
-	body.KeyBlob = []byte(happydns.RedactedSecret)
+	body.KeyBlob.Redact()
 	raw, err := json.Marshal(&body)
 	if err != nil {
 		t.Fatalf("failed to encode body: %v", err)
@@ -648,8 +641,8 @@ func Test_CreateProvider_ClearsSentinel(t *testing.T) {
 		t.Fatalf("unexpected error creating provider: %v", err)
 	}
 
-	if blob := created.Provider.(*providers.DDNSServer).KeyBlob; len(blob) != 0 {
-		t.Errorf("KeyBlob = %q, want it cleared rather than the placeholder stored", blob)
+	if blob := created.Provider.(*providers.DDNSServer).KeyBlob; !blob.IsEmpty() {
+		t.Errorf("KeyBlob = %v, want it cleared rather than the placeholder stored", blob)
 	}
 }
 

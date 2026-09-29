@@ -30,8 +30,8 @@ import (
 )
 
 type VercelAPI struct {
-	APIToken string `json:"api_token,omitempty" happydomain:"label=API Token,required,secret"`
-	TeamID   string `json:"team_id,omitempty" happydomain:"label=Team ID,required"`
+	APIToken happydns.Secret `json:"api_token,omitzero" happydomain:"label=API Token,required,secret"`
+	TeamID   string          `json:"team_id,omitempty" happydomain:"label=Team ID,required"`
 }
 
 func (s *VercelAPI) DNSControlName() string {
@@ -44,7 +44,7 @@ func (s *VercelAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 
 func (s *VercelAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"api_token": s.APIToken,
+		"api_token": s.APIToken.Reveal(),
 		"team_id":   s.TeamID,
 	}, nil
 }
