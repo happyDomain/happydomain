@@ -93,6 +93,15 @@ type Options struct {
 	// StorageEngine points to the storage engine used.
 	StorageEngine string
 
+	// SecretKeysetFile is the path to the instance keyset, a cleartext Tink
+	// JSON keyset protecting the stored secrets under the instance policy.
+	// Losing it loses every secret it protects.
+	SecretKeysetFile string
+
+	// SecretPolicy says how new secrets are stored: "plaintext" (the
+	// default) or "instance", encrypted under SecretKeysetFile.
+	SecretPolicy string
+
 	// TrustedProxies lists the IP addresses or CIDR blocks of the reverse
 	// proxies allowed to set client IP headers (X-Forwarded-For, X-Real-IP).
 	// Requests coming from any other peer have those headers ignored and are

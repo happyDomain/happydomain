@@ -50,6 +50,8 @@ func declareFlags(o *happydns.Options) {
 	flag.StringVar(&o.BasePath, "baseurl", o.BasePath, "URL prepended to each URL")
 	flag.StringVar(&o.DefaultNameServer, "default-ns", o.DefaultNameServer, "Adress to the default name server")
 	flag.StringVar(&o.StorageEngine, "storage-engine", o.StorageEngine, fmt.Sprintf("Select the storage engine between %v", storage.GetStorageEngines()))
+	flag.StringVar(&o.SecretKeysetFile, "secret-keyset-file", o.SecretKeysetFile, "Path to the instance keyset (cleartext Tink JSON keyset, see `happydomain secret-keyset generate`) protecting stored credentials; keep it readable by happyDomain only, and back it up: losing it loses every credential it protects")
+	flag.StringVar(&o.SecretPolicy, "secret-policy", "plaintext", "How new credentials are stored: \"plaintext\" (default), or \"instance\" to encrypt them under -secret-keyset-file")
 	flag.BoolVar(&o.NoAuth, "no-auth", false, "Disable user access control, use default account")
 	flag.Var(&JWTSecretKey{&o.JWTSecretKey}, "jwt-secret-key", "Secret key used to verify JWT authentication tokens (a random secret is used if undefined)")
 	flag.Var(&URL{&o.ExternalAuth}, "external-auth", "Base URL to use for login and registration (use embedded forms if left empty)")

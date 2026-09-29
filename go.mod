@@ -112,6 +112,7 @@ require (
 	github.com/spf13/viper v1.21.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/teambition/rrule-go v1.8.2 // indirect
+	github.com/tink-crypto/tink-go/v2 v2.8.0 // indirect
 	github.com/willpower232/go-namecheap v0.0.0-20260720171816-b13495139f3c // indirect
 	github.com/wlynxg/anet v0.0.3 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect

@@ -58,6 +58,9 @@ func main() {
 		runAdminHash()
 		os.Exit(0)
 	}
+	if len(os.Args) > 1 && os.Args[1] == "secret-keyset" {
+		os.Exit(runSecretKeyset(os.Args[2:], os.Stdout, os.Stderr))
+	}
 
 	controller.HDVersion = happydns.VersionResponse{
 		Version:    Version,
