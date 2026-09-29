@@ -42,11 +42,11 @@ func (t *Tester) Send(ch *happydns.NotificationChannel, user *happydns.User) err
 	if !ok {
 		return notifPkg.ErrUnknownChannelType
 	}
-	cfg, err := sender.DecodeConfig(ch.Config)
+	ctx, cancel := context.WithTimeout(context.Background(), sendTimeout)
+	defer cancel()
+	cfg, err := t.registry.OpenChannelConfig(ctx, ch)
 	if err != nil {
 		return err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), sendTimeout)
-	defer cancel()
 	return sender.SendTest(ctx, cfg, user)
 }

@@ -32,6 +32,7 @@ import (
 
 	"git.happydns.org/happyDomain/internal/netguard"
 	notifPkg "git.happydns.org/happyDomain/internal/notifier"
+	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	"git.happydns.org/happyDomain/model"
@@ -74,7 +75,13 @@ func TestUpdateChannelWithShorterConfig(t *testing.T) {
 	}
 }
 
-func newChannelRegistry() *notifPkg.Registry { return notifPkg.NewRegistry() }
+func newChannelRegistry() *notifPkg.Registry {
+	m, err := secret.NewManager(secret.Config{Policy: secret.PolicyPlaintext})
+	if err != nil {
+		panic(err)
+	}
+	return notifPkg.NewRegistry(m)
+}
 
 // newWebhookRegistry returns a registry handling webhooks.
 func newWebhookRegistry(t *testing.T) *notifPkg.Registry {

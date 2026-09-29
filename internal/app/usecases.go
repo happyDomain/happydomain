@@ -184,7 +184,7 @@ func (app *App) initUsecases() {
 	// Notification system: dispatcher fans out checker results to user
 	// channels (email/webhook/UnifiedPush) based on per-target preferences.
 	baseURL := app.cfg.GetBaseURL()
-	registry := notifPkg.NewRegistry()
+	registry := notifPkg.NewRegistry(app.secrets)
 	registry.Register(notifPkg.Adapt(notifPkg.NewEmailSender(app.mailer, baseURL), app.guards.Outbound))
 	registry.Register(notifPkg.Adapt(notifPkg.NewWebhookSender(baseURL, app.guards.Outbound), app.guards.Outbound))
 	registry.Register(notifPkg.Adapt(notifPkg.NewUnifiedPushSender(baseURL, app.guards.Outbound), app.guards.Outbound))

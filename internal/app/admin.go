@@ -35,9 +35,11 @@ import (
 	"git.happydns.org/happyDomain/internal/adminauth"
 	adminmw "git.happydns.org/happyDomain/internal/api-admin/middleware"
 	admin "git.happydns.org/happyDomain/internal/api-admin/route"
+	notifPkg "git.happydns.org/happyDomain/internal/notifier"
 	"git.happydns.org/happyDomain/internal/usecase"
 	backupUC "git.happydns.org/happyDomain/internal/usecase/backup"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
+	notifUC "git.happydns.org/happyDomain/internal/usecase/notification"
 	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
 	sessionUC "git.happydns.org/happyDomain/internal/usecase/session"
 	"git.happydns.org/happyDomain/model"
@@ -106,6 +108,7 @@ func NewAdmin(app *App) *Admin {
 			TidyUp:                usecase.NewTidyUpUsecase(app.store),
 			Secrets: usecase.NewSecretsUsecase(app.secrets, map[string]usecase.SecretHolder{
 				providerUC.SecretObjectType: providerAdminService,
+				notifPkg.SecretObjectType:   notifUC.NewChannelSecrets(app.store, app.usecases.notificationRegistry),
 			}),
 		},
 	)

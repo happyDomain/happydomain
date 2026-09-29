@@ -28,6 +28,7 @@ import (
 	"fmt"
 
 	"git.happydns.org/happyDomain/internal/netguard"
+	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -68,6 +69,17 @@ type ChannelSender interface {
 	RedactConfig(raw json.RawMessage) (json.RawMessage, error)
 	// Preserve stored secrets when client submits empty fields (client never sees them on read).
 	MergeForUpdate(existing, incoming json.RawMessage) (json.RawMessage, error)
+	// Refuse a config sent by a client that holds a sealed value.
+	CheckIncomingConfig(raw json.RawMessage) error
+	// Seal the secrets of a config before it is stored.
+	SealConfig(ctx context.Context, secrets *secret.Manager, sc secret.SecretContext, raw json.RawMessage) (json.RawMessage, error)
+	// Decode a stored config with its secrets opened, for sending only.
+	OpenConfig(ctx context.Context, secrets *secret.Manager, sc secret.SecretContext, raw json.RawMessage) (ChannelConfig, error)
+	// Add how the secrets of a stored config are stored to counts.
+	InspectConfig(ctx context.Context, secrets *secret.Manager, sc secret.SecretContext, raw json.RawMessage, counts *secret.Counts) error
+	// Store the secrets of a stored config the way the current policy stores
+	// new ones; the config is nil when nothing changed.
+	ResealConfig(ctx context.Context, secrets *secret.Manager, sc secret.SecretContext, raw json.RawMessage) (json.RawMessage, error)
 }
 
 // Optional capability: senders with secret fields opt in by implementing this on their TypedSender.
@@ -121,11 +133,9 @@ type typedAdapter[C ChannelConfig] struct {
 func (a *typedAdapter[C]) Type() happydns.NotificationChannelType { return a.inner.Type() }
 
 func (a *typedAdapter[C]) DecodeConfig(raw json.RawMessage) (ChannelConfig, error) {
-	var c C
-	if len(raw) > 0 {
-		if err := json.Unmarshal(raw, &c); err != nil {
-			return nil, fmt.Errorf("decoding %s config: %w", a.inner.Type(), err)
-		}
+	c, err := a.decode(raw)
+	if err != nil {
+		return nil, err
 	}
 	if err := c.Validate(); err != nil {
 		return nil, err
@@ -133,6 +143,17 @@ func (a *typedAdapter[C]) DecodeConfig(raw json.RawMessage) (ChannelConfig, erro
 	for _, d := range a.inner.Destinations(c) {
 		if _, err := netguard.ValidateURLShape(d.URL); err != nil {
 			return nil, fmt.Errorf("%s: %w", d.Label, err)
+		}
+	}
+	return c, nil
+}
+
+// decode decodes raw, without checking it.
+func (a *typedAdapter[C]) decode(raw json.RawMessage) (C, error) {
+	var c C
+	if len(raw) > 0 {
+		if err := json.Unmarshal(raw, &c); err != nil {
+			return c, fmt.Errorf("decoding %s config: %w", a.inner.Type(), err)
 		}
 	}
 	return c, nil
@@ -176,11 +197,9 @@ func (a *typedAdapter[C]) RedactConfig(raw json.RawMessage) (json.RawMessage, er
 	if !ok {
 		return raw, nil
 	}
-	var c C
-	if len(raw) > 0 {
-		if err := json.Unmarshal(raw, &c); err != nil {
-			return nil, fmt.Errorf("decoding %s config: %w", a.inner.Type(), err)
-		}
+	c, err := a.decode(raw)
+	if err != nil {
+		return nil, err
 	}
 	c = redactor.RedactConfig(c)
 	return json.Marshal(c)
@@ -191,27 +210,159 @@ func (a *typedAdapter[C]) MergeForUpdate(existing, incoming json.RawMessage) (js
 	if !ok {
 		return incoming, nil
 	}
-	var ec, ic C
+	var ec C
 	if len(existing) > 0 {
 		if err := json.Unmarshal(existing, &ec); err != nil {
 			return nil, fmt.Errorf("decoding existing %s config: %w", a.inner.Type(), err)
 		}
 	}
-	if len(incoming) > 0 {
-		if err := json.Unmarshal(incoming, &ic); err != nil {
-			return nil, fmt.Errorf("decoding %s config: %w", a.inner.Type(), err)
-		}
+	ic, err := a.decode(incoming)
+	if err != nil {
+		return nil, err
 	}
-	return json.Marshal(merger.MergeForUpdate(ec, ic))
+	merged := merger.MergeForUpdate(ec, ic)
+	// Encoded as a request body: a new secret is still in clear, and is
+	// sealed once the channel is accepted.
+	return secret.MarshalIncoming(&merged)
+}
+
+func (a *typedAdapter[C]) CheckIncomingConfig(raw json.RawMessage) error {
+	c, err := a.decode(raw)
+	if err != nil {
+		return err
+	}
+	return secret.CheckIncoming(&c)
+}
+
+func (a *typedAdapter[C]) SealConfig(ctx context.Context, secrets *secret.Manager, sc secret.SecretContext, raw json.RawMessage) (json.RawMessage, error) {
+	c, err := a.decode(raw)
+	if err != nil {
+		return nil, err
+	}
+	if err := secrets.SealObject(ctx, sc, &c); err != nil {
+		return nil, err
+	}
+	return json.Marshal(&c)
+}
+
+func (a *typedAdapter[C]) InspectConfig(ctx context.Context, secrets *secret.Manager, sc secret.SecretContext, raw json.RawMessage, counts *secret.Counts) error {
+	c, err := a.decode(raw)
+	if err != nil {
+		return err
+	}
+	return secrets.Inspect(ctx, sc, &c, counts)
+}
+
+func (a *typedAdapter[C]) ResealConfig(ctx context.Context, secrets *secret.Manager, sc secret.SecretContext, raw json.RawMessage) (json.RawMessage, error) {
+	c, err := a.decode(raw)
+	if err != nil {
+		return nil, err
+	}
+	changed, err := secrets.ResealObject(ctx, sc, &c)
+	if err != nil || !changed {
+		return nil, err
+	}
+	return json.Marshal(&c)
+}
+
+func (a *typedAdapter[C]) OpenConfig(ctx context.Context, secrets *secret.Manager, sc secret.SecretContext, raw json.RawMessage) (ChannelConfig, error) {
+	cfg, err := a.DecodeConfig(raw)
+	if err != nil {
+		return nil, err
+	}
+	c := cfg.(C)
+	if err := secrets.OpenObject(ctx, sc, &c); err != nil {
+		return nil, err
+	}
+	return c, nil
 }
 
 // Senders self-register at startup; adding a transport requires no changes here.
 type Registry struct {
 	senders map[happydns.NotificationChannelType]ChannelSender
+	secrets *secret.Manager
 }
 
-func NewRegistry() *Registry {
-	return &Registry{senders: make(map[happydns.NotificationChannelType]ChannelSender)}
+// secrets seals the channel secrets before they are stored, and opens them
+// right before sending.
+func NewRegistry(secrets *secret.Manager) *Registry {
+	return &Registry{
+		senders: make(map[happydns.NotificationChannelType]ChannelSender),
+		secrets: secrets,
+	}
+}
+
+// SecretObjectType names notification channels in the context their secrets
+// are bound to. Channels are used in the background, when a scheduled check
+// completes: their secrets must stay in safes that open without the user.
+const SecretObjectType = "notification-channel"
+
+// ChannelSecretContext returns the context the secrets of ch are bound to.
+func ChannelSecretContext(ch *happydns.NotificationChannel) secret.SecretContext {
+	return secret.SecretContext{
+		Owner:      ch.UserId,
+		ObjectType: SecretObjectType,
+		ObjectId:   ch.Id.String(),
+	}
+}
+
+// CheckIncomingChannel refuses a channel sent by a client whose config holds
+// a sealed value.
+func (r *Registry) CheckIncomingChannel(ch *happydns.NotificationChannel) error {
+	s, ok := r.Get(ch.Type)
+	if !ok {
+		return fmt.Errorf("%w: %q", ErrUnknownChannelType, ch.Type)
+	}
+	return s.CheckIncomingConfig(ch.Config)
+}
+
+// SealChannelConfig seals the secrets of the config of ch, in place, before
+// it is stored. ch needs its identifier and owner.
+func (r *Registry) SealChannelConfig(ctx context.Context, ch *happydns.NotificationChannel) error {
+	s, ok := r.Get(ch.Type)
+	if !ok {
+		return fmt.Errorf("%w: %q", ErrUnknownChannelType, ch.Type)
+	}
+	sealed, err := s.SealConfig(ctx, r.secrets, ChannelSecretContext(ch), ch.Config)
+	if err != nil {
+		return err
+	}
+	ch.Config = sealed
+	return nil
+}
+
+// InspectChannelConfig adds how the secrets of ch are stored to counts.
+func (r *Registry) InspectChannelConfig(ctx context.Context, ch *happydns.NotificationChannel, counts *secret.Counts) error {
+	s, ok := r.Get(ch.Type)
+	if !ok {
+		return fmt.Errorf("%w: %q", ErrUnknownChannelType, ch.Type)
+	}
+	return s.InspectConfig(ctx, r.secrets, ChannelSecretContext(ch), ch.Config, counts)
+}
+
+// ResealChannelConfig stores the secrets of ch the way the current policy
+// stores new ones, in place, and reports whether ch changed.
+func (r *Registry) ResealChannelConfig(ctx context.Context, ch *happydns.NotificationChannel) (bool, error) {
+	s, ok := r.Get(ch.Type)
+	if !ok {
+		return false, fmt.Errorf("%w: %q", ErrUnknownChannelType, ch.Type)
+	}
+	resealed, err := s.ResealConfig(ctx, r.secrets, ChannelSecretContext(ch), ch.Config)
+	if err != nil || resealed == nil {
+		return false, err
+	}
+	ch.Config = resealed
+	return true, nil
+}
+
+// OpenChannelConfig decodes the config of ch with its secrets opened. Only
+// the send path uses it.
+func (r *Registry) OpenChannelConfig(ctx context.Context, ch *happydns.NotificationChannel) (ChannelConfig, error) {
+	s, ok := r.Get(ch.Type)
+	if !ok {
+		return nil, fmt.Errorf("%w: %q", ErrUnknownChannelType, ch.Type)
+	}
+	return s.OpenConfig(ctx, r.secrets, ChannelSecretContext(ch), ch.Config)
 }
 
 // Panics on duplicate — programming error.

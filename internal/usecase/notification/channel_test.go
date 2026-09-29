@@ -30,32 +30,33 @@ import (
 
 	"git.happydns.org/happyDomain/internal/netguard"
 	notifPkg "git.happydns.org/happyDomain/internal/notifier"
+	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	notifUC "git.happydns.org/happyDomain/internal/usecase/notification"
 	"git.happydns.org/happyDomain/model"
 )
 
-// channelServiceFixture returns a ChannelService handling webhooks, and the
-// storage under it.
+// channelServiceFixture returns a ChannelService handling webhooks, sealing
+// under the instance policy, and the storage under it.
 func channelServiceFixture(t *testing.T) (*notifUC.ChannelService, storage.Storage) {
 	t.Helper()
 	db, err := inmemory.Instantiate()
 	if err != nil {
 		t.Fatal(err)
 	}
-	return notifUC.NewChannelService(db, channelRegistry(t)), db
+	return notifUC.NewChannelService(db, channelRegistry(t, instanceManager(t, db))), db
 }
 
 // channelRegistry handles webhooks, allowing the documentation address so
 // that the destination check does not depend on a resolver.
-func channelRegistry(t *testing.T) *notifPkg.Registry {
+func channelRegistry(t *testing.T, m *secret.Manager) *notifPkg.Registry {
 	t.Helper()
 	guard, err := netguard.New("outbound", "-outbound-allowed-target", []string{"192.0.2.10"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	registry := notifPkg.NewRegistry()
+	registry := notifPkg.NewRegistry(m)
 	registry.Register(notifPkg.Adapt(notifPkg.NewWebhookSender("https://happydomain.example", guard), guard))
 	return registry
 }
@@ -157,7 +158,7 @@ func (failingChannelStore) CreateChannel(*happydns.NotificationChannel) error {
 // ValidationError, whose message would be sent back to the client.
 func TestCreateChannelStorageFailureIsNotValidation(t *testing.T) {
 	_, db := channelServiceFixture(t)
-	svc := notifUC.NewChannelService(failingChannelStore{db}, channelRegistry(t))
+	svc := notifUC.NewChannelService(failingChannelStore{db}, channelRegistry(t, instanceManager(t, db)))
 
 	err := svc.CreateChannel(context.Background(), &happydns.User{Id: newTestIdentifier(t)}, &happydns.NotificationChannel{
 		Type:   notifPkg.ChannelTypeWebhook,
@@ -170,6 +171,81 @@ func TestCreateChannelStorageFailureIsNotValidation(t *testing.T) {
 	var verr happydns.ValidationError
 	if errors.As(err, &verr) {
 		t.Errorf("a storage failure reads as a ValidationError: %v", err)
+	}
+}
+
+// The secret is sealed before the channel is stored.
+func TestCreateChannelSealsSecrets(t *testing.T) {
+	svc, db := channelServiceFixture(t)
+	user := &happydns.User{Id: existingUser(t, db)}
+
+	ch := &happydns.NotificationChannel{
+		Type:   notifPkg.ChannelTypeWebhook,
+		Config: json.RawMessage(`{"url":"https://192.0.2.10/h","secret":"s3cr3t"}`),
+	}
+	if err := svc.CreateChannel(context.Background(), user, ch); err != nil {
+		t.Fatalf("CreateChannel: %v", err)
+	}
+
+	stored, err := db.GetChannel(ch.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(stored.Config), "s3cr3t") {
+		t.Errorf("stored config holds the secret in clear: %s", stored.Config)
+	}
+}
+
+// A client never has a sealed value to send: accepting one would let a user
+// paste a token taken from elsewhere.
+func TestCreateChannelRefusesSealedValue(t *testing.T) {
+	svc, db := channelServiceFixture(t)
+	user := &happydns.User{Id: existingUser(t, db)}
+
+	first := &happydns.NotificationChannel{
+		Type:   notifPkg.ChannelTypeWebhook,
+		Config: json.RawMessage(`{"url":"https://192.0.2.10/h","secret":"s3cr3t"}`),
+	}
+	if err := svc.CreateChannel(context.Background(), user, first); err != nil {
+		t.Fatal(err)
+	}
+	stored, err := db.GetChannel(first.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = svc.CreateChannel(context.Background(), user, &happydns.NotificationChannel{
+		Type:   notifPkg.ChannelTypeWebhook,
+		Config: stored.Config,
+	})
+
+	var verr happydns.ValidationError
+	if !errors.As(err, &verr) {
+		t.Fatalf("CreateChannel = %v, want a ValidationError", err)
+	}
+	if chs, _ := db.ListChannelsByUser(user.Id); len(chs) != 1 {
+		t.Errorf("%d channels stored, want only the first one", len(chs))
+	}
+}
+
+// On creation, nothing is stored for the placeholder to stand for: a client
+// sending it, copying the form of another channel say, gets it refused as a
+// bad request rather than a channel silently left unsigned.
+func TestCreateChannelRefusesRedactedPlaceholder(t *testing.T) {
+	svc, db := channelServiceFixture(t)
+	user := &happydns.User{Id: existingUser(t, db)}
+
+	err := svc.CreateChannel(context.Background(), user, &happydns.NotificationChannel{
+		Type:   notifPkg.ChannelTypeWebhook,
+		Config: json.RawMessage(`{"url":"https://192.0.2.10/h","secret":"` + happydns.RedactedSecret + `"}`),
+	})
+
+	var verr happydns.ValidationError
+	if !errors.As(err, &verr) {
+		t.Fatalf("CreateChannel = %v, want a ValidationError", err)
+	}
+	if chs, _ := db.ListChannelsByUser(user.Id); len(chs) != 0 {
+		t.Errorf("%d channels stored, want none", len(chs))
 	}
 }
 
@@ -260,7 +336,7 @@ func TestUpdateChannelDoesNotOverwriteAConcurrentWrite(t *testing.T) {
 	store := &racingChannels{Storage: db, during: func() {
 		overwriteChannel(t, db, meanwhile)
 	}}
-	svc := notifUC.NewChannelService(store, channelRegistry(t))
+	svc := notifUC.NewChannelService(store, channelRegistry(t, instanceManager(t, db)))
 
 	_, err := svc.UpdateChannel(ctx, user, ch.Id, setConfig(`{"url":"https://192.0.2.10/new"}`))
 	var conflict happydns.ConflictError
@@ -277,8 +353,8 @@ func TestUpdateChannelDoesNotOverwriteAConcurrentWrite(t *testing.T) {
 		t.Fatalf("retried UpdateChannel: %v", err)
 	}
 	stored, _ := db.GetChannel(ch.Id)
-	if !strings.Contains(string(stored.Config), "192.0.2.10/new") || !strings.Contains(string(stored.Config), "written-meanwhile") {
-		t.Errorf("stored = %s, want the new URL and the secret carried forward", stored.Config)
+	if !strings.Contains(string(stored.Config), "192.0.2.10/new") || strings.Contains(string(stored.Config), "written-meanwhile") {
+		t.Errorf("stored = %s, want the new URL and the secret carried forward, sealed", stored.Config)
 	}
 	if !updated.Id.Equals(ch.Id) {
 		t.Errorf("UpdateChannel returned channel %s, want %s", updated.Id, ch.Id)
@@ -291,7 +367,7 @@ func TestUpdateChannelChecksWhatIsStored(t *testing.T) {
 	ctx := context.Background()
 	db, _ := inmemory.Instantiate()
 	ch := legacyChannel(t, db, existingUser(t, db))
-	svc := notifUC.NewChannelService(db, channelRegistry(t))
+	svc := notifUC.NewChannelService(db, channelRegistry(t, instanceManager(t, db)))
 
 	stranger := &happydns.User{Id: existingUser(t, db)}
 	if _, err := svc.UpdateChannel(ctx, stranger, ch.Id, setConfig(`{"url":"https://192.0.2.10/new"}`)); !errors.Is(err, happydns.ErrNotificationChannelNotFound) {

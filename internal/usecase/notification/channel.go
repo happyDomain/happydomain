@@ -22,11 +22,13 @@
 package notification
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 
 	notifPkg "git.happydns.org/happyDomain/internal/notifier"
+	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -56,8 +58,21 @@ func (s *ChannelService) CreateChannel(ctx context.Context, user *happydns.User,
 	ch.Id = id
 	ch.UserId = user.Id
 
+	if err := s.registry.CheckIncomingChannel(ch); err != nil {
+		return happydns.ValidationError{Msg: err.Error()}
+	}
+
 	if _, err := s.registry.AcceptChannelConfig(ctx, ch); err != nil {
 		return happydns.ValidationError{Msg: err.Error()}
+	}
+
+	// After the identifier and owner are set: the secrets are bound to them.
+	if err := s.registry.SealChannelConfig(ctx, ch); errors.Is(err, secret.ErrRedactedSecret) {
+		// Nothing is stored yet for the placeholder to stand for: the
+		// client sent it.
+		return happydns.ValidationError{Msg: "the secret placeholder cannot be used to create a channel: enter the secret, or leave it empty"}
+	} else if err != nil {
+		return fmt.Errorf("unable to seal the channel secrets: %w", err)
 	}
 
 	if err := s.store.CreateChannel(ch); err != nil {
@@ -109,7 +124,7 @@ func (s *ChannelService) UpdateChannel(ctx context.Context, user *happydns.User,
 }
 
 // updated returns existing, a stored channel, as apply changes it, checked,
-// and its stored secrets carried forward.
+// its stored secrets carried forward, and sealed.
 func (s *ChannelService) updated(ctx context.Context, user *happydns.User, existing *happydns.NotificationChannel, apply func(*happydns.NotificationChannel) error) (*happydns.NotificationChannel, error) {
 	if !existing.UserId.Equals(user.Id) {
 		return nil, happydns.ErrNotificationChannelNotFound
@@ -130,6 +145,14 @@ func (s *ChannelService) updated(ctx context.Context, user *happydns.User, exist
 		return nil, happydns.ValidationError{Msg: "the type of a channel cannot be changed, create a new channel instead"}
 	}
 
+	// A config left out is the stored one, sealed values included; only one
+	// the client sent is checked.
+	if !bytes.Equal(ch.Config, existing.Config) {
+		if err := s.registry.CheckIncomingChannel(ch); err != nil {
+			return nil, happydns.ValidationError{Msg: err.Error()}
+		}
+	}
+
 	// Carry forward stored secrets, so that a GET then PUT round-trip does
 	// not wipe them.
 	merged, err := s.registry.MergeChannelForUpdate(existing, ch)
@@ -140,6 +163,10 @@ func (s *ChannelService) updated(ctx context.Context, user *happydns.User, exist
 
 	if _, err := s.registry.AcceptChannelConfig(ctx, ch); err != nil {
 		return nil, happydns.ValidationError{Msg: err.Error()}
+	}
+
+	if err := s.registry.SealChannelConfig(ctx, ch); err != nil {
+		return nil, fmt.Errorf("unable to seal the channel secrets: %w", err)
 	}
 
 	return ch, nil
