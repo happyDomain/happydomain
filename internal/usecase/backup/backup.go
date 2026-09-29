@@ -22,11 +22,13 @@
 package backup
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 
 	"git.happydns.org/happyDomain/internal/forms"
+	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/internal/storage"
 	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
 	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
@@ -34,11 +36,12 @@ import (
 )
 
 type Usecase struct {
-	store storage.Storage
+	store   storage.Storage
+	secrets *secret.Manager
 }
 
-func NewUsecase(store storage.Storage) *Usecase {
-	return &Usecase{store: store}
+func NewUsecase(store storage.Storage, secrets *secret.Manager) *Usecase {
+	return &Usecase{store: store, secrets: secrets}
 }
 
 func (u *Usecase) backupOneUser(user *happydns.User, ret *happydns.Backup) {
@@ -321,6 +324,29 @@ func (u *Usecase) BackupUser(user *happydns.User) happydns.Backup {
 	return ret
 }
 
+// restoreProvider stores one provider of a backup, its secrets sealed under
+// the current policy.
+func (u *Usecase) restoreProvider(msg *happydns.ProviderMessage) error {
+	p, err := providerUC.ParseProvider(msg)
+	if err != nil {
+		return err
+	}
+
+	// A user export (BackupUser) carries placeholders instead of secrets.
+	// They stand for no value, as on creation: the provider comes back
+	// without them, for its owner to fill in again.
+	forms.MergeSecrets(nil, p.Provider)
+
+	// Clear values, from a backup taken before sealing existed, are sealed
+	// under the current policy. A sealed value is kept only if it opens here:
+	// otherwise the provider is not restored.
+	if err := u.secrets.SealObject(context.Background(), providerUC.SecretContext(p), p.Provider); err != nil {
+		return err
+	}
+
+	return u.store.UpdateProvider(p)
+}
+
 func (u *Usecase) Restore(backup *happydns.Backup) error {
 	if current := u.store.SchemaVersion(); backup.Version != 0 && backup.Version != current {
 		return fmt.Errorf("backup schema version %d does not match current database schema version %d", backup.Version, current)
@@ -340,18 +366,23 @@ func (u *Usecase) Restore(backup *happydns.Backup) error {
 		}
 	}
 
-	// Providers
+	// Providers. Those that cannot be restored are remembered, so that their
+	// domains are not restored pointing at nothing.
+	unrestored := map[string]bool{}
 	for _, provider := range backup.Providers {
-		p, err := providerUC.ParseProvider(provider)
-		if err != nil {
-			errs = errors.Join(errs, err)
+		if err := u.restoreProvider(provider); err != nil {
+			errs = errors.Join(errs, fmt.Errorf("provider %s: %w", provider.Id.String(), err))
+			unrestored[provider.Id.String()] = true
 		}
-
-		errs = errors.Join(errs, u.store.UpdateProvider(p))
 	}
 
 	// Domains
 	for _, domain := range backup.Domains {
+		if unrestored[domain.ProviderId.String()] {
+			errs = errors.Join(errs, fmt.Errorf("domain %s (%s): not restored, as its provider %s was not", domain.Id.String(), domain.DomainName, domain.ProviderId.String()))
+			continue
+		}
+
 		if err := u.store.UpdateDomain(domain); err != nil {
 			errs = errors.Join(errs, err)
 		} else {

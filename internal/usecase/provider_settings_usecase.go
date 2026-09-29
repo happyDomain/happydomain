@@ -23,10 +23,10 @@ package usecase
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"git.happydns.org/happyDomain/internal/forms"
+	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -54,7 +54,15 @@ func (psu *providerSettingsUsecase) NextProviderSettingsState(ctx context.Contex
 			return nil, nil, happydns.ForbiddenError{Msg: "cannot change provider settings as DisableProviders parameter is set."}
 		}
 
-		providerJSON, err := json.Marshal(state.ProviderBody)
+		// The controller presets the body, but "Provider": null in the
+		// request clears it.
+		if state.ProviderBody == nil {
+			return nil, nil, happydns.ValidationError{Msg: "the provider settings are missing"}
+		}
+
+		// Encoded as the client sent it, clear secrets included, to be
+		// decoded again by the provider use case, which seals them.
+		providerJSON, err := secret.MarshalIncoming(state.ProviderBody)
 		if err != nil {
 			return nil, nil, happydns.InternalError{
 				Err:         fmt.Errorf("unable to marshal provider body: %w", err),

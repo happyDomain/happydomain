@@ -81,7 +81,7 @@ func seed(t *testing.T) (storage.Storage, *happydns.User) {
 func TestBackupUserRedactsProviderSecrets(t *testing.T) {
 	db, user := seed(t)
 
-	ret := backup.NewUsecase(db).BackupUser(user)
+	ret := backup.NewUsecase(db, plaintextSecrets(t)).BackupUser(user)
 
 	if len(ret.Errors) > 0 {
 		t.Fatalf("unexpected export errors: %v", ret.Errors)
@@ -115,7 +115,7 @@ func TestBackupUserRedactsProviderSecrets(t *testing.T) {
 func TestBackupKeepsProviderSecrets(t *testing.T) {
 	db, user := seed(t)
 
-	uc := backup.NewUsecase(db)
+	uc := backup.NewUsecase(db, plaintextSecrets(t))
 	_ = uc.BackupUser(user)
 
 	ret := uc.Backup()

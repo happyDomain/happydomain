@@ -57,12 +57,12 @@ func (app *App) initUsecases() {
 		sessionService,
 	)
 	domainLogService := domainlogUC.NewService(app.store)
-	providerService := providerUC.NewRestrictedService(app.cfg, app.store, app.guards.Outbound)
-	providerAdminService := providerUC.NewService(app.store, nil, app.guards.Outbound)
+	providerService := providerUC.NewRestrictedService(app.cfg, app.store, app.guards.Outbound, app.secrets)
+	providerAdminService := providerUC.NewService(app.store, nil, app.guards.Outbound, app.secrets)
 	serviceService := serviceUC.NewServiceUsecases()
 	zoneService := zoneUC.NewZoneUsecases(app.store, serviceService)
 
-	app.usecases.backup = backupUC.NewUsecase(app.store)
+	app.usecases.backup = backupUC.NewUsecase(app.store, app.secrets)
 	app.initFaviconService()
 	app.usecases.providerSpecs = usecase.NewProviderSpecsUsecase(app.faviconService)
 	app.usecases.provider = providerService
