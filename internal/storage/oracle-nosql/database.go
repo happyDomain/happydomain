@@ -113,20 +113,30 @@ func (n *NoSQLStorage) Get(key string, v any) error {
 	return n.DecodeData(data, v)
 }
 
-func (n *NoSQLStorage) Put(key string, v any) error {
+// row builds the row that stores v under key.
+func (n *NoSQLStorage) row(key string, v any) (*types.MapValue, error) {
 	data, err := storage.Marshal(v)
 	if err != nil {
-		return fmt.Errorf("unable to marshal data: %w", err)
+		return nil, fmt.Errorf("unable to marshal data: %w", err)
 	}
 
 	val, err := types.NewMapValueFromJSON(string(data))
 	if err != nil {
-		return fmt.Errorf("unable to create mapvalue from data: %w", err)
+		return nil, fmt.Errorf("unable to create mapvalue from data: %w", err)
 	}
 
 	value := &types.MapValue{}
 	value.Put("key", key)
 	value.Put("value", val)
+
+	return value, nil
+}
+
+func (n *NoSQLStorage) Put(key string, v any) error {
+	value, err := n.row(key, v)
+	if err != nil {
+		return err
+	}
 
 	req := &nosqldb.PutRequest{
 		TableName: n.table,
@@ -139,6 +149,68 @@ func (n *NoSQLStorage) Put(key string, v any) error {
 	}
 
 	return nil
+}
+
+func (n *NoSQLStorage) PutIfAbsent(key string, v any) (bool, error) {
+	value, err := n.row(key, v)
+	if err != nil {
+		return false, err
+	}
+
+	req := &nosqldb.PutRequest{
+		TableName: n.table,
+		Value:     value,
+		PutOption: types.PutIfAbsent,
+	}
+
+	res, err := n.client.Put(req)
+	if err != nil {
+		return false, fmt.Errorf("failed to put key %q: %w", key, err)
+	}
+
+	return res.Success(), nil
+}
+
+// PutIfUnchanged reads the row with its version, compares, then writes only
+// if the row still has that version.
+func (n *NoSQLStorage) PutIfUnchanged(key string, previous json.RawMessage, v any) (bool, error) {
+	value, err := n.row(key, v)
+	if err != nil {
+		return false, err
+	}
+
+	gkey := &types.MapValue{}
+	gkey.Put("key", key)
+
+	res, err := n.client.Get(&nosqldb.GetRequest{
+		TableName: n.table,
+		Key:       gkey,
+	})
+	if err != nil {
+		return false, fmt.Errorf("failed to get key %q: %w", key, err)
+	}
+	if res.Value == nil {
+		return false, nil
+	}
+	current, ok := res.Value.Get("value")
+	if !ok {
+		return false, fmt.Errorf("unable to find value for the given key")
+	}
+	if same, err := storage.SameJSON([]byte(jsonutil.AsJSON(current)), previous); err != nil || !same {
+		return false, err
+	}
+
+	put, err := n.client.Put(&nosqldb.PutRequest{
+		TableName:    n.table,
+		Value:        value,
+		PutOption:    types.PutIfVersion,
+		MatchVersion: res.Version,
+	})
+	if err != nil {
+		return false, fmt.Errorf("failed to put key %q: %w", key, err)
+	}
+
+	return put.Success(), nil
 }
 
 func (n *NoSQLStorage) Has(key string) (exists bool, err error) {

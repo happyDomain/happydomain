@@ -184,6 +184,55 @@ func (s *PostgreSQLStorage) Put(key string, v any) error {
 	return nil
 }
 
+func (s *PostgreSQLStorage) PutIfAbsent(key string, v any) (bool, error) {
+	jsonData, err := storage.Marshal(v)
+	if err != nil {
+		return false, fmt.Errorf("failed to marshal value: %w", err)
+	}
+
+	query := fmt.Sprintf(`
+		INSERT INTO %s (key, data)
+		VALUES ($1, $2::jsonb)
+		ON CONFLICT (key) DO NOTHING
+	`, s.table)
+
+	res, err := s.db.Exec(query, key, jsonData)
+	if err != nil {
+		return false, fmt.Errorf("failed to put key %q: %w", key, err)
+	}
+
+	n, err := res.RowsAffected()
+	if err != nil {
+		return false, fmt.Errorf("failed to put key %q: %w", key, err)
+	}
+	return n == 1, nil
+}
+
+// PutIfUnchanged relies on a conditional UPDATE, which PostgreSQL applies
+// atomically; jsonb equality ignores key order and spacing.
+func (s *PostgreSQLStorage) PutIfUnchanged(key string, previous json.RawMessage, v any) (bool, error) {
+	jsonData, err := storage.Marshal(v)
+	if err != nil {
+		return false, fmt.Errorf("failed to marshal value: %w", err)
+	}
+
+	query := fmt.Sprintf(`
+		UPDATE %s SET data = $3::jsonb
+		WHERE key = $1 AND data = $2::jsonb
+	`, s.table)
+
+	res, err := s.db.Exec(query, key, []byte(previous), jsonData)
+	if err != nil {
+		return false, fmt.Errorf("failed to put key %q: %w", key, err)
+	}
+
+	n, err := res.RowsAffected()
+	if err != nil {
+		return false, fmt.Errorf("failed to put key %q: %w", key, err)
+	}
+	return n == 1, nil
+}
+
 func (s *PostgreSQLStorage) FindIdentifierKey(prefix string) (key string, id happydns.Identifier, err error) {
 	found := true
 	for found {

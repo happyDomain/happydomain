@@ -110,6 +110,41 @@ func (s *InMemoryStorage) Put(key string, v any) error {
 	return nil
 }
 
+// PutIfAbsent stores a value with the given key, unless the key exists.
+func (s *InMemoryStorage) PutIfAbsent(key string, v any) (bool, error) {
+	data, err := storage.Marshal(v)
+	if err != nil {
+		return false, err
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, exists := s.data[key]; exists {
+		return false, nil
+	}
+	s.data[key] = data
+	return true, nil
+}
+
+// PutIfUnchanged stores a value with the given key, only when the key still
+// holds previous.
+func (s *InMemoryStorage) PutIfUnchanged(key string, previous json.RawMessage, v any) (bool, error) {
+	data, err := storage.Marshal(v)
+	if err != nil {
+		return false, err
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	current, exists := s.data[key]
+	if !exists {
+		return false, nil
+	}
+	if same, err := storage.SameJSON(current, previous); err != nil || !same {
+		return false, err
+	}
+	s.data[key] = data
+	return true, nil
+}
+
 // FindIdentifierKey finds a unique key with the given prefix.
 func (s *InMemoryStorage) FindIdentifierKey(prefix string) (key string, id happydns.Identifier, err error) {
 	s.mu.Lock()

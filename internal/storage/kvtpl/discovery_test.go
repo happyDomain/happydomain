@@ -69,6 +69,22 @@ func (f *fakeKV) Put(key string, v any) error {
 	f.data[key] = b
 	return nil
 }
+func (f *fakeKV) PutIfAbsent(key string, v any) (bool, error) {
+	if _, ok := f.data[key]; ok {
+		return false, nil
+	}
+	return true, f.Put(key, v)
+}
+func (f *fakeKV) PutIfUnchanged(key string, previous json.RawMessage, v any) (bool, error) {
+	current, ok := f.data[key]
+	if !ok {
+		return false, nil
+	}
+	if same, err := storage.SameJSON(current, previous); err != nil || !same {
+		return false, err
+	}
+	return true, f.Put(key, v)
+}
 func (f *fakeKV) FindIdentifierKey(prefix string) (string, happydns.Identifier, error) {
 	id, err := happydns.NewRandomIdentifier()
 	if err != nil {

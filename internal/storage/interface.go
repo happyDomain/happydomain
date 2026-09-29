@@ -22,6 +22,8 @@
 package storage // import "git.happydns.org/happyDomain/internal/storage"
 
 import (
+	"encoding/json"
+
 	"git.happydns.org/happyDomain/internal/usecase/authuser"
 	"git.happydns.org/happyDomain/internal/usecase/checker"
 	"git.happydns.org/happyDomain/internal/usecase/domain"
@@ -88,6 +90,19 @@ type KVStorage interface {
 	Has(key string) (bool, error)
 	Get(key string, v any) error
 	Put(key string, v any) error
+
+	// PutIfAbsent stores v under key only when key does not exist yet, and
+	// reports whether it did. Two concurrent calls on the same key never both
+	// store: this is what lets a key act as a unique index.
+	PutIfAbsent(key string, v any) (bool, error)
+
+	// PutIfUnchanged stores v under key only when key still holds previous,
+	// as read by Get into a json.RawMessage, and reports whether it did. It
+	// stores nothing when key was changed or deleted in between: this is what
+	// lets a read-modify-write neither overwrite a concurrent write nor bring
+	// back a deleted record. Values are compared as JSON (see SameJSON).
+	PutIfUnchanged(key string, previous json.RawMessage, v any) (bool, error)
+
 	FindIdentifierKey(prefix string) (key string, id happydns.Identifier, err error)
 	Delete(key string) error
 	Search(prefix string) Iterator

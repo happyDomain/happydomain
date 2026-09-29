@@ -26,6 +26,7 @@ import (
 	goerrors "errors"
 	"fmt"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/syndtr/goleveldb/leveldb"
@@ -41,6 +42,10 @@ type LevelDBStorage struct {
 	db             *leveldb.DB
 	compactionStop chan struct{} // closed to ask the worker to stop
 	compactionDone chan struct{} // closed by the worker once it has exited
+
+	// putIfAbsent serializes PutIfAbsent: LevelDB has no conditional write,
+	// and only this process opens the database.
+	putIfAbsent sync.Mutex
 }
 
 // NewLevelDBStorage establishes the connection to the database. A nil opts
@@ -143,6 +148,56 @@ func (s *LevelDBStorage) Put(key string, v any) error {
 	}
 
 	return s.db.Put([]byte(key), data, nil)
+}
+
+func (s *LevelDBStorage) PutIfAbsent(key string, v any) (bool, error) {
+	data, err := storage.Marshal(v)
+	if err != nil {
+		return false, err
+	}
+
+	s.putIfAbsent.Lock()
+	defer s.putIfAbsent.Unlock()
+
+	exists, err := s.db.Has([]byte(key), nil)
+	if err != nil || exists {
+		return false, err
+	}
+	return true, s.db.Put([]byte(key), data, nil)
+}
+
+// PutIfUnchanged compares and writes within a transaction: LevelDB blocks
+// every other write until it ends, so key cannot change in between.
+func (s *LevelDBStorage) PutIfUnchanged(key string, previous json.RawMessage, v any) (bool, error) {
+	data, err := storage.Marshal(v)
+	if err != nil {
+		return false, err
+	}
+
+	tr, err := s.db.OpenTransaction()
+	if err != nil {
+		return false, err
+	}
+	defer tr.Discard()
+
+	current, err := tr.Get([]byte(key), nil)
+	if goerrors.Is(err, leveldb.ErrNotFound) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	if same, err := storage.SameJSON(current, previous); err != nil || !same {
+		return false, err
+	}
+
+	if err := tr.Put([]byte(key), data, nil); err != nil {
+		return false, err
+	}
+	if err := tr.Commit(); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (s *LevelDBStorage) FindIdentifierKey(prefix string) (key string, id happydns.Identifier, err error) {
