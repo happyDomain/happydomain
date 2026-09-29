@@ -519,3 +519,31 @@ func TestSecretOptionsResealLosesToConcurrentWrites(t *testing.T) {
 		t.Errorf("stored = %q, want the user's save kept", v)
 	}
 }
+
+// A stored secret option that no longer opens, its safe gone, does not make
+// every later save an error: stored single values are kept as they are
+// without being opened, and entering the secret again repairs the options.
+func TestSecretOptionsSaveWithAStoredValueThatNoLongerOpens(t *testing.T) {
+	safes := secrettest.NewSafes()
+	m, _ := optionsManagers(t, safes, nil)
+	store := newOptionsStore()
+	uc := checkerUC.NewCheckerOptionsUsecase(store, nil).WithSecrets(m)
+	user := idPtr()
+
+	if err := uc.SetCheckerOptions(secretChecker, user, nil, nil, happydns.CheckerOptions{"user_token": "lost", "plain": "a"}); err != nil {
+		t.Fatal(err)
+	}
+	secrettest.DeleteSafeOf(t, safes, *user, secret.KindInstance)
+
+	if err := uc.SetCheckerOption(secretChecker, user, nil, nil, "plain", "b"); err != nil {
+		t.Fatalf("SetCheckerOption keeping it = %v", err)
+	}
+
+	if err := uc.SetCheckerOptions(secretChecker, user, nil, nil, happydns.CheckerOptions{"user_token": "entered-again", "plain": "b"}); err != nil {
+		t.Fatalf("SetCheckerOptions entering it again = %v", err)
+	}
+	forUse, err := uc.GetCheckerOptionsForUse(secretChecker, user, nil, nil)
+	if err != nil || forUse["user_token"] != "entered-again" {
+		t.Errorf("GetCheckerOptionsForUse = %v, %v; want the value entered again", forUse, err)
+	}
+}

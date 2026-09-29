@@ -32,6 +32,7 @@ import (
 
 	providerReg "git.happydns.org/happyDomain/internal/providerregistry"
 	"git.happydns.org/happyDomain/internal/secret"
+	"git.happydns.org/happyDomain/internal/secret/secrettest"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	kv "git.happydns.org/happyDomain/internal/storage/kvtpl"
@@ -264,8 +265,9 @@ func Test_Secret_InstantiateFailsClosedOnUnopenable(t *testing.T) {
 	}
 
 	instantiatedWith = nil
-	if _, err := svc.RetrieveZone(ctx, p, "example.com"); !errors.Is(err, secret.ErrUnknownSafe) {
-		t.Errorf("RetrieveZone = %v, want ErrUnknownSafe", err)
+	// Without safe storage, whether its safe exists is unknown.
+	if _, err := svc.RetrieveZone(ctx, p, "example.com"); !errors.Is(err, secret.ErrSafeUnavailable) {
+		t.Errorf("RetrieveZone = %v, want ErrSafeUnavailable", err)
 	}
 	if instantiatedWith != nil {
 		t.Error("the provider was instantiated with a secret that could not be opened")
@@ -293,8 +295,8 @@ func Test_Secret_ValidatorOpensBeforeInstantiating(t *testing.T) {
 
 	instantiatedWith = nil
 	err := provider.NewValidator(nil, plaintextSecrets(t)).Validate(ctx, p)
-	if !errors.Is(err, secret.ErrUnknownSafe) {
-		t.Errorf("Validate = %v, want ErrUnknownSafe", err)
+	if !errors.Is(err, secret.ErrSafeUnavailable) {
+		t.Errorf("Validate = %v, want ErrSafeUnavailable", err)
 	}
 	if instantiatedWith != nil {
 		t.Error("the validator instantiated a provider it could not open")
@@ -815,5 +817,59 @@ func Test_Secret_ResealSkipsOrphans(t *testing.T) {
 	}
 	if _, err := db.GetSafeByOwner(orphan.Owner, secret.KindInstance); !errors.Is(err, happydns.ErrSafeNotFound) {
 		t.Errorf("GetSafeByOwner = %v, want no safe for a deleted user", err)
+	}
+}
+
+// A stored credential that no longer opens, its safe gone, does not make
+// every later update a server error: the user is told to enter it again,
+// and doing so repairs the provider.
+func Test_Secret_UpdateWithAStoredValueThatNoLongerOpens(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	svc := provider.NewService(db, &mockValidator{}, nil, instanceSecrets(t, db))
+	user := createTestUser(t, db, "secret@example.com")
+
+	p, err := svc.CreateProvider(ctx, user, secretMessage(t, "SecretTestProvider", `{"host":"h","apikey":"lost"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	secrettest.DeleteSafeOf(t, db, user.Id, secret.KindInstance)
+
+	body := `{"host":"h2","apikey":"` + happydns.RedactedSecret + `"}`
+	err = svc.UpdateProviderFromMessage(ctx, p.Id, user, secretMessage(t, "SecretTestProvider", body))
+	wantSecretUserError(t, err, 400, "enter it again")
+
+	if err := svc.UpdateProviderFromMessage(ctx, p.Id, user, secretMessage(t, "SecretTestProvider", `{"host":"h2","apikey":"entered-again"}`)); err != nil {
+		t.Fatalf("UpdateProviderFromMessage entering it again = %v", err)
+	}
+	stored, err := svc.GetUserProvider(ctx, user, p.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	instantiatedWith = nil
+	if _, err := svc.RetrieveZone(ctx, stored, "example.com"); err != nil {
+		t.Fatal(err)
+	}
+	if instantiatedWith == nil || *instantiatedWith != "entered-again" {
+		t.Errorf("instantiated with %v, want the value entered again", instantiatedWith)
+	}
+}
+
+// wantSecretUserError checks that err tells the user what to do about a
+// stored credential that does not open, with status, without the reason.
+func wantSecretUserError(t *testing.T, err error, status int, hint string) {
+	t.Helper()
+	var he happydns.HTTPError
+	if !errors.As(err, &he) {
+		t.Fatalf("error = %v (%T), want a happydns.HTTPError", err, err)
+	}
+	if he.HTTPStatus() != status {
+		t.Errorf("status = %d, want %d (%v)", he.HTTPStatus(), status, err)
+	}
+	msg := he.ToErrorResponse().Message
+	if !strings.Contains(msg, hint) {
+		t.Errorf("message %q does not say %q", msg, hint)
+	}
+	if strings.Contains(msg, "safe") || strings.Contains(msg, "unable to validate") {
+		t.Errorf("message %q leaks the reason or blames the provider attributes", msg)
 	}
 }

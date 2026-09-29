@@ -48,7 +48,8 @@ type Counts struct {
 	Unreadable int `json:"unreadable"`
 
 	// Undecodable counts the objects whose secrets could not be looked at:
-	// a record that does not decode, an unknown provider type.
+	// a record that does not decode, an unknown provider type, a safe that
+	// could not be read.
 	Undecodable int `json:"undecodable"`
 
 	// Problems names some of the undecodable objects, and why.
@@ -120,9 +121,14 @@ func (m *Manager) inspectOne(sc SecretContext, s *happydns.Secret, primitives ma
 		return nil
 	}
 
-	if err := m.open(sc, s, primitives); err != nil {
+	if err := m.open(sc, s, primitives); errors.Is(err, ErrUnopenable) {
 		c.Unreadable++
 		return nil
+	} else if err != nil {
+		// Maybe the storage is down: the value may open a moment later, so
+		// it is not counted as lost, and its object is reported as not
+		// looked at.
+		return err
 	}
 
 	// open only accepts instance safes, see safeRegistry.aead.

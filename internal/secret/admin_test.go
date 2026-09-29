@@ -564,3 +564,53 @@ func TestValueOpenerLooksEachSafeUpOnce(t *testing.T) {
 		t.Error("Open without a manager succeeded")
 	}
 }
+
+// flakySafes fails to read a safe by identifier, like a storage briefly down.
+type flakySafes struct {
+	*secrettest.Safes
+}
+
+func (flakySafes) GetSafe(happydns.Identifier) (*happydns.Safe, error) {
+	return nil, errors.New("storage unavailable")
+}
+
+// A safe that cannot be read for now does not make the values sealed in it
+// count as unreadable: they may open a moment later. Inspecting fails
+// instead, so that the object is reported as not looked at.
+func TestInspectDoesNotCountAPassingFailureAsUnreadable(t *testing.T) {
+	ctx := context.Background()
+	key := testInstanceKey(t)
+	store := secrettest.NewSafes()
+
+	instance, err := NewManager(Config{Policy: PolicyInstance, InstanceKey: key, Safes: store})
+	if err != nil {
+		t.Fatal(err)
+	}
+	flaky, err := NewManager(Config{Policy: PolicyPlaintext, InstanceKey: key, Safes: flakySafes{store}})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sc := objectContext()
+	token := sealOne(t, instance, sc, "v")
+
+	var c Counts
+	err = flaky.Inspect(ctx, sc, &managedObject{ApiKey: sealedFromStorage(t, token)}, &c)
+	if err == nil || errors.Is(err, ErrUnopenable) {
+		t.Errorf("Inspect = %v, want an error other than ErrUnopenable", err)
+	}
+	if c.Unreadable != 0 {
+		t.Errorf("Inspect counted %d unreadable, want none", c.Unreadable)
+	}
+
+	vsc := objectContext()
+	vsc.Field = "k"
+	vtoken, err := instance.SealValue(ctx, vsc, "v")
+	if err != nil {
+		t.Fatal(err)
+	}
+	c = Counts{}
+	if err := flaky.InspectValue(ctx, vsc, vtoken, &c); err == nil || c.Unreadable != 0 {
+		t.Errorf("InspectValue = %v, counts %+v; want an error and nothing unreadable", err, c)
+	}
+}

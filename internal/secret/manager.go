@@ -63,6 +63,21 @@ var (
 	// not exist.
 	ErrUnknownSafe = errors.New("unknown safe")
 
+	// ErrUnopenable is returned, wrapping the reason, for a sealed value
+	// that will never open where it is: its safe is gone or is another
+	// owner's, it was moved from elsewhere, or it is malformed. Retrying
+	// does not help, entering the secret again does. A failure that may
+	// pass, such as the storage being down, is not one.
+	ErrUnopenable = errors.New("secret cannot be opened")
+
+	// ErrSafeUnavailable is returned, wrapping the reason, for a sealed value
+	// whose safe cannot be opened on this instance as configured: no
+	// instance keyset, one lacking the key that wrapped the safe, a damaged
+	// safe. Only the administrator can repair it; entering the secret again
+	// does not, since it would be sealed in the same safe. The value is not
+	// lost: it opens again once the configuration is repaired.
+	ErrSafeUnavailable = errors.New("the safe of this secret cannot be opened on this instance")
+
 	// ErrUnknownOwner is returned when a secret would need a new safe for an
 	// owner that does not exist, such as a deleted user.
 	ErrUnknownOwner = errors.New("owner does not exist")
@@ -340,42 +355,58 @@ func (m *Manager) open(sc SecretContext, s *happydns.Secret, primitives map[stri
 	token := s.Token()
 	sv, err := ParseSealed(token)
 	if err != nil {
-		return err
+		return unopenable(err)
 	}
 
 	primitive, ok := primitives[sv.SafeId.String()]
 	if !ok {
 		if m.safes == nil {
-			return fmt.Errorf("%w %s", ErrUnknownSafe, sv.SafeId.String())
+			// Without safe storage, whether the safe exists is unknown:
+			// the configuration is what is missing.
+			return safeUnavailable(fmt.Errorf("safe %s: no safe storage configured", sv.SafeId.String()))
 		}
 
 		safe, err := m.safes.store.GetSafe(sv.SafeId)
 		if errors.Is(err, happydns.ErrSafeNotFound) {
-			return fmt.Errorf("%w %s", ErrUnknownSafe, sv.SafeId.String())
+			return unopenable(fmt.Errorf("%w %s", ErrUnknownSafe, sv.SafeId.String()))
 		}
 		if err != nil {
+			// Maybe the storage is down: not known to be for good.
 			return err
 		}
 
 		// The associated data already binds the owner; this only makes the
 		// error clearer.
 		if !safe.Owner.Equals(sc.Owner) {
-			return fmt.Errorf("safe %s does not belong to the owner of this secret", sv.SafeId.String())
+			return unopenable(fmt.Errorf("safe %s does not belong to the owner of this secret", sv.SafeId.String()))
 		}
 
 		if primitive, err = m.safes.aead(safe); err != nil {
-			return err
+			// The keyset is missing or lacks the key of this safe, or the
+			// safe is damaged: sealing again would hit the same safe.
+			return safeUnavailable(err)
 		}
 		primitives[sv.SafeId.String()] = primitive
 	}
 
 	clear, err := primitive.Decrypt(sv.Payload, AssociatedData(sv.SafeId, sc))
 	if err != nil {
-		return fmt.Errorf("unable to open secret %s: %w", sc.Field, err)
+		return unopenable(fmt.Errorf("unable to open secret %s: %w", sc.Field, err))
 	}
 
 	s.SetOpened(token, clear, sc.binding())
 	return nil
+}
+
+// unopenable marks err as the reason a sealed value will never open.
+func unopenable(err error) error {
+	return fmt.Errorf("%w: %w", ErrUnopenable, err)
+}
+
+// safeUnavailable marks err as the reason the safe of a sealed value cannot
+// be opened on this instance.
+func safeUnavailable(err error) error {
+	return fmt.Errorf("%w: %w", ErrSafeUnavailable, err)
 }
 
 // CheckIncoming refuses an object coming from a client that holds a sealed

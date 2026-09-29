@@ -160,9 +160,11 @@ func TestSealRefusesSealedSecretItCannotOpen(t *testing.T) {
 	obj := &managedObject{ApiKey: sealedFromStorage(t, "hds:1:AQ:c2VhbGVk")}
 
 	// Kept as is, it would be stored where nobody knows whether it opens.
+	// Without safe storage, whether its safe exists is unknown: a fault of
+	// the configuration, not a value known lost.
 	err := m.SealObject(context.Background(), objectContext(), obj)
-	if !errors.Is(err, ErrUnknownSafe) {
-		t.Errorf("SealObject(sealed, unknown safe) = %v, want ErrUnknownSafe", err)
+	if !errors.Is(err, ErrSafeUnavailable) {
+		t.Errorf("SealObject(sealed, no safe storage) = %v, want ErrSafeUnavailable", err)
 	}
 	if !obj.ApiKey.IsSealed() || obj.ApiKey.Token() != "hds:1:AQ:c2VhbGVk" {
 		t.Error("a failed SealObject changed the sealed value")
@@ -245,9 +247,9 @@ func TestOpenRefuses(t *testing.T) {
 		s    happydns.Secret
 		want error
 	}{
-		"sealed, no safe": {sealedFromStorage(t, "hds:1:AQ:c2VhbGVk"), ErrUnknownSafe},
-		"malformed":       {sealedFromStorage(t, "hds:1:no-payload"), ErrMalformedSealed},
-		"redacted":        {redacted(), ErrRedactedSecret},
+		"sealed, no safe storage": {sealedFromStorage(t, "hds:1:AQ:c2VhbGVk"), ErrSafeUnavailable},
+		"malformed":               {sealedFromStorage(t, "hds:1:no-payload"), ErrMalformedSealed},
+		"redacted":                {redacted(), ErrRedactedSecret},
 	} {
 		obj := &managedObject{ApiKey: tc.s}
 		if err := m.OpenObject(context.Background(), objectContext(), obj); !errors.Is(err, tc.want) {

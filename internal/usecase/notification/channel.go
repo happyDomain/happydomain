@@ -165,7 +165,10 @@ func (s *ChannelService) updated(ctx context.Context, user *happydns.User, exist
 		return nil, happydns.ValidationError{Msg: err.Error()}
 	}
 
-	if err := s.registry.SealChannelConfig(ctx, ch); err != nil {
+	err = s.registry.SealChannelConfig(ctx, ch)
+	if uerr := secret.UserError(err, "notification channel"); uerr != nil {
+		return nil, uerr
+	} else if err != nil {
 		return nil, fmt.Errorf("unable to seal the channel secrets: %w", err)
 	}
 

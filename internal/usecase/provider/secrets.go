@@ -78,7 +78,11 @@ func (i instantiator) instantiate(ctx context.Context, p *happydns.Provider) (ha
 
 // seal seals the secrets of p before it is stored.
 func (i instantiator) seal(ctx context.Context, p *happydns.Provider) error {
-	if err := i.secrets.SealObject(ctx, SecretContext(p), p.Provider); err != nil {
+	err := i.secrets.SealObject(ctx, SecretContext(p), p.Provider)
+	if uerr := secret.UserError(err, "provider"); uerr != nil {
+		// A stored credential carried forward that does not open.
+		return uerr
+	} else if err != nil {
 		return happydns.InternalError{
 			Err:         fmt.Errorf("unable to seal provider credentials: %w", err),
 			UserMessage: "Sorry, we are currently unable to store your provider credentials. Please try again later.",

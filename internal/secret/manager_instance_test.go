@@ -525,17 +525,147 @@ func TestInstanceOpenFailsOnceSafeDeleted(t *testing.T) {
 		t.Fatalf("OpenObject: %v", err)
 	}
 
-	safe, err := store.GetSafeByOwner(sc.Owner, KindInstance)
-	if err != nil {
-		t.Fatal(err)
-	}
 	// Deleted behind the Manager's back, as the tidy job does.
-	if err := store.DeleteSafe(safe.Id); err != nil {
-		t.Fatal(err)
-	}
+	secrettest.DeleteSafeOf(t, store, sc.Owner, KindInstance)
 
 	back = &managedObject{ApiKey: stored}
 	if err := m.OpenObject(context.Background(), sc, back); !errors.Is(err, ErrUnknownSafe) {
 		t.Errorf("OpenObject after the safe was deleted = %v, want ErrUnknownSafe", err)
+	}
+}
+
+// failingGets makes every GetSafe fail, as a storage that is down.
+type failingGets struct {
+	*secrettest.Safes
+}
+
+func (failingGets) GetSafe(happydns.Identifier) (*happydns.Safe, error) {
+	return nil, errors.New("storage down")
+}
+
+// A value that will never open, whatever is retried, is told apart from a
+// failure that may pass, so that callers can ask the user to enter it again
+// rather than report a fault of theirs.
+func TestUnopenableIsTold(t *testing.T) {
+	m, _, store := instanceManagers(t)
+	sc := objectContext()
+	token := sealOne(t, m, sc, "v")
+
+	moved := sc
+	moved.ObjectId = "YW5vdGhlcg"
+
+	gone := objectContext()
+	gone.Owner = happydns.Identifier{0x07}
+	goneToken := sealOne(t, m, gone, "v")
+	secrettest.DeleteSafeOf(t, store, gone.Owner, KindInstance)
+
+	for name, c := range map[string]struct {
+		sc    SecretContext
+		token string
+	}{
+		"safe deleted":        {gone, goneToken},
+		"moved elsewhere":     {moved, token},
+		"malformed":           {sc, happydns.SealedSecretPrefix + "not-a-token"},
+		"safe of another one": {SecretContext{Owner: happydns.Identifier{0x99}, ObjectType: sc.ObjectType, ObjectId: sc.ObjectId}, token},
+	} {
+		t.Run(name, func(t *testing.T) {
+			// A fresh Manager: no key cached from the seals above.
+			fresh, err := NewManager(Config{Policy: PolicyInstance, InstanceKey: m.safes.key, Safes: store})
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			obj := &managedObject{ApiKey: sealedFromStorage(t, c.token)}
+			if err := fresh.OpenObject(context.Background(), c.sc, obj); !errors.Is(err, ErrUnopenable) {
+				t.Errorf("OpenObject = %v, want ErrUnopenable", err)
+			}
+			// Carried forward by an update, it is checked the same way.
+			obj = &managedObject{ApiKey: sealedFromStorage(t, c.token)}
+			if err := fresh.SealObject(context.Background(), c.sc, obj); !errors.Is(err, ErrUnopenable) {
+				t.Errorf("SealObject = %v, want ErrUnopenable", err)
+			}
+		})
+	}
+
+	t.Run("storage down", func(t *testing.T) {
+		down, err := NewManager(Config{Policy: PolicyInstance, InstanceKey: m.safes.key, Safes: failingGets{store}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		obj := &managedObject{ApiKey: sealedFromStorage(t, token)}
+		err = down.OpenObject(context.Background(), sc, obj)
+		if err == nil || errors.Is(err, ErrUnopenable) {
+			t.Errorf("OpenObject with the storage down = %v, want an error that is not ErrUnopenable", err)
+		}
+	})
+}
+
+// A sealed value whose safe exists but cannot be opened on this instance, the
+// keyset missing or lacking the key that wrapped the safe, is a fault of the
+// configuration: the administrator repairs it, entering the secret again does
+// not. It is never taken for lost, and carrying it forward neither stores it
+// in clear nor drops it.
+func TestKeyProblemsAreNotUnopenable(t *testing.T) {
+	ctx := context.Background()
+	instance, _, store := instanceManagers(t)
+	sc := objectContext()
+	token := sealOne(t, instance, sc, "v")
+
+	h, err := GenerateInstanceKeyset()
+	if err != nil {
+		t.Fatal(err)
+	}
+	otherKey, err := NewInstanceKey(h)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for name, cfg := range map[string]Config{
+		"no keyset, no safe storage":    {Policy: PolicyPlaintext},
+		"no keyset":                     {Policy: PolicyPlaintext, Safes: store},
+		"keyset lacking the safe's key": {Policy: PolicyInstance, InstanceKey: otherKey, Safes: store},
+	} {
+		t.Run(name, func(t *testing.T) {
+			m, err := NewManager(cfg)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			obj := &managedObject{ApiKey: sealedFromStorage(t, token)}
+			err = m.OpenObject(ctx, sc, obj)
+			if !errors.Is(err, ErrSafeUnavailable) || errors.Is(err, ErrUnopenable) {
+				t.Errorf("OpenObject = %v, want ErrSafeUnavailable and not ErrUnopenable", err)
+			}
+
+			// Carried forward by an update: refused, and left as it was.
+			obj = &managedObject{ApiKey: sealedFromStorage(t, token)}
+			err = m.SealObject(ctx, sc, obj)
+			if !errors.Is(err, ErrSafeUnavailable) || errors.Is(err, ErrUnopenable) {
+				t.Errorf("SealObject = %v, want ErrSafeUnavailable and not ErrUnopenable", err)
+			}
+			if !obj.ApiKey.IsSealed() || obj.ApiKey.Token() != token {
+				t.Error("a failed SealObject changed the value")
+			}
+
+			// A single value, such as a checker option: refused, or kept
+			// sealed as it is, never stored in clear.
+			vsc := sc
+			vsc.Field = "k"
+			if out, err := m.SealValue(ctx, vsc, token); err != nil && !errors.Is(err, ErrSafeUnavailable) {
+				t.Errorf("SealValue = %q, %v; want ErrSafeUnavailable", out, err)
+			} else if err == nil && out != token {
+				t.Errorf("SealValue = %q, want the sealed value kept as it is", out)
+			}
+
+			// Counted neither as lost nor as readable.
+			var c Counts
+			err = m.Inspect(ctx, sc, &managedObject{ApiKey: sealedFromStorage(t, token)}, &c)
+			if !errors.Is(err, ErrSafeUnavailable) {
+				t.Errorf("Inspect = %v, want ErrSafeUnavailable", err)
+			}
+			if c.Unreadable != 0 {
+				t.Errorf("Inspect counted %d unreadable, want none", c.Unreadable)
+			}
+		})
 	}
 }

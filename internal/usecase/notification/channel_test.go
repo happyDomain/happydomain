@@ -31,6 +31,7 @@ import (
 	"git.happydns.org/happyDomain/internal/netguard"
 	notifPkg "git.happydns.org/happyDomain/internal/notifier"
 	"git.happydns.org/happyDomain/internal/secret"
+	"git.happydns.org/happyDomain/internal/secret/secrettest"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	notifUC "git.happydns.org/happyDomain/internal/usecase/notification"
@@ -391,5 +392,53 @@ func TestUpdateChannelChecksWhatIsStored(t *testing.T) {
 	}
 	if stored, err := db.GetChannel(ch.Id); err != nil || !stored.UserId.Equals(ch.UserId) {
 		t.Errorf("stored = %+v, %v; want the identifier and owner kept", stored, err)
+	}
+}
+
+// A stored secret that no longer opens, its safe gone, does not make every
+// later update a server error: the user is told to enter it again, and doing
+// so repairs the channel.
+func TestUpdateChannelWithAStoredSecretThatNoLongerOpens(t *testing.T) {
+	ctx := context.Background()
+	svc, db := channelServiceFixture(t)
+	user := &happydns.User{Id: existingUser(t, db)}
+
+	ch := &happydns.NotificationChannel{
+		Type:   notifPkg.ChannelTypeWebhook,
+		Config: json.RawMessage(`{"url":"https://192.0.2.10/h","secret":"lost"}`),
+	}
+	if err := svc.CreateChannel(ctx, user, ch); err != nil {
+		t.Fatal(err)
+	}
+	safe := secrettest.DeleteSafeOf(t, db, user.Id, secret.KindInstance)
+
+	_, err := svc.UpdateChannel(ctx, user, ch.Id, func(c *happydns.NotificationChannel) error {
+		c.Name = "renamed"
+		return nil
+	})
+	wantSecretUserError(t, err, 400, "enter it again", safe.Id)
+
+	if _, err := svc.UpdateChannel(ctx, user, ch.Id, setConfig(`{"url":"https://192.0.2.10/h","secret":"entered-again"}`)); err != nil {
+		t.Fatalf("UpdateChannel entering it again = %v", err)
+	}
+}
+
+// wantSecretUserError checks that err tells the user what to do about a
+// stored secret that does not open, with status, without naming safe.
+func wantSecretUserError(t *testing.T, err error, status int, hint string, safe happydns.Identifier) {
+	t.Helper()
+	var he happydns.HTTPError
+	if !errors.As(err, &he) {
+		t.Fatalf("error = %v (%T), want a happydns.HTTPError", err, err)
+	}
+	if he.HTTPStatus() != status {
+		t.Errorf("status = %d, want %d (%v)", he.HTTPStatus(), status, err)
+	}
+	msg := he.ToErrorResponse().Message
+	if !strings.Contains(msg, hint) {
+		t.Errorf("message %q does not say %q", msg, hint)
+	}
+	if strings.Contains(msg, safe.String()) {
+		t.Errorf("the message sent back to the user names the safe: %q", msg)
 	}
 }

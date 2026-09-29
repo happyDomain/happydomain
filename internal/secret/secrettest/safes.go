@@ -29,6 +29,7 @@ import (
 	"fmt"
 	"slices"
 	"sync"
+	"testing"
 
 	"git.happydns.org/happyDomain/model"
 )
@@ -234,6 +235,24 @@ func (m *Safes) DeleteSafe(id happydns.Identifier) error {
 	delete(m.records, id.String())
 	m.deletes++
 	return nil
+}
+
+// DeleteSafeOf deletes the safe of kind held by owner in store, behind the
+// back of the Manager using it: every value sealed in it no longer opens. It
+// returns the safe deleted.
+func DeleteSafeOf(t testing.TB, store interface {
+	GetSafeByOwner(owner happydns.Identifier, kind string) (*happydns.Safe, error)
+	DeleteSafe(id happydns.Identifier) error
+}, owner happydns.Identifier, kind string) *happydns.Safe {
+	t.Helper()
+	safe, err := store.GetSafeByOwner(owner, kind)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.DeleteSafe(safe.Id); err != nil {
+		t.Fatal(err)
+	}
+	return safe
 }
 
 // Put stores safe as is, as a record written behind the storage's back,
