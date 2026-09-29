@@ -182,6 +182,13 @@ func (nc *NotificationController) UpdateChannel(c *gin.Context) {
 	ch.Id = existing.Id
 	ch.UserId = existing.UserId
 
+	// Each type reads its own config: another type would inherit the stored
+	// one, secrets included.
+	if ch.Type != existing.Type {
+		middleware.ErrorResponse(c, http.StatusBadRequest, errors.New("the type of a channel cannot be changed, create a new channel instead"))
+		return
+	}
+
 	// Carry forward stored secrets so a GET → PUT round-trip does not wipe them.
 	merged, err := nc.registry.MergeChannelForUpdate(existing, ch)
 	if err != nil {
