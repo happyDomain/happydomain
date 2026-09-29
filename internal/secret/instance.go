@@ -204,19 +204,70 @@ func (k *InstanceKey) VerifyCheck(store CheckStorage) error {
 	return nil
 }
 
+// Storage is what secret management keeps in the database.
+type Storage interface {
+	CheckStorage
+	SafeStorage
+}
+
 // StartupCheck refuses a configuration that would leave secrets unreadable:
-// the instance policy without a keyset, or a keyset that is not the one the
-// database was used with.
-func StartupCheck(policy Policy, key *InstanceKey, store CheckStorage) error {
+// the instance policy without a keyset, instance safes without a keyset to
+// open them, or a keyset that is not the one the database was used with.
+func StartupCheck(policy Policy, key *InstanceKey, store Storage) error {
 	if policy == PolicyInstance && key == nil {
 		return errors.New("the instance secret policy requires an instance keyset: see `happydomain secret-keyset generate`")
 	}
 
-	if key != nil {
-		if err := key.VerifyCheck(store); err != nil {
-			return err
+	if key == nil {
+		has, err := hasSafeOfKind(store, KindInstance)
+		if err != nil {
+			return fmt.Errorf("unable to list safes: %w", err)
 		}
+		if has {
+			return errors.New("secrets are sealed under an instance keyset, but none is configured: set -secret-keyset-file")
+		}
+		return nil
 	}
 
-	return nil
+	return key.VerifyCheck(store)
+}
+
+func hasSafeOfKind(store SafeStorage, kind string) (bool, error) {
+	iter, err := store.ListAllSafes()
+	if err != nil {
+		return false, err
+	}
+	defer iter.Close()
+
+	for iter.Next() {
+		if iter.Item().Kind == kind {
+			return true, nil
+		}
+	}
+	return false, iter.Err()
+}
+
+// SafeStorage keeps the safes.
+type SafeStorage interface {
+	// ListAllSafes lists every safe.
+	ListAllSafes() (happydns.Iterator[happydns.Safe], error)
+
+	// GetSafe returns the safe with the given identifier, or
+	// happydns.ErrSafeNotFound.
+	GetSafe(id happydns.Identifier) (*happydns.Safe, error)
+
+	// GetSafeByOwner returns the safe of the given kind owned by owner, or
+	// happydns.ErrSafeNotFound.
+	GetSafeByOwner(owner happydns.Identifier, kind string) (*happydns.Safe, error)
+
+	// CreateSafe stores a new safe, failing when its owner already has one
+	// of its kind.
+	CreateSafe(safe *happydns.Safe) error
+
+	// UpdateSafe replaces a stored safe.
+	UpdateSafe(safe *happydns.Safe) error
+
+	// DeleteSafe removes a safe: every value sealed in it becomes
+	// unreadable.
+	DeleteSafe(id happydns.Identifier) error
 }

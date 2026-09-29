@@ -61,6 +61,7 @@ type Storage interface {
 	notification.NotificationRecordStorage
 	provider.ProviderStorage
 	secret.CheckStorage
+	secret.SafeStorage
 	session.SessionStorage
 	user.UserStorage
 	zone.ZoneStorage
