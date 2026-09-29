@@ -30,6 +30,14 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+var secretType = reflect.TypeFor[happydns.Secret]()
+
+// isSecret reports whether t is happydns.Secret, which marks a secret on its
+// own, tag or not.
+func isSecret(t reflect.Type) bool {
+	return t == secretType
+}
+
 // GenField generates a generic Field based on the happydomain tag.
 func GenField(field reflect.StructField) (f *happydns.Field) {
 	jsonTag := field.Tag.Get("json")
@@ -37,6 +45,12 @@ func GenField(field reflect.StructField) (f *happydns.Field) {
 
 	f = &happydns.Field{
 		Type: field.Type.String(),
+	}
+
+	if isSecret(field.Type) {
+		// A string for the client, which never sees anything else.
+		f.Type = "string"
+		f.Secret = true
 	}
 
 	if len(jsonTuples) > 0 && len(jsonTuples[0]) > 0 {

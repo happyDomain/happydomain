@@ -28,14 +28,13 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-// RedactSecrets replaces the value of every field tagged `secret` with
-// happydns.RedactedSecret, recursing into embedded and nested structs the same
-// way Endpoints does.
+// RedactSecrets replaces the value of every happydns.Secret, and of every
+// field tagged `secret`, with happydns.RedactedSecret, recursing into embedded
+// and nested structs the same way Endpoints does.
 //
-// It exists because the credentials a user entrusts to happyDomain live in a
-// struct whose shape differs for each of the 60+ providers, so there is no one
-// type to write a MarshalJSON on. Reading the tags back is the only place we
-// can decide, once, that a stored credential never leaves over the user API.
+// Secret.MarshalJSON writes the stored form, which the database needs and the
+// user API must never send, and tagged string fields predate Secret: this is
+// the one place deciding that a stored credential never leaves over the API.
 //
 // It mutates data in place, so callers must own what they pass. That holds for
 // the provider handlers: GetUserProvider and the provider middleware both
@@ -64,6 +63,13 @@ func redactStruct(v reflect.Value) {
 		}
 
 		fv := v.Field(i)
+
+		if isSecret(fv.Type()) {
+			if fv.CanAddr() {
+				fv.Addr().Interface().(*happydns.Secret).Redact()
+			}
+			continue
+		}
 
 		if inner := structValue(fv); inner.IsValid() {
 			redactStruct(inner)
@@ -152,6 +158,11 @@ func mergeStruct(ev, iv reflect.Value) {
 			efv = ev.Field(i)
 		}
 
+		if isSecret(ifv.Type()) {
+			mergeSecret(efv, ifv)
+			continue
+		}
+
 		if inner := structValue(ifv); inner.IsValid() {
 			var existingInner reflect.Value
 			if efv.IsValid() {
@@ -211,6 +222,26 @@ func mergeValue(efv, ifv reflect.Value) {
 		if stored {
 			ifv.Set(efv)
 		}
+	}
+}
+
+// mergeSecret restores the stored Secret, whatever its state and without
+// opening it, when incoming holds the placeholder.
+func mergeSecret(efv, ifv reflect.Value) {
+	if !ifv.CanSet() {
+		return
+	}
+
+	if !ifv.Interface().(happydns.Secret).IsRedacted() {
+		return
+	}
+
+	if efv.IsValid() && efv.Type() == ifv.Type() {
+		// Shared, unlike the []byte of mergeValue: a Secret never changes
+		// its value in place, its methods replace it.
+		ifv.Set(efv)
+	} else {
+		ifv.SetZero()
 	}
 }
 
