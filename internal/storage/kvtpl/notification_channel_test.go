@@ -74,6 +74,34 @@ func TestCreateChannelRefusesInvalidId(t *testing.T) {
 	}
 }
 
+// Like its identifier and user, the type of a channel cannot change: each type
+// reads its own config, secrets included.
+func TestReplaceChannelRefusesTypeChange(t *testing.T) {
+	s := newStorage(t)
+	id := newIdentifier(t)
+	config := json.RawMessage(`{"url":"https://example.com/hook","secret":"kept"}`)
+	if err := s.CreateChannel(&happydns.NotificationChannel{Id: id, UserId: newIdentifier(t), Type: "webhook", Config: config}); err != nil {
+		t.Fatal(err)
+	}
+
+	err := s.ReplaceChannel(id, func(ch *happydns.NotificationChannel) (*happydns.NotificationChannel, error) {
+		ch.Type = "email"
+		ch.Config = json.RawMessage(`{}`)
+		return ch, nil
+	})
+	if err == nil {
+		t.Fatal("ReplaceChannel changing the type succeeded")
+	}
+
+	stored, err := s.GetChannel(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stored.Type != "webhook" || string(stored.Config) != string(config) {
+		t.Errorf("stored = %s %s, want the channel left as it was", stored.Type, stored.Config)
+	}
+}
+
 func TestListAllChannels(t *testing.T) {
 	s := newStorage(t)
 	for _, owner := range []happydns.Identifier{{0x01}, {0x02}} {

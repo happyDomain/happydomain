@@ -659,6 +659,11 @@ func (s *instrumentedStorage) PutState(state *happydns.NotificationState) (err e
 	return s.inner.PutState(state)
 }
 
+func (s *instrumentedStorage) ReplaceChannel(id happydns.Identifier, update func(*happydns.NotificationChannel) (*happydns.NotificationChannel, error)) (err error) {
+	defer observe("update", "notification_channel")(&err)
+	return s.inner.ReplaceChannel(id, update)
+}
+
 func (s *instrumentedStorage) ReplaceDiscoveryEntries(producerID string, target happydns.CheckTarget, entries []happydns.DiscoveryEntry) (err error) {
 	defer observe("update", "discovery_entry")(&err)
 	return s.inner.ReplaceDiscoveryEntries(producerID, target, entries)

@@ -23,13 +23,14 @@ package notification
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	notifPkg "git.happydns.org/happyDomain/internal/notifier"
 	"git.happydns.org/happyDomain/model"
 )
 
-// ChannelService creates the notification channels users submit.
+// ChannelService creates and updates the notification channels users submit.
 type ChannelService struct {
 	store    NotificationChannelStorage
 	registry *notifPkg.Registry
@@ -64,4 +65,82 @@ func (s *ChannelService) CreateChannel(ctx context.Context, user *happydns.User,
 	}
 
 	return nil
+}
+
+// UpdateChannel stores the channel id of user as apply changes it from what
+// is stored, and returns it. apply gets a copy of the stored channel, so that
+// what it leaves out keeps its stored value; the identifier and owner are
+// kept whatever it does.
+//
+// The channel is written only if it is still what apply was given: the
+// stored secret carried forward is never written over what another writer,
+// such as a reseal, stored in between. Such an update fails with a
+// happydns.ConflictError; retrying reads the channel again.
+//
+// This only guards against a write landing while the update is handled. A
+// client submitting a form read before someone else's change is not detected:
+// the update is applied to what is stored when writing.
+//
+// What is wrong with the update comes back as a happydns.ValidationError; a
+// channel that is not user's as happydns.ErrNotificationChannelNotFound.
+func (s *ChannelService) UpdateChannel(ctx context.Context, user *happydns.User, id happydns.Identifier, apply func(*happydns.NotificationChannel) error) (*happydns.NotificationChannel, error) {
+	// What updating the stored channel failed with, told apart from what the
+	// storage fails with.
+	var updateErr error
+	var updated *happydns.NotificationChannel
+	err := s.store.ReplaceChannel(id, func(existing *happydns.NotificationChannel) (*happydns.NotificationChannel, error) {
+		updated, updateErr = s.updated(ctx, user, existing, apply)
+		return updated, updateErr
+	})
+
+	switch {
+	case updateErr != nil:
+		return nil, updateErr
+	case errors.Is(err, happydns.ErrChangedMeanwhile):
+		return nil, happydns.ConflictError{
+			Msg: "This channel was written by another operation at the same moment. Please try again.",
+			Err: err,
+		}
+	case err != nil:
+		return nil, err
+	}
+
+	return updated, nil
+}
+
+// updated returns existing, a stored channel, as apply changes it, checked,
+// and its stored secrets carried forward.
+func (s *ChannelService) updated(ctx context.Context, user *happydns.User, existing *happydns.NotificationChannel, apply func(*happydns.NotificationChannel) error) (*happydns.NotificationChannel, error) {
+	if !existing.UserId.Equals(user.Id) {
+		return nil, happydns.ErrNotificationChannelNotFound
+	}
+
+	// A clone, not a copy: decoding reuses the slices it finds, and the
+	// merge below reads existing.
+	ch := existing.Clone()
+	if err := apply(ch); err != nil {
+		return nil, happydns.ValidationError{Msg: err.Error()}
+	}
+	ch.Id = existing.Id
+	ch.UserId = existing.UserId
+
+	// Each type reads its own config: another type would inherit the stored
+	// one, secrets included.
+	if ch.Type != existing.Type {
+		return nil, happydns.ValidationError{Msg: "the type of a channel cannot be changed, create a new channel instead"}
+	}
+
+	// Carry forward stored secrets, so that a GET then PUT round-trip does
+	// not wipe them.
+	merged, err := s.registry.MergeChannelForUpdate(existing, ch)
+	if err != nil {
+		return nil, happydns.ValidationError{Msg: err.Error()}
+	}
+	ch.Config = merged
+
+	if _, err := s.registry.AcceptChannelConfig(ctx, ch); err != nil {
+		return nil, happydns.ValidationError{Msg: err.Error()}
+	}
+
+	return ch, nil
 }

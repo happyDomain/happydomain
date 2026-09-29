@@ -38,6 +38,12 @@ type NotificationChannelStorage interface {
 	// database returns.
 	CreateChannel(ch *happydns.NotificationChannel) error
 	UpdateChannel(ch *happydns.NotificationChannel) error
+	// ReplaceChannel rewrites the channel id with what update returns from
+	// the stored one. It writes nothing when update returns nil, and fails,
+	// writing nothing, with happydns.ErrNotificationChannelNotFound or
+	// happydns.ErrChangedMeanwhile when the channel was deleted or changed
+	// in between. Its identifier and user cannot change.
+	ReplaceChannel(id happydns.Identifier, update func(*happydns.NotificationChannel) (*happydns.NotificationChannel, error)) error
 	DeleteChannel(channelId happydns.Identifier) error
 }
 

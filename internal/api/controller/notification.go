@@ -22,6 +22,7 @@
 package controller
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -169,45 +170,35 @@ func (nc *NotificationController) GetChannel(c *gin.Context) {
 //	@Success	200			{object}	happydns.NotificationChannel
 //	@Router		/notifications/channels/{channelId} [put]
 func (nc *NotificationController) UpdateChannel(c *gin.Context) {
+	user := middleware.MyUser(c)
 	existing := middleware.MyNotificationChannel(c)
 
-	// Bind onto a clone so json.Unmarshal only overwrites present fields; identity fields are forced back below.
-	// A clone, not a copy: decoding reuses the slices it finds, and the merge below reads existing.
-	ch := existing.Clone()
-	if err := c.ShouldBindJSON(ch); err != nil {
-		middleware.ErrorResponse(c, http.StatusBadRequest, err)
-		return
-	}
-
-	ch.Id = existing.Id
-	ch.UserId = existing.UserId
-
-	// Each type reads its own config: another type would inherit the stored
-	// one, secrets included.
-	if ch.Type != existing.Type {
-		middleware.ErrorResponse(c, http.StatusBadRequest, errors.New("the type of a channel cannot be changed, create a new channel instead"))
-		return
-	}
-
-	// Carry forward stored secrets so a GET → PUT round-trip does not wipe them.
-	merged, err := nc.registry.MergeChannelForUpdate(existing, ch)
+	body, err := c.GetRawData()
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusBadRequest, err)
 		return
 	}
-	ch.Config = merged
 
-	if _, err := nc.registry.AcceptChannelConfig(c.Request.Context(), ch); err != nil {
+	// The body is decoded onto a clone of the channel as stored when it is
+	// written, so that only the fields it holds are overwritten.
+	updated, err := nc.channels.UpdateChannel(c.Request.Context(), user, existing.Id, func(ch *happydns.NotificationChannel) error {
+		return json.Unmarshal(body, ch)
+	})
+	switch {
+	case errors.As(err, new(happydns.ValidationError)), errors.As(err, new(happydns.ConflictError)):
+		// Their message is meant for the client; ErrorResponse answers with
+		// the status of each.
 		middleware.ErrorResponse(c, http.StatusBadRequest, err)
 		return
-	}
-
-	if err := nc.channelStore.UpdateChannel(ch); err != nil {
+	case errors.Is(err, happydns.ErrNotificationChannelNotFound):
+		middleware.ErrorResponse(c, http.StatusNotFound, err)
+		return
+	case err != nil:
 		internalError(c, err)
 		return
 	}
 
-	redacted, err := nc.registry.RedactChannel(ch)
+	redacted, err := nc.registry.RedactChannel(updated)
 	if err != nil {
 		internalError(c, err)
 		return

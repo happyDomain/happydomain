@@ -211,3 +211,68 @@ func TestUpdatePreferenceLeavesExistingAlone(t *testing.T) {
 		t.Errorf("existing changed by the request: quietStart=%d channelIds=%v", *existing.QuietStart, existing.ChannelIds)
 	}
 }
+
+// changedAfterRead stores meanwhile over the channel right after the update
+// read it, as a reseal landing in between would.
+type changedAfterRead struct {
+	storage.Storage
+	meanwhile *happydns.NotificationChannel
+}
+
+func (s *changedAfterRead) ReplaceChannel(id happydns.Identifier, update func(*happydns.NotificationChannel) (*happydns.NotificationChannel, error)) error {
+	return s.Storage.ReplaceChannel(id, func(ch *happydns.NotificationChannel) (*happydns.NotificationChannel, error) {
+		if s.meanwhile != nil {
+			meanwhile := s.meanwhile
+			if err := s.Storage.ReplaceChannel(meanwhile.Id, func(*happydns.NotificationChannel) (*happydns.NotificationChannel, error) {
+				return meanwhile, nil
+			}); err != nil {
+				return nil, err
+			}
+			s.meanwhile = nil
+		}
+		return update(ch)
+	})
+}
+
+// An update refused because the channel changed in between is answered 409,
+// so that the client knows to reload it; a body that does not decode, 400.
+func TestUpdateChannelAnswers(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	db, err := inmemory.Instantiate()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	user := &happydns.User{Id: happydns.Identifier{0x01}}
+	existing := &happydns.NotificationChannel{
+		Id:     newTestIdentifier(t),
+		UserId: user.Id,
+		Type:   notifPkg.ChannelTypeWebhook,
+		Config: json.RawMessage(`{"url":"https://192.0.2.10/hook","secret":"kept"}`),
+	}
+	if err := db.CreateChannel(existing); err != nil {
+		t.Fatal(err)
+	}
+	meanwhile := existing.Clone()
+	meanwhile.Config = json.RawMessage(`{"url":"https://192.0.2.10/meanwhile"}`)
+
+	store := &changedAfterRead{Storage: db, meanwhile: meanwhile}
+	nc := NewNotificationController(nil, newWebhookRegistry(t), store, db, db)
+
+	put := func(body string) *httptest.ResponseRecorder {
+		w, c := channelRequest(t, http.MethodPut, body, user, existing)
+		nc.UpdateChannel(c)
+		return w
+	}
+
+	if w := put(`{"config":{"url":"https://192.0.2.10/new"}}`); w.Code != http.StatusConflict {
+		t.Errorf("UpdateChannel changed meanwhile = %d %s, want 409", w.Code, w.Body.String())
+	}
+	if stored, _ := db.GetChannel(existing.Id); string(stored.Config) != string(meanwhile.Config) {
+		t.Errorf("stored = %s, want what was written meanwhile", stored.Config)
+	}
+
+	if w := put(`{"config":`); w.Code != http.StatusBadRequest {
+		t.Errorf("UpdateChannel with a broken body = %d %s, want 400", w.Code, w.Body.String())
+	}
+}

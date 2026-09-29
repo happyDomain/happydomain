@@ -25,6 +25,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"slices"
 	"strings"
 
 	"git.happydns.org/happyDomain/model"
@@ -111,6 +112,25 @@ func (s *KVStorage) CreateChannel(ch *happydns.NotificationChannel) error {
 func (s *KVStorage) UpdateChannel(ch *happydns.NotificationChannel) error {
 	// Index has no payload, so only the primary needs writing.
 	return s.db.Put(notifchPrimaryKey(ch.Id), ch)
+}
+
+// ReplaceChannel rewrites a stored channel, unless it changed or was deleted
+// in between. Its identifier and user cannot change: the user index is left
+// as it is. Nor can its type: each type reads its own config, secrets
+// included.
+func (s *KVStorage) ReplaceChannel(id happydns.Identifier, update func(*happydns.NotificationChannel) (*happydns.NotificationChannel, error)) error {
+	return replace(s.db, notifchPrimaryKey(id), happydns.ErrNotificationChannelNotFound, func(old *happydns.NotificationChannel) (*happydns.NotificationChannel, error) {
+		user := slices.Clone(old.UserId)
+		typ := old.Type
+		next, err := update(old)
+		if err != nil || next == nil {
+			return next, err
+		}
+		if !next.Id.Equals(id) || !next.UserId.Equals(user) || next.Type != typ {
+			return nil, errors.New("the identifier, user and type of a notification channel cannot change")
+		}
+		return next, nil
+	})
 }
 
 func (s *KVStorage) DeleteChannel(channelId happydns.Identifier) error {
