@@ -19,6 +19,10 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import type { HappydnsSession } from "$lib/api-base/types.gen";
+import type { HappydnsSession, HappydnsSessionWithToken } from "$lib/api-base/types.gen";
 
 export type Session = HappydnsSession;
+
+// SessionWithToken is only returned when a session is created: it is the one
+// time its token is handed out.
+export type SessionWithToken = HappydnsSessionWithToken;

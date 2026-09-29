@@ -27,7 +27,7 @@ import {
     deleteSessionsBySessionId,
     deleteSessions as deleteSdkSessions,
 } from "$lib/api-base/sdk.gen";
-import type { Session } from "$lib/model/session";
+import type { Session, SessionWithToken } from "$lib/model/session";
 import { unwrapSdkResponse, unwrapEmptyResponse } from "./errors";
 
 export async function listSessions(): Promise<Array<Session>> {
@@ -42,12 +42,16 @@ export async function getCurrentSession(): Promise<Session> {
     return unwrapSdkResponse(await getSession()) as Session;
 }
 
-export async function addSession(description: string): Promise<Session> {
+/**
+ * Create a new session. The returned token is not stored by the server: it
+ * cannot be retrieved later.
+ */
+export async function addSession(description: string): Promise<SessionWithToken> {
     return unwrapSdkResponse(
         await postSessions({
             body: { description },
         }),
-    ) as Session;
+    ) as SessionWithToken;
 }
 
 export async function updateSession(session: Session): Promise<Session> {

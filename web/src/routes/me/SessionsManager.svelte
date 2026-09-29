@@ -49,13 +49,11 @@
 
     import type { Session } from "$lib/model/session";
     import { t } from "$lib/translations";
-    import { digestHex } from "$lib/utils/crypto";
 
-    // Outside a secure context (plain HTTP), digestHex gives up and the short
-    // identifier is simply omitted, the session stays identifiable by its
-    // description and dates.
-    function shortId(id: string): Promise<string | undefined> {
-        return digestHex("SHA-256", new TextEncoder().encode(id), 6);
+    // The session id is a public identifier (a hash of the token), so it can be
+    // shown as is; its first characters are enough to tell sessions apart.
+    function shortId(id: string): string {
+        return id.slice(0, 10);
     }
 
     let current_session_req = getCurrentSession();
@@ -88,7 +86,7 @@
         creating_session_in_progress = true;
 
         const session = await addSession(newSessionDescription);
-        newSessionSecret = session.id;
+        newSessionSecret = session.token;
 
         creating_session_in_progress = false;
         newSessionSecretShown = false;
@@ -150,9 +148,7 @@
                         <div class="text-truncate">
                             {session.description}
                             <small class="text-muted">
-                                {#await shortId(session.id) then sessid}
-                                    {sessid ?? ""}
-                                {/await}
+                                {shortId(session.id)}
                             </small>
                             {#if session.id === current_session.id}
                                 <Badge>
