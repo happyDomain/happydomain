@@ -117,7 +117,11 @@ func (app *App) initSecrets() {
 	}
 
 	var err error
-	app.secrets, err = secret.NewManager(policy)
+	app.secrets, err = secret.NewManager(secret.Config{
+		Policy:      policy,
+		InstanceKey: key,
+		Safes:       app.store,
+	})
 	if err != nil {
 		log.Fatalf("Unable to initialize secret management: %s", err)
 	}

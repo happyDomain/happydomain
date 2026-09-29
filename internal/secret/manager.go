@@ -28,6 +28,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/tink-crypto/tink-go/v2/tink"
+
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -72,17 +74,46 @@ const reservedPrefix = "hds:"
 // happyDomain uses them on behalf of their owner.
 type Manager struct {
 	policy Policy
+
+	// safes is nil when no safe can be opened: no instance keyset and no
+	// storage.
+	safes *safeRegistry
 }
 
-// NewManager returns a Manager sealing new secrets under policy.
-func NewManager(policy Policy) (*Manager, error) {
-	switch policy {
+// Config tells a Manager how to seal new secrets and how to open stored ones.
+type Config struct {
+	// Policy says how new secrets are sealed.
+	Policy Policy
+
+	// InstanceKey opens the instance safes. Without it, their secrets
+	// cannot be opened.
+	InstanceKey *InstanceKey
+
+	// Safes keeps the safes. Required with InstanceKey.
+	Safes SafeStorage
+}
+
+// NewManager returns a Manager for cfg.
+func NewManager(cfg Config) (*Manager, error) {
+	switch cfg.Policy {
 	case PolicyPlaintext:
+	case PolicyInstance:
+		if cfg.InstanceKey == nil {
+			return nil, errors.New("the instance secret policy requires an instance keyset")
+		}
 	default:
-		return nil, fmt.Errorf("unknown secret policy %q", policy)
+		return nil, fmt.Errorf("unknown secret policy %q", cfg.Policy)
 	}
 
-	return &Manager{policy: policy}, nil
+	if cfg.InstanceKey != nil && cfg.Safes == nil {
+		return nil, errors.New("an instance keyset requires a safe storage")
+	}
+
+	m := &Manager{policy: cfg.Policy}
+	if cfg.Safes != nil {
+		m.safes = newSafeRegistry(cfg.Safes, cfg.InstanceKey)
+	}
+	return m, nil
 }
 
 // SealObject seals every clear Secret of obj, a pointer to a struct, under
@@ -99,42 +130,61 @@ func (m *Manager) SealObject(ctx context.Context, sc SecretContext, obj any) err
 		return err
 	}
 
+	// All the secrets of an object go to the same safe.
+	var safe *happydns.Safe
+	var primitive tink.AEAD
+
 	return Walk(obj, func(path string, s *happydns.Secret) error {
-		fsc := sc
-		fsc.Field = path
-		return m.seal(ctx, fsc, s)
+		switch {
+		case s.IsEmpty(), s.IsSealed(), s.IsOpened():
+			return nil
+		case s.IsRedacted():
+			return ErrRedactedSecret
+		}
+
+		clear, ok := s.ClearForSealing()
+		if !ok {
+			return errors.New("secret in an unknown state")
+		}
+
+		switch m.policy {
+		case PolicyPlaintext:
+			if strings.HasPrefix(string(clear), reservedPrefix) {
+				// Stored as is, it would read back as sealed, now or
+				// once a format to come claims its prefix.
+				return fmt.Errorf("a value starting with %q cannot be stored in clear", reservedPrefix)
+			}
+			if string(clear) == happydns.RedactedSecret {
+				// Stored as is, it would read back as redacted.
+				return errors.New("the redacted placeholder cannot be stored in clear")
+			}
+			s.SetOpened(string(clear), clear)
+			return nil
+
+		case PolicyInstance:
+			if safe == nil {
+				var err error
+				if safe, err = m.safes.instanceSafe(sc.Owner); err != nil {
+					return err
+				}
+				if primitive, err = m.safes.aead(safe); err != nil {
+					return err
+				}
+			}
+
+			fsc := sc
+			fsc.Field = path
+
+			ct, err := primitive.Encrypt(clear, AssociatedData(safe.Id, fsc))
+			if err != nil {
+				return err
+			}
+			s.SetOpened(FormatSealed(safe.Id, ct), clear)
+			return nil
+		}
+
+		return fmt.Errorf("unknown secret policy %q", m.policy)
 	})
-}
-
-func (m *Manager) seal(_ context.Context, _ SecretContext, s *happydns.Secret) error {
-	switch {
-	case s.IsEmpty(), s.IsSealed(), s.IsOpened():
-		return nil
-	case s.IsRedacted():
-		return ErrRedactedSecret
-	}
-
-	clear, ok := s.ClearForSealing()
-	if !ok {
-		return errors.New("secret in an unknown state")
-	}
-
-	switch m.policy {
-	case PolicyPlaintext:
-		if strings.HasPrefix(string(clear), reservedPrefix) {
-			// Stored as is, it would read back as sealed, now or once a
-			// format to come claims its prefix.
-			return fmt.Errorf("a value starting with %q cannot be stored in clear", reservedPrefix)
-		}
-		if string(clear) == happydns.RedactedSecret {
-			// Stored as is, it would read back as redacted.
-			return errors.New("the redacted placeholder cannot be stored in clear")
-		}
-		s.SetOpened(string(clear), clear)
-		return nil
-	}
-
-	return fmt.Errorf("unknown secret policy %q", m.policy)
 }
 
 // OpenObject opens every sealed Secret of obj, a pointer to a struct. Clear
@@ -148,10 +198,13 @@ func (m *Manager) OpenObject(ctx context.Context, sc SecretContext, obj any) err
 		return err
 	}
 
+	// The primitives of the safes met so far, by safe identifier.
+	primitives := map[string]tink.AEAD{}
+
 	return Walk(obj, func(path string, s *happydns.Secret) error {
 		fsc := sc
 		fsc.Field = path
-		return m.open(ctx, fsc, s)
+		return m.open(fsc, s, primitives)
 	})
 }
 
@@ -173,7 +226,7 @@ func (m *Manager) OpenCopy(ctx context.Context, sc SecretContext, obj any) (any,
 	return cp, nil
 }
 
-func (m *Manager) open(_ context.Context, _ SecretContext, s *happydns.Secret) error {
+func (m *Manager) open(sc SecretContext, s *happydns.Secret, primitives map[string]tink.AEAD) error {
 	switch {
 	case s.IsEmpty(), s.IsClear(), s.IsOpened():
 		return nil
@@ -181,12 +234,45 @@ func (m *Manager) open(_ context.Context, _ SecretContext, s *happydns.Secret) e
 		return ErrRedactedSecret
 	}
 
-	sv, err := ParseSealed(s.Token())
+	token := s.Token()
+	sv, err := ParseSealed(token)
 	if err != nil {
 		return err
 	}
 
-	return fmt.Errorf("%w %s", ErrUnknownSafe, sv.SafeId.String())
+	primitive, ok := primitives[sv.SafeId.String()]
+	if !ok {
+		if m.safes == nil {
+			return fmt.Errorf("%w %s", ErrUnknownSafe, sv.SafeId.String())
+		}
+
+		safe, err := m.safes.store.GetSafe(sv.SafeId)
+		if errors.Is(err, happydns.ErrSafeNotFound) {
+			return fmt.Errorf("%w %s", ErrUnknownSafe, sv.SafeId.String())
+		}
+		if err != nil {
+			return err
+		}
+
+		// The associated data already binds the owner; this only makes the
+		// error clearer.
+		if !safe.Owner.Equals(sc.Owner) {
+			return fmt.Errorf("safe %s does not belong to the owner of this secret", sv.SafeId.String())
+		}
+
+		if primitive, err = m.safes.aead(safe); err != nil {
+			return err
+		}
+		primitives[sv.SafeId.String()] = primitive
+	}
+
+	clear, err := primitive.Decrypt(sv.Payload, AssociatedData(sv.SafeId, sc))
+	if err != nil {
+		return fmt.Errorf("unable to open secret %s: %w", sc.Field, err)
+	}
+
+	s.SetOpened(token, clear)
+	return nil
 }
 
 // CheckIncoming refuses an object coming from a client that holds a sealed
