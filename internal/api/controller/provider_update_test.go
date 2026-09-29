@@ -57,7 +57,7 @@ func TestUpdateProviderAnswersTheUpdatedProvider(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	user := &happydns.User{Id: happydns.Identifier{0x01}}
 	old := &happydns.Provider{ProviderMeta: happydns.ProviderMeta{Id: happydns.Identifier{0x02}, Owner: user.Id, Type: "DDNSServer", Comment: "before"}}
-	pc := NewProviderController(&updatingProviders{}, false)
+	pc := NewProviderController(&updatingProviders{})
 
 	update := old.ProviderMeta
 	update.Comment = "after"

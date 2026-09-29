@@ -32,7 +32,7 @@ import (
 func DeclareProviderRoutes(router *gin.RouterGroup, providerUC happydns.ProviderUsecase) {
 	// Redact: these routes answer end users, who must never read a stored
 	// credential back out of happyDomain.
-	pc := controller.NewProviderController(providerUC, true)
+	pc := controller.NewProviderController(providerUC)
 
 	router.GET("/providers", pc.ListProviders)
 	router.POST("/providers", pc.AddProvider)

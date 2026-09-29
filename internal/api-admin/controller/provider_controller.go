@@ -85,9 +85,8 @@ func (pc *ProviderController) ListProviders(c *gin.Context) {
 //	@Router			/providers [post]
 //	@Router			/users/{uid}/providers [post]
 func (pc *ProviderController) AddProvider(c *gin.Context) {
-	// No redaction: an administrator is expected to read provider credentials
-	// back. The user API passes true instead.
-	apidc := controller.NewProviderController(pc.providerService, false)
+	// Credentials are redacted, as on the user API.
+	apidc := controller.NewProviderController(pc.providerService)
 	apidc.AddProvider(c)
 }
 
@@ -127,9 +126,8 @@ func (pc *ProviderController) DeleteProvider(c *gin.Context) {
 //	@Router			/providers/{pid} [get]
 //	@Router			/users/{uid}/providers/{pid} [get]
 func (pc *ProviderController) GetProvider(c *gin.Context) {
-	// No redaction: an administrator is expected to read provider credentials
-	// back. The user API passes true instead.
-	apidc := controller.NewProviderController(pc.providerService, false)
+	// Credentials are redacted, as on the user API.
+	apidc := controller.NewProviderController(pc.providerService)
 	apidc.GetProvider(c)
 }
 
@@ -151,9 +149,8 @@ func (pc *ProviderController) GetProvider(c *gin.Context) {
 //	@Router			/providers/{pid} [put]
 //	@Router			/users/{uid}/providers/{pid} [put]
 func (pc *ProviderController) UpdateProvider(c *gin.Context) {
-	// No redaction: an administrator is expected to read provider credentials
-	// back. The user API passes true instead.
-	apidc := controller.NewProviderController(pc.providerService, false)
+	// Credentials are redacted, as on the user API.
+	apidc := controller.NewProviderController(pc.providerService)
 	apidc.UpdateProvider(c)
 }
 

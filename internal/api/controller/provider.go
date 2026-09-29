@@ -34,33 +34,25 @@ import (
 
 type ProviderController struct {
 	providerService happydns.ProviderUsecase
-
-	// redactSecrets withholds the value of every `secret`-tagged provider
-	// field from the responses this controller writes. The user API sets it;
-	// the admin API reuses these same handlers with it off, as an
-	// administrator is expected to read the credentials back.
-	redactSecrets bool
 }
 
-func NewProviderController(providerService happydns.ProviderUsecase, redactSecrets bool) *ProviderController {
+func NewProviderController(providerService happydns.ProviderUsecase) *ProviderController {
 	return &ProviderController{
 		providerService: providerService,
-		redactSecrets:   redactSecrets,
 	}
 }
 
-// writeProvider answers with p, hiding stored credentials unless the caller is
-// the admin API.
+// writeProvider answers with p, its stored credentials withheld. The admin API
+// reuses these handlers and withholds them too: a legacy plaintext value
+// cannot be encoded, and an operator has no use for a sealed one.
 //
 // Redacting in place is safe here: GetUserProvider and the provider middleware
 // both ParseProvider a fresh body out of the store on every request, so p is
-// never shared with anything that still needs the real values. That is also why
-// the middleware must not redact: ListZones, RetrieveZone and every apply path
-// read the provider from the same context key and do need them.
+// never shared with anything that still needs the stored values. That is also
+// why the middleware must not redact: ListZones, RetrieveZone and every apply
+// path read the provider from the same context key and do need them.
 func (pc *ProviderController) writeProvider(c *gin.Context, status int, p *happydns.Provider) {
-	if pc.redactSecrets {
-		forms.RedactSecrets(p.Provider)
-	}
+	forms.RedactSecrets(p.Provider)
 
 	c.JSON(status, p)
 }
