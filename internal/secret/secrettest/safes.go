@@ -23,6 +23,7 @@
 package secrettest
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -41,7 +42,7 @@ import (
 //     GetSafeByOwner follows it;
 //   - a safe needs an owner, a kind and a well-formed identifier, not already
 //     taken;
-//   - the owner and kind of a safe cannot change;
+//   - the identifier, owner and kind of a safe cannot change;
 //   - deleting or updating an unknown safe fails.
 //
 // Records written by Put bypass these rules, to stand for damaged or
@@ -54,9 +55,10 @@ type Safes struct {
 
 	// The counters count the successful writes through the storage
 	// interface; Put is not counted.
-	creates int
-	updates int
-	deletes int
+	creates  int
+	updates  int
+	replaces int
+	deletes  int
 }
 
 func NewSafes() *Safes {
@@ -175,6 +177,48 @@ func (m *Safes) UpdateSafe(safe *happydns.Safe) error {
 	return nil
 }
 
+// ReplaceSafe applies update to a copy of the stored safe, and stores the
+// result unless the safe changed or was deleted in between.
+func (m *Safes) ReplaceSafe(id happydns.Identifier, update func(*happydns.Safe) (*happydns.Safe, error)) error {
+	m.mu.Lock()
+	stored, ok := m.records[id.String()]
+	m.mu.Unlock()
+	if !ok {
+		return happydns.ErrSafeNotFound
+	}
+
+	old, err := decode(stored)
+	if err != nil {
+		return err
+	}
+	owner, kind := slices.Clone(old.Owner), old.Kind
+
+	next, err := update(old)
+	if err != nil || next == nil {
+		return err
+	}
+	if !next.Id.Equals(id) || !next.Owner.Equals(owner) || next.Kind != kind {
+		return errors.New("the identifier, owner and kind of a safe cannot change")
+	}
+	record, err := json.Marshal(next)
+	if err != nil {
+		return err
+	}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	current, ok := m.records[id.String()]
+	if !ok {
+		return happydns.ErrSafeNotFound
+	}
+	if !bytes.Equal(current, stored) {
+		return fmt.Errorf("safe %s: %w", id.String(), happydns.ErrChangedMeanwhile)
+	}
+	m.records[id.String()] = record
+	m.replaces++
+	return nil
+}
+
 // DeleteSafe removes a safe and its owner index.
 func (m *Safes) DeleteSafe(id happydns.Identifier) error {
 	m.mu.Lock()
@@ -228,6 +272,13 @@ func (m *Safes) Deletes() int {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return m.deletes
+}
+
+// Replaces returns the number of safes ReplaceSafe rewrote.
+func (m *Safes) Replaces() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.replaces
 }
 
 type sliceIterator struct {

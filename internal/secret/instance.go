@@ -398,6 +398,14 @@ type SafeStorage interface {
 	// UpdateSafe replaces a stored safe.
 	UpdateSafe(safe *happydns.Safe) error
 
+	// ReplaceSafe rewrites the safe id with what update returns from the
+	// stored safe. update may be called with a copy it can change. It
+	// writes nothing when update returns nil, and fails, writing nothing,
+	// with happydns.ErrSafeNotFound or happydns.ErrChangedMeanwhile when the
+	// safe was deleted or changed in between. The owner and kind of a safe
+	// cannot change.
+	ReplaceSafe(id happydns.Identifier, update func(*happydns.Safe) (*happydns.Safe, error)) error
+
 	// DeleteSafe removes a safe: every value sealed in it becomes
 	// unreadable.
 	DeleteSafe(id happydns.Identifier) error

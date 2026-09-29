@@ -669,6 +669,11 @@ func (s *instrumentedStorage) ReplaceProvider(id happydns.Identifier, update fun
 	return s.inner.ReplaceProvider(id, update)
 }
 
+func (s *instrumentedStorage) ReplaceSafe(id happydns.Identifier, update func(*happydns.Safe) (*happydns.Safe, error)) (err error) {
+	defer observe("update", "safe")(&err)
+	return s.inner.ReplaceSafe(id, update)
+}
+
 func (s *instrumentedStorage) RestoreCheckPlan(plan *happydns.CheckPlan) (err error) {
 	defer observe("restore", "check_plan")(&err)
 	return s.inner.RestoreCheckPlan(plan)

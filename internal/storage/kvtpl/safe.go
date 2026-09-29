@@ -24,6 +24,7 @@ package database
 import (
 	"errors"
 	"fmt"
+	"slices"
 
 	"git.happydns.org/happyDomain/model"
 )
@@ -136,6 +137,22 @@ func (s *KVStorage) UpdateSafe(safe *happydns.Safe) error {
 	}
 
 	return s.db.Put(safePrimaryKey(safe.Id), safe)
+}
+
+// ReplaceSafe rewrites a stored safe, unless it changed or was deleted in
+// between. Its owner and kind cannot change.
+func (s *KVStorage) ReplaceSafe(id happydns.Identifier, update func(*happydns.Safe) (*happydns.Safe, error)) error {
+	return replace(s.db, safePrimaryKey(id), happydns.ErrSafeNotFound, func(old *happydns.Safe) (*happydns.Safe, error) {
+		owner, kind := slices.Clone(old.Owner), old.Kind
+		next, err := update(old)
+		if err != nil || next == nil {
+			return next, err
+		}
+		if !next.Id.Equals(id) || !next.Owner.Equals(owner) || next.Kind != kind {
+			return nil, errors.New("the identifier, owner and kind of a safe cannot change")
+		}
+		return next, nil
+	})
 }
 
 func (s *KVStorage) DeleteSafe(id happydns.Identifier) error {

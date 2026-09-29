@@ -24,13 +24,17 @@ package provider_test
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	providerReg "git.happydns.org/happyDomain/internal/providerregistry"
 	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
+	kv "git.happydns.org/happyDomain/internal/storage/kvtpl"
 	"git.happydns.org/happyDomain/internal/usecase/provider"
 	"git.happydns.org/happyDomain/model"
 )
@@ -407,6 +411,22 @@ func Test_Secret_LegacyPlaintextSealedOnNextWrite(t *testing.T) {
 	}
 }
 
+// failingUpdates makes the nth ReplaceProvider fail, as an interrupted
+// reseal.
+type failingUpdates struct {
+	storage.Storage
+	failAt int
+	calls  int
+}
+
+func (s *failingUpdates) ReplaceProvider(id happydns.Identifier, update func(*happydns.ProviderMessage) (*happydns.Provider, error)) error {
+	s.calls++
+	if s.calls == s.failAt {
+		return errors.New("storage unavailable")
+	}
+	return s.Storage.ReplaceProvider(id, update)
+}
+
 func seedLegacyProviders(t *testing.T, db storage.Storage, n int) (*happydns.User, []happydns.Identifier) {
 	t.Helper()
 	user := createTestUser(t, db, "reseal@example.com")
@@ -416,6 +436,161 @@ func seedLegacyProviders(t *testing.T, db storage.Storage, n int) (*happydns.Use
 		ids = append(ids, p.Id)
 	}
 	return user, ids
+}
+
+func Test_Secret_ResealProviders(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	_, ids := seedLegacyProviders(t, db, 3)
+
+	instance := instanceSecrets(t, db)
+	svc := provider.NewService(db, &mockValidator{}, nil, instance)
+
+	counts, err := svc.InspectSecrets(ctx)
+	if err != nil || counts.Clear != 3 {
+		t.Fatalf("InspectProviders before = %+v, %v; want 3 clear", counts, err)
+	}
+
+	report, err := svc.ResealSecrets(ctx)
+	if err != nil || report.Processed != 3 || report.Changed != 3 || report.Failed != 0 {
+		t.Fatalf("ResealProviders = %+v, %v", report, err)
+	}
+	for _, id := range ids {
+		if body := storedBody(t, db, id); strings.Contains(body, "legacy") {
+			t.Errorf("provider still in clear: %s", body)
+		}
+	}
+
+	counts, _ = svc.InspectSecrets(ctx)
+	if counts.Clear != 0 || counts.Sealed[secret.KindInstance] != 3 || counts.Unreadable != 0 {
+		t.Errorf("InspectProviders after = %+v, want 3 sealed", counts)
+	}
+
+	// Idempotent.
+	if report, err := svc.ResealSecrets(ctx); err != nil || report.Changed != 0 {
+		t.Errorf("second ResealProviders = %+v, %v; want nothing changed", report, err)
+	}
+}
+
+func Test_Secret_ResealBackToPlaintext(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	_, ids := seedLegacyProviders(t, db, 2)
+
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	instance, _ := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db})
+	plaintext, _ := secret.NewManager(secret.Config{Policy: secret.PolicyPlaintext, InstanceKey: key, Safes: db})
+
+	if _, err := provider.NewService(db, &mockValidator{}, nil, instance).ResealSecrets(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	report, err := provider.NewService(db, &mockValidator{}, nil, plaintext).ResealSecrets(ctx)
+	if err != nil || report.Changed != 2 {
+		t.Fatalf("ResealProviders(plaintext) = %+v, %v", report, err)
+	}
+	for i, id := range ids {
+		want := `{"host":"h","apikey":"legacy-` + string(rune('a'+i)) + `"}`
+		if body := storedBody(t, db, id); body != want {
+			t.Errorf("stored = %s, want %s", body, want)
+		}
+	}
+}
+
+func Test_Secret_ResealResumesAfterInterruption(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	_, ids := seedLegacyProviders(t, db, 3)
+	instance := instanceSecrets(t, db)
+
+	broken := &failingUpdates{Storage: db, failAt: 2}
+	report, err := provider.NewService(broken, &mockValidator{}, nil, instance).ResealSecrets(ctx)
+	if err != nil {
+		t.Fatalf("ResealProviders: %v", err)
+	}
+	if report.Failed != 1 || report.Changed != 2 || len(report.Errors) != 1 {
+		t.Errorf("report = %+v, want one failure reported and the others done", report)
+	}
+
+	report, err = provider.NewService(db, &mockValidator{}, nil, instance).ResealSecrets(ctx)
+	if err != nil || report.Changed != 1 || report.Failed != 0 {
+		t.Errorf("rerun = %+v, %v; want the remaining one done", report, err)
+	}
+	for _, id := range ids {
+		if body := storedBody(t, db, id); strings.Contains(body, "legacy") {
+			t.Errorf("provider still in clear after rerun: %s", body)
+		}
+	}
+}
+
+// slowReads widens the window between a reseal reading a provider and
+// writing it back.
+type slowReads struct {
+	storage.Storage
+}
+
+func (s *slowReads) ReplaceProvider(id happydns.Identifier, update func(*happydns.ProviderMessage) (*happydns.Provider, error)) error {
+	return s.Storage.ReplaceProvider(id, func(msg *happydns.ProviderMessage) (*happydns.Provider, error) {
+		time.Sleep(time.Millisecond)
+		return update(msg)
+	})
+}
+
+// A user saving a new key while an administrator reseals must not see it
+// replaced by the value the reseal read before.
+func Test_Secret_ResealDoesNotLoseConcurrentUpdates(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	user, ids := seedLegacyProviders(t, db, 1)
+	id := ids[0]
+
+	// The user side stores in clear, so that every reseal has work to do.
+	userSvc := provider.NewService(db, &mockValidator{}, nil, plaintextSecrets(t))
+	// Slow reads widen the window between the reseal reading a provider and
+	// writing it back.
+	adminSvc := provider.NewService(&slowReads{Storage: db}, &mockValidator{}, nil, instanceSecrets(t, db))
+
+	const rounds = 50
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		for i := range rounds {
+			body := fmt.Sprintf(`{"host":"h","apikey":"user-%d"}`, i)
+			for {
+				err := userSvc.UpdateProviderFromMessage(ctx, id, user, secretMessage(t, "SecretTestProvider", body))
+				// Resealed in between: retry, as a client told so would.
+				var conflict happydns.ConflictError
+				if errors.As(err, &conflict) {
+					continue
+				}
+				if err != nil {
+					t.Errorf("UpdateProviderFromMessage: %v", err)
+					return
+				}
+				break
+			}
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		for range rounds {
+			if _, err := adminSvc.ResealSecrets(ctx); err != nil {
+				t.Errorf("ResealProviders: %v", err)
+				return
+			}
+		}
+	}()
+	wg.Wait()
+
+	p, err := adminSvc.GetUserProvider(ctx, user, id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	instantiatedWith = nil
+	if _, err := adminSvc.RetrieveZone(ctx, p, "example.com"); err != nil {
+		t.Fatal(err)
+	}
+	if want := fmt.Sprintf("user-%d", rounds-1); instantiatedWith == nil || *instantiatedWith != want {
+		t.Errorf("stored key = %v, want the user's last value %q", instantiatedWith, want)
+	}
 }
 
 // racing runs during once, right after the next read of a provider and
@@ -516,5 +691,129 @@ func Test_Secret_UpdateOfAProviderDeletedMeanwhile(t *testing.T) {
 	}
 	if _, err := db.GetProvider(ids[0]); !errors.Is(err, happydns.ErrProviderNotFound) {
 		t.Errorf("GetProvider = %v, want the provider to stay deleted", err)
+	}
+}
+
+// A provider deleted while being resealed, by the administrator, tidy or
+// its owner, is not brought back.
+func Test_Secret_ResealDoesNotBringBackADeletedProvider(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	_, ids := seedLegacyProviders(t, db, 1)
+
+	store := &racing{Storage: db, during: func() {
+		if err := db.DeleteProvider(ids[0]); err != nil {
+			t.Fatal(err)
+		}
+	}}
+	report, err := provider.NewService(store, &mockValidator{}, nil, instanceSecrets(t, db)).ResealSecrets(ctx)
+	if err != nil || report.Changed != 0 || report.Failed != 0 {
+		t.Errorf("ResealSecrets = %+v, %v; want nothing written, nothing failed", report, err)
+	}
+	if _, err := db.GetProvider(ids[0]); !errors.Is(err, happydns.ErrProviderNotFound) {
+		t.Errorf("GetProvider = %v, want the deleted provider to stay deleted", err)
+	}
+}
+
+// A provider rewritten while being resealed, by a backup restore for
+// instance, keeps what was written.
+func Test_Secret_ResealDoesNotOverwriteARestore(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	user, ids := seedLegacyProviders(t, db, 1)
+
+	store := &racing{Storage: db, during: func() {
+		writeProviderBody(t, db, ids[0], user.Id, `{"host":"h","apikey":"restored"}`)
+	}}
+	report, err := provider.NewService(store, &mockValidator{}, nil, instanceSecrets(t, db)).ResealSecrets(ctx)
+	if err != nil || report.Skipped != 1 || report.Changed != 0 {
+		t.Errorf("ResealSecrets = %+v, %v; want the provider skipped", report, err)
+	}
+	if body := storedBody(t, db, ids[0]); body != `{"host":"h","apikey":"restored"}` {
+		t.Errorf("stored = %s, want the restored body kept", body)
+	}
+}
+
+// storeCorrupt writes, under a provider key, a record that does not decode.
+func storeCorrupt(t *testing.T) (storage.Storage, string) {
+	t.Helper()
+	kvdb, err := inmemory.NewInMemoryStorage()
+	if err != nil {
+		t.Fatal(err)
+	}
+	db, err := kv.NewKVDatabase(kvdb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	id, _ := happydns.NewRandomIdentifier()
+	key := "provider-" + id.String()
+	if err := kvdb.Put(key, "not a provider"); err != nil {
+		t.Fatal(err)
+	}
+	return db, key
+}
+
+// One record that does not decode keeps neither the others from being
+// resealed, nor the status from being reported.
+func Test_Secret_OneCorruptRecordDoesNotStopTheOthers(t *testing.T) {
+	db, corrupt := storeCorrupt(t)
+	_, ids := seedLegacyProviders(t, db, 2)
+
+	// A provider of a type this build no longer knows.
+	gone, _ := happydns.NewRandomIdentifier()
+	if err := db.UpdateProvider(&happydns.Provider{ProviderMeta: happydns.ProviderMeta{Type: "RemovedTestProvider", Id: gone, Owner: happydns.Identifier("user-reseal@example.com")}, Provider: &removedProvider{}}); err != nil {
+		t.Fatal(err)
+	}
+
+	svc := provider.NewService(db, &mockValidator{}, nil, instanceSecrets(t, db))
+
+	counts, err := svc.InspectSecrets(ctx)
+	if err != nil {
+		t.Fatalf("InspectSecrets: %v", err)
+	}
+	if counts.Clear != 2 || counts.Undecodable != 2 {
+		t.Errorf("counts = %+v, want 2 clear and 2 undecodable", counts)
+	}
+	if !strings.Contains(strings.Join(counts.Problems, " "), corrupt) {
+		t.Errorf("problems = %q, want the corrupt record named", counts.Problems)
+	}
+
+	report, err := svc.ResealSecrets(ctx)
+	if err != nil {
+		t.Fatalf("ResealSecrets: %v", err)
+	}
+	if report.Changed != 2 || report.Failed != 2 {
+		t.Errorf("report = %+v, want both readable providers resealed, 2 failures", report)
+	}
+	for _, id := range ids {
+		if body := storedBody(t, db, id); strings.Contains(body, "legacy") {
+			t.Errorf("provider still in clear: %s", body)
+		}
+	}
+}
+
+// removedProvider is stored under a type name no registered provider has.
+type removedProvider struct {
+	ApiKey happydns.Secret `json:"apikey"`
+}
+
+func (*removedProvider) InstantiateProvider() (happydns.ProviderActuator, error) {
+	return nil, errors.New("removed")
+}
+
+// A provider left by a deleted user, not tidied yet, gets no safe: it is
+// skipped until tidy removes it.
+func Test_Secret_ResealSkipsOrphans(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	orphan := storeRaw(t, db, happydns.Identifier("user-gone@example.com"), `{"host":"h","apikey":"legacy"}`)
+
+	instance := instanceSecrets(t, db)
+	report, err := provider.NewService(db, &mockValidator{}, nil, instance).ResealSecrets(ctx)
+	if err != nil || report.Skipped != 1 || report.Changed != 0 || report.Failed != 0 {
+		t.Errorf("ResealSecrets = %+v, %v; want the orphan skipped", report, err)
+	}
+	if body := storedBody(t, db, orphan.Id); body != `{"host":"h","apikey":"legacy"}` {
+		t.Errorf("stored = %s, want the orphan left as it was", body)
+	}
+	if _, err := db.GetSafeByOwner(orphan.Owner, secret.KindInstance); !errors.Is(err, happydns.ErrSafeNotFound) {
+		t.Errorf("GetSafeByOwner = %v, want no safe for a deleted user", err)
 	}
 }

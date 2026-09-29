@@ -203,3 +203,102 @@ func TestCreateSafeOnePerOwnerUnderConcurrency(t *testing.T) {
 		t.Errorf("ListAllSafes = %d safes, want 1", count)
 	}
 }
+
+func TestReplaceSafe(t *testing.T) {
+	s := newStorage(t)
+	owner, _ := happydns.NewRandomIdentifier()
+	safe := newSafe(owner, "instance")
+	if err := s.CreateSafe(safe); err != nil {
+		t.Fatal(err)
+	}
+
+	err := s.ReplaceSafe(safe.Id, func(got *happydns.Safe) (*happydns.Safe, error) {
+		if !got.Id.Equals(safe.Id) || len(got.Keyring) != 1 {
+			t.Errorf("update got %+v, want the stored safe", got)
+		}
+		got.Keyring[0].Blob = []byte{9}
+		return got, nil
+	})
+	if err != nil {
+		t.Fatalf("ReplaceSafe: %v", err)
+	}
+	if got, _ := s.GetSafe(safe.Id); len(got.Keyring) != 1 || got.Keyring[0].Blob[0] != 9 {
+		t.Errorf("stored = %+v, want the replaced keyring", got)
+	}
+
+	// Nothing to do, or a failing update: nothing written.
+	if err := s.ReplaceSafe(safe.Id, func(*happydns.Safe) (*happydns.Safe, error) { return nil, nil }); err != nil {
+		t.Errorf("ReplaceSafe with nothing to do = %v", err)
+	}
+	boom := errors.New("boom")
+	err = s.ReplaceSafe(safe.Id, func(got *happydns.Safe) (*happydns.Safe, error) {
+		got.Keyring = nil
+		return nil, boom
+	})
+	if !errors.Is(err, boom) {
+		t.Errorf("ReplaceSafe with a failing update = %v, want its error", err)
+	}
+	if got, _ := s.GetSafe(safe.Id); len(got.Keyring) != 1 {
+		t.Errorf("a failed update was written: %+v", got)
+	}
+
+	// The owner and kind cannot change.
+	other, _ := happydns.NewRandomIdentifier()
+	err = s.ReplaceSafe(safe.Id, func(got *happydns.Safe) (*happydns.Safe, error) {
+		got.Owner = other
+		return got, nil
+	})
+	if err == nil {
+		t.Error("ReplaceSafe changed the owner of a safe")
+	}
+
+	// Missing: update is not even called.
+	missing, _ := happydns.NewRandomIdentifier()
+	err = s.ReplaceSafe(missing, func(*happydns.Safe) (*happydns.Safe, error) {
+		t.Error("update called for a missing safe")
+		return nil, nil
+	})
+	if !errors.Is(err, happydns.ErrSafeNotFound) {
+		t.Errorf("ReplaceSafe on a missing safe = %v, want ErrSafeNotFound", err)
+	}
+}
+
+// What happens between the read and the write wins: the replacement is
+// dropped, and a deleted safe is not brought back.
+func TestReplaceSafeLosesToConcurrentWrites(t *testing.T) {
+	s := newStorage(t)
+	owner, _ := happydns.NewRandomIdentifier()
+	safe := newSafe(owner, "instance")
+	if err := s.CreateSafe(safe); err != nil {
+		t.Fatal(err)
+	}
+
+	err := s.ReplaceSafe(safe.Id, func(got *happydns.Safe) (*happydns.Safe, error) {
+		concurrent := *got
+		concurrent.Keyring = []happydns.WrappedKeyset{{KEK: "instance", Blob: []byte{7}}}
+		if err := s.UpdateSafe(&concurrent); err != nil {
+			t.Fatal(err)
+		}
+		got.Keyring[0].Blob = []byte{9}
+		return got, nil
+	})
+	if !errors.Is(err, happydns.ErrChangedMeanwhile) {
+		t.Errorf("ReplaceSafe over a concurrent update = %v, want ErrChangedMeanwhile", err)
+	}
+	if got, _ := s.GetSafe(safe.Id); got.Keyring[0].Blob[0] != 7 {
+		t.Errorf("stored = %+v, want the concurrent update kept", got)
+	}
+
+	err = s.ReplaceSafe(safe.Id, func(got *happydns.Safe) (*happydns.Safe, error) {
+		if err := s.DeleteSafe(safe.Id); err != nil {
+			t.Fatal(err)
+		}
+		return got, nil
+	})
+	if !errors.Is(err, happydns.ErrSafeNotFound) {
+		t.Errorf("ReplaceSafe over a concurrent delete = %v, want ErrSafeNotFound", err)
+	}
+	if _, err := s.GetSafe(safe.Id); !errors.Is(err, happydns.ErrSafeNotFound) {
+		t.Errorf("a deleted safe was brought back: %v", err)
+	}
+}

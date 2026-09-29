@@ -1,0 +1,369 @@
+// This file is part of the happyDomain (R) project.
+// Copyright (c) 2020-2026 happyDomain
+// Authors: Pierre-Olivier Mercier, et al.
+//
+// This program is offered under a commercial and under the AGPL license.
+// For commercial licensing, contact us at <contact@happydomain.org>.
+//
+// For AGPL licensing:
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+package secret
+
+import (
+	"bytes"
+	"context"
+	"errors"
+	"maps"
+	"slices"
+
+	"github.com/tink-crypto/tink-go/v2/keyset"
+	"github.com/tink-crypto/tink-go/v2/tink"
+
+	"git.happydns.org/happyDomain/model"
+)
+
+// Counts tells how the secrets of some objects are stored.
+type Counts struct {
+	// Clear counts the secrets stored in clear.
+	Clear int `json:"clear"`
+
+	// Sealed counts the secrets that open, by kind of safe.
+	Sealed map[string]int `json:"sealed"`
+
+	// Unreadable counts the sealed secrets that do not open, and the
+	// placeholders stored by mistake in place of a secret.
+	Unreadable int `json:"unreadable"`
+
+	// Undecodable counts the objects whose secrets could not be looked at:
+	// a record that does not decode, an unknown provider type.
+	Undecodable int `json:"undecodable"`
+
+	// Problems names some of the undecodable objects, and why.
+	Problems []string `json:"problems,omitempty"`
+}
+
+// ResealReport tells what a reseal of every object of a type did.
+type ResealReport struct {
+	ObjectType string `json:"objectType"`
+
+	// Processed counts the objects looked at.
+	Processed int `json:"processed"`
+
+	// Changed counts the objects written back.
+	Changed int `json:"changed"`
+
+	// Skipped counts the objects left for a later run: changed meanwhile,
+	// or owned by a user that no longer exists.
+	Skipped int `json:"skipped"`
+
+	// Failed counts the objects left as they were because of an error.
+	Failed int `json:"failed"`
+
+	// Errors names some of the skipped and failed objects, and why.
+	Errors []string `json:"errors,omitempty"`
+}
+
+// Inspect adds how the secrets of obj are stored to c. It tries to open each
+// sealed one, in a copy: obj is left untouched.
+func (m *Manager) Inspect(ctx context.Context, sc SecretContext, obj any, c *Counts) error {
+	if m == nil {
+		return errNoManager
+	}
+	if err := sc.validateObject(); err != nil {
+		return err
+	}
+	if c.Sealed == nil {
+		c.Sealed = map[string]int{}
+	}
+
+	cp, err := clone(obj)
+	if err != nil {
+		return err
+	}
+
+	primitives := map[string]tink.AEAD{}
+
+	return Walk(cp, func(path string, s *happydns.Secret) error {
+		fsc := sc
+		fsc.Field = path
+		return m.inspectOne(fsc, s, primitives, c)
+	})
+}
+
+func (m *Manager) inspectOne(sc SecretContext, s *happydns.Secret, primitives map[string]tink.AEAD, c *Counts) error {
+	if c.Sealed == nil {
+		c.Sealed = map[string]int{}
+	}
+
+	switch {
+	case s.IsEmpty():
+		return nil
+	case s.IsClear():
+		c.Clear++
+		return nil
+	case !s.IsSealed():
+		// A placeholder stored in place of the secret: the secret is lost.
+		c.Unreadable++
+		return nil
+	}
+
+	if err := m.open(sc, s, primitives); err != nil {
+		c.Unreadable++
+		return nil
+	}
+
+	// open only accepts instance safes, see safeRegistry.aead.
+	c.Sealed[KindInstance]++
+	return nil
+}
+
+// ResealObject stores the secrets of obj, as read from storage, the way the
+// current policy stores new ones: sealing clear values under the instance
+// policy, opening sealed ones to store them in clear under the plaintext
+// policy. It reports whether obj changed and has to be written back; it
+// fails, leaving obj untouched, when a secret does not open.
+func (m *Manager) ResealObject(ctx context.Context, sc SecretContext, obj any) (bool, error) {
+	if m == nil {
+		return false, errNoManager
+	}
+
+	cp, err := clone(obj)
+	if err != nil {
+		return false, err
+	}
+
+	changed := false
+	err = Walk(cp, func(_ string, s *happydns.Secret) error {
+		switch {
+		case s.IsClear():
+			if m.policy != PolicyPlaintext {
+				changed = true
+			}
+		case s.IsSealed():
+			if m.policy == PolicyPlaintext {
+				changed = true
+			}
+		}
+		return nil
+	})
+	if err != nil || !changed {
+		return false, err
+	}
+
+	if m.policy == PolicyPlaintext {
+		if err := m.OpenObject(ctx, sc, cp); err != nil {
+			return false, err
+		}
+		// Back to clear, so that sealing stores the value itself.
+		err := Walk(cp, func(_ string, s *happydns.Secret) error {
+			if s.IsOpened() {
+				*s = happydns.NewSecret(s.Reveal())
+			}
+			return nil
+		})
+		if err != nil {
+			return false, err
+		}
+	}
+
+	if err := m.SealObject(ctx, sc, cp); err != nil {
+		return false, err
+	}
+
+	// Only now that everything went through: obj is never left half done.
+	src, dst := reflectElem(cp), reflectElem(obj)
+	dst.Set(src)
+	return true, nil
+}
+
+// KeyUsage counts the safes wrapped by each key of the instance keyset, by
+// key identifier. A key no safe uses any more can be removed from the keyset.
+func (m *Manager) KeyUsage() (map[uint32]int, error) {
+	usage, _, err := m.keyUsage()
+	return usage, err
+}
+
+// keyUsage is KeyUsage, also counting the safes whose wrapping key cannot be
+// told: a damaged record must not hide the usage of every other key.
+func (m *Manager) keyUsage() (usage map[uint32]int, unreadable int, err error) {
+	if m == nil || m.safes == nil {
+		return nil, 0, errNoManager
+	}
+
+	usage = map[uint32]int{}
+	damaged, err := scanSafes(m.safes.store, func(safe *happydns.Safe) bool {
+		for _, w := range safe.Keyring {
+			if w.KEK != KEKInstance {
+				continue
+			}
+			id, err := wrappingKeyId(w)
+			if err != nil {
+				unreadable++
+				continue
+			}
+			usage[id]++
+		}
+		return true
+	})
+	return usage, unreadable + len(damaged), err
+}
+
+// SafeObjectType names safes in the reports.
+const SafeObjectType = "safe"
+
+// Rewrap wraps again, under the primary instance key, the key of every safe
+// wrapped by another one. The sealed values are not touched. A safe that
+// fails is reported and left as it was; run it again to resume.
+func (m *Manager) Rewrap(ctx context.Context) (ResealReport, error) {
+	if m == nil || m.safes == nil || m.safes.key == nil {
+		return ResealReport{ObjectType: SafeObjectType}, errors.New("no instance keyset configured")
+	}
+
+	iter, err := m.safes.store.ListAllSafes()
+	if err != nil {
+		return ResealReport{ObjectType: SafeObjectType}, err
+	}
+
+	return ResealAll(SafeObjectType, iter,
+		func(safe *happydns.Safe) string { return "safe " + safe.Id.String() },
+		func(safe *happydns.Safe) (bool, error) { return m.rewrapSafe(safe.Id) },
+	)
+}
+
+// rewrapSafe rewraps the safe id, as stored now, if it needs it. The write is
+// conditional: a safe changed or deleted since it was read is left alone.
+func (m *Manager) rewrapSafe(id happydns.Identifier) (bool, error) {
+	key := m.safes.key
+
+	changed := false
+	err := m.safes.store.ReplaceSafe(id, func(safe *happydns.Safe) (*happydns.Safe, error) {
+		needed, err := key.needsRewrap(safe)
+		if err != nil || !needed {
+			return nil, err
+		}
+
+		dek, err := key.Unwrap(safe)
+		if err != nil {
+			return nil, err
+		}
+		w, err := key.Wrap(safe, dek)
+		if err != nil {
+			return nil, err
+		}
+
+		// The new wrapping takes the place of the first instance entry;
+		// any other one goes, they all wrapped the same key.
+		keyring := make([]happydns.WrappedKeyset, 0, len(safe.Keyring))
+		placed := false
+		for _, e := range safe.Keyring {
+			if e.KEK != KEKInstance {
+				keyring = append(keyring, e)
+			} else if !placed {
+				keyring = append(keyring, w)
+				placed = true
+			}
+		}
+		safe.Keyring = keyring
+
+		changed = true
+		return safe, nil
+	})
+	if errors.Is(err, happydns.ErrSafeNotFound) {
+		// Deleted since it was listed.
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return changed, nil
+}
+
+// needsRewrap tells whether an instance entry of safe is wrapped by another
+// key than the primary one.
+func (k *InstanceKey) needsRewrap(safe *happydns.Safe) (bool, error) {
+	for _, w := range safe.Keyring {
+		if w.KEK != KEKInstance {
+			continue
+		}
+		id, err := wrappingKeyId(w)
+		if err != nil {
+			return false, err
+		}
+		if id != k.PrimaryKeyId() {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+// wrappingKeyId returns the identifier of the instance key that wrapped w,
+// read from the Tink output prefix of the ciphertext: one version byte, then
+// the key identifier.
+func wrappingKeyId(w happydns.WrappedKeyset) (uint32, error) {
+	enc, err := keyset.NewBinaryReader(bytes.NewReader(w.Blob)).ReadEncrypted()
+	if err != nil {
+		return 0, err
+	}
+
+	return ciphertextKeyId(enc.GetEncryptedKeyset())
+}
+
+// KeyStatus describes a key of the instance keyset and how many safes it
+// wraps.
+type KeyStatus struct {
+	KeyInfo
+
+	// Safes counts the safes whose key it wraps.
+	Safes int `json:"safes"`
+}
+
+// KeyStatus lists the keys of the instance keyset with the number of safes
+// each wraps. A key wrapping safes but missing from the keyset is listed
+// with the status MISSING: those safes do not open. Safes whose wrapping key
+// cannot be told, damaged ones, are counted under the status UNREADABLE.
+func (m *Manager) KeyStatus() ([]KeyStatus, error) {
+	if m == nil || m.safes == nil {
+		return nil, errNoManager
+	}
+
+	usage, unreadable, err := m.keyUsage()
+	if err != nil {
+		return nil, err
+	}
+
+	var keys []KeyStatus
+	if m.safes.key != nil {
+		for _, k := range DescribeKeyset(m.safes.key.handle) {
+			keys = append(keys, KeyStatus{KeyInfo: k, Safes: usage[k.Id]})
+			delete(usage, k.Id)
+		}
+	}
+	missing := slices.Sorted(maps.Keys(usage))
+	for _, id := range missing {
+		keys = append(keys, KeyStatus{KeyInfo: KeyInfo{Id: id, Status: "MISSING"}, Safes: usage[id]})
+	}
+	if unreadable > 0 {
+		keys = append(keys, KeyStatus{KeyInfo: KeyInfo{Status: "UNREADABLE"}, Safes: unreadable})
+	}
+	return keys, nil
+}
+
+// Policy is how new secrets are sealed.
+func (m *Manager) Policy() Policy {
+	if m == nil {
+		return ""
+	}
+	return m.policy
+}

@@ -97,3 +97,69 @@ func checkIncoming(p *happydns.Provider) error {
 	}
 	return nil
 }
+
+// providerName names a provider in the reports.
+func providerName(msg *happydns.ProviderMessage) string {
+	return "provider " + msg.Id.String()
+}
+
+// InspectSecrets tells how the secrets of every provider are stored. A
+// provider that cannot be looked at, such as one of a type this build does
+// not know, is counted as undecodable.
+func (s *Service) InspectSecrets(ctx context.Context) (secret.Counts, error) {
+	iter, err := s.store.ListAllProviders()
+	if err != nil {
+		return secret.Counts{}, err
+	}
+
+	return secret.InspectAll(iter, providerName, func(msg *happydns.ProviderMessage, c *secret.Counts) error {
+		p, err := ParseProvider(msg)
+		if err != nil {
+			return err
+		}
+		return s.secrets.Inspect(ctx, SecretContext(p), p.Provider, c)
+	})
+}
+
+// ResealSecrets stores the secrets of every provider the way the current
+// policy stores new ones. A provider that fails is reported and skipped; run
+// it again to resume.
+func (s *Service) ResealSecrets(ctx context.Context) (secret.ResealReport, error) {
+	iter, err := s.store.ListAllProviders()
+	if err != nil {
+		return secret.ResealReport{ObjectType: SecretObjectType}, err
+	}
+
+	return secret.ResealAll(SecretObjectType, iter, providerName, func(msg *happydns.ProviderMessage) (bool, error) {
+		return s.resealProvider(ctx, msg.Id)
+	})
+}
+
+// resealProvider reseals the provider id as stored now. The write is
+// conditional: whatever another writer did in between (a user's update, a
+// restore, a deletion) wins, and the provider is left for the next run.
+func (s *Service) resealProvider(ctx context.Context, id happydns.Identifier) (bool, error) {
+	changed := false
+	err := s.store.ReplaceProvider(id, func(msg *happydns.ProviderMessage) (*happydns.Provider, error) {
+		p, err := ParseProvider(msg)
+		if err != nil {
+			return nil, err
+		}
+
+		c, err := s.secrets.ResealObject(ctx, SecretContext(p), p.Provider)
+		if err != nil || !c {
+			return nil, err
+		}
+
+		changed = true
+		return p, nil
+	})
+	if errors.Is(err, happydns.ErrProviderNotFound) {
+		// Deleted since it was listed.
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return changed, nil
+}

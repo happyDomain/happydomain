@@ -160,6 +160,11 @@ func TestSafesAreCopies(t *testing.T) {
 			iter.Item().Keyring[0].Blob[2] = 'Y'
 		}
 	}
+	_ = safes.ReplaceSafe(id(0x10), func(s *happydns.Safe) (*happydns.Safe, error) {
+		s.Keyring[0].Blob[3] = 'Y'
+		return nil, nil
+	})
+
 	for _, i := range []happydns.Identifier{id(0x10), id(0x20)} {
 		s, err := safes.GetSafe(i)
 		if err != nil {
@@ -231,6 +236,88 @@ func TestUpdateSafe(t *testing.T) {
 	}
 	if safes.Updates() != 1 {
 		t.Errorf("Updates = %d, want 1", safes.Updates())
+	}
+}
+
+// ReplaceSafe refuses to change the identifier, owner or kind of a safe, and
+// counts only what it writes.
+func TestReplaceSafe(t *testing.T) {
+	ok := func(s *happydns.Safe) (*happydns.Safe, error) {
+		s.Keyring[0].Blob = []byte("new")
+		return s, nil
+	}
+
+	for name, tc := range map[string]struct {
+		update func(*secrettest.Safes) func(*happydns.Safe) (*happydns.Safe, error)
+		want   error
+	}{
+		"other identifier": {func(*secrettest.Safes) func(*happydns.Safe) (*happydns.Safe, error) {
+			return func(s *happydns.Safe) (*happydns.Safe, error) { s.Id = id(0x11); return s, nil }
+		}, nil},
+		"other owner": {func(*secrettest.Safes) func(*happydns.Safe) (*happydns.Safe, error) {
+			return func(s *happydns.Safe) (*happydns.Safe, error) { s.Owner = id(0x02); return s, nil }
+		}, nil},
+		"other kind": {func(*secrettest.Safes) func(*happydns.Safe) (*happydns.Safe, error) {
+			return func(s *happydns.Safe) (*happydns.Safe, error) { s.Kind = "password"; return s, nil }
+		}, nil},
+		"update error": {func(*secrettest.Safes) func(*happydns.Safe) (*happydns.Safe, error) {
+			return func(*happydns.Safe) (*happydns.Safe, error) { return nil, errors.New("boom") }
+		}, nil},
+		"changed meanwhile": {func(safes *secrettest.Safes) func(*happydns.Safe) (*happydns.Safe, error) {
+			return func(s *happydns.Safe) (*happydns.Safe, error) {
+				other := newSafe(0x10, 0x01)
+				other.Keyring[0].Blob = []byte("concurrent")
+				if err := safes.UpdateSafe(other); err != nil {
+					return nil, err
+				}
+				return ok(s)
+			}
+		}, happydns.ErrChangedMeanwhile},
+		"deleted meanwhile": {func(safes *secrettest.Safes) func(*happydns.Safe) (*happydns.Safe, error) {
+			return func(s *happydns.Safe) (*happydns.Safe, error) {
+				if err := safes.DeleteSafe(id(0x10)); err != nil {
+					return nil, err
+				}
+				return ok(s)
+			}
+		}, happydns.ErrSafeNotFound},
+	} {
+		t.Run(name, func(t *testing.T) {
+			safes := secrettest.NewSafes()
+			if err := safes.CreateSafe(newSafe(0x10, 0x01)); err != nil {
+				t.Fatal(err)
+			}
+			err := safes.ReplaceSafe(id(0x10), tc.update(safes))
+			if err == nil || (tc.want != nil && !errors.Is(err, tc.want)) {
+				t.Errorf("ReplaceSafe = %v, want an error (%v)", err, tc.want)
+			}
+			if safes.Replaces() != 0 {
+				t.Errorf("Replaces = %d after a refused replace, want 0", safes.Replaces())
+			}
+			if s, err := safes.GetSafe(id(0x10)); err == nil && string(s.Keyring[0].Blob) == "new" {
+				t.Error("a refused replace was stored")
+			}
+		})
+	}
+
+	safes := secrettest.NewSafes()
+	if err := safes.CreateSafe(newSafe(0x10, 0x01)); err != nil {
+		t.Fatal(err)
+	}
+	if err := safes.ReplaceSafe(id(0x10), func(*happydns.Safe) (*happydns.Safe, error) { return nil, nil }); err != nil {
+		t.Errorf("ReplaceSafe returning nil = %v, want nil", err)
+	}
+	if err := safes.ReplaceSafe(id(0x11), ok); !errors.Is(err, happydns.ErrSafeNotFound) {
+		t.Errorf("ReplaceSafe(unknown) = %v, want ErrSafeNotFound", err)
+	}
+	if safes.Replaces() != 0 {
+		t.Errorf("Replaces = %d after writing nothing, want 0", safes.Replaces())
+	}
+	if err := safes.ReplaceSafe(id(0x10), ok); err != nil {
+		t.Fatal(err)
+	}
+	if s, _ := safes.GetSafe(id(0x10)); string(s.Keyring[0].Blob) != "new" || safes.Replaces() != 1 {
+		t.Errorf("after ReplaceSafe: blob %q, Replaces %d; want \"new\", 1", s.Keyring[0].Blob, safes.Replaces())
 	}
 }
 
