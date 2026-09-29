@@ -1,0 +1,2 @@
+// happydns.Secret travels as a string in every API payload.
+replace git.happydns.org/happyDomain/model.Secret string

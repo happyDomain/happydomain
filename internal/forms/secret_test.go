@@ -24,6 +24,7 @@ package forms
 import (
 	"bytes"
 	"encoding/json"
+	"reflect"
 	"testing"
 
 	happydns "git.happydns.org/happyDomain/model"
@@ -250,4 +251,161 @@ func TestRedactAndMergeToleratePartialInput(t *testing.T) {
 	MergeSecrets(nil, nil)
 	MergeSecrets(filled(), nil)
 	MergeSecrets((*testProvider)(nil), filled())
+}
+
+// A body holding happydns.Secret, the type every provider secret moves to.
+type typedNested struct {
+	Endpoint string          `json:"endpoint"`
+	Token    happydns.Secret `json:"token"`
+}
+
+type typedProvider struct {
+	Host   string          `json:"host"`
+	ApiKey happydns.Secret `json:"apikey" happydomain:"label=API Key,required,secret"`
+	// No `secret` tag: the type alone marks it.
+	Untagged happydns.Secret `json:"untagged"`
+	Unset    happydns.Secret `json:"unset"`
+	Nested   *typedNested    `json:"nested,omitempty"`
+}
+
+func sealedSecret(t *testing.T, token string) happydns.Secret {
+	t.Helper()
+	var s happydns.Secret
+	if err := json.Unmarshal([]byte(`"`+token+`"`), &s); err != nil {
+		t.Fatal(err)
+	}
+	if !s.IsSealed() {
+		t.Fatalf("%q did not decode as sealed", token)
+	}
+	return s
+}
+
+func TestGenFieldSecretType(t *testing.T) {
+	typ := reflect.TypeOf(typedProvider{})
+
+	for _, name := range []string{"ApiKey", "Untagged"} {
+		sf, _ := typ.FieldByName(name)
+		f := GenField(sf)
+		if f.Type != "string" {
+			t.Errorf("%s: Type = %q, want string", name, f.Type)
+		}
+		if !f.Secret {
+			t.Errorf("%s: Secret = false, want true", name)
+		}
+	}
+
+	sf, _ := typ.FieldByName("ApiKey")
+	if f := GenField(sf); !f.Required || f.Label != "API Key" {
+		t.Errorf("ApiKey: tag options lost: %+v", f)
+	}
+}
+
+func TestRedactSecretsSecretType(t *testing.T) {
+	opened := sealedSecret(t, "hds:1:AQ:b3BlbmVk")
+	opened.SetOpened(opened.Token(), []byte("opened-value"))
+
+	p := &typedProvider{
+		Host:     "dns.example.com",
+		ApiKey:   happydns.NewSecret("clear-value"),
+		Untagged: sealedSecret(t, "hds:1:AQ:c2VhbGVk"),
+		Nested:   &typedNested{Endpoint: "https://example.com", Token: opened},
+	}
+
+	RedactSecrets(p)
+
+	for name, s := range map[string]happydns.Secret{
+		"clear":  p.ApiKey,
+		"sealed": p.Untagged,
+		"opened": p.Nested.Token,
+	} {
+		if !s.IsRedacted() {
+			t.Errorf("%s: IsRedacted() = false after RedactSecrets", name)
+		}
+	}
+	if !p.Unset.IsEmpty() {
+		t.Error("an empty Secret must stay empty")
+	}
+	if p.Host != "dns.example.com" || p.Nested.Endpoint != "https://example.com" {
+		t.Error("non-secret fields must be left alone")
+	}
+
+	raw, err := json.Marshal(p)
+	if err != nil {
+		t.Fatalf("a redacted body must marshal: %v", err)
+	}
+	if bytes.Contains(raw, []byte("clear-value")) || bytes.Contains(raw, []byte("hds:1:")) || bytes.Contains(raw, []byte("opened-value")) {
+		t.Errorf("redacted payload still carries a secret or a token: %s", raw)
+	}
+}
+
+func redactedSecret() happydns.Secret {
+	s := happydns.NewSecret("x")
+	s.Redact()
+	return s
+}
+
+func TestMergeSecretsSecretType(t *testing.T) {
+	existing := &typedProvider{
+		ApiKey:   sealedSecret(t, "hds:1:AQ:c3RvcmVk"),
+		Untagged: happydns.NewSecret("legacy-plaintext"),
+		Nested:   &typedNested{Token: sealedSecret(t, "hds:1:AQ:bmVzdGVk")},
+	}
+
+	incoming := &typedProvider{
+		ApiKey:   redactedSecret(),
+		Untagged: happydns.NewSecret("brand-new"),
+		Unset:    redactedSecret(),
+		Nested:   &typedNested{Token: redactedSecret()},
+	}
+
+	MergeSecrets(existing, incoming)
+
+	// Redacted takes the stored value as it is, without opening it.
+	if !incoming.ApiKey.IsSealed() || incoming.ApiKey.Token() != "hds:1:AQ:c3RvcmVk" {
+		t.Errorf("ApiKey = %v (sealed %v), want the stored sealed value", incoming.ApiKey, incoming.ApiKey.IsSealed())
+	}
+	if !incoming.Nested.Token.IsSealed() || incoming.Nested.Token.Token() != "hds:1:AQ:bmVzdGVk" {
+		t.Error("nested Token: want the stored sealed value")
+	}
+	// A clear value wins.
+	if incoming.Untagged.Reveal() != "brand-new" {
+		t.Errorf("Untagged = %q, want the submitted value", incoming.Untagged.Reveal())
+	}
+	// Redacted over nothing stored becomes empty.
+	if !incoming.Unset.IsEmpty() {
+		t.Error("Unset: want empty, nothing was stored")
+	}
+}
+
+func TestMergeSecretsSecretTypeLegacyPlaintext(t *testing.T) {
+	existing := &typedProvider{ApiKey: happydns.NewSecret("legacy-plaintext")}
+	incoming := &typedProvider{ApiKey: redactedSecret()}
+
+	MergeSecrets(existing, incoming)
+
+	if !incoming.ApiKey.IsClear() || incoming.ApiKey.Reveal() != "legacy-plaintext" {
+		t.Errorf("ApiKey: want the stored legacy value, got clear=%v", incoming.ApiKey.IsClear())
+	}
+}
+
+func TestMergeSecretsSecretTypeWithoutExisting(t *testing.T) {
+	incoming := &typedProvider{
+		ApiKey: redactedSecret(),
+		Nested: &typedNested{Token: redactedSecret()},
+	}
+
+	MergeSecrets(nil, incoming)
+
+	if !incoming.ApiKey.IsEmpty() || !incoming.Nested.Token.IsEmpty() {
+		t.Error("redacted with nothing stored must become empty")
+	}
+}
+
+func TestValidateStructValuesSecretRequired(t *testing.T) {
+	if err := ValidateStructValues(&typedProvider{}); err == nil {
+		t.Error("an empty required Secret must fail validation")
+	}
+	if err := ValidateStructValues(&typedProvider{ApiKey: happydns.NewSecret("v")}); err != nil {
+		t.Errorf("a set required Secret must pass validation: %v", err)
+	}
 }
