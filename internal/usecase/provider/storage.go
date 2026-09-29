@@ -41,7 +41,9 @@ type ProviderStorage interface {
 	// GetProvider retrieves the full Provider with the given identifier and owner.
 	GetProvider(prvdid happydns.Identifier) (*happydns.ProviderMessage, error)
 
-	// CreateProvider creates a record in the database for the given Provider.
+	// CreateProvider stores a new Provider under the identifier it carries,
+	// failing when that identifier is taken, or under a generated one when it
+	// has none.
 	CreateProvider(prvd *happydns.Provider) error
 
 	// UpdateProvider updates the fields of the given Provider.
