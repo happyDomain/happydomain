@@ -127,6 +127,35 @@ func newTestIdentifier(t *testing.T) happydns.Identifier {
 	return id
 }
 
+// The identifier is chosen by the server: a client cannot pick one, let alone
+// one already used by another user's channel.
+func TestCreateChannelIgnoresClientId(t *testing.T) {
+	nc, db := newTestNotificationController(t)
+	victim := happydns.Identifier{0x02}
+	user := &happydns.User{Id: happydns.Identifier{0x01}, Email: "u@example.com"}
+
+	taken := newTestIdentifier(t)
+	if err := db.CreateChannel(&happydns.NotificationChannel{Id: taken, UserId: victim, Type: "webhook", Name: "victim", Config: json.RawMessage(`{}`)}); err != nil {
+		t.Fatal(err)
+	}
+
+	w, c := channelRequest(t, http.MethodPost, `{"id":"`+taken.String()+`","type":"webhook","name":"hook","config":{"url":"https://192.0.2.10/hook"}}`, user, nil)
+	nc.CreateChannel(c)
+	if w.Code != http.StatusCreated {
+		t.Fatalf("CreateChannel = %d %s", w.Code, w.Body.String())
+	}
+	var created happydns.NotificationChannel
+	if err := json.Unmarshal(w.Body.Bytes(), &created); err != nil {
+		t.Fatal(err)
+	}
+	if created.Id.Equals(taken) {
+		t.Error("CreateChannel kept the identifier sent by the client")
+	}
+	if got, err := db.GetChannel(taken); err != nil || !got.UserId.Equals(victim) || got.Name != "victim" {
+		t.Errorf("victim channel = %+v, %v; want it untouched", got, err)
+	}
+}
+
 // Each type reads its own config: changing it would merge the config of the
 // old type, secrets included, into the new one. The refused update leaves the
 // stored channel as it was, config and secret included.

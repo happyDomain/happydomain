@@ -98,12 +98,30 @@ func (s *KVStorage) GetChannel(channelId happydns.Identifier) (*happydns.Notific
 	return ch, err
 }
 
+// CreateChannel stores a new channel. It keeps the identifier ch already
+// carries, which the caller needs before storing when it seals secrets bound
+// to it, and fails when that identifier is taken. Without one, it generates
+// it.
 func (s *KVStorage) CreateChannel(ch *happydns.NotificationChannel) error {
-	key, id, err := s.db.FindIdentifierKey(notifchPrimaryPrefix)
-	if err != nil {
-		return err
+	var key string
+	if ch.Id.IsEmpty() {
+		var id happydns.Identifier
+		var err error
+		key, id, err = s.db.FindIdentifierKey(notifchPrimaryPrefix)
+		if err != nil {
+			return err
+		}
+		ch.Id = id
+	} else {
+		key = notifchPrimaryKey(ch.Id)
+		exists, err := s.db.Has(key)
+		if err != nil {
+			return err
+		}
+		if exists {
+			return fmt.Errorf("notification channel %s already exists", ch.Id.String())
+		}
 	}
-	ch.Id = id
 
 	batch := s.db.NewBatch()
 	if err := batch.Put(key, ch); err != nil {

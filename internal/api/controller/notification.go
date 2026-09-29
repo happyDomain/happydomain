@@ -126,6 +126,14 @@ func (nc *NotificationController) CreateChannel(c *gin.Context) {
 
 	ch.UserId = user.Id
 
+	// Chosen here, whatever the client sent: secrets are sealed bound to it.
+	id, err := happydns.NewRandomIdentifier()
+	if err != nil {
+		internalError(c, err)
+		return
+	}
+	ch.Id = id
+
 	if _, err := nc.registry.AcceptChannelConfig(c.Request.Context(), &ch); err != nil {
 		middleware.ErrorResponse(c, http.StatusBadRequest, err)
 		return
