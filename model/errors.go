@@ -44,6 +44,15 @@ var (
 	ErrUserAlreadyExist               = errors.New("user already exists")
 	ErrZoneNotFound                   = errors.New("zone not found")
 	ErrNotFound                       = errors.New("not found")
+
+	// ErrAlreadyExists is returned by the storage when an object is created
+	// under an identifier already taken.
+	ErrAlreadyExists = errors.New("already exists")
+
+	// ErrInvalidIdentifier is returned by the storage when an object is
+	// created without a well-formed identifier: the caller has to generate
+	// one with NewRandomIdentifier.
+	ErrInvalidIdentifier = errors.New("invalid identifier")
 )
 
 const TryAgainErr = "Sorry, we are currently unable to sent email validation link. Please try again later."

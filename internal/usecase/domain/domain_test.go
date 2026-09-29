@@ -106,9 +106,14 @@ func createTestUser(t *testing.T, store storage.Storage, email string) *happydns
 }
 
 func createTestProvider(t *testing.T, store storage.Storage, user *happydns.User, name string) happydns.Identifier {
+	id, err := happydns.NewRandomIdentifier()
+	if err != nil {
+		t.Fatalf("failed to generate provider identifier: %v", err)
+	}
 	provider := &happydns.Provider{
 		ProviderMeta: happydns.ProviderMeta{
 			Type:    "mockProviderBody",
+			Id:      id,
 			Owner:   user.Id,
 			Comment: name,
 		},

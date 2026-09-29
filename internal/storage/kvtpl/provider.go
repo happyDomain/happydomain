@@ -100,22 +100,13 @@ func (s *KVStorage) GetProvider(id happydns.Identifier) (*happydns.ProviderMessa
 	return &prvdMsg, nil
 }
 
+// CreateProvider stores a new provider under the identifier it already
+// carries, which the caller needs before storing since secrets are sealed bound
+// to it. It fails when that identifier is malformed or already taken.
 func (s *KVStorage) CreateProvider(prvd *happydns.Provider) error {
-	key, id, err := s.db.FindIdentifierKey(providerPrimaryPrefix)
-	if err != nil {
-		return err
-	}
-
-	prvd.Id = id
-
-	batch := s.db.NewBatch()
-	if err := batch.Put(key, prvd); err != nil {
-		return err
-	}
-	if err := batch.Put(providerOwnerKey(prvd.Owner, prvd.Id), true); err != nil {
-		return err
-	}
-	return batch.Commit()
+	return s.createNew("provider", prvd.Id, providerPrimaryKey(prvd.Id), prvd, func() error {
+		return s.db.Put(providerOwnerKey(prvd.Owner, prvd.Id), true)
+	})
 }
 
 func (s *KVStorage) UpdateProvider(prvd *happydns.Provider) error {

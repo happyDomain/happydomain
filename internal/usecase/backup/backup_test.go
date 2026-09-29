@@ -51,9 +51,14 @@ func seed(t *testing.T) (storage.Storage, *happydns.User) {
 		t.Fatalf("failed to create user: %v", err)
 	}
 
+	providerId, err := happydns.NewRandomIdentifier()
+	if err != nil {
+		t.Fatalf("failed to generate provider identifier: %v", err)
+	}
 	p := &happydns.Provider{
 		ProviderMeta: happydns.ProviderMeta{
 			Type:    "DDNSServer",
+			Id:      providerId,
 			Owner:   user.Id,
 			Comment: "Exported provider",
 		},
