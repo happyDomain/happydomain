@@ -107,6 +107,16 @@ func (s *Service) CreateProvider(ctx context.Context, user *happydns.User, msg *
 
 	provider.Owner = user.Id
 
+	// Chosen here rather than by the storage, whatever the client sent: the
+	// secrets are sealed bound to this identifier before being stored.
+	provider.Id, err = happydns.NewRandomIdentifier()
+	if err != nil {
+		return nil, happydns.InternalError{
+			Err:         fmt.Errorf("unable to generate provider identifier: %w", err),
+			UserMessage: "Sorry, we are currently unable to create the given provider. Please try again later.",
+		}
+	}
+
 	if err := s.store.CreateProvider(provider); err != nil {
 		return nil, happydns.InternalError{
 			Err:         fmt.Errorf("failed to save provider: %w", err),

@@ -652,3 +652,64 @@ func Test_CreateProvider_ClearsSentinel(t *testing.T) {
 		t.Errorf("KeyBlob = %q, want it cleared rather than the placeholder stored", blob)
 	}
 }
+
+// idRecordingStorage remembers the identifier a provider carries when it
+// reaches the storage.
+type idRecordingStorage struct {
+	storage.Storage
+	createdWith happydns.Identifier
+}
+
+func (s *idRecordingStorage) CreateProvider(p *happydns.Provider) error {
+	s.createdWith = append(happydns.Identifier(nil), p.Id...)
+	return s.Storage.CreateProvider(p)
+}
+
+func Test_CreateProviderAssignsIdBeforeStoring(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	rec := &idRecordingStorage{Storage: db}
+	providerService := provider.NewService(rec, &mockValidator{}, nil)
+
+	user := createTestUser(t, db, "test@example.com")
+	msg := createTestProviderMessage(t, "DDNSServer", "Test DDNS Provider")
+
+	p, err := providerService.CreateProvider(ctx, user, msg)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if rec.createdWith.IsEmpty() {
+		t.Fatal("the provider reached the storage without an identifier")
+	}
+	if !rec.createdWith.Equals(p.Id) {
+		t.Errorf("stored under %s, returned %s", rec.createdWith.String(), p.Id.String())
+	}
+}
+
+func Test_CreateProviderIgnoresClientId(t *testing.T) {
+	providerService, db := newTestService(t)
+
+	user := createTestUser(t, db, "test@example.com")
+	first, err := providerService.CreateProvider(ctx, user, createTestProviderMessage(t, "DDNSServer", "first"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// A client naming an identifier, here one already taken, must not choose
+	// where its provider is stored.
+	msg := createTestProviderMessage(t, "DDNSServer", "second")
+	msg.Id = first.Id
+
+	second, err := providerService.CreateProvider(ctx, user, msg)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if second.Id.Equals(first.Id) {
+		t.Fatal("the client-supplied identifier was used")
+	}
+
+	stored, err := db.GetProvider(first.Id)
+	if err != nil || stored.Comment != "first" {
+		t.Errorf("first provider = %v, %v; want it untouched", stored, err)
+	}
+}
