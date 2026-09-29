@@ -28,8 +28,14 @@ import (
 )
 
 type NotificationChannelStorage interface {
+	ListAllChannels() (happydns.Iterator[happydns.NotificationChannel], error)
 	ListChannelsByUser(userId happydns.Identifier) ([]*happydns.NotificationChannel, error)
 	GetChannel(channelId happydns.Identifier) (*happydns.NotificationChannel, error)
+	// CreateChannel stores a new channel under the identifier it carries.
+	// ChannelService.CreateChannel, which generates that identifier, is its
+	// only caller outside of tests. Fails with happydns.ErrInvalidIdentifier
+	// or happydns.ErrAlreadyExists, or with whatever error the underlying
+	// database returns.
 	CreateChannel(ch *happydns.NotificationChannel) error
 	UpdateChannel(ch *happydns.NotificationChannel) error
 	DeleteChannel(channelId happydns.Identifier) error

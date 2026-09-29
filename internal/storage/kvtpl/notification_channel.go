@@ -93,21 +93,19 @@ func (s *KVStorage) GetChannel(channelId happydns.Identifier) (*happydns.Notific
 	return ch, err
 }
 
-func (s *KVStorage) CreateChannel(ch *happydns.NotificationChannel) error {
-	key, id, err := s.db.FindIdentifierKey(notifchPrimaryPrefix)
-	if err != nil {
-		return err
-	}
-	ch.Id = id
+func (s *KVStorage) ListAllChannels() (happydns.Iterator[happydns.NotificationChannel], error) {
+	iter := s.db.Search(notifchPrimaryPrefix)
+	return NewKVIterator[happydns.NotificationChannel](s.db, iter), nil
+}
 
-	batch := s.db.NewBatch()
-	if err := batch.Put(key, ch); err != nil {
-		return err
-	}
-	if err := batch.Put(notifchUserKey(ch.UserId, ch.Id), ""); err != nil {
-		return err
-	}
-	return batch.Commit()
+// CreateChannel stores a new channel under the identifier it already carries,
+// which the caller chooses before storing it, since the secrets of the channel
+// are to be sealed bound to that identifier. It fails when that identifier is
+// malformed or already taken.
+func (s *KVStorage) CreateChannel(ch *happydns.NotificationChannel) error {
+	return s.createNew("notification channel", ch.Id, notifchPrimaryKey(ch.Id), ch, func() error {
+		return s.db.Put(notifchUserKey(ch.UserId, ch.Id), "")
+	})
 }
 
 func (s *KVStorage) UpdateChannel(ch *happydns.NotificationChannel) error {

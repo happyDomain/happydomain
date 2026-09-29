@@ -44,7 +44,9 @@ func TestUpdateChannelWithShorterConfig(t *testing.T) {
 	nc, db := newTestNotificationController(t)
 
 	user := &happydns.User{Id: happydns.Identifier{0x01}}
+	existingId := newTestIdentifier(t)
 	existing := &happydns.NotificationChannel{
+		Id:     existingId,
 		UserId: user.Id,
 		Type:   notifPkg.ChannelTypeWebhook,
 		Config: json.RawMessage(`{"url":"https://192.0.2.10/a/rather/long/path/to/the/hook","secret":"kept"}`),
@@ -115,6 +117,15 @@ func channelRequest(t *testing.T, method string, body string, user *happydns.Use
 		c.Set("notification_channel", existing)
 	}
 	return w, c
+}
+
+func newTestIdentifier(t *testing.T) happydns.Identifier {
+	t.Helper()
+	id, err := happydns.NewRandomIdentifier()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return id
 }
 
 // The body is bound onto a clone: the stored preference must not see it.

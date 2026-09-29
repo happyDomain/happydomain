@@ -427,6 +427,11 @@ func (s *instrumentedStorage) ListAllCachedObservations() (ret happydns.Iterator
 	return s.inner.ListAllCachedObservations()
 }
 
+func (s *instrumentedStorage) ListAllChannels() (ret happydns.Iterator[happydns.NotificationChannel], err error) {
+	defer observe("list", "notification_channel")(&err)
+	return s.inner.ListAllChannels()
+}
+
 func (s *instrumentedStorage) ListAllCheckPlans() (ret happydns.Iterator[happydns.CheckPlan], err error) {
 	defer observe("list", "check_plan")(&err)
 	return s.inner.ListAllCheckPlans()

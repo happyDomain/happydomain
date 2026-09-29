@@ -55,6 +55,7 @@ func internalError(c *gin.Context, err error) {
 type NotificationController struct {
 	dispatcher   *notifUC.Dispatcher
 	registry     *notifPkg.Registry
+	channels     *notifUC.ChannelService
 	channelStore notifUC.NotificationChannelStorage
 	prefStore    notifUC.NotificationPreferenceStorage
 	recordStore  notifUC.NotificationRecordStorage
@@ -70,6 +71,7 @@ func NewNotificationController(
 	return &NotificationController{
 		dispatcher:   dispatcher,
 		registry:     registry,
+		channels:     notifUC.NewChannelService(channelStore, registry),
 		channelStore: channelStore,
 		prefStore:    prefStore,
 		recordStore:  recordStore,
@@ -124,15 +126,12 @@ func (nc *NotificationController) CreateChannel(c *gin.Context) {
 		return
 	}
 
-	ch.UserId = user.Id
-
-	if _, err := nc.registry.AcceptChannelConfig(c.Request.Context(), &ch); err != nil {
-		middleware.ErrorResponse(c, http.StatusBadRequest, err)
-		return
-	}
-
-	if err := nc.channelStore.CreateChannel(&ch); err != nil {
-		internalError(c, err)
+	if err := nc.channels.CreateChannel(c.Request.Context(), user, &ch); err != nil {
+		if errors.As(err, new(happydns.ValidationError)) {
+			middleware.ErrorResponse(c, http.StatusBadRequest, err)
+		} else {
+			internalError(c, err)
+		}
 		return
 	}
 
