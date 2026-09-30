@@ -148,7 +148,9 @@ func newTestRegistry(t *testing.T) *Registry {
 	return NewRegistry(m)
 }
 
-func instanceRegistry(t *testing.T, allowLoopback bool) (*Registry, *secrettest.Safes) {
+// instanceRegistryWithGuard seals under the instance policy and registers no
+// sender, returning the outbound guard allowing the given addresses.
+func instanceRegistryWithGuard(t *testing.T, allowed ...string) (*Registry, *netguard.Guard, *secrettest.Safes) {
 	t.Helper()
 	h, err := secret.GenerateInstanceKeyset()
 	if err != nil {
@@ -160,17 +162,20 @@ func instanceRegistry(t *testing.T, allowLoopback bool) (*Registry, *secrettest.
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	var allowed []string
-	if allowLoopback {
-		allowed = []string{"127.0.0.1"}
-	}
 	guard, err := netguard.New("outbound", "-outbound-allowed-target", allowed)
 	if err != nil {
 		t.Fatal(err)
 	}
+	return NewRegistry(m), guard, safes
+}
 
-	r := NewRegistry(m)
+func instanceRegistry(t *testing.T, allowLoopback bool) (*Registry, *secrettest.Safes) {
+	t.Helper()
+	var allowed []string
+	if allowLoopback {
+		allowed = []string{"127.0.0.1"}
+	}
+	r, guard, safes := instanceRegistryWithGuard(t, allowed...)
 	r.Register(Adapt(NewWebhookSender("https://happydomain.example", guard), guard))
 	return r, safes
 }
@@ -326,13 +331,10 @@ func TestWebhookSendRefusesUnopenedSecret(t *testing.T) {
 // Transports without secrets go through sealing unchanged.
 func TestSealChannelWithoutSecret(t *testing.T) {
 	r, _ := instanceRegistry(t, false)
-	guard := publicOnlyGuard(t)
-	r.Register(Adapt(NewUnifiedPushSender("https://happydomain.example", guard), guard))
 	r.Register(Adapt(NewEmailSender(nil, "https://happydomain.example"), nil))
 
 	for typ, config := range map[happydns.NotificationChannelType]string{
-		"unifiedpush": `{"endpoint":"https://push.example.com/abc"}`,
-		"email":       `{}`,
+		"email": `{}`,
 	} {
 		ch := &happydns.NotificationChannel{Id: happydns.Identifier{0x0c}, UserId: happydns.Identifier{0x01}, Type: typ, Config: json.RawMessage(config)}
 		if err := r.SealChannelConfig(context.Background(), ch); err != nil {
@@ -406,5 +408,113 @@ func TestWebhookResealsLegacyHeaders(t *testing.T) {
 	}
 	if strings.Contains(string(ch.Config), "t0k3n") {
 		t.Errorf("resealed config = %s, want the header sealed", ch.Config)
+	}
+}
+
+// unifiedPushRegistry seals under the instance policy and handles UnifiedPush,
+// allowing the given addresses as destinations.
+func unifiedPushRegistry(t *testing.T, allowed ...string) *Registry {
+	t.Helper()
+	r, guard, _ := instanceRegistryWithGuard(t, allowed...)
+	r.Register(Adapt(NewUnifiedPushSender("https://happydomain.example", guard), guard))
+	return r
+}
+
+func unifiedPushChannel(config string) *happydns.NotificationChannel {
+	return &happydns.NotificationChannel{
+		Id:     happydns.Identifier{0x0d},
+		UserId: happydns.Identifier{0x01},
+		Type:   ChannelTypeUnifiedPush,
+		Config: json.RawMessage(config),
+	}
+}
+
+// The endpoint is a capability URL, enough to push to the user's device: it
+// is sealed, and goes back to the client as the placeholder only.
+func TestUnifiedPushSealsAndRedactsTheEndpoint(t *testing.T) {
+	r := unifiedPushRegistry(t)
+	ch := unifiedPushChannel(`{"endpoint":"https://push.example.com/abc"}`)
+
+	if err := r.SealChannelConfig(context.Background(), ch); err != nil {
+		t.Fatalf("SealChannelConfig: %v", err)
+	}
+	if strings.Contains(string(ch.Config), "push.example.com") {
+		t.Errorf("stored config = %s, want the endpoint sealed", ch.Config)
+	}
+
+	red, err := r.RedactChannel(ch)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if m := decodeMap(t, red.Config); m["endpoint"] != happydns.RedactedSecret {
+		t.Errorf("redacted = %s, want the placeholder", red.Config)
+	}
+
+	// Echoed back, the placeholder keeps the stored endpoint; a new one
+	// replaces it.
+	merged, err := r.MergeChannelForUpdate(ch, unifiedPushChannel(`{"endpoint":"`+happydns.RedactedSecret+`"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := decodeMap(t, merged)["endpoint"], decodeMap(t, ch.Config)["endpoint"]; got != want {
+		t.Errorf("merged endpoint = %v, want the stored %v", got, want)
+	}
+	merged, err = r.MergeChannelForUpdate(ch, unifiedPushChannel(`{"endpoint":"https://push.example.com/new"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := decodeMap(t, merged)["endpoint"]; got != "https://push.example.com/new" {
+		t.Errorf("merged endpoint = %v, want the new one", got)
+	}
+}
+
+// The notification is pushed to the endpoint in clear, once opened.
+func TestUnifiedPushSendsToTheOpenedEndpoint(t *testing.T) {
+	r := unifiedPushRegistry(t, "127.0.0.1")
+
+	reached := false
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		reached = true
+	}))
+	defer srv.Close()
+
+	ch := unifiedPushChannel(`{"endpoint":"` + srv.URL + `/push"}`)
+	if err := r.SealChannelConfig(context.Background(), ch); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := r.OpenChannelConfig(context.Background(), ch)
+	if err != nil {
+		t.Fatalf("OpenChannelConfig: %v", err)
+	}
+	sender, _ := r.Get(ch.Type)
+	if err := sender.SendTest(context.Background(), cfg, &happydns.User{Email: "u@example.com"}); err != nil {
+		t.Fatalf("SendTest: %v", err)
+	}
+	if !reached {
+		t.Error("the endpoint was not reached")
+	}
+}
+
+// An endpoint carried forward sealed by an update is checked against the
+// address policy like a new one: the check looks at it opened.
+func TestUnifiedPushAcceptChecksTheStoredEndpoint(t *testing.T) {
+	r := unifiedPushRegistry(t, "192.0.2.10")
+
+	for endpoint, allowed := range map[string]bool{
+		"https://192.0.2.10/push": true,
+		"https://10.0.0.1/push":   false,
+	} {
+		ch := unifiedPushChannel(`{"endpoint":"` + endpoint + `"}`)
+		if err := r.SealChannelConfig(context.Background(), ch); err != nil {
+			t.Fatal(err)
+		}
+		_, err := r.AcceptChannelConfig(context.Background(), ch)
+		if allowed && err != nil {
+			t.Errorf("AcceptChannelConfig(%s sealed) = %v, want it accepted", endpoint, err)
+		}
+		if !allowed && err == nil {
+			t.Errorf("AcceptChannelConfig(%s sealed) accepted a refused destination", endpoint)
+		}
 	}
 }

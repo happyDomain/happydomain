@@ -161,7 +161,11 @@ func (s *ChannelService) updated(ctx context.Context, user *happydns.User, exist
 	}
 	ch.Config = merged
 
-	if _, err := s.registry.AcceptChannelConfig(ctx, ch); err != nil {
+	// Both open what is carried forward sealed.
+	_, err = s.registry.AcceptChannelConfig(ctx, ch)
+	if uerr := secret.UserError(err, "notification channel"); uerr != nil {
+		return nil, uerr
+	} else if err != nil {
 		return nil, happydns.ValidationError{Msg: err.Error()}
 	}
 

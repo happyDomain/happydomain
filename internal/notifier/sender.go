@@ -137,13 +137,8 @@ func (a *typedAdapter[C]) DecodeConfig(raw json.RawMessage) (ChannelConfig, erro
 	if err != nil {
 		return nil, err
 	}
-	if err := c.Validate(); err != nil {
+	if err := a.validate(c); err != nil {
 		return nil, err
-	}
-	for _, d := range a.inner.Destinations(c) {
-		if _, err := netguard.ValidateURLShape(d.URL); err != nil {
-			return nil, fmt.Errorf("%s: %w", d.Label, err)
-		}
 	}
 	return c, nil
 }
@@ -157,6 +152,20 @@ func (a *typedAdapter[C]) decode(raw json.RawMessage) (C, error) {
 		}
 	}
 	return c, nil
+}
+
+// validate checks c and the shape of its destinations. A destination held in
+// a secret must be opened first.
+func (a *typedAdapter[C]) validate(c C) error {
+	if err := c.Validate(); err != nil {
+		return err
+	}
+	for _, d := range a.inner.Destinations(c) {
+		if _, err := netguard.ValidateURLShape(d.URL); err != nil {
+			return fmt.Errorf("%s: %w", d.Label, err)
+		}
+	}
+	return nil
 }
 
 // CheckConfig resolves the destinations, so it only runs when a user submits a
@@ -266,12 +275,15 @@ func (a *typedAdapter[C]) ResealConfig(ctx context.Context, secrets *secret.Mana
 }
 
 func (a *typedAdapter[C]) OpenConfig(ctx context.Context, secrets *secret.Manager, sc secret.SecretContext, raw json.RawMessage) (ChannelConfig, error) {
-	cfg, err := a.DecodeConfig(raw)
+	c, err := a.decode(raw)
 	if err != nil {
 		return nil, err
 	}
-	c := cfg.(C)
+	// Opened before being checked: a destination may be a secret.
 	if err := secrets.OpenObject(ctx, sc, &c); err != nil {
+		return nil, err
+	}
+	if err := a.validate(c); err != nil {
 		return nil, err
 	}
 	return c, nil
@@ -396,15 +408,19 @@ func (r *Registry) DecodeChannelConfig(ch *happydns.NotificationChannel) (Channe
 }
 
 // AcceptChannelConfig validates a channel a user is submitting: it decodes the
-// config, then checks its destination against runtime policy. Only use it on
-// the administration path; the send path must stick to DecodeChannelConfig, as
-// the destination check can hit the network.
+// config, opens what it carries forward sealed, then checks its destination
+// against runtime policy. Only use it on the administration path; the send
+// path must stick to OpenChannelConfig, as the destination check can hit the
+// network. ch needs its identifier and owner.
+//
+// The config returned holds the secrets in clear: never store it.
 func (r *Registry) AcceptChannelConfig(ctx context.Context, ch *happydns.NotificationChannel) (ChannelConfig, error) {
 	s, ok := r.Get(ch.Type)
 	if !ok {
 		return nil, fmt.Errorf("%w: %q", ErrUnknownChannelType, ch.Type)
 	}
-	cfg, err := s.DecodeConfig(ch.Config)
+	// A destination carried forward sealed is checked as it is in clear.
+	cfg, err := s.OpenConfig(ctx, r.secrets, ChannelSecretContext(ch), ch.Config)
 	if err != nil {
 		return nil, err
 	}
