@@ -106,3 +106,56 @@ func TestTidySafesGoesPastASafeDeletedMeanwhile(t *testing.T) {
 		t.Errorf("TidySafes = %v, want no error", err)
 	}
 }
+
+// A damaged safe is only deleted when the owner index ties it to a user who
+// no longer exists: deleting it is then the shredding their deletion asked
+// for. Any other stays, since it may be the only key to some secrets.
+func TestTidySafesRemovesTheDamagedSafesOfDeletedUsers(t *testing.T) {
+	raw, db := newKVTestStorage(t)
+
+	alive := &happydns.User{Id: happydns.Identifier("alive"), Email: "alive@example.com"}
+	if err := db.CreateOrUpdateUser(alive); err != nil {
+		t.Fatal(err)
+	}
+	gone := happydns.Identifier("gone")
+
+	ofAlive := &happydns.Safe{Id: newSafeId(t), Owner: alive.Id, Kind: "instance"}
+	ofGone := &happydns.Safe{Id: newSafeId(t), Owner: gone, Kind: "instance"}
+	ofInstance := &happydns.Safe{Id: newSafeId(t), Owner: secret.InstanceOwner(), Kind: "instance"}
+	for _, s := range []*happydns.Safe{ofAlive, ofGone, ofInstance} {
+		if err := db.CreateSafe(s); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// Restored beside the one of its owner: no index tells whose it is.
+	unindexed := &happydns.Safe{Id: newSafeId(t), Owner: gone, Kind: "instance"}
+	if err := db.RestoreSafe(unindexed); err != nil {
+		t.Fatal(err)
+	}
+	for _, s := range []*happydns.Safe{ofAlive, ofGone, ofInstance, unindexed} {
+		if err := raw.Put("safe-"+s.Id.String(), "not a safe"); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := usecase.NewTidyUpUsecase(db).TidySafes(true); err != nil {
+		t.Fatalf("TidySafes: %v", err)
+	}
+
+	damaged, err := db.ListDamagedSafes()
+	if err != nil {
+		t.Fatal(err)
+	}
+	left := map[string]bool{}
+	for _, d := range damaged {
+		left[d.Id.String()] = true
+	}
+	if left[ofGone.Id.String()] {
+		t.Error("the damaged safe of a deleted user is still there")
+	}
+	for name, s := range map[string]*happydns.Safe{"an existing user": ofAlive, "the instance": ofInstance, "no known owner": unindexed} {
+		if !left[s.Id.String()] {
+			t.Errorf("the damaged safe of %s was deleted", name)
+		}
+	}
+}

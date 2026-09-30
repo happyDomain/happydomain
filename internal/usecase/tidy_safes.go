@@ -33,7 +33,8 @@ import (
 // TidySafes deletes the safes whose owner no longer exists. The safe of the
 // instance itself has no user owner, and is kept. A safe record
 // that does not decode is kept whatever dropInvalid says: deleting it would
-// make the secrets it holds unreadable for good.
+// make the secrets it holds unreadable for good. Unless the owner index ties
+// it to a user who no longer exists: then it goes, as their deletion asked.
 func (tu *tidyUpUsecase) TidySafes(_ bool) error {
 	iter, err := tu.store.ListAllSafes()
 	if err != nil {
@@ -65,5 +66,35 @@ func (tu *tidyUpUsecase) TidySafes(_ bool) error {
 		}
 	}
 
+	return tu.tidyDamagedSafes()
+}
+
+// tidyDamagedSafes deletes the safe records that do not decode, whose owner
+// index names a user who no longer exists.
+func (tu *tidyUpUsecase) tidyDamagedSafes() error {
+	damaged, err := tu.store.ListDamagedSafes()
+	if err != nil {
+		return err
+	}
+
+	for _, d := range damaged {
+		if d.Id == nil || d.Owner == nil || secret.IsInstanceOwner(d.Owner) {
+			continue
+		}
+		if _, err := tu.store.GetUser(d.Owner); !errors.Is(err, happydns.ErrUserNotFound) {
+			if err != nil {
+				return err
+			}
+			continue
+		}
+
+		log.Printf("Deleting damaged safe %s (owner not found)", d.Id.String())
+		// Gone meanwhile, or repaired and then left to the next run as an
+		// orphan: nothing to do here.
+		err := tu.store.DeleteDamagedSafe(d.Id)
+		if err != nil && !errors.Is(err, happydns.ErrSafeNotFound) && !errors.Is(err, happydns.ErrSafeNotDamaged) {
+			return fmt.Errorf("unable to delete damaged safe %s: %w", d.Id.String(), err)
+		}
+	}
 	return nil
 }
