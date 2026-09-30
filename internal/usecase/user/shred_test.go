@@ -27,6 +27,7 @@ import (
 	"errors"
 	"testing"
 
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
@@ -112,5 +113,34 @@ func Test_DeleteUserShredsSecrets(t *testing.T) {
 				t.Errorf("another user's secret no longer opens: %v", err)
 			}
 		})
+	}
+}
+
+// A user deleting their local account, wired the way the application wires
+// it, deletes their safes too, and not only their credentials.
+func Test_DeleteAuthUserShredsSecrets(t *testing.T) {
+	db, secrets, authUsers, service := newShredFixture(t)
+	authUsers.SetOnDeleted(service.DeleteUserByID)
+
+	ua := &happydns.UserAuth{Email: "leaving@example.com"}
+	helpers.DefinePassword(ua, "Leaving-Password-123")
+	if err := db.CreateAuthUser(ua); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.CreateOrUpdateUser(&happydns.User{Id: ua.Id, Email: ua.Email}); err != nil {
+		t.Fatal(err)
+	}
+
+	sealFor(t, secrets, ua.Id)
+
+	if err := authUsers.DeleteAuthUser(ua, "Leaving-Password-123"); err != nil {
+		t.Fatalf("DeleteAuthUser: %v", err)
+	}
+
+	if _, err := db.GetSafeByOwner(ua.Id, secret.KindInstance); !errors.Is(err, happydns.ErrSafeNotFound) {
+		t.Errorf("the safe of the deleted account is still there: %v", err)
+	}
+	if _, err := db.GetUser(ua.Id); !errors.Is(err, happydns.ErrUserNotFound) {
+		t.Errorf("the deleted account is still there: %v", err)
 	}
 }
