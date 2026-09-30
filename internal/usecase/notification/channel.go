@@ -168,6 +168,10 @@ func (s *ChannelService) updated(ctx context.Context, user *happydns.User, exist
 	err = s.registry.SealChannelConfig(ctx, ch)
 	if uerr := secret.UserError(err, "notification channel"); uerr != nil {
 		return nil, uerr
+	} else if errors.Is(err, secret.ErrRedactedSecret) {
+		// A placeholder with nothing stored under its name, such as a
+		// renamed header.
+		return nil, happydns.ValidationError{Msg: "a secret placeholder has no stored value behind it, such as a renamed header: enter the value again"}
 	} else if err != nil {
 		return nil, fmt.Errorf("unable to seal the channel secrets: %w", err)
 	}

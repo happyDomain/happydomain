@@ -442,3 +442,28 @@ func wantSecretUserError(t *testing.T, err error, status int, hint string, safe 
 		t.Errorf("the message sent back to the user names the safe: %q", msg)
 	}
 }
+
+// A header sent with the placeholder but nothing stored under its name,
+// renamed say, has no value to keep: the user is asked for it rather than
+// the header silently dropped.
+func TestUpdateChannelRefusesAPlaceholderWithNothingStored(t *testing.T) {
+	ctx := context.Background()
+	svc, db := channelServiceFixture(t)
+	user := &happydns.User{Id: existingUser(t, db)}
+
+	ch := &happydns.NotificationChannel{
+		Type:   notifPkg.ChannelTypeWebhook,
+		Config: json.RawMessage(`{"url":"https://192.0.2.10/h","headers":{"Authorization":"Bearer t0k3n"}}`),
+	}
+	if err := svc.CreateChannel(ctx, user, ch); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err := svc.UpdateChannel(ctx, user, ch.Id, setConfig(`{"url":"https://192.0.2.10/h","headers":{"X-Token":"`+happydns.RedactedSecret+`"}}`))
+	if !errors.As(err, new(happydns.ValidationError)) {
+		t.Fatalf("UpdateChannel = %v, want a ValidationError", err)
+	}
+	if stored, _ := db.GetChannel(ch.Id); !strings.Contains(string(stored.Config), `"Authorization":"hds:1:`) {
+		t.Errorf("stored = %s, want it unchanged", stored.Config)
+	}
+}

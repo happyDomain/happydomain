@@ -235,8 +235,9 @@ func TestWebhookRefusesSealedFromClient(t *testing.T) {
 	}
 }
 
-// The notification reaches the webhook signed with the secret in clear, both
-// for a sealed secret and for one stored before sealing existed.
+// The notification reaches the webhook signed with the secret and carrying the
+// header values in clear, both when sealed and when stored before sealing
+// existed.
 func TestWebhookSendsWithOpenedSecret(t *testing.T) {
 	r, _ := instanceRegistry(t, true)
 
@@ -249,15 +250,16 @@ func TestWebhookSendsWithOpenedSecret(t *testing.T) {
 		"legacy plaintext": func(*happydns.NotificationChannel) {},
 	} {
 		t.Run(name, func(t *testing.T) {
-			var gotSig string
+			var gotSig, gotAuth string
 			var gotBody []byte
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 				gotSig = req.Header.Get("X-Happydomain-Signature")
+				gotAuth = req.Header.Get("Authorization")
 				gotBody, _ = io.ReadAll(req.Body)
 			}))
 			defer srv.Close()
 
-			ch := webhookChannel(`{"url":"` + srv.URL + `","secret":"s3cr3t"}`)
+			ch := webhookChannel(`{"url":"` + srv.URL + `","secret":"s3cr3t","headers":{"Authorization":"Bearer t0k3n"}}`)
 			prepare(ch)
 
 			cfg, err := r.OpenChannelConfig(context.Background(), ch)
@@ -274,6 +276,9 @@ func TestWebhookSendsWithOpenedSecret(t *testing.T) {
 			if want := "sha256=" + hex.EncodeToString(mac.Sum(nil)); gotSig != want {
 				t.Errorf("signature = %q, want %q", gotSig, want)
 			}
+			if gotAuth != "Bearer t0k3n" {
+				t.Errorf("Authorization received = %q", gotAuth)
+			}
 		})
 	}
 }
@@ -287,21 +292,34 @@ func TestOpenChannelConfigFailsClosed(t *testing.T) {
 	}
 }
 
-// A sealed secret that was not opened must not be sent unsigned.
+// A sealed secret or header that was not opened must not be sent, unsigned or
+// empty.
 func TestWebhookSendRefusesUnopenedSecret(t *testing.T) {
 	r, _ := instanceRegistry(t, true)
-	ch := webhookChannel(`{"url":"https://example.com/hook","secret":"s3cr3t"}`)
-	if err := r.SealChannelConfig(context.Background(), ch); err != nil {
-		t.Fatal(err)
-	}
 
-	sender, _ := r.Get(ch.Type)
-	cfg, err := sender.DecodeConfig(ch.Config)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := sender.SendTest(context.Background(), cfg, &happydns.User{Email: "u@example.com"}); err == nil {
-		t.Error("a webhook was sent with a sealed secret it could not sign with")
+	received := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		received++
+	}))
+	defer srv.Close()
+
+	for name, config := range map[string]string{
+		"secret": `{"url":"` + srv.URL + `","secret":"s3cr3t"}`,
+		"header": `{"url":"` + srv.URL + `","headers":{"Authorization":"Bearer t0k3n"}}`,
+	} {
+		ch := webhookChannel(config)
+		if err := r.SealChannelConfig(context.Background(), ch); err != nil {
+			t.Fatal(err)
+		}
+
+		sender, _ := r.Get(ch.Type)
+		cfg, err := sender.DecodeConfig(ch.Config)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := sender.SendTest(context.Background(), cfg, &happydns.User{Email: "u@example.com"}); err == nil || received != 0 {
+			t.Errorf("%s: a webhook was sent with a sealed value it could not open (err = %v)", name, err)
+		}
 	}
 }
 
@@ -324,5 +342,69 @@ func TestSealChannelWithoutSecret(t *testing.T) {
 		if _, err := r.OpenChannelConfig(context.Background(), ch); err != nil {
 			t.Errorf("%s: OpenChannelConfig: %v", typ, err)
 		}
+	}
+}
+
+// Header values may carry credentials, an Authorization token say: none goes
+// back to the client, only the header names.
+func TestWebhookRedactsHeaderValues(t *testing.T) {
+	r := webhookRegistry(t)
+
+	red, err := r.RedactChannel(webhookChannel(`{"url":"https://example.com/hook","headers":{"Authorization":"Bearer t0k3n","X-Env":"prod"}}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(red.Config), "t0k3n") || strings.Contains(string(red.Config), "prod") {
+		t.Errorf("redacted config carries header values: %s", red.Config)
+	}
+	headers, _ := decodeMap(t, red.Config)["headers"].(map[string]any)
+	if headers["Authorization"] != happydns.RedactedSecret || headers["X-Env"] != happydns.RedactedSecret {
+		t.Errorf("redacted headers = %v, want every name with the placeholder", headers)
+	}
+}
+
+// A header echoed back with the placeholder keeps its stored value; one sent
+// with a value takes it; one left out is removed.
+func TestWebhookMergesHeaders(t *testing.T) {
+	r := webhookRegistry(t)
+	existing := webhookChannel(`{"url":"https://example.com/hook","headers":{"Authorization":"stored","X-Gone":"g"}}`)
+
+	merged, err := r.MergeChannelForUpdate(existing, webhookChannel(`{"url":"https://example.com/hook","headers":{"Authorization":"`+happydns.RedactedSecret+`","X-New":"n"}}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	headers, _ := decodeMap(t, merged)["headers"].(map[string]any)
+	if headers["Authorization"] != "stored" || headers["X-New"] != "n" || headers["X-Gone"] != nil {
+		t.Errorf("merged headers = %v, want Authorization kept, X-New set, X-Gone removed", headers)
+	}
+}
+
+func TestWebhookSealsHeaders(t *testing.T) {
+	r, _ := instanceRegistry(t, false)
+	ch := webhookChannel(`{"url":"https://example.com/hook","headers":{"Authorization":"Bearer t0k3n"}}`)
+
+	if err := r.SealChannelConfig(context.Background(), ch); err != nil {
+		t.Fatalf("SealChannelConfig: %v", err)
+	}
+	if strings.Contains(string(ch.Config), "t0k3n") || !strings.Contains(string(ch.Config), `"Authorization":"hds:1:`) {
+		t.Errorf("stored config = %s, want the header value sealed", ch.Config)
+	}
+
+	if err := r.CheckIncomingChannel(ch); !errors.Is(err, secret.ErrSealedFromClient) {
+		t.Errorf("CheckIncomingChannel(sealed header) = %v, want ErrSealedFromClient", err)
+	}
+}
+
+// Headers stored in clear before they were sealed are sealed by a reseal.
+func TestWebhookResealsLegacyHeaders(t *testing.T) {
+	r, _ := instanceRegistry(t, false)
+	ch := webhookChannel(`{"url":"https://example.com/hook","headers":{"Authorization":"Bearer t0k3n"}}`)
+
+	changed, err := r.ResealChannelConfig(context.Background(), ch)
+	if err != nil || !changed {
+		t.Fatalf("ResealChannelConfig = %v, %v; want it changed", changed, err)
+	}
+	if strings.Contains(string(ch.Config), "t0k3n") {
+		t.Errorf("resealed config = %s, want the header sealed", ch.Config)
 	}
 }
