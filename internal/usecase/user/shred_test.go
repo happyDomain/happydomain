@@ -27,6 +27,7 @@ import (
 	"errors"
 	"testing"
 
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	kv "git.happydns.org/happyDomain/internal/storage/kvtpl"
@@ -174,5 +175,46 @@ func Test_DeleteUserClosesSessionsWhenShreddingFails(t *testing.T) {
 				t.Errorf("sessions closed for %v, want the deleted user's", closer.closedUserIDs)
 			}
 		})
+	}
+}
+
+// A user deleting their local account, wired the way the application wires
+// it, deletes their safes too, and not only their credentials.
+func Test_DeleteAuthUserShredsSecrets(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	secrets, err := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db})
+	if err != nil {
+		t.Fatal(err)
+	}
+	sessions := sessionUC.NewService(db)
+	authUsers := authuserUC.NewAuthUserUsecases(&happydns.Options{}, &noopMailer{}, db, sessions)
+	service := user.NewUserUsecases(db, nil, authUsers, &mockSessionCloser{}, secrets)
+	authUsers.SetOnDeleted(service.DeleteUserByID)
+
+	ua := &happydns.UserAuth{Email: "leaving@example.com"}
+	helpers.DefinePassword(ua, "Leaving-Password-123")
+	if err := db.CreateAuthUser(ua); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.CreateOrUpdateUser(&happydns.User{Id: ua.Id, Email: ua.Email}); err != nil {
+		t.Fatal(err)
+	}
+
+	body := &sealedBody{ApiKey: happydns.NewSecret("key")}
+	if err := secrets.SealObject(context.Background(), secret.SecretContext{Owner: ua.Id, ObjectType: "provider", ObjectId: "p"}, body); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := authUsers.DeleteAuthUser(ua, "Leaving-Password-123"); err != nil {
+		t.Fatalf("DeleteAuthUser: %v", err)
+	}
+
+	if _, err := db.GetSafeByOwner(ua.Id, secret.KindInstance); !errors.Is(err, happydns.ErrSafeNotFound) {
+		t.Errorf("the safe of the deleted account is still there: %v", err)
+	}
+	if _, err := db.GetUser(ua.Id); !errors.Is(err, happydns.ErrUserNotFound) {
+		t.Errorf("the deleted account is still there: %v", err)
 	}
 }
