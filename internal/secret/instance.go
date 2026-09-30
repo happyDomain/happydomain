@@ -428,6 +428,24 @@ type SafeStorage interface {
 	DeleteSafe(id happydns.Identifier) error
 }
 
+// DamagedSafeStorage deals with the safe records that do not decode.
+type DamagedSafeStorage interface {
+	// ListDamagedSafes lists the safe records that do not decode.
+	ListDamagedSafes() ([]*happydns.DamagedSafe, error)
+
+	// DeleteDamagedSafe deletes the safe record id, and the owner index
+	// pointing to it, as long as it does not decode: it fails with
+	// happydns.ErrSafeNotDamaged when it does, and happydns.ErrSafeNotFound
+	// when there is none.
+	DeleteDamagedSafe(id happydns.Identifier) error
+
+	// RepairSafe puts safe in place of its record, as long as that record
+	// does not decode: it fails with happydns.ErrSafeNotDamaged when it
+	// does, and happydns.ErrSafeNotFound when there is none. It points the
+	// owner index to safe unless it points to another safe.
+	RepairSafe(safe *happydns.Safe) error
+}
+
 // SafeRestorer puts back the safes of a backup.
 type SafeRestorer interface {
 	// RestoreSafe stores a safe coming from elsewhere, such as a backup,

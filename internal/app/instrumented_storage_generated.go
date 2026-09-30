@@ -222,6 +222,11 @@ func (s *instrumentedStorage) DeleteCheckerConfiguration(checkerName string, use
 	return s.inner.DeleteCheckerConfiguration(checkerName, userId, domainId, serviceId)
 }
 
+func (s *instrumentedStorage) DeleteDamagedSafe(id happydns.Identifier) (err error) {
+	defer observe("delete", "safe")(&err)
+	return s.inner.DeleteDamagedSafe(id)
+}
+
 func (s *instrumentedStorage) DeleteDiscoveryEntriesByProducer(producerID string, target happydns.CheckTarget) (err error) {
 	defer observe("delete", "discovery_entry")(&err)
 	return s.inner.DeleteDiscoveryEntriesByProducer(producerID, target)
@@ -562,6 +567,11 @@ func (s *instrumentedStorage) ListCheckerConfiguration(checkerName string) (ret 
 	return s.inner.ListCheckerConfiguration(checkerName)
 }
 
+func (s *instrumentedStorage) ListDamagedSafes() (ret []*happydns.DamagedSafe, err error) {
+	defer observe("list", "safe")(&err)
+	return s.inner.ListDamagedSafes()
+}
+
 func (s *instrumentedStorage) ListDiscoveryEntriesByProducer(producerID string, target happydns.CheckTarget) (ret []*happydns.StoredDiscoveryEntry, err error) {
 	defer observe("list", "discovery_entry")(&err)
 	return s.inner.ListDiscoveryEntriesByProducer(producerID, target)
@@ -662,6 +672,11 @@ func (s *instrumentedStorage) PutSecretCheck(record []byte) (err error) {
 func (s *instrumentedStorage) PutState(state *happydns.NotificationState) (err error) {
 	defer observe("put", "notification_state")(&err)
 	return s.inner.PutState(state)
+}
+
+func (s *instrumentedStorage) RepairSafe(safe *happydns.Safe) (err error) {
+	defer observe("update", "safe")(&err)
+	return s.inner.RepairSafe(safe)
 }
 
 func (s *instrumentedStorage) ReplaceChannel(id happydns.Identifier, update func(*happydns.NotificationChannel) (*happydns.NotificationChannel, error)) (err error) {

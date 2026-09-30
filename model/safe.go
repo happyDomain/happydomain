@@ -54,3 +54,20 @@ type WrappedKeyset struct {
 	// Blob is the encrypted keyset.
 	Blob []byte `json:"blob"`
 }
+
+// DamagedSafe is a safe record that does not decode: corrupted, since a
+// version refuses a database written by a later one. The values sealed in it
+// no longer open, unless it is repaired from a backup.
+type DamagedSafe struct {
+	// Key is the key of the record in the database.
+	Key string `json:"key"`
+
+	// Id is the identifier of the safe, read from Key. It is nil when Key
+	// holds none.
+	Id Identifier `json:"id,omitempty"`
+
+	// Owner and Kind are those of the owner index pointing to the safe, if
+	// any: the record itself cannot tell them.
+	Owner Identifier `json:"owner,omitempty"`
+	Kind  string     `json:"kind,omitempty"`
+}

@@ -22,9 +22,11 @@
 package database
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 
 	"git.happydns.org/happyDomain/model"
 )
@@ -189,4 +191,133 @@ func (s *KVStorage) DeleteSafe(id happydns.Identifier) error {
 	}
 	batch.Delete(safePrimaryKey(id))
 	return batch.Commit()
+}
+
+// safeOwnerIndexes returns, by safe identifier, the owner and kind of the
+// owner index entries pointing to it.
+func (s *KVStorage) safeOwnerIndexes() (map[string]happydns.DamagedSafe, error) {
+	iter := s.db.Search(safeOwnerPrefix)
+	defer iter.Release()
+
+	indexes := map[string]happydns.DamagedSafe{}
+	for iter.Next() {
+		owner, kind, ok := strings.Cut(strings.TrimPrefix(iter.Key(), safeOwnerPrefix), "|")
+		if !ok {
+			continue
+		}
+		ownerId, err := happydns.NewIdentifierFromString(owner)
+		if err != nil {
+			continue
+		}
+		var id happydns.Identifier
+		if err := s.db.DecodeData(iter.Value(), &id); err != nil {
+			continue
+		}
+		indexes[id.String()] = happydns.DamagedSafe{Owner: ownerId, Kind: kind}
+	}
+	return indexes, iter.Err()
+}
+
+// safeIdFromKey returns the identifier a safe record key holds, or nil when
+// it holds none in the form the storage writes.
+func safeIdFromKey(key string) happydns.Identifier {
+	suffix := strings.TrimPrefix(key, safePrimaryPrefix)
+	id, err := happydns.NewIdentifierFromString(suffix)
+	if err != nil || len(id) == 0 || id.String() != suffix {
+		return nil
+	}
+	return id
+}
+
+func (s *KVStorage) ListDamagedSafes() ([]*happydns.DamagedSafe, error) {
+	iter := s.db.Search(safePrimaryPrefix)
+	var damaged []*happydns.DamagedSafe
+	for iter.Next() {
+		var safe happydns.Safe
+		if s.db.DecodeData(iter.Value(), &safe) == nil {
+			continue
+		}
+		damaged = append(damaged, &happydns.DamagedSafe{Key: iter.Key(), Id: safeIdFromKey(iter.Key())})
+	}
+	err := iter.Err()
+	iter.Release()
+	if err != nil || len(damaged) == 0 {
+		return damaged, err
+	}
+
+	indexes, err := s.safeOwnerIndexes()
+	if err != nil {
+		return nil, err
+	}
+	for _, d := range damaged {
+		if d.Id == nil {
+			continue
+		}
+		if index, ok := indexes[d.Id.String()]; ok {
+			d.Owner, d.Kind = index.Owner, index.Kind
+		}
+	}
+	return damaged, nil
+}
+
+// damagedSafeRecord returns the raw record of the safe id, provided it does
+// not decode.
+func (s *KVStorage) damagedSafeRecord(id happydns.Identifier) (json.RawMessage, error) {
+	var raw json.RawMessage
+	err := s.db.Get(safePrimaryKey(id), &raw)
+	if errors.Is(err, happydns.ErrNotFound) {
+		return nil, happydns.ErrSafeNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	// Decoded as GetSafe does: whatever GetSafe reads is not damaged.
+	var safe happydns.Safe
+	if json.Unmarshal(raw, &safe) == nil {
+		return nil, fmt.Errorf("safe %s: %w", id.String(), happydns.ErrSafeNotDamaged)
+	}
+	return raw, nil
+}
+
+func (s *KVStorage) DeleteDamagedSafe(id happydns.Identifier) error {
+	if _, err := s.damagedSafeRecord(id); err != nil {
+		return err
+	}
+
+	indexes, err := s.safeOwnerIndexes()
+	if err != nil {
+		return err
+	}
+
+	batch := s.db.NewBatch()
+	if index, ok := indexes[id.String()]; ok {
+		batch.Delete(safeOwnerKey(index.Owner, index.Kind))
+	}
+	batch.Delete(safePrimaryKey(id))
+	return batch.Commit()
+}
+
+func (s *KVStorage) RepairSafe(safe *happydns.Safe) error {
+	if safe.Owner.IsEmpty() || safe.Kind == "" {
+		return errors.New("a safe needs an owner and a kind")
+	}
+
+	raw, err := s.damagedSafeRecord(safe.Id)
+	if err != nil {
+		return err
+	}
+
+	// Unless the record changed since it was read: repaired meanwhile, say.
+	if stored, err := s.db.PutIfUnchanged(safePrimaryKey(safe.Id), raw, safe); err != nil {
+		return err
+	} else if !stored {
+		return fmt.Errorf("safe %s: %w", safe.Id.String(), happydns.ErrChangedMeanwhile)
+	}
+
+	err = s.claimSafeOwnerIndex(safe)
+	if errors.Is(err, happydns.ErrAlreadyExists) {
+		return nil
+	}
+	return err
 }

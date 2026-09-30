@@ -40,6 +40,7 @@ var (
 	ErrProviderNotFound               = errors.New("provider not found")
 	ErrSessionNotFound                = errors.New("session not found")
 	ErrSafeNotFound                   = errors.New("safe not found")
+	ErrSafeNotDamaged                 = errors.New("the safe record decodes: it is not damaged")
 	ErrSnapshotNotFound               = errors.New("snapshot not found")
 	ErrUserNotFound                   = errors.New("user not found")
 	ErrUserAlreadyExist               = errors.New("user already exists")

@@ -61,6 +61,7 @@ var entityMap = map[string]string{
 	"CheckStorage":             "secret_check",
 	"SafeStorage":              "safe",
 	"SafeRestorer":             "safe",
+	"DamagedSafeStorage":       "safe",
 	"SessionStorage":           "session",
 	"UserStorage":              "user",
 	"ZoneStorage":              "zone",
@@ -73,6 +74,7 @@ var operationOverrides = map[string]string{
 	"LastInsightsRun":         "get",
 	"CreateOrUpdateUser":      "update",
 	"ReplaceDiscoveryEntries": "update",
+	"RepairSafe":              "update",
 }
 
 // skipMethods lists methods that should be passed through without instrumentation.
