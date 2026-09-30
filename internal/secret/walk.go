@@ -25,14 +25,17 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
+	"strconv"
 	"strings"
 
 	"git.happydns.org/happyDomain/model"
 )
 
 // ErrUnsupportedSecret is returned when a happydns.Secret sits where Walk
-// cannot reach it for sure: in a map, a slice, an array, behind a pointer to
-// the Secret itself, or in an interface holding a struct by value.
+// cannot reach it for sure: in a slice, an array, a map other than one of
+// Secrets with string keys, behind a pointer to the Secret itself, or in an
+// interface holding a struct by value.
 var ErrUnsupportedSecret = errors.New("secret in an unsupported position")
 
 var secretType = reflect.TypeFor[happydns.Secret]()
@@ -45,6 +48,10 @@ type WalkFunc func(path string, s *happydns.Secret) error
 // struct, in field order. It follows nested and embedded structs, non-nil
 // pointers to structs and interfaces holding one; it skips what encoding/json
 // skips (unexported fields, `json:"-"`).
+//
+// The Secrets of a map with string keys are visited in key order, under the
+// path of the map followed by the quoted key: `headers["X-Token"]`. What fn
+// does to one is stored back in the map.
 //
 // Secrets are found by their type, no tag needed. One it cannot reach for
 // sure is an error rather than skipped: a secret silently left out would be
@@ -133,6 +140,11 @@ func (w *walker) walkValue(fv reflect.Value, path string) error {
 	case reflect.Struct:
 		return w.walkStruct(fv, path)
 
+	case reflect.Map:
+		if isSecretMap(fv.Type()) {
+			return w.walkMap(fv, path)
+		}
+
 	case reflect.Pointer:
 		if isStructPointer(fv.Type()) {
 			if fv.IsNil() {
@@ -159,6 +171,39 @@ func (w *walker) walkValue(fv reflect.Value, path string) error {
 		return fmt.Errorf("%s: %w", path, ErrUnsupportedSecret)
 	}
 	return nil
+}
+
+// walkMap visits the Secrets of fv, a map of Secrets with string keys, in
+// key order, and stores back those the visit changed.
+func (w *walker) walkMap(fv reflect.Value, path string) error {
+	keys := fv.MapKeys()
+	slices.SortFunc(keys, func(a, b reflect.Value) int { return strings.Compare(a.String(), b.String()) })
+
+	for _, k := range keys {
+		// Map values cannot be addressed: the visit gets a copy.
+		orig := fv.MapIndex(k)
+		val := reflect.New(secretType).Elem()
+		val.Set(orig)
+
+		kpath := path + "[" + strconv.Quote(k.String()) + "]"
+		if err := w.visit(kpath, val); err != nil {
+			return fmt.Errorf("%s: %w", kpath, err)
+		}
+
+		// Only when changed: a walk that only reads leaves the map, maybe
+		// shared, untouched.
+		if !reflect.DeepEqual(val.Interface(), orig.Interface()) {
+			fv.SetMapIndex(k, val)
+		}
+	}
+
+	return nil
+}
+
+// isSecretMap reports whether t is a map of Secrets with string keys, the
+// only map Walk goes into.
+func isSecretMap(t reflect.Type) bool {
+	return t.Kind() == reflect.Map && t.Key().Kind() == reflect.String && t.Elem() == secretType
 }
 
 // errFound stops reachesSecret at the first secret.

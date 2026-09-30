@@ -129,9 +129,57 @@ func TestWalkRequiresPointerToStruct(t *testing.T) {
 	}
 }
 
+type walkMap struct {
+	Headers map[string]happydns.Secret `json:"headers,omitempty"`
+	Token   happydns.Secret            `json:"token"`
+}
+
+// A secret in a map with string keys is reached under its key, quoted so that
+// a key holding a dot or a bracket cannot pass for another path, in key
+// order so that two walks visit the secrets in the same order.
+func TestWalkFollowsStringKeyedMaps(t *testing.T) {
+	obj := &walkMap{Headers: map[string]happydns.Secret{
+		"b":      happydns.NewSecret("2"),
+		"a":      happydns.NewSecret("1"),
+		"x.y":    happydns.NewSecret("3"),
+		`z"]["w`: happydns.NewSecret("4"),
+	}}
+
+	got := collect(t, obj)
+	want := []string{`headers["a"]`, `headers["b"]`, `headers["x.y"]`, `headers["z\"][\"w"]`, "token"}
+	if !slices.Equal(got, want) {
+		t.Errorf("paths = %v, want %v", got, want)
+	}
+
+	if got := collect(t, &walkMap{}); !slices.Equal(got, []string{"token"}) {
+		t.Errorf("paths of a nil map = %v, want [token]", got)
+	}
+}
+
+func TestWalkCanMutateMapValues(t *testing.T) {
+	obj := &walkMap{Headers: map[string]happydns.Secret{"a": happydns.NewSecret("1")}}
+
+	err := Walk(obj, func(path string, s *happydns.Secret) error {
+		*s = happydns.NewSecret("v-" + path)
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v := obj.Headers["a"].Reveal(); v != `v-headers["a"]` {
+		t.Errorf(`headers["a"] = %q`, v)
+	}
+}
+
 func TestWalkRefusesSecretsInContainers(t *testing.T) {
-	type inMap struct {
-		M map[string]happydns.Secret `json:"m"`
+	type inIntMap struct {
+		M map[int]happydns.Secret `json:"m"`
+	}
+	type inPointerMap struct {
+		M map[string]*happydns.Secret `json:"m"`
+	}
+	type inStructMap struct {
+		M map[string]walkInner `json:"m"`
 	}
 	type inSlice struct {
 		S []walkInner `json:"s"`
@@ -147,11 +195,13 @@ func TestWalkRefusesSecretsInContainers(t *testing.T) {
 	}
 
 	for name, obj := range map[string]any{
-		"map":              &inMap{},
-		"slice":            &inSlice{},
-		"array":            &inArray{},
-		"pointer":          &viaPointer{},
-		"interface struct": &inInterface{I: walkInner{}},
+		"map with int keys":      &inIntMap{M: map[int]happydns.Secret{1: {}}},
+		"map of pointers":        &inPointerMap{},
+		"map of structs holding": &inStructMap{},
+		"slice":                  &inSlice{},
+		"array":                  &inArray{},
+		"pointer":                &viaPointer{},
+		"interface struct":       &inInterface{I: walkInner{}},
 	} {
 		err := Walk(obj, func(string, *happydns.Secret) error { return nil })
 		if err == nil {

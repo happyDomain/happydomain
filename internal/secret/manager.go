@@ -189,33 +189,35 @@ func (m *Manager) SealSecret(ctx context.Context, sc SecretContext, s *happydns.
 // transform calls f on a copy of every Secret of obj, and writes the copies
 // back only once every call succeeded: obj is never left half done.
 func transform(obj any, sc SecretContext, f func(SecretContext, *happydns.Secret) error) error {
-	type change struct {
-		dst *happydns.Secret
-		val happydns.Secret
-	}
-	var changes []change
-
+	// A Secret is never modified in place: its methods replace it, so each
+	// copy is independent.
+	var vals []happydns.Secret
 	err := Walk(obj, func(path string, s *happydns.Secret) error {
 		fsc := sc
 		fsc.Field = path
 
-		// A Secret is never modified in place: its methods replace it, so
-		// this copy is independent.
 		val := *s
 		if err := f(fsc, &val); err != nil {
 			return err
 		}
-		changes = append(changes, change{s, val})
+		vals = append(vals, val)
 		return nil
 	})
 	if err != nil {
 		return err
 	}
 
-	for _, c := range changes {
-		*c.dst = c.val
-	}
-	return nil
+	// A second walk rather than pointers kept from the first: those to the
+	// values of a map point at copies. Walk visits in the same order.
+	i := 0
+	return Walk(obj, func(path string, s *happydns.Secret) error {
+		if i >= len(vals) {
+			return fmt.Errorf("%s: %w: changed while being transformed", path, ErrUnsupportedSecret)
+		}
+		*s = vals[i]
+		i++
+		return nil
+	})
 }
 
 // sealer seals the secrets of one owner, looking its safe up once.

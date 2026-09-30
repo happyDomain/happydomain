@@ -670,6 +670,62 @@ func TestKeyProblemsAreNotUnopenable(t *testing.T) {
 	}
 }
 
+type mapObject struct {
+	Headers map[string]happydns.Secret `json:"headers,omitempty"`
+}
+
+// Secrets in a map are sealed and opened like fields, each bound to its key,
+// and a failure leaves the map as it was.
+func TestInstanceSealOpenMap(t *testing.T) {
+	m, _, _ := instanceManagers(t)
+	sc := objectContext()
+
+	obj := &mapObject{Headers: map[string]happydns.Secret{
+		"Authorization": happydns.NewSecret("Bearer value-a"),
+		"X-Other":       happydns.NewSecret("value-b"),
+	}}
+	if err := m.SealObject(context.Background(), sc, obj); err != nil {
+		t.Fatalf("SealObject: %v", err)
+	}
+	b, err := json.Marshal(obj)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(b), "value-") {
+		t.Fatalf("stored = %s, want the values sealed", b)
+	}
+
+	var back mapObject
+	if err := json.Unmarshal(b, &back); err != nil {
+		t.Fatal(err)
+	}
+	cp, err := m.OpenCopy(context.Background(), sc, &back)
+	if err != nil {
+		t.Fatalf("OpenCopy: %v", err)
+	}
+	if v := cp.(*mapObject).Headers["Authorization"].Reveal(); v != "Bearer value-a" {
+		t.Errorf("opened Authorization = %q", v)
+	}
+	if !back.Headers["Authorization"].IsSealed() {
+		t.Error("OpenCopy opened the original map")
+	}
+
+	// Bound to its key: moved to another one, it does not open.
+	swapped := &mapObject{Headers: map[string]happydns.Secret{"X-Other": back.Headers["Authorization"]}}
+	if err := m.OpenObject(context.Background(), sc, swapped); err == nil {
+		t.Error("a value moved to another key opened")
+	}
+
+	// All or nothing.
+	half := &mapObject{Headers: map[string]happydns.Secret{"A": happydns.NewSecret("clear"), "B": redacted()}}
+	if err := m.SealObject(context.Background(), sc, half); err == nil {
+		t.Fatal("SealObject sealed a redacted placeholder")
+	}
+	if !half.Headers["A"].IsClear() {
+		t.Error("a failed SealObject changed the map")
+	}
+}
+
 // Under the plaintext policy, whatever is written is stored in clear, sealed
 // values carried forward included: once nothing is found sealed, no write
 // brings back a value only the instance safes open, and dropping them loses

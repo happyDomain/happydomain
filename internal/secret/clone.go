@@ -29,7 +29,7 @@ import (
 )
 
 // clone returns a copy of obj, a non-nil pointer to a struct, sharing none of
-// the structs holding a Secret with it. Secrets themselves are shared: they
+// the structs nor the maps holding a Secret with it. Secrets themselves are shared: they
 // are never modified in place. What holds no secret, found by looking at the
 // values as Walk does, is shared too: an http.Client reached through a pointer
 // keeps its locks and pools to itself.
@@ -71,7 +71,7 @@ func (c *cloner) cloneStruct(ptr reflect.Value) (reflect.Value, error) {
 }
 
 // deepen replaces, in the struct v, every pointer through which Walk finds a
-// Secret by a pointer to a copy.
+// Secret by a pointer to a copy, and every map of Secrets by a copy.
 func (c *cloner) deepen(v reflect.Value) error {
 	t := v.Type()
 
@@ -97,6 +97,20 @@ func (c *cloner) deepenValue(fv reflect.Value) error {
 	switch fv.Kind() {
 	case reflect.Struct:
 		return c.deepen(fv)
+
+	case reflect.Map:
+		if fv.IsNil() || !isSecretMap(fv.Type()) {
+			return nil
+		}
+		// Its values are replaced, not modified: a copy of the map is
+		// enough.
+		cp := reflect.MakeMapWithSize(fv.Type(), fv.Len())
+		iter := fv.MapRange()
+		for iter.Next() {
+			cp.SetMapIndex(iter.Key(), iter.Value())
+		}
+		fv.Set(cp)
+		return nil
 
 	case reflect.Pointer:
 		if fv.IsNil() || !isStructPointer(fv.Type()) {

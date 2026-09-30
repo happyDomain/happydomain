@@ -465,3 +465,12 @@ func TestSecretOmitZero(t *testing.T) {
 		t.Errorf("json.Marshal(empty, omitzero) = %s, %v; want {}", b, err)
 	}
 }
+
+// encoding/json calls MarshalJSON on map values too: a clear secret in a map
+// is refused like one in a field.
+func TestSecretInMapFailsClosed(t *testing.T) {
+	_, err := json.Marshal(map[string]happydns.Secret{"k": happydns.NewSecret("v")})
+	if !errors.Is(err, happydns.ErrUnsealedSecret) {
+		t.Errorf("json.Marshal = %v, want ErrUnsealedSecret", err)
+	}
+}
