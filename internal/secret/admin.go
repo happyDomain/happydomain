@@ -56,6 +56,26 @@ type Counts struct {
 
 	// Problems names some of the undecodable objects, and why.
 	Problems []string `json:"problems,omitempty"`
+
+	// SealedIn counts the sealed values by the safe they name, by safe
+	// identifier, whether they open or not. It is not reported as is: it
+	// tells what depends on a damaged safe.
+	SealedIn map[string]int `json:"-"`
+}
+
+// countSealedIn counts s in c.SealedIn, if it names a safe.
+func (c *Counts) countSealedIn(s *happydns.Secret) {
+	if !s.IsSealed() {
+		return
+	}
+	sv, err := ParseSealed(s.Token())
+	if err != nil {
+		return
+	}
+	if c.SealedIn == nil {
+		c.SealedIn = map[string]int{}
+	}
+	c.SealedIn[sv.SafeId.String()]++
 }
 
 // ResealReport tells what a reseal of every object of a type did.
@@ -99,11 +119,16 @@ func (m *Manager) Inspect(ctx context.Context, sc SecretContext, obj any, c *Cou
 
 	primitives := map[string]tink.AEAD{}
 
-	return Walk(cp, func(path string, s *happydns.Secret) error {
+	// Past a value that fails, the others are still looked at, so that
+	// every value sealed in a safe that cannot be read is counted.
+	var errs error
+	err = Walk(cp, func(path string, s *happydns.Secret) error {
 		fsc := sc
 		fsc.Field = path
-		return m.inspectOne(fsc, s, primitives, c)
+		errs = errors.Join(errs, m.inspectOne(fsc, s, primitives, c))
+		return nil
 	})
+	return errors.Join(err, errs)
 }
 
 func (m *Manager) inspectOne(sc SecretContext, s *happydns.Secret, primitives map[string]tink.AEAD, c *Counts) error {
@@ -122,6 +147,8 @@ func (m *Manager) inspectOne(sc SecretContext, s *happydns.Secret, primitives ma
 		c.Unreadable++
 		return nil
 	}
+
+	c.countSealedIn(s)
 
 	if err := m.open(sc, s, primitives); errors.Is(err, ErrUnopenable) {
 		c.Unreadable++

@@ -574,3 +574,57 @@ func TestSecretOptionsPlaintextPolicyStoresSealedInClearOnNextSave(t *testing.T)
 		t.Errorf("stored = %q, want the option in clear", v)
 	}
 }
+
+const twoSecretsChecker = "two_secrets_opts_checker"
+
+func init() {
+	registerTestChecker(twoSecretsChecker, &happydns.CheckerDefinition{
+		Options: happydns.CheckerOptionsDocumentation{
+			UserOpts: []happydns.CheckerOptionDocumentation{
+				{Id: "first", Type: "string", Secret: true},
+				{Id: "second", Type: "string", Secret: true},
+			},
+		},
+	})
+}
+
+// unreadableSafes cannot read any safe, as when it is damaged.
+type unreadableSafes struct {
+	*secrettest.Safes
+}
+
+func (unreadableSafes) GetSafe(happydns.Identifier) (*happydns.Safe, error) {
+	return nil, errors.New("invalid character")
+}
+
+// Every value of a scope sealed in a safe that cannot be read is counted by
+// that safe, not only the first: that is what the status tells of a damaged
+// safe.
+func TestSecretOptionsInspectCountsEveryValueOfAFailingScope(t *testing.T) {
+	safes := secrettest.NewSafes()
+	instance, _ := optionsManagers(t, safes, nil)
+	store := newListableOptionsStore()
+	user := idPtr()
+	store.data[posKey(twoSecretsChecker, user, nil, nil)] = happydns.CheckerOptions{"first": "a", "second": "b"}
+	if report, err := checkerUC.NewCheckerOptionsSecrets(store, instance).ResealSecrets(context.Background()); err != nil || report.Changed != 1 {
+		t.Fatalf("ResealSecrets = %+v, %v", report, err)
+	}
+
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	unreadable, err := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: unreadableSafes{safes}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	counts, err := checkerUC.NewCheckerOptionsSecrets(store, unreadable).InspectSecrets(context.Background())
+	if err != nil || counts.Undecodable != 1 {
+		t.Fatalf("InspectSecrets = %+v, %v; want the scope undecodable", counts, err)
+	}
+	total := 0
+	for _, n := range counts.SealedIn {
+		total += n
+	}
+	if len(counts.SealedIn) != 1 || total != 2 {
+		t.Errorf("SealedIn = %v, want both values under their safe", counts.SealedIn)
+	}
+}

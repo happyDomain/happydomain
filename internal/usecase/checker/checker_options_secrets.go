@@ -395,9 +395,16 @@ func (cs *CheckerOptionsSecrets) InspectSecrets(ctx context.Context) (secret.Cou
 	}
 
 	return secret.InspectAll(iter, scopeName, func(p *happydns.CheckerOptionsPositional, c *secret.Counts) error {
-		return eachSecretSet(p.CheckName, p.UserId, p.DomainId, p.ServiceId, p.Options, func(_, s string, sc secret.SecretContext) error {
-			return cs.secrets.InspectValue(ctx, sc, s, c)
+		// Past a value that fails, the others are still looked at, so that
+		// every value sealed in a safe that cannot be read is counted.
+		var errs error
+		err := eachSecretSet(p.CheckName, p.UserId, p.DomainId, p.ServiceId, p.Options, func(k, s string, sc secret.SecretContext) error {
+			if err := cs.secrets.InspectValue(ctx, sc, s, c); err != nil {
+				errs = errors.Join(errs, fmt.Errorf("option %q: %w", k, err))
+			}
+			return nil
 		})
+		return errors.Join(err, errs)
 	})
 }
 

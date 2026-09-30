@@ -39,7 +39,7 @@ func NewSecretController(secrets *usecase.SecretsUsecase) *SecretController {
 //
 //	@Summary	Secrets status
 //	@Schemes
-//	@Description	Counts, for each type of object, the secrets stored in clear, sealed by kind of safe, and those that cannot be opened; and, for each key of the instance keyset, the number of safes it wraps. A key wrapping no safe any more can be removed from the keyset.
+//	@Description	Counts, for each type of object, the secrets stored in clear, sealed by kind of safe, and those that cannot be opened; and, for each key of the instance keyset, the number of safes it wraps. A key wrapping no safe any more can be removed from the keyset. Lists the safe records that do not decode, with their owner when the owner index tells it, and the number of sealed values that open again only if they are repaired.
 //	@Tags		admin
 //	@Produce	json
 //	@Security	securitydefinitions.basic

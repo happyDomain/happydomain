@@ -53,6 +53,26 @@ type SecretsStatus struct {
 	// InstanceKeys lists the keys of the instance keyset and the number of
 	// safes each wraps.
 	InstanceKeys []secret.KeyStatus `json:"instanceKeys"`
+
+	// DamagedSafes lists the safe records that do not decode.
+	DamagedSafes []DamagedSafeStatus `json:"damagedSafes,omitempty"`
+}
+
+// DamagedSafeStatus is a safe record that does not decode, and what depends
+// on it.
+type DamagedSafeStatus struct {
+	*happydns.DamagedSafe
+
+	// Values counts the sealed values naming it, every type of object
+	// together: they open again only if it is repaired.
+	Values int `json:"values"`
+}
+
+// SecretsStorage is what SecretsUsecase reads and writes besides the objects
+// holding secrets.
+type SecretsStorage interface {
+	secret.CheckStorage
+	secret.DamagedSafeStorage
 }
 
 // SecretsUsecase lets the administrator follow and migrate how secrets are
@@ -60,11 +80,11 @@ type SecretsStatus struct {
 type SecretsUsecase struct {
 	manager *secret.Manager
 	holders map[string]SecretHolder
-	checks  secret.CheckStorage
+	store   SecretsStorage
 }
 
-func NewSecretsUsecase(manager *secret.Manager, holders map[string]SecretHolder, checks secret.CheckStorage) *SecretsUsecase {
-	return &SecretsUsecase{manager: manager, holders: holders, checks: checks}
+func NewSecretsUsecase(manager *secret.Manager, holders map[string]SecretHolder, store SecretsStorage) *SecretsUsecase {
+	return &SecretsUsecase{manager: manager, holders: holders, store: store}
 }
 
 func (u *SecretsUsecase) types() []string {
@@ -76,20 +96,36 @@ func (u *SecretsUsecase) types() []string {
 	return types
 }
 
-// Status tells how the secrets of every object are stored, and which key of
-// the instance keyset wraps how many safes.
+// Status tells how the secrets of every object are stored, which key of the
+// instance keyset wraps how many safes, and which safes are damaged.
 func (u *SecretsUsecase) Status(ctx context.Context) (*SecretsStatus, error) {
 	status := &SecretsStatus{
 		Policy:  string(u.manager.Policy()),
 		Objects: map[string]secret.Counts{},
 	}
 
+	sealedIn := map[string]int{}
 	for _, t := range u.types() {
 		counts, err := u.holders[t].InspectSecrets(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", t, err)
 		}
 		status.Objects[t] = counts
+		for id, n := range counts.SealedIn {
+			sealedIn[id] += n
+		}
+	}
+
+	damaged, err := u.store.ListDamagedSafes()
+	if err != nil {
+		return nil, fmt.Errorf("unable to list the damaged safes: %w", err)
+	}
+	for _, d := range damaged {
+		ds := DamagedSafeStatus{DamagedSafe: d}
+		if d.Id != nil {
+			ds.Values = sealedIn[d.Id.String()]
+		}
+		status.DamagedSafes = append(status.DamagedSafes, ds)
 	}
 
 	keys, err := u.manager.KeyStatus()
@@ -153,5 +189,5 @@ func (u *SecretsUsecase) DropSafes(ctx context.Context) (secret.ResealReport, er
 		}
 	}
 
-	return u.manager.DropInstanceSafes(ctx, u.checks)
+	return u.manager.DropInstanceSafes(ctx, u.store)
 }

@@ -321,9 +321,9 @@ type Storage interface {
 //
 // A safe record that does not decode may be an instance safe. While one is
 // there, the check record stays, and the keyset it names stays required,
-// until the record is repaired, or removed by hand if known to be lost: `tidy`
-// never deletes a safe record that does not decode. Without a check record,
-// nothing then vouches for a keyset: it is accepted, but not recorded.
+// until the record is dealt with: see damagedSafes in the secrets status.
+// Without a check record, nothing then vouches for a keyset: it is accepted,
+// but not recorded.
 func StartupCheck(policy Policy, key *InstanceKey, store Storage) error {
 	if policy == PolicyInstance && key == nil {
 		return errors.New("the instance secret policy requires an instance keyset: see `happydomain secret-keyset generate`")
@@ -358,7 +358,7 @@ func StartupCheck(policy Policy, key *InstanceKey, store Storage) error {
 			return errors.New("secrets are sealed under an instance keyset, but none is configured: set -secret-keyset-file")
 		}
 		if recorded {
-			return fmt.Errorf("%d safe record(s) do not decode and may be instance safes, and the keyset check record is there: set -secret-keyset-file until they are repaired, or removed by hand if known to be lost", len(damaged))
+			return fmt.Errorf("%d safe record(s) do not decode and may be instance safes, and the keyset check record is there: set -secret-keyset-file until they are dealt with: see damagedSafes in /api/secrets/status", len(damaged))
 		}
 		return nil
 	}

@@ -128,11 +128,12 @@ func InspectAll[T any](iter happydns.Iterator[T], name func(*T) string, inspect 
 		}
 
 		// Counted apart, so that an object failing halfway adds nothing
-		// but its failure.
+		// but its failure, and the values it seals.
 		var one Counts
 		if err := inspect(iter.Item(), &one); err != nil {
 			c.Undecodable++
 			probs.add("%s: %s", name(iter.Item()), err.Error())
+			c.add(Counts{SealedIn: one.SealedIn})
 			continue
 		}
 		c.add(one)
@@ -154,5 +155,11 @@ func (c *Counts) add(o Counts) {
 	}
 	for kind, n := range o.Sealed {
 		c.Sealed[kind] += n
+	}
+	for id, n := range o.SealedIn {
+		if c.SealedIn == nil {
+			c.SealedIn = map[string]int{}
+		}
+		c.SealedIn[id] += n
 	}
 }
