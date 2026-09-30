@@ -22,9 +22,12 @@
 package controller
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/usecase"
+	"git.happydns.org/happyDomain/model"
 )
 
 type SecretController struct {
@@ -98,4 +101,25 @@ func (sc *SecretController) Reseal(c *gin.Context) {
 func (sc *SecretController) DropSafes(c *gin.Context) {
 	report, err := sc.secrets.DropSafes(c.Request.Context())
 	apiResponse(c, report, err)
+}
+
+// ForgetSafe gives up a damaged safe.
+//
+//	@Summary	Forget a damaged safe
+//	@Schemes
+//	@Description	Deletes a safe record that does not decode, listed under damagedSafes in the status, along with its owner index. The values sealed in it never open again: their users have to enter them again. Refused for a safe that decodes. Repair it from a backup instead when one holds it.
+//	@Tags		admin
+//	@Produce	json
+//	@Security	securitydefinitions.basic
+//	@Param		safeId	path	string	true	"Safe identifier"
+//	@Success	200	{boolean}	bool
+//	@Failure	400	{object}	happydns.ErrorResponse	"Invalid identifier, no such safe, or a safe that decodes"
+//	@Router		/secrets/safes/{safeId}/forget [post]
+func (sc *SecretController) ForgetSafe(c *gin.Context) {
+	id, err := happydns.NewIdentifierFromString(c.Param("safeId"))
+	if err != nil {
+		apiResponse(c, nil, fmt.Errorf("invalid safe identifier: %w", err))
+		return
+	}
+	apiResponse(c, true, sc.secrets.ForgetSafe(c.Request.Context(), id))
 }

@@ -24,6 +24,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"log"
 	"maps"
 	"slices"
 	"sort"
@@ -190,4 +191,15 @@ func (u *SecretsUsecase) DropSafes(ctx context.Context) (secret.ResealReport, er
 	}
 
 	return u.manager.DropInstanceSafes(ctx, u.store)
+}
+
+// ForgetSafe gives up the safe id, whose record does not decode: it is
+// deleted, and what it sealed never opens again. It refuses a safe that
+// decodes: those go with their owner, or with DropSafes.
+func (u *SecretsUsecase) ForgetSafe(ctx context.Context, id happydns.Identifier) error {
+	if err := u.store.DeleteDamagedSafe(id); err != nil {
+		return err
+	}
+	log.Printf("secret: damaged safe %s forgotten, what it sealed is lost", id.String())
+	return nil
 }

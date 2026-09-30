@@ -23,11 +23,13 @@ package usecase_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
+	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -68,5 +70,68 @@ func TestSecretsUsecaseStatusNamesDamagedSafes(t *testing.T) {
 	d := status.DamagedSafes[0]
 	if !d.Id.Equals(safe.Id) || !d.Owner.Equals(happydns.Identifier{0x01}) || d.Kind != secret.KindInstance || d.Values != 2 {
 		t.Errorf("DamagedSafes[0] = %+v, want safe %s of 0x01, instance, 2 values", d, safe.Id.String())
+	}
+}
+
+// Forgetting a damaged safe gives up what it sealed: the values it held count
+// as unreadable, like any value that no longer opens, and no longer keep the
+// objects from being inspected, nor the keyset from being removed.
+func TestSecretsUsecaseForgetSafe(t *testing.T) {
+	ctx := context.Background()
+	_, db, key, instance, safe := damagedSafeSetup(t)
+	uc := newProviderSecretsUsecase(db, instance)
+
+	other := secret.SecretContext{Owner: happydns.Identifier{0x02}, ObjectType: "provider", ObjectId: "AQ", Field: "k"}
+	if _, err := instance.SealValue(ctx, other, "v"); err != nil {
+		t.Fatal(err)
+	}
+	sound, err := db.GetSafeByOwner(other.Owner, secret.KindInstance)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := uc.ForgetSafe(ctx, sound.Id); !errors.Is(err, happydns.ErrSafeNotDamaged) {
+		t.Errorf("ForgetSafe on a sound safe = %v, want ErrSafeNotDamaged", err)
+	}
+	missing, _ := happydns.NewRandomIdentifier()
+	if err := uc.ForgetSafe(ctx, missing); !errors.Is(err, happydns.ErrSafeNotFound) {
+		t.Errorf("ForgetSafe on no safe = %v, want ErrSafeNotFound", err)
+	}
+
+	if err := uc.ForgetSafe(ctx, safe.Id); err != nil {
+		t.Fatalf("ForgetSafe: %v", err)
+	}
+
+	status, err := uc.Status(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(status.DamagedSafes) != 0 {
+		t.Errorf("DamagedSafes after forgetting = %+v", status.DamagedSafes)
+	}
+	if c := status.Objects[providerUC.SecretObjectType]; c.Unreadable != 2 || c.Undecodable != 0 {
+		t.Errorf("provider counts after forgetting = %+v, want 2 unreadable, none undecodable", c)
+	}
+
+	// The owner gets a new safe for what they enter again.
+	seedSecretProvider(t, db, instance, 3, "sealed-3")
+	if got, err := db.GetSafeByOwner(happydns.Identifier{0x01}, secret.KindInstance); err != nil || got.Id.Equals(safe.Id) {
+		t.Errorf("safe of the owner after forgetting = %+v, %v; want a new one", got, err)
+	}
+
+	// Nothing keeps going back to clear from completing any more.
+	var plaintext *secret.Manager
+	plaintext, err = secret.NewManager(secret.Config{Policy: secret.PolicyPlaintext, InstanceKey: key, Safes: db})
+	if err != nil {
+		t.Fatal(err)
+	}
+	back := newProviderSecretsUsecase(db, plaintext)
+	if _, err := back.Reseal(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := back.DropSafes(ctx); err != nil {
+		t.Fatalf("DropSafes after forgetting the damaged safe: %v", err)
+	}
+	if err := secret.StartupCheck(secret.PolicyPlaintext, nil, db); err != nil {
+		t.Errorf("StartupCheck without keyset after the drop: %v", err)
 	}
 }

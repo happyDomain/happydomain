@@ -34,4 +34,5 @@ func declareSecretsRoutes(router *gin.RouterGroup, dep Dependencies) {
 	router.POST("/secrets/rewrap", sc.Rewrap)
 	router.POST("/secrets/reseal", sc.Reseal)
 	router.POST("/secrets/drop-safes", sc.DropSafes)
+	router.POST("/secrets/safes/:safeId/forget", sc.ForgetSafe)
 }
