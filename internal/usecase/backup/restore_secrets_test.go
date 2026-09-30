@@ -25,6 +25,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strings"
 	"testing"
 
 	providerReg "git.happydns.org/happyDomain/internal/providerregistry"
@@ -129,8 +130,8 @@ func secretProviderMessage(owner happydns.Identifier, id byte, body string) *hap
 
 func TestBackupCopiesStoredSecretsVerbatim(t *testing.T) {
 	db, user := seed(t)
-	instance, plaintext := keyedSecrets(t, db)
-	uc := backup.NewUsecase(db, plaintext)
+	instance, _ := keyedSecrets(t, db)
+	uc := backup.NewUsecase(db, instance)
 	token := sealedFor(t, instance, user.Id, 2, "sealed-key")
 
 	// Restore puts the records in place; Backup must give them back as is.
@@ -146,8 +147,12 @@ func TestBackupCopiesStoredSecretsVerbatim(t *testing.T) {
 	}
 
 	id1, id2 := happydns.Identifier{1}, happydns.Identifier{2}
+	stored1, err := db.GetProvider(id1)
+	if err != nil {
+		t.Fatal(err)
+	}
 	want := map[string]string{
-		id1.String(): `{"host":"h","apikey":"legacy"}`,
+		id1.String(): string(stored1.Provider),
 		id2.String(): `{"host":"h","apikey":"` + token + `"}`,
 	}
 
@@ -168,37 +173,63 @@ func TestBackupCopiesStoredSecretsVerbatim(t *testing.T) {
 	}
 }
 
-func TestRestoreSealsClearAndKeepsSealed(t *testing.T) {
-	db, err := inmemory.Instantiate()
-	if err != nil {
-		t.Fatal(err)
-	}
-	owner := happydns.Identifier{0xaa}
-	instance, plaintext := keyedSecrets(t, db)
-	uc := backup.NewUsecase(db, plaintext)
-	token := sealedFor(t, instance, owner, 2, "sealed-key")
+// Restoring stores secrets the way the current policy stores new ones: the
+// instance policy seals clear values and keeps sealed ones that open, the
+// plaintext policy stores both in clear.
+func TestRestoreStoresSecretsTheWayThePolicyDoes(t *testing.T) {
+	for _, policy := range []secret.Policy{secret.PolicyInstance, secret.PolicyPlaintext} {
+		t.Run(string(policy), func(t *testing.T) {
+			db, err := inmemory.Instantiate()
+			if err != nil {
+				t.Fatal(err)
+			}
+			owner := happydns.Identifier{0xaa}
+			instance, plaintext := keyedSecrets(t, db)
+			m := instance
+			if policy == secret.PolicyPlaintext {
+				m = plaintext
+			}
+			uc := backup.NewUsecase(db, m)
+			token := sealedFor(t, instance, owner, 2, "sealed-key")
 
-	in := &happydns.Backup{
-		Providers: []*happydns.ProviderMessage{
-			secretProviderMessage(owner, 1, `{"host":"h","apikey":"legacy"}`),
-			secretProviderMessage(owner, 2, `{"host":"h","apikey":"`+token+`"}`),
-		},
-	}
-	if err := uc.Restore(in); err != nil {
-		t.Fatalf("Restore: %v", err)
-	}
+			in := &happydns.Backup{
+				Providers: []*happydns.ProviderMessage{
+					secretProviderMessage(owner, 1, `{"host":"h","apikey":"legacy"}`),
+					secretProviderMessage(owner, 2, `{"host":"h","apikey":"`+token+`"}`),
+				},
+			}
+			if err := uc.Restore(in); err != nil {
+				t.Fatalf("Restore: %v", err)
+			}
 
-	for id, want := range map[byte]string{
-		1: `{"host":"h","apikey":"legacy"}`,
-		2: `{"host":"h","apikey":"` + token + `"}`,
-	} {
-		got, err := db.GetProvider(happydns.Identifier{id})
-		if err != nil {
-			t.Fatalf("GetProvider(%d): %v", id, err)
-		}
-		if string(got.Provider) != want {
-			t.Errorf("restored %d = %s, want %s", id, got.Provider, want)
-		}
+			stored := func(id byte) string {
+				got, err := db.GetProvider(happydns.Identifier{id})
+				if err != nil {
+					t.Fatalf("GetProvider(%d): %v", id, err)
+				}
+				return string(got.Provider)
+			}
+
+			if policy == secret.PolicyPlaintext {
+				if got := stored(1); got != `{"host":"h","apikey":"legacy"}` {
+					t.Errorf("restored 1 = %s, want it in clear", got)
+				}
+				if got := stored(2); got != `{"host":"h","apikey":"sealed-key"}` {
+					t.Errorf("restored 2 = %s, want it in clear", got)
+				}
+				return
+			}
+
+			if got := stored(1); !strings.Contains(got, `"apikey":"hds:1:`) {
+				t.Errorf("restored 1 = %s, want it sealed", got)
+			}
+			if restoredApiKey(t, db, instance, 1) != "legacy" {
+				t.Error("restored 1 does not open to its value")
+			}
+			if got := stored(2); got != `{"host":"h","apikey":"`+token+`"}` {
+				t.Errorf("restored 2 = %s, want it kept as is", got)
+			}
+		})
 	}
 }
 

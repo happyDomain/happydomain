@@ -151,6 +151,8 @@ func NewManager(cfg Config) (*Manager, error) {
 // A secret already opened stays as it is when it was opened for this very
 // field, and is sealed again otherwise: its token would not open where it now
 // lives. A sealed one stays as it is only once it is known to open here.
+// Under the plaintext policy, both are stored in clear instead, like new
+// values: nothing written then needs a safe to open.
 //
 // A sealed secret stays opened: obj can still be used, and is now storable.
 // On error, obj is left as it was.
@@ -240,19 +242,29 @@ func (x *sealer) seal(sc SecretContext, s *happydns.Secret) error {
 	case s.IsRedacted():
 		return ErrRedactedSecret
 	case s.IsSealed():
-		// Its value is unknown, so it cannot be sealed again: keep it only
-		// if it opens here.
+		// Keep it only if it opens here.
 		probe := *s
-		return x.m.open(sc, &probe, x.primitives)
+		if err := x.m.open(sc, &probe, x.primitives); err != nil {
+			return err
+		}
+		if x.m.policy != PolicyPlaintext {
+			return nil
+		}
+		// Under the plaintext policy, stored in clear like a new value:
+		// once nothing is found sealed, no write brings back a value only
+		// a safe opens, and the safes can be dropped.
+		*s = happydns.NewSecret(probe.Reveal())
 	case s.IsOpened():
-		if s.Binding() == sc.binding() {
+		if s.Binding() == sc.binding() && (x.m.policy != PolicyPlaintext || !IsSealed(s.Token())) {
 			return nil
 		}
-		// Opened elsewhere: seal its value again for where it now lives.
+		// Opened elsewhere, or sealed while the policy is now plaintext:
+		// store its value again the way new values are, for where it now
+		// lives.
 		*s = happydns.NewSecret(s.Reveal())
-		if s.IsEmpty() {
-			return nil
-		}
+	}
+	if s.IsEmpty() {
+		return nil
 	}
 
 	clear, ok := s.ClearForSealing()

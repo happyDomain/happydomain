@@ -669,3 +669,83 @@ func TestKeyProblemsAreNotUnopenable(t *testing.T) {
 		})
 	}
 }
+
+// Under the plaintext policy, whatever is written is stored in clear, sealed
+// values carried forward included: once nothing is found sealed, no write
+// brings back a value only the instance safes open, and dropping them loses
+// nothing.
+func TestPlaintextSealStoresSealedValuesInClear(t *testing.T) {
+	ctx := context.Background()
+	instance, plaintext, _ := instanceManagers(t)
+	sc := objectContext()
+	token := sealOne(t, instance, sc, "sealed-earlier")
+
+	// Carried forward as read from storage.
+	obj := &managedObject{ApiKey: sealedFromStorage(t, token)}
+	if err := plaintext.SealObject(ctx, sc, obj); err != nil {
+		t.Fatal(err)
+	}
+	if b, err := json.Marshal(obj); err != nil || !strings.Contains(string(b), `"apikey":"sealed-earlier"`) {
+		t.Errorf("stored = %s, %v; want the value in clear", b, err)
+	}
+
+	// Opened before being written back.
+	opened := &managedObject{ApiKey: sealedFromStorage(t, token)}
+	if err := plaintext.OpenObject(ctx, sc, opened); err != nil {
+		t.Fatal(err)
+	}
+	if err := plaintext.SealObject(ctx, sc, opened); err != nil {
+		t.Fatal(err)
+	}
+	if b, err := json.Marshal(opened); err != nil || !strings.Contains(string(b), `"apikey":"sealed-earlier"`) {
+		t.Errorf("stored = %s, %v; want the value in clear", b, err)
+	}
+
+	// A single value.
+	vsc := objectContext()
+	vsc.Field = "k"
+	vtoken, err := instance.SealValue(ctx, vsc, "v")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if out, err := plaintext.SealValue(ctx, vsc, vtoken); err != nil || out != "v" {
+		t.Errorf("SealValue(sealed, plaintext) = %q, %v; want the value in clear", out, err)
+	}
+}
+
+// A single value that will never open is kept as it is under the plaintext
+// policy too: it is lost already, and the values stored beside it can still
+// be saved. One that may open a moment later is not taken for lost.
+func TestPlaintextSealValueOfAValueThatDoesNotOpen(t *testing.T) {
+	ctx := context.Background()
+	key := testInstanceKey(t)
+	store := secrettest.NewSafes()
+	instance, err := NewManager(Config{Policy: PolicyInstance, InstanceKey: key, Safes: store})
+	if err != nil {
+		t.Fatal(err)
+	}
+	plaintext, err := NewManager(Config{Policy: PolicyPlaintext, InstanceKey: key, Safes: store})
+	if err != nil {
+		t.Fatal(err)
+	}
+	flaky, err := NewManager(Config{Policy: PolicyPlaintext, InstanceKey: key, Safes: flakySafes{store}})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sc := objectContext()
+	sc.Field = "k"
+
+	lost := FormatSealed(happydns.Identifier{0x42}, []byte("payload"))
+	if out, err := plaintext.SealValue(ctx, sc, lost); err != nil || out != lost {
+		t.Errorf("SealValue(unopenable, plaintext) = %q, %v; want it kept as is", out, err)
+	}
+
+	token, err := instance.SealValue(ctx, sc, "v")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if out, err := flaky.SealValue(ctx, sc, token); err == nil {
+		t.Errorf("SealValue with the safe unreadable for now = %q, want an error", out)
+	}
+}

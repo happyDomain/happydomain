@@ -386,13 +386,28 @@ func refusePlaceholder(sc SecretContext, value string) error {
 
 // SealValue returns value, a secret stored in a map rather than in a
 // struct, sealed under the current policy. A value already sealed is
-// returned as is. sc must name the field.
+// returned as is, except under the plaintext policy, which returns it in
+// clear when it opens. sc must name the field.
 func (m *Manager) SealValue(ctx context.Context, sc SecretContext, value string) (string, error) {
 	if err := refusePlaceholder(sc, value); err != nil {
 		return "", err
 	}
 	if IsSealed(value) {
-		return value, nil
+		if m.policy != PolicyPlaintext {
+			return value, nil
+		}
+		// Under the plaintext policy, stored in clear like a new value,
+		// as SealObject does.
+		clear, err := m.OpenValue(ctx, sc, value)
+		if errors.Is(err, ErrUnopenable) {
+			// Lost already: kept as is, so that the values stored beside
+			// it can still be saved.
+			return value, nil
+		}
+		if err != nil {
+			return "", err
+		}
+		value = clear
 	}
 	s := happydns.NewSecret(value)
 	if err := m.SealSecret(ctx, sc, &s); err != nil {

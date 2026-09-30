@@ -854,6 +854,35 @@ func Test_Secret_UpdateWithAStoredValueThatNoLongerOpens(t *testing.T) {
 	}
 }
 
+// Under the plaintext policy, a credential still sealed is stored in clear on
+// the next write of its provider, as a reseal would do.
+func Test_Secret_PlaintextPolicyStoresSealedInClearOnNextWrite(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	instance, _ := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db, Owners: db})
+	plaintext, _ := secret.NewManager(secret.Config{Policy: secret.PolicyPlaintext, InstanceKey: key, Safes: db, Owners: db})
+
+	user := createTestUser(t, db, "back-to-clear@example.com")
+	p := storeRaw(t, db, user.Id, `{"host":"h","apikey":"my-key"}`)
+
+	body := `{"host":"h","apikey":"` + happydns.RedactedSecret + `"}`
+	if err := provider.NewService(db, &mockValidator{}, nil, instance).UpdateProviderFromMessage(ctx, p.Id, user, secretMessage(t, "SecretTestProvider", body)); err != nil {
+		t.Fatal(err)
+	}
+	if got := storedBody(t, db, p.Id); !strings.Contains(got, `"apikey":"hds:1:`) {
+		t.Fatalf("stored body = %s, want the key sealed", got)
+	}
+
+	body = `{"host":"renamed","apikey":"` + happydns.RedactedSecret + `"}`
+	if err := provider.NewService(db, &mockValidator{}, nil, plaintext).UpdateProviderFromMessage(ctx, p.Id, user, secretMessage(t, "SecretTestProvider", body)); err != nil {
+		t.Fatalf("UpdateProviderFromMessage(plaintext): %v", err)
+	}
+	if got := storedBody(t, db, p.Id); got != `{"host":"renamed","apikey":"my-key"}` {
+		t.Errorf("stored body = %s, want the key in clear", got)
+	}
+}
+
 // wantSecretUserError checks that err tells the user what to do about a
 // stored credential that does not open, with status, without the reason.
 func wantSecretUserError(t *testing.T, err error, status int, hint string) {

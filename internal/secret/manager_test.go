@@ -115,7 +115,8 @@ func fieldContext(field string) SecretContext {
 }
 
 func TestSealKeepsOpenedSecretOfTheSameContext(t *testing.T) {
-	m := plaintextManager(t)
+	// Under the instance policy: the plaintext one stores it in clear.
+	m, _, _ := instanceManagers(t)
 
 	opened := sealedFromStorage(t, "hds:1:AQ:b3BlbmVk")
 	opened.SetOpened(opened.Token(), []byte("opened-value"), fieldContext("other").binding())

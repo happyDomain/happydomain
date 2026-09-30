@@ -547,3 +547,26 @@ func TestSecretOptionsSaveWithAStoredValueThatNoLongerOpens(t *testing.T) {
 		t.Errorf("GetCheckerOptionsForUse = %v, %v; want the value entered again", forUse, err)
 	}
 }
+
+// Under the plaintext policy, a secret option still sealed is stored in clear
+// on the next save of its scope, as a reseal would do.
+func TestSecretOptionsPlaintextPolicyStoresSealedInClearOnNextSave(t *testing.T) {
+	instance, plaintext := optionsManagers(t, secrettest.NewSafes(), nil)
+	store := newOptionsStore()
+	user := idPtr()
+
+	if err := checkerUC.NewCheckerOptionsUsecase(store, nil).WithSecrets(instance).SetCheckerOptions(secretChecker, user, nil, nil, happydns.CheckerOptions{"user_token": "kept", "plain": "a"}); err != nil {
+		t.Fatal(err)
+	}
+	if v := storedString(t, store, user, "user_token"); !strings.HasPrefix(v, "hds:1:") {
+		t.Fatalf("stored = %q, want it sealed", v)
+	}
+
+	uc := checkerUC.NewCheckerOptionsUsecase(store, nil).WithSecrets(plaintext)
+	if err := uc.SetCheckerOptions(secretChecker, user, nil, nil, happydns.CheckerOptions{"user_token": happydns.RedactedSecret, "plain": "b"}); err != nil {
+		t.Fatalf("SetCheckerOptions(plaintext): %v", err)
+	}
+	if v := storedString(t, store, user, "user_token"); v != "kept" {
+		t.Errorf("stored = %q, want the option in clear", v)
+	}
+}
