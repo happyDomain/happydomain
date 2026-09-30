@@ -139,11 +139,19 @@ func (m *Manager) inspectOne(sc SecretContext, s *happydns.Secret, primitives ma
 // ResealObject stores the secrets of obj, as read from storage, the way the
 // current policy stores new ones: sealing clear values under the instance
 // policy, opening sealed ones to store them in clear under the plaintext
-// policy. It reports whether obj changed and has to be written back; it
-// fails, leaving obj untouched, when a secret does not open.
+// policy. It reports whether obj changed and has to be written back.
+//
+// A value that will never open, or a placeholder stored by mistake, is lost
+// already: it is left as it is, so that it does not keep the other secrets of
+// its object from being stored the way the policy does. Any other failure,
+// such as a safe that cannot be read for now, fails the whole object, leaving
+// obj untouched.
 func (m *Manager) ResealObject(ctx context.Context, sc SecretContext, obj any) (bool, error) {
 	if m == nil {
 		return false, errNoManager
+	}
+	if err := sc.validateObject(); err != nil {
+		return false, err
 	}
 
 	cp, err := clone(obj)
@@ -151,41 +159,39 @@ func (m *Manager) ResealObject(ctx context.Context, sc SecretContext, obj any) (
 		return false, err
 	}
 
-	changed := false
+	// Only what the policy stores differently is worth opening.
+	todo := false
 	err = Walk(cp, func(_ string, s *happydns.Secret) error {
 		switch {
 		case s.IsClear():
-			if m.policy != PolicyPlaintext {
-				changed = true
-			}
+			todo = todo || m.policy != PolicyPlaintext
 		case s.IsSealed():
-			if m.policy == PolicyPlaintext {
-				changed = true
-			}
+			todo = todo || m.policy == PolicyPlaintext
+		}
+		return nil
+	})
+	if err != nil || !todo {
+		return false, err
+	}
+
+	x := m.newSealer(sc.Owner)
+	x.keepUnopenable = true
+
+	changed := false
+	err = transform(cp, sc, func(fsc SecretContext, s *happydns.Secret) error {
+		if s.IsRedacted() {
+			return nil
+		}
+		wasClear, wasSealed := s.IsClear(), s.IsSealed()
+		if err := x.seal(fsc, s); err != nil {
+			return err
+		}
+		if (wasClear && m.policy != PolicyPlaintext) || (wasSealed && !IsSealed(s.Token())) {
+			changed = true
 		}
 		return nil
 	})
 	if err != nil || !changed {
-		return false, err
-	}
-
-	if m.policy == PolicyPlaintext {
-		if err := m.OpenObject(ctx, sc, cp); err != nil {
-			return false, err
-		}
-		// Back to clear, so that sealing stores the value itself.
-		err := Walk(cp, func(_ string, s *happydns.Secret) error {
-			if s.IsOpened() {
-				*s = happydns.NewSecret(s.Reveal())
-			}
-			return nil
-		})
-		if err != nil {
-			return false, err
-		}
-	}
-
-	if err := m.SealObject(ctx, sc, cp); err != nil {
 		return false, err
 	}
 
@@ -469,7 +475,8 @@ func (m *Manager) InspectValue(ctx context.Context, sc SecretContext, value stri
 }
 
 // ResealValue returns value, as stored, the way the current policy stores new
-// secrets, and whether that differs from what is stored.
+// secrets, and whether that differs from what is stored. A value that will
+// never open is lost already, and is returned as it is.
 func (m *Manager) ResealValue(ctx context.Context, sc SecretContext, value string) (string, bool, error) {
 	if m == nil {
 		return "", false, errNoManager
@@ -487,6 +494,10 @@ func (m *Manager) ResealValue(ctx context.Context, sc SecretContext, value strin
 	}
 
 	clear, err := m.OpenValue(ctx, sc, value)
+	if errors.Is(err, ErrUnopenable) {
+		// Lost already: left as it is.
+		return value, false, nil
+	}
 	if err != nil {
 		return "", false, err
 	}

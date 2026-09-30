@@ -118,15 +118,97 @@ func TestResealObject(t *testing.T) {
 	}
 }
 
-func TestResealObjectFailsOnUnreadable(t *testing.T) {
-	_, plaintext, _ := instanceManagers(t)
-	obj := &managedObject{ApiKey: sealedFromStorage(t, FormatSealed(happydns.Identifier{0x42}, []byte("payload")))}
+// A value that will never open is lost already: a reseal leaves it as it is,
+// and stores the other secrets of its object the way the policy does, so that
+// one lost value does not keep the rest sealed, or in clear, for ever.
+func TestResealObjectGoesPastAValueThatNoLongerOpens(t *testing.T) {
+	ctx := context.Background()
+	instance, plaintext, _ := instanceManagers(t)
+	sc := objectContext()
+	lost := FormatSealed(happydns.Identifier{0x42}, []byte("payload"))
+	token := sealOne(t, instance, sc, "v")
 
-	if _, err := plaintext.ResealObject(context.Background(), objectContext(), obj); err == nil {
-		t.Error("an unreadable secret was resealed")
+	// Back to clear: the value that opens goes, the lost one stays.
+	obj := &managedObject{ApiKey: sealedFromStorage(t, token), Other: sealedFromStorage(t, lost)}
+	changed, err := plaintext.ResealObject(ctx, sc, obj)
+	if err != nil || !changed {
+		t.Fatalf("ResealObject(plaintext) = %v, %v; want changed", changed, err)
 	}
-	if !obj.ApiKey.IsSealed() {
+	if b, err := json.Marshal(obj); err != nil || string(b) != `{"host":"","apikey":"v","other":"`+lost+`"}` {
+		t.Errorf("stored = %s, %v; want the key in clear, the lost value as is", b, err)
+	}
+
+	// To the instance policy: the clear value is sealed, the lost one stays.
+	obj = &managedObject{ApiKey: happydns.NewSecret("legacy"), Other: sealedFromStorage(t, lost)}
+	changed, err = instance.ResealObject(ctx, sc, obj)
+	if err != nil || !changed {
+		t.Fatalf("ResealObject(instance) = %v, %v; want changed", changed, err)
+	}
+	if !IsSealed(obj.ApiKey.Token()) || obj.ApiKey.Reveal() != "legacy" || obj.Other.Token() != lost {
+		t.Errorf("after reseal: apikey %q, other %q; want the key sealed, the lost value as is", obj.ApiKey.Token(), obj.Other.Token())
+	}
+
+	// Nothing but a lost value: nothing to write.
+	for name, m := range map[string]*Manager{"instance": instance, "plaintext": plaintext} {
+		obj := &managedObject{ApiKey: sealedFromStorage(t, lost)}
+		if changed, err := m.ResealObject(ctx, sc, obj); err != nil || changed {
+			t.Errorf("ResealObject(lost only, %s) = %v, %v; want unchanged", name, changed, err)
+		}
+		if obj.ApiKey.Token() != lost {
+			t.Errorf("ResealObject(lost only, %s) changed the object", name)
+		}
+	}
+}
+
+// A value whose safe cannot be read for now is not taken for lost: the
+// reseal of its object fails, and leaves it as it was.
+func TestResealObjectFailsOnAPassingFailure(t *testing.T) {
+	ctx := context.Background()
+	key := testInstanceKey(t)
+	store := secrettest.NewSafes()
+	instance, err := NewManager(Config{Policy: PolicyInstance, InstanceKey: key, Safes: store})
+	if err != nil {
+		t.Fatal(err)
+	}
+	flaky, err := NewManager(Config{Policy: PolicyPlaintext, InstanceKey: key, Safes: flakySafes{store}})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sc := objectContext()
+	token := sealOne(t, instance, sc, "v")
+	obj := &managedObject{ApiKey: sealedFromStorage(t, token)}
+	if _, err := flaky.ResealObject(ctx, sc, obj); err == nil {
+		t.Error("ResealObject succeeded with the safe unreadable for now")
+	}
+	if obj.ApiKey.Token() != token {
 		t.Error("a failed reseal changed the object")
+	}
+
+	vsc := objectContext()
+	vsc.Field = "k"
+	vtoken, err := instance.SealValue(ctx, vsc, "v")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := flaky.ResealValue(ctx, vsc, vtoken); err == nil {
+		t.Error("ResealValue succeeded with the safe unreadable for now")
+	}
+}
+
+// A single value that will never open is left as it is by a reseal, under
+// either policy.
+func TestResealValueLeavesAValueThatNoLongerOpens(t *testing.T) {
+	ctx := context.Background()
+	instance, plaintext, _ := instanceManagers(t)
+	sc := objectContext()
+	sc.Field = "k"
+	lost := FormatSealed(happydns.Identifier{0x42}, []byte("payload"))
+
+	for name, m := range map[string]*Manager{"instance": instance, "plaintext": plaintext} {
+		if out, changed, err := m.ResealValue(ctx, sc, lost); err != nil || changed || out != lost {
+			t.Errorf("ResealValue(lost, %s) = %q, %v, %v; want it left as is", name, out, changed, err)
+		}
 	}
 }
 

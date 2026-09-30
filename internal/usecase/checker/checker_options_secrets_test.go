@@ -400,7 +400,8 @@ func TestSecretOptionsResealGoesPastWhatItCannotReseal(t *testing.T) {
 		t.Errorf("orphan option = %q, want it left as it was", v)
 	}
 
-	// A value that no safe opens fails on its own, back to clear.
+	// A value that no safe opens is lost already: it is left as it is, and
+	// the others go back to clear.
 	delete(store.data, posKey(secretChecker, gone, nil, nil))
 	store.data[posKey(secretChecker, nil, nil, nil)] = happydns.CheckerOptions{"api_key": "hds:1:AQ:c2VhbGVk"}
 
@@ -410,11 +411,14 @@ func TestSecretOptionsResealGoesPastWhatItCannotReseal(t *testing.T) {
 		t.Errorf("InspectSecrets = %+v, %v; want 1 sealed, 1 unreadable", counts, err)
 	}
 	report, err = holder.ResealSecrets(context.Background())
-	if err != nil || report.Changed != 1 || report.Failed != 1 {
-		t.Errorf("ResealSecrets(plaintext) = %+v, %v; want 1 back in clear, 1 failure", report, err)
+	if err != nil || report.Changed != 1 || report.Failed != 0 {
+		t.Errorf("ResealSecrets(plaintext) = %+v, %v; want 1 back in clear, no failure", report, err)
 	}
 	if v := storedString(t, store.optionsStore, user, "user_token"); v != "legacy" {
 		t.Errorf("user option = %q, want it back in clear", v)
+	}
+	if v := storedString(t, store.optionsStore, nil, "api_key"); v != "hds:1:AQ:c2VhbGVk" {
+		t.Errorf("lost option = %q, want it left as it was", v)
 	}
 }
 

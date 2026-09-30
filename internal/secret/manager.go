@@ -227,6 +227,10 @@ type sealer struct {
 
 	// primitives opens the sealed values met, by safe identifier.
 	primitives map[string]tink.AEAD
+
+	// keepUnopenable keeps as they are the sealed values that will never
+	// open, rather than failing: a reseal goes past them.
+	keepUnopenable bool
 }
 
 // newSealer returns a sealer for the secrets of owner, sharing nothing with
@@ -244,7 +248,9 @@ func (x *sealer) seal(sc SecretContext, s *happydns.Secret) error {
 	case s.IsSealed():
 		// Keep it only if it opens here.
 		probe := *s
-		if err := x.m.open(sc, &probe, x.primitives); err != nil {
+		if err := x.m.open(sc, &probe, x.primitives); x.keepUnopenable && errors.Is(err, ErrUnopenable) {
+			return nil
+		} else if err != nil {
 			return err
 		}
 		if x.m.policy != PolicyPlaintext {
