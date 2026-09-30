@@ -203,3 +203,42 @@ func (u *SecretsUsecase) ForgetSafe(ctx context.Context, id happydns.Identifier)
 	log.Printf("secret: damaged safe %s forgotten, what it sealed is lost", id.String())
 	return nil
 }
+
+// RepairSafe puts the safe id of backup in place of its record, which does
+// not decode: what it sealed opens again. The safe of the backup has to open
+// with the instance keyset, and its key is bound to its identifier and owner:
+// only the very safe that was damaged can take its place.
+func (u *SecretsUsecase) RepairSafe(ctx context.Context, id happydns.Identifier, backup *happydns.Backup) error {
+	var safe *happydns.Safe
+	for _, s := range backup.Safes {
+		if s != nil && s.Id.Equals(id) {
+			safe = s
+			break
+		}
+	}
+	if safe == nil {
+		return fmt.Errorf("the backup holds no safe %s", id.String())
+	}
+
+	// The owner index, when it points to the damaged record, tells whose it
+	// is: the error is clearer than the one of CheckSafe.
+	damaged, err := u.store.ListDamagedSafes()
+	if err != nil {
+		return err
+	}
+	for _, d := range damaged {
+		if d.Id.Equals(id) && d.Owner != nil && (!d.Owner.Equals(safe.Owner) || d.Kind != safe.Kind) {
+			return fmt.Errorf("safe %s of the backup is not of the owner and kind the owner index names", id.String())
+		}
+	}
+
+	if err := u.manager.CheckSafe(safe); err != nil {
+		return fmt.Errorf("safe %s of the backup does not open with the instance keyset: %w", id.String(), err)
+	}
+	if err := u.store.RepairSafe(safe); err != nil {
+		return err
+	}
+
+	log.Printf("secret: damaged safe %s repaired from a backup", id.String())
+	return nil
+}

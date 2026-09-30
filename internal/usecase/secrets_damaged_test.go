@@ -135,3 +135,71 @@ func TestSecretsUsecaseForgetSafe(t *testing.T) {
 		t.Errorf("StartupCheck without keyset after the drop: %v", err)
 	}
 }
+
+// A backup holding the damaged safe repairs it: what it sealed opens again.
+// The safe of the backup is only put back when it opens with the keyset,
+// bound to its identifier and owner, and only in place of a damaged record.
+func TestSecretsUsecaseRepairSafe(t *testing.T) {
+	ctx := context.Background()
+	_, db, _, instance, safe := damagedSafeSetup(t)
+	uc := newProviderSecretsUsecase(db, instance)
+
+	damagedStill := func(t *testing.T) {
+		t.Helper()
+		if damaged, _ := db.ListDamagedSafes(); len(damaged) != 1 {
+			t.Errorf("a refused repair changed the record: %+v", damaged)
+		}
+	}
+
+	if err := uc.RepairSafe(ctx, safe.Id, &happydns.Backup{}); err == nil {
+		t.Error("RepairSafe from a backup without the safe succeeded")
+	}
+	damagedStill(t)
+
+	// Another owner: the wrapped key is bound to the owner, it does not open.
+	stolen := *safe
+	stolen.Owner = happydns.Identifier{0x02}
+	if err := uc.RepairSafe(ctx, safe.Id, &happydns.Backup{Safes: []*happydns.Safe{&stolen}}); err == nil {
+		t.Error("RepairSafe with a safe of another owner succeeded")
+	}
+	damagedStill(t)
+
+	// Wrapped for another safe, under another keyset: it never opens here.
+	foreign := &happydns.Safe{}
+	{
+		fdb, _ := inmemory.Instantiate()
+		_, fm, _ := newSecretManagers(t, fdb)
+		if _, err := fm.SealValue(ctx, secret.SecretContext{Owner: happydns.Identifier{0x01}, ObjectType: "provider", ObjectId: "AQ", Field: "k"}, "v"); err != nil {
+			t.Fatal(err)
+		}
+		fs, err := fdb.GetSafeByOwner(happydns.Identifier{0x01}, secret.KindInstance)
+		if err != nil {
+			t.Fatal(err)
+		}
+		*foreign = *fs
+		foreign.Id = safe.Id
+	}
+	if err := uc.RepairSafe(ctx, safe.Id, &happydns.Backup{Safes: []*happydns.Safe{foreign}}); err == nil {
+		t.Error("RepairSafe with a safe wrapped under another keyset succeeded")
+	}
+	damagedStill(t)
+
+	if err := uc.RepairSafe(ctx, safe.Id, &happydns.Backup{Safes: []*happydns.Safe{safe}}); err != nil {
+		t.Fatalf("RepairSafe: %v", err)
+	}
+	status, err := uc.Status(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(status.DamagedSafes) != 0 {
+		t.Errorf("DamagedSafes after the repair = %+v", status.DamagedSafes)
+	}
+	if c := status.Objects[providerUC.SecretObjectType]; c.Sealed[secret.KindInstance] != 2 || c.Unreadable != 0 || c.Undecodable != 0 {
+		t.Errorf("provider counts after the repair = %+v, want both values opening again", c)
+	}
+
+	// Only a damaged record is repaired.
+	if err := uc.RepairSafe(ctx, safe.Id, &happydns.Backup{Safes: []*happydns.Safe{safe}}); !errors.Is(err, happydns.ErrSafeNotDamaged) {
+		t.Errorf("RepairSafe over a sound safe = %v, want ErrSafeNotDamaged", err)
+	}
+}

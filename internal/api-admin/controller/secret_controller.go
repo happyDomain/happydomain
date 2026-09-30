@@ -123,3 +123,33 @@ func (sc *SecretController) ForgetSafe(c *gin.Context) {
 	}
 	apiResponse(c, true, sc.secrets.ForgetSafe(c.Request.Context(), id))
 }
+
+// RepairSafe puts a damaged safe back from a backup.
+//
+//	@Summary	Repair a damaged safe
+//	@Schemes
+//	@Description	Puts the safe of the given identifier, taken from an administrative backup, in place of its record that does not decode, listed under damagedSafes in the status: the values sealed in it open again. Only the safe that was damaged can take its place: it has to open with the instance keyset, its key being bound to its identifier and owner. Refused for a safe that decodes.
+//	@Tags		admin
+//	@Accept		json
+//	@Produce	json
+//	@Security	securitydefinitions.basic
+//	@Param		safeId	path	string			true	"Safe identifier"
+//	@Param		body	body	happydns.Backup	true	"An administrative backup holding the safe"
+//	@Success	200	{boolean}	bool
+//	@Failure	400	{object}	happydns.ErrorResponse	"Invalid identifier or backup, no such safe in the backup or in the database, a safe that decodes, or one that does not open"
+//	@Router		/secrets/safes/{safeId}/repair [post]
+func (sc *SecretController) RepairSafe(c *gin.Context) {
+	id, err := happydns.NewIdentifierFromString(c.Param("safeId"))
+	if err != nil {
+		apiResponse(c, nil, fmt.Errorf("invalid safe identifier: %w", err))
+		return
+	}
+
+	var backup happydns.Backup
+	if err := c.ShouldBindJSON(&backup); err != nil {
+		apiResponse(c, nil, fmt.Errorf("invalid backup: %w", err))
+		return
+	}
+
+	apiResponse(c, true, sc.secrets.RepairSafe(c.Request.Context(), id, &backup))
+}
