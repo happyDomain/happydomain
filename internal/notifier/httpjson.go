@@ -28,6 +28,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	"git.happydns.org/happyDomain/model"
@@ -65,15 +66,15 @@ func buildHTTPPayload(p *NotificationPayload, dashboardURL string) httpJSONPaylo
 // it so the connection can be reused.
 const maxResponseBodyBytes = 64 * 1024
 
-func postJSON(ctx context.Context, client *http.Client, url string, body any, decorate func(*http.Request, []byte)) error {
+func postJSON(ctx context.Context, client *http.Client, endpoint string, body any, decorate func(*http.Request, []byte)) error {
 	raw, err := json.Marshal(body)
 	if err != nil {
 		return fmt.Errorf("marshaling payload: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(raw))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(raw))
 	if err != nil {
-		return fmt.Errorf("creating request: %w", err)
+		return fmt.Errorf("creating request: %w", hideURL(err))
 	}
 	req.Header.Set("Content-Type", "application/json")
 	if decorate != nil {
@@ -82,7 +83,7 @@ func postJSON(ctx context.Context, client *http.Client, url string, body any, de
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("sending request: %w", err)
+		return fmt.Errorf("sending request: %w", hideURL(err))
 	}
 	defer resp.Body.Close()
 	io.Copy(io.Discard, io.LimitReader(resp.Body, maxResponseBodyBytes))
@@ -91,6 +92,25 @@ func postJSON(ctx context.Context, client *http.Client, url string, body any, de
 		return fmt.Errorf("endpoint returned status %d", resp.StatusCode)
 	}
 	return nil
+}
+
+// hideURL returns err, a *url.Error as the HTTP client returns, with its URL
+// cut down to scheme and host. The rest may be a capability (a UnifiedPush
+// endpoint, the token of a chat webhook), and a failed send ends up in the
+// logs and in the notification records stored in the database. What err
+// wraps is kept, so that errors.Is still sees a timeout.
+func hideURL(err error) error {
+	ue, ok := err.(*url.Error)
+	if !ok {
+		return err
+	}
+
+	short := happydns.RedactedSecret
+	if u, perr := url.Parse(ue.URL); perr == nil && u.Host != "" {
+		short = u.Scheme + "://" + u.Host + "/" + happydns.RedactedSecret
+	}
+
+	return &url.Error{Op: ue.Op, URL: short, Err: ue.Err}
 }
 
 func testPayload(rcpt Recipient) *NotificationPayload {
