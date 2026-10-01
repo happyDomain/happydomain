@@ -115,6 +115,30 @@ func TestWebhookMergeChannelForUpdate(t *testing.T) {
 	}
 }
 
+// Each type reads its own config: merging the stored config of one type into
+// another would hand it the stored secrets, whether or not the new type is
+// known.
+func TestMergeChannelForUpdateRefusesTypeChange(t *testing.T) {
+	r := webhookRegistry(t)
+	r.Register(Adapt(NewEmailSender(nil, "https://happydomain.example"), nil))
+	existing := webhookChannel(`{"url":"https://example.com/hook","secret":"stored"}`)
+
+	for _, typ := range []happydns.NotificationChannelType{ChannelTypeEmail, "unregistered"} {
+		t.Run(string(typ), func(t *testing.T) {
+			incoming := webhookChannel(`{"url":"https://example.com/hook"}`)
+			incoming.Type = typ
+
+			merged, err := r.MergeChannelForUpdate(existing, incoming)
+			if !errors.Is(err, ErrChannelTypeChanged) {
+				t.Errorf("MergeChannelForUpdate = %v, want ErrChannelTypeChanged", err)
+			}
+			if merged != nil {
+				t.Errorf("merged = %s, want nothing", merged)
+			}
+		})
+	}
+}
+
 func newTestRegistry(t *testing.T) *Registry {
 	t.Helper()
 	m, err := secret.NewManager(secret.Config{Policy: secret.PolicyPlaintext})

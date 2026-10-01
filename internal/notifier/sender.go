@@ -446,7 +446,15 @@ func (r *Registry) RedactChannels(chs []*happydns.NotificationChannel) ([]*happy
 }
 
 // Caller should DecodeConfig the returned raw before persisting.
+//
+// It refuses an update changing the type of the channel with
+// ErrChannelTypeChanged: each type reads its own config, and the stored one,
+// secrets included, would be merged into a type that does not read it.
 func (r *Registry) MergeChannelForUpdate(existing, incoming *happydns.NotificationChannel) (json.RawMessage, error) {
+	if incoming.Type != existing.Type {
+		return nil, fmt.Errorf("%w: from %q to %q", ErrChannelTypeChanged, existing.Type, incoming.Type)
+	}
+
 	s, ok := r.Get(incoming.Type)
 	if !ok {
 		return incoming.Config, nil
@@ -455,3 +463,7 @@ func (r *Registry) MergeChannelForUpdate(existing, incoming *happydns.Notificati
 }
 
 var ErrUnknownChannelType = errors.New("unknown channel type")
+
+// ErrChannelTypeChanged is returned by MergeChannelForUpdate when the update
+// changes the type of the channel.
+var ErrChannelTypeChanged = errors.New("the type of a notification channel cannot change")
