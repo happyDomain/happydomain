@@ -109,11 +109,6 @@ func (s *KVStorage) CreateChannel(ch *happydns.NotificationChannel) error {
 	})
 }
 
-func (s *KVStorage) UpdateChannel(ch *happydns.NotificationChannel) error {
-	// Index has no payload, so only the primary needs writing.
-	return s.db.Put(notifchPrimaryKey(ch.Id), ch)
-}
-
 // ReplaceChannel rewrites a stored channel, unless it changed or was deleted
 // in between. Its identifier and user cannot change: the user index is left
 // as it is. Nor can its type: each type reads its own config, secrets

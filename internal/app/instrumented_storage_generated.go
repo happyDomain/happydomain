@@ -766,11 +766,6 @@ func (s *instrumentedStorage) UpdateAuthUser(user *happydns.UserAuth) (err error
 	return s.inner.UpdateAuthUser(user)
 }
 
-func (s *instrumentedStorage) UpdateChannel(ch *happydns.NotificationChannel) (err error) {
-	defer observe("update", "notification_channel")(&err)
-	return s.inner.UpdateChannel(ch)
-}
-
 func (s *instrumentedStorage) UpdateCheckPlan(plan *happydns.CheckPlan) (err error) {
 	defer observe("update", "check_plan")(&err)
 	return s.inner.UpdateCheckPlan(plan)
