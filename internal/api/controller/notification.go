@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"slices"
 	"strconv"
 	"time"
 
@@ -215,12 +216,37 @@ func (nc *NotificationController) UpdateChannel(c *gin.Context) {
 func (nc *NotificationController) DeleteChannel(c *gin.Context) {
 	ch := middleware.MyNotificationChannel(c)
 
+	// A preference listing channels sends only to those: once the only one
+	// it lists is gone, it sends nothing, and nothing tells the user.
+	prefs, err := nc.prefStore.ListPreferencesByUser(ch.UserId)
+	if err != nil {
+		internalError(c, err)
+		return
+	}
+	if n := countPreferencesUsing(prefs, ch.Id); n > 0 {
+		c.AbortWithStatusJSON(http.StatusConflict, happydns.ErrorResponse{
+			Message: fmt.Sprintf("This channel is used by %d notification preference(s): remove it from them first.", n),
+		})
+		return
+	}
+
 	if err := nc.channelStore.DeleteChannel(ch.Id); err != nil {
 		internalError(c, err)
 		return
 	}
 
 	c.Status(http.StatusNoContent)
+}
+
+// countPreferencesUsing returns how many of prefs list the channel id.
+// Preferences listing no channel send to all of them and are not counted.
+func countPreferencesUsing(prefs []*happydns.NotificationPreference, id happydns.Identifier) (n int) {
+	for _, p := range prefs {
+		if slices.ContainsFunc(p.ChannelIds, id.Equals) {
+			n++
+		}
+	}
+	return
 }
 
 //	@Summary	Send a test notification
