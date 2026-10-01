@@ -443,6 +443,47 @@ func wantSecretUserError(t *testing.T, err error, status int, hint string, safe 
 	}
 }
 
+// A safe this instance cannot open, its key missing from the keyset, is the
+// administrator's to repair: the user is told so, not asked for the secret,
+// and the stored channel is left as it was.
+func TestUpdateChannelWithASafeThisInstanceCannotOpen(t *testing.T) {
+	ctx := context.Background()
+	before, db := channelServiceFixture(t)
+	user := &happydns.User{Id: existingUser(t, db)}
+
+	ch := &happydns.NotificationChannel{
+		Type:   notifPkg.ChannelTypeWebhook,
+		Config: json.RawMessage(`{"url":"https://192.0.2.10/h","secret":"kept"}`),
+	}
+	if err := before.CreateChannel(ctx, user, ch); err != nil {
+		t.Fatal(err)
+	}
+	stored, err := db.GetChannel(ch.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	safe, err := db.GetSafeByOwner(user.Id, secret.KindInstance)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Restarted with another keyset.
+	after := notifUC.NewChannelService(db, channelRegistry(t, instanceManager(t, db)))
+	_, err = after.UpdateChannel(ctx, user, ch.Id, func(c *happydns.NotificationChannel) error {
+		c.Name = "renamed"
+		return nil
+	})
+	wantSecretUserError(t, err, 503, "administrator", safe.Id)
+
+	now, err := db.GetChannel(ch.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if now.Name != stored.Name || string(now.Config) != string(stored.Config) {
+		t.Error("a failed update changed the stored channel")
+	}
+}
+
 // A header sent with the placeholder but nothing stored under its name,
 // renamed say, has no value to keep: the user is asked for it rather than
 // the header silently dropped.

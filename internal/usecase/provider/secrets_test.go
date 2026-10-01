@@ -902,3 +902,81 @@ func wantSecretUserError(t *testing.T, err error, status int, hint string) {
 		t.Errorf("message %q leaks the reason or blames the provider attributes", msg)
 	}
 }
+
+// With the validator used in production, which opens the stored credentials
+// before anything else, an update carrying one forward that will never open
+// still asks for it again.
+func Test_Secret_UpdateWithTheRealValidatorAsksToEnterItAgain(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	secrets := instanceSecrets(t, db)
+	svc := provider.NewService(db, provider.NewValidator(nil, secrets), nil, secrets)
+	user := createTestUser(t, db, "real-validator@example.com")
+
+	p, err := svc.CreateProvider(ctx, user, secretMessage(t, "SecretTestProvider", `{"host":"h","apikey":"lost"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	secrettest.DeleteSafeOf(t, db, user.Id, secret.KindInstance)
+
+	body := `{"host":"h2","apikey":"` + happydns.RedactedSecret + `"}`
+	err = svc.UpdateProviderFromMessage(ctx, p.Id, user, secretMessage(t, "SecretTestProvider", body))
+	wantSecretUserError(t, err, 400, "enter it again")
+
+	if err := svc.UpdateProviderFromMessage(ctx, p.Id, user, secretMessage(t, "SecretTestProvider", `{"host":"h2","apikey":"entered-again"}`)); err != nil {
+		t.Fatalf("UpdateProviderFromMessage entering it again = %v", err)
+	}
+}
+
+// A safe this instance cannot open, its key missing from the keyset, is the
+// administrator's to repair: the user is told so wherever the credential is
+// needed, and the stored value is left as it was.
+func Test_Secret_SafeUnavailableTellsTheAdministrator(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	before := instanceSecrets(t, db)
+	user := createTestUser(t, db, "unavailable@example.com")
+	p, err := provider.NewService(db, &mockValidator{}, nil, before).CreateProvider(ctx, user, secretMessage(t, "SecretTestProvider", `{"host":"h","apikey":"kept"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	stored := storedBody(t, db, p.Id)
+
+	// Restarted with another keyset.
+	after := instanceSecrets(t, db)
+	svc := provider.NewService(db, provider.NewValidator(nil, after), nil, after)
+
+	body := `{"host":"h2","apikey":"` + happydns.RedactedSecret + `"}`
+	err = svc.UpdateProviderFromMessage(ctx, p.Id, user, secretMessage(t, "SecretTestProvider", body))
+	wantSecretUserError(t, err, 503, "administrator")
+	if storedBody(t, db, p.Id) != stored {
+		t.Error("a failed update changed the stored provider")
+	}
+
+	got, err := svc.GetUserProvider(ctx, user, p.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = svc.RetrieveZone(ctx, got, "example.com")
+	wantSecretUserError(t, err, 503, "administrator")
+}
+
+// Using a provider whose stored credential will never open, not only
+// updating it, asks for it again.
+func Test_Secret_RetrieveZoneAsksToEnterItAgain(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	secrets := instanceSecrets(t, db)
+	svc := provider.NewService(db, &mockValidator{}, nil, secrets)
+	user := createTestUser(t, db, "retrieve-lost@example.com")
+
+	p, err := svc.CreateProvider(ctx, user, secretMessage(t, "SecretTestProvider", `{"host":"h","apikey":"lost"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	secrettest.DeleteSafeOf(t, db, user.Id, secret.KindInstance)
+
+	got, err := svc.GetUserProvider(ctx, user, p.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = svc.RetrieveZone(ctx, got, "example.com")
+	wantSecretUserError(t, err, 400, "enter it again")
+}

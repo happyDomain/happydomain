@@ -27,6 +27,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -107,5 +108,48 @@ func testPayloadFor(user *happydns.User) *notifPkg.NotificationPayload {
 		Recipient: notifPkg.Recipient{Email: user.Email},
 		CheckerID: "test",
 		NewStatus: happydns.StatusOK,
+	}
+}
+
+// A stored secret that does not open is told for what it is on both send
+// paths: the tester answers the user, and the pool records what the user
+// sees in the history of the channel. Neither names the safe.
+func TestSendPathsTellAStoredSecretThatDoesNotOpen(t *testing.T) {
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	store := secrettest.NewSafes()
+	secrets, err := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: store})
+	if err != nil {
+		t.Fatal(err)
+	}
+	registry := notifPkg.NewRegistry(secrets)
+	registry.Register(notifPkg.Adapt(notifPkg.NewWebhookSender("https://happydomain.example", nil), nil))
+
+	ch := &happydns.NotificationChannel{
+		Id:     happydns.Identifier{0x0d},
+		UserId: happydns.Identifier{0x01},
+		Type:   notifPkg.ChannelTypeWebhook,
+		Config: json.RawMessage(`{"url":"https://example.com/hook","secret":"lost"}`),
+	}
+	if err := registry.SealChannelConfig(context.Background(), ch); err != nil {
+		t.Fatal(err)
+	}
+	safe := secrettest.DeleteSafeOf(t, store, ch.UserId, secret.KindInstance)
+	user := &happydns.User{Id: ch.UserId, Email: "u@example.com"}
+
+	err = NewTester(registry).Send(ch, user)
+	var he happydns.HTTPError
+	if !errors.As(err, &he) || he.HTTPStatus() != http.StatusBadRequest {
+		t.Errorf("Tester.Send = %v, want a 400 happydns.HTTPError", err)
+	}
+
+	err = NewPool(registry, nil).runSend(ch, testPayloadFor(user))
+	if err == nil || !strings.Contains(err.Error(), "enter it again") {
+		t.Errorf("Pool.runSend = %v, want the user told to enter it again", err)
+	}
+	for name, err := range map[string]error{"tester": NewTester(registry).Send(ch, user), "pool": err} {
+		if err != nil && strings.Contains(err.Error(), safe.Id.String()) {
+			t.Errorf("%s error names the safe: %v", name, err)
+		}
 	}
 }

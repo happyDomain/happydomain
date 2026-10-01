@@ -60,7 +60,9 @@ func (i instantiator) instantiate(ctx context.Context, p *happydns.Provider) (ha
 
 	// Opened in a copy: p goes on carrying sealed values only.
 	opened, err := i.secrets.OpenCopy(ctx, SecretContext(p), p.Provider)
-	if err != nil {
+	if uerr := secret.UserError(err, "provider"); uerr != nil {
+		return nil, uerr
+	} else if err != nil {
 		return nil, fmt.Errorf("unable to open provider credentials: %w", err)
 	}
 

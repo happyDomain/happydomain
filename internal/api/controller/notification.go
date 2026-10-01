@@ -35,6 +35,7 @@ import (
 
 	"git.happydns.org/happyDomain/internal/api/middleware"
 	notifPkg "git.happydns.org/happyDomain/internal/notifier"
+	"git.happydns.org/happyDomain/internal/secret"
 	notifUC "git.happydns.org/happyDomain/internal/usecase/notification"
 	"git.happydns.org/happyDomain/model"
 )
@@ -184,7 +185,13 @@ func (nc *NotificationController) UpdateChannel(c *gin.Context) {
 	updated, err := nc.channels.UpdateChannel(c.Request.Context(), user, existing.Id, func(ch *happydns.NotificationChannel) error {
 		return json.Unmarshal(body, ch)
 	})
+	uerr := secret.UserError(err, "notification channel")
 	switch {
+	case uerr != nil:
+		// A stored secret that does not open: what the user is told about
+		// it, with its own status.
+		middleware.ErrorResponse(c, http.StatusInternalServerError, uerr)
+		return
 	case errors.As(err, new(happydns.ValidationError)), errors.As(err, new(happydns.ConflictError)):
 		// Their message is meant for the client; ErrorResponse answers with
 		// the status of each.
@@ -257,7 +264,11 @@ func (nc *NotificationController) TestChannel(c *gin.Context) {
 	ch := middleware.MyNotificationChannel(c)
 
 	if err := nc.dispatcher.SendTestNotification(ch, user); err != nil {
-		internalError(c, err)
+		if uerr := secret.UserError(err, "notification channel"); uerr != nil {
+			middleware.ErrorResponse(c, http.StatusInternalServerError, uerr)
+		} else {
+			internalError(c, err)
+		}
 		return
 	}
 

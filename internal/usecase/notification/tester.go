@@ -25,6 +25,7 @@ import (
 	"context"
 
 	notifPkg "git.happydns.org/happyDomain/internal/notifier"
+	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -45,7 +46,9 @@ func (t *Tester) Send(ch *happydns.NotificationChannel, user *happydns.User) err
 	ctx, cancel := context.WithTimeout(context.Background(), sendTimeout)
 	defer cancel()
 	cfg, err := t.registry.OpenChannelConfig(ctx, ch)
-	if err != nil {
+	if uerr := secret.UserError(err, "notification channel"); uerr != nil {
+		return uerr
+	} else if err != nil {
 		return err
 	}
 	return sender.SendTest(ctx, cfg, user)

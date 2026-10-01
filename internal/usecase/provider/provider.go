@@ -234,6 +234,11 @@ func (s *Service) updated(ctx context.Context, providerID happydns.Identifier, u
 	}
 
 	if err := s.validator.Validate(ctx, provider); err != nil {
+		// The validator opens the stored credentials first: one that does
+		// not open is not a fault of the attributes.
+		if uerr := secret.UserError(err, "provider"); uerr != nil {
+			return nil, uerr
+		}
 		return nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to validate provider attributes: %s", err.Error())}
 	}
 

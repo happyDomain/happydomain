@@ -30,6 +30,7 @@ import (
 	"time"
 
 	notifPkg "git.happydns.org/happyDomain/internal/notifier"
+	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -153,7 +154,10 @@ func (p *Pool) runSend(ch *happydns.NotificationChannel, payload *notifPkg.Notif
 	ctx, cancel := context.WithTimeout(context.Background(), sendTimeout)
 	defer cancel()
 	cfg, err := p.registry.OpenChannelConfig(ctx, ch)
-	if err != nil {
+	if uerr := secret.UserError(err, "notification channel"); uerr != nil {
+		// Recorded in the history the user sees.
+		return uerr
+	} else if err != nil {
 		return fmt.Errorf("invalid config for channel %s: %w", ch.Id, err)
 	}
 	return sender.Send(ctx, cfg, payload)

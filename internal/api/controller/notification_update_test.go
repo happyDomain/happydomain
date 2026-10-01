@@ -26,6 +26,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -281,5 +282,37 @@ func TestUpdateChannelAnswers(t *testing.T) {
 
 	if w := put(`{"config":`); w.Code != http.StatusBadRequest {
 		t.Errorf("UpdateChannel with a broken body = %d %s, want 400", w.Code, w.Body.String())
+	}
+}
+
+// A stored secret that does not open is answered with what the user is told
+// about it and its status, not a 500: here, a sealed secret this instance has
+// no safe storage to open, which only the administrator can repair.
+func TestUpdateChannelTellsAStoredSecretThatDoesNotOpen(t *testing.T) {
+	nc, db := newTestNotificationController(t)
+
+	user := &happydns.User{Id: happydns.Identifier{0x01}}
+	existing := &happydns.NotificationChannel{
+		Id:     newTestIdentifier(t),
+		UserId: user.Id,
+		Type:   notifPkg.ChannelTypeWebhook,
+		Config: json.RawMessage(`{"url":"https://192.0.2.10/hook","secret":"hds:1:AQ:c2VhbGVk"}`),
+	}
+	if err := db.CreateChannel(existing); err != nil {
+		t.Fatal(err)
+	}
+
+	w, c := channelRequest(t, http.MethodPut, `{"name":"renamed"}`, user, existing)
+	nc.UpdateChannel(c)
+
+	if w.Code != http.StatusServiceUnavailable {
+		t.Errorf("UpdateChannel = %d %s, want 503", w.Code, w.Body.String())
+	}
+	var resp happydns.ErrorResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(resp.Message, "administrator") || strings.Contains(resp.Message, "safe") {
+		t.Errorf("message = %q, want the user sent to the administrator, without the reason", resp.Message)
 	}
 }
