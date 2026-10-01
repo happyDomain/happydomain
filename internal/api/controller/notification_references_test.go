@@ -127,3 +127,86 @@ func TestDeleteChannelUnused(t *testing.T) {
 		t.Errorf("GetChannel after deletion = %v, want ErrNotificationChannelNotFound", err)
 	}
 }
+
+// refBody encodes a preference body listing channels, along with quietStart.
+func refBody(t *testing.T, quietStart int, channels ...happydns.Identifier) string {
+	t.Helper()
+	b, err := json.Marshal(map[string]any{"channelIds": channels, "quietStart": quietStart, "enabled": true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(b)
+}
+
+// A preference may only list channels of its user: an unknown one would
+// never match, and the preference would send nothing.
+func TestCreatePreferenceChannels(t *testing.T) {
+	user := &happydns.User{Id: happydns.Identifier{0x01}}
+	other := &happydns.User{Id: happydns.Identifier{0x02}}
+
+	for name, tc := range map[string]struct {
+		channel func(*testing.T, storage.Storage) happydns.Identifier
+		want    int
+	}{
+		"own channel": {func(t *testing.T, db storage.Storage) happydns.Identifier { return refChannel(t, db, user).Id }, http.StatusCreated},
+		"unknown":     {func(*testing.T, storage.Storage) happydns.Identifier { return happydns.Identifier{0x0f} }, http.StatusBadRequest},
+		"of another":  {func(t *testing.T, db storage.Storage) happydns.Identifier { return refChannel(t, db, other).Id }, http.StatusBadRequest},
+	} {
+		t.Run(name, func(t *testing.T) {
+			nc, db := refController(t)
+			w, c := refRequest(http.MethodPost, refBody(t, 3, tc.channel(t, db)), user, "", nil)
+			nc.CreatePreference(c)
+			if w.Code != tc.want {
+				t.Fatalf("CreatePreference = %d %s, want %d", w.Code, w.Body.String(), tc.want)
+			}
+			prefs, err := db.ListPreferencesByUser(user.Id)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if stored := len(prefs) == 1; stored != (tc.want == http.StatusCreated) {
+				t.Errorf("%d preferences stored after a %d", len(prefs), w.Code)
+			}
+		})
+	}
+}
+
+func TestUpdatePreferenceAddingChannel(t *testing.T) {
+	nc, db := refController(t)
+	user := &happydns.User{Id: happydns.Identifier{0x01}}
+	ch := refChannel(t, db, user)
+	pref := refPreference(t, db, user, ch.Id)
+
+	w, c := refRequest(http.MethodPut, refBody(t, 3, ch.Id, happydns.Identifier{0x0f}), user, "notification_preference", pref)
+	nc.UpdatePreference(c)
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("UpdatePreference adding an unknown channel = %d %s, want 400", w.Code, w.Body.String())
+	}
+	if stored, _ := db.GetPreference(pref.Id); len(stored.ChannelIds) != 1 || stored.QuietStart != nil {
+		t.Errorf("stored = %+v, want it unchanged", stored)
+	}
+
+	added := refChannel(t, db, user)
+	w, c = refRequest(http.MethodPut, refBody(t, 3, ch.Id, added.Id), user, "notification_preference", pref)
+	nc.UpdatePreference(c)
+	if w.Code != http.StatusOK {
+		t.Fatalf("UpdatePreference adding an own channel = %d %s, want 200", w.Code, w.Body.String())
+	}
+}
+
+// The interface sends back the channels it was given, those it does not show
+// included: a reference left from before stays editable.
+func TestUpdatePreferenceKeepingStaleChannel(t *testing.T) {
+	nc, db := refController(t)
+	user := &happydns.User{Id: happydns.Identifier{0x01}}
+	stale := happydns.Identifier{0x0f}
+	pref := refPreference(t, db, user, stale)
+
+	w, c := refRequest(http.MethodPut, refBody(t, 3, stale), user, "notification_preference", pref)
+	nc.UpdatePreference(c)
+	if w.Code != http.StatusOK {
+		t.Fatalf("UpdatePreference keeping a stale channel = %d %s, want 200", w.Code, w.Body.String())
+	}
+	if stored, _ := db.GetPreference(pref.Id); stored.QuietStart == nil || *stored.QuietStart != 3 {
+		t.Errorf("stored = %+v, want the update applied", stored)
+	}
+}

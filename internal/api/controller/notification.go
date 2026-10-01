@@ -283,6 +283,46 @@ func validateQuietHours(p *happydns.NotificationPreference) error {
 	return nil
 }
 
+// channelIdSet returns the set of ids, as strings.
+func channelIdSet(ids []happydns.Identifier) map[string]bool {
+	set := make(map[string]bool, len(ids))
+	for _, id := range ids {
+		set[id.String()] = true
+	}
+	return set
+}
+
+// checkAddedChannels refuses with a happydns.ValidationError a preference
+// listing a channel its user does not have: it would never match, and the
+// preference would send nothing. Only the channels not in listed, those the
+// stored preference lists, are checked: the interface sends back the ones it
+// does not show, and a reference left from before stays editable.
+func (nc *NotificationController) checkAddedChannels(pref *happydns.NotificationPreference, listed map[string]bool) error {
+	channels, err := nc.channelStore.ListChannelsByUser(pref.UserId)
+	if err != nil {
+		return err
+	}
+
+	for _, id := range pref.ChannelIds {
+		if listed[id.String()] {
+			continue
+		}
+		if !slices.ContainsFunc(channels, func(ch *happydns.NotificationChannel) bool { return ch.Id.Equals(id) }) {
+			return happydns.ValidationError{Msg: fmt.Sprintf("unknown notification channel %q", id.String())}
+		}
+	}
+	return nil
+}
+
+// preferenceChannelsError answers what checkAddedChannels failed with.
+func preferenceChannelsError(c *gin.Context, err error) {
+	if errors.As(err, new(happydns.ValidationError)) {
+		middleware.ErrorResponse(c, http.StatusBadRequest, err)
+	} else {
+		internalError(c, err)
+	}
+}
+
 // @Summary	List notification preferences
 // @Tags		notifications
 // @Produce	json
@@ -307,6 +347,7 @@ func (nc *NotificationController) ListPreferences(c *gin.Context) {
 // @Produce	json
 // @Param		body	body		happydns.NotificationPreference	true	"Preference configuration"
 // @Success	201		{object}	happydns.NotificationPreference
+// @Failure	400		{object}	happydns.ErrorResponse	"Unknown channel listed"
 // @Router		/notifications/preferences [post]
 func (nc *NotificationController) CreatePreference(c *gin.Context) {
 	user := middleware.MyUser(c)
@@ -321,6 +362,11 @@ func (nc *NotificationController) CreatePreference(c *gin.Context) {
 
 	if err := validateQuietHours(&pref); err != nil {
 		middleware.ErrorResponse(c, http.StatusBadRequest, err)
+		return
+	}
+
+	if err := nc.checkAddedChannels(&pref, nil); err != nil {
+		preferenceChannelsError(c, err)
 		return
 	}
 
@@ -351,9 +397,13 @@ func (nc *NotificationController) GetPreference(c *gin.Context) {
 //	@Param		prefId	path		string								true	"Preference ID"
 //	@Param		body	body		happydns.NotificationPreference		true	"Preference configuration"
 //	@Success	200		{object}	happydns.NotificationPreference
+//	@Failure	400		{object}	happydns.ErrorResponse	"Unknown channel listed"
 //	@Router		/notifications/preferences/{prefId} [put]
 func (nc *NotificationController) UpdatePreference(c *gin.Context) {
 	existing := middleware.MyNotificationPreference(c)
+
+	// Before binding, which may reuse the stored slice.
+	listed := channelIdSet(existing.ChannelIds)
 
 	pref := *existing
 	if err := c.ShouldBindJSON(&pref); err != nil {
@@ -366,6 +416,11 @@ func (nc *NotificationController) UpdatePreference(c *gin.Context) {
 
 	if err := validateQuietHours(&pref); err != nil {
 		middleware.ErrorResponse(c, http.StatusBadRequest, err)
+		return
+	}
+
+	if err := nc.checkAddedChannels(&pref, listed); err != nil {
+		preferenceChannelsError(c, err)
 		return
 	}
 
