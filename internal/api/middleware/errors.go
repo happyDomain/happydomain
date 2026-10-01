@@ -31,9 +31,16 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+// ErrorResponse answers err. An error carrying its own status and message, a
+// happydns.InternalError or another happydns.HTTPError, is found however a
+// use case wrapped it on the way, and answered with them: the wrapping text
+// is left out, as it may hold what the user is not meant to see.
 func ErrorResponse(c *gin.Context, defaultStatus int, err error) {
-	if ie, ok := err.(happydns.InternalError); ok {
-		log.Println(ie.Error())
+	var ie happydns.InternalError
+	var e happydns.HTTPError
+	if errors.As(err, &ie) {
+		// The whole chain, for the logs only.
+		log.Println(err.Error())
 
 		status := ie.HTTPStatus()
 		if status == 0 {
@@ -42,7 +49,7 @@ func ErrorResponse(c *gin.Context, defaultStatus int, err error) {
 
 		c.AbortWithStatusJSON(status, ie.ToErrorResponse())
 		return
-	} else if e, ok := err.(happydns.HTTPError); ok {
+	} else if errors.As(err, &e) {
 		status := e.HTTPStatus()
 		if status == 0 {
 			status = http.StatusInternalServerError
