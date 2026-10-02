@@ -75,20 +75,20 @@ func NewNotificationController(
 	}
 }
 
-//	@Summary	List supported notification channel types
-//	@Tags		notifications
-//	@Produce	json
-//	@Success	200	{array}	string
-//	@Router		/notifications/channel-types [get]
+// @Summary	List supported notification channel types
+// @Tags		notifications
+// @Produce	json
+// @Success	200	{array}	string
+// @Router		/notifications/channel-types [get]
 func (nc *NotificationController) ListChannelTypes(c *gin.Context) {
 	c.JSON(http.StatusOK, nc.registry.Types())
 }
 
-//	@Summary	List notification channels
-//	@Tags		notifications
-//	@Produce	json
-//	@Success	200	{array}		happydns.NotificationChannel
-//	@Router		/notifications/channels [get]
+// @Summary	List notification channels
+// @Tags		notifications
+// @Produce	json
+// @Success	200	{array}		happydns.NotificationChannel
+// @Router		/notifications/channels [get]
 func (nc *NotificationController) ListChannels(c *gin.Context) {
 	user := middleware.MyUser(c)
 	channels, err := nc.channelStore.ListChannelsByUser(user.Id)
@@ -107,13 +107,13 @@ func (nc *NotificationController) ListChannels(c *gin.Context) {
 	c.JSON(http.StatusOK, redacted)
 }
 
-//	@Summary	Create a notification channel
-//	@Tags		notifications
-//	@Accept		json
-//	@Produce	json
-//	@Param		body	body		happydns.NotificationChannel	true	"Channel configuration"
-//	@Success	201		{object}	happydns.NotificationChannel
-//	@Router		/notifications/channels [post]
+// @Summary	Create a notification channel
+// @Tags		notifications
+// @Accept		json
+// @Produce	json
+// @Param		body	body		happydns.NotificationChannel	true	"Channel configuration"
+// @Success	201		{object}	happydns.NotificationChannel
+// @Router		/notifications/channels [post]
 func (nc *NotificationController) CreateChannel(c *gin.Context) {
 	user := middleware.MyUser(c)
 
@@ -143,12 +143,12 @@ func (nc *NotificationController) CreateChannel(c *gin.Context) {
 	c.JSON(http.StatusCreated, redacted)
 }
 
-//	@Summary	Get a notification channel
-//	@Tags		notifications
-//	@Produce	json
-//	@Param		channelId	path		string	true	"Channel ID"
-//	@Success	200			{object}	happydns.NotificationChannel
-//	@Router		/notifications/channels/{channelId} [get]
+// @Summary	Get a notification channel
+// @Tags		notifications
+// @Produce	json
+// @Param		channelId	path		string	true	"Channel ID"
+// @Success	200			{object}	happydns.NotificationChannel
+// @Router		/notifications/channels/{channelId} [get]
 func (nc *NotificationController) GetChannel(c *gin.Context) {
 	redacted, err := nc.registry.RedactChannel(middleware.MyNotificationChannel(c))
 	if err != nil {
@@ -207,11 +207,11 @@ func (nc *NotificationController) UpdateChannel(c *gin.Context) {
 	c.JSON(http.StatusOK, redacted)
 }
 
-//	@Summary	Delete a notification channel
-//	@Tags		notifications
-//	@Param		channelId	path	string	true	"Channel ID"
-//	@Success	204
-//	@Router		/notifications/channels/{channelId} [delete]
+// @Summary	Delete a notification channel
+// @Tags		notifications
+// @Param		channelId	path	string	true	"Channel ID"
+// @Success	204
+// @Router		/notifications/channels/{channelId} [delete]
 func (nc *NotificationController) DeleteChannel(c *gin.Context) {
 	ch := middleware.MyNotificationChannel(c)
 
@@ -223,11 +223,11 @@ func (nc *NotificationController) DeleteChannel(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-//	@Summary	Send a test notification
-//	@Tags		notifications
-//	@Param		channelId	path	string	true	"Channel ID"
-//	@Success	200	{object}	map[string]string
-//	@Router		/notifications/channels/{channelId}/test [post]
+// @Summary	Send a test notification
+// @Tags		notifications
+// @Param		channelId	path	string	true	"Channel ID"
+// @Success	200	{object}	map[string]string
+// @Router		/notifications/channels/{channelId}/test [post]
 func (nc *NotificationController) TestChannel(c *gin.Context) {
 	user := middleware.MyUser(c)
 	ch := middleware.MyNotificationChannel(c)
@@ -256,11 +256,11 @@ func validateQuietHours(p *happydns.NotificationPreference) error {
 	return nil
 }
 
-//	@Summary	List notification preferences
-//	@Tags		notifications
-//	@Produce	json
-//	@Success	200	{array}		happydns.NotificationPreference
-//	@Router		/notifications/preferences [get]
+// @Summary	List notification preferences
+// @Tags		notifications
+// @Produce	json
+// @Success	200	{array}		happydns.NotificationPreference
+// @Router		/notifications/preferences [get]
 func (nc *NotificationController) ListPreferences(c *gin.Context) {
 	user := middleware.MyUser(c)
 	prefs, err := nc.prefStore.ListPreferencesByUser(user.Id)
@@ -274,13 +274,13 @@ func (nc *NotificationController) ListPreferences(c *gin.Context) {
 	c.JSON(http.StatusOK, prefs)
 }
 
-//	@Summary	Create a notification preference
-//	@Tags		notifications
-//	@Accept		json
-//	@Produce	json
-//	@Param		body	body		happydns.NotificationPreference	true	"Preference configuration"
-//	@Success	201		{object}	happydns.NotificationPreference
-//	@Router		/notifications/preferences [post]
+// @Summary	Create a notification preference
+// @Tags		notifications
+// @Accept		json
+// @Produce	json
+// @Param		body	body		happydns.NotificationPreference	true	"Preference configuration"
+// @Success	201		{object}	happydns.NotificationPreference
+// @Router		/notifications/preferences [post]
 func (nc *NotificationController) CreatePreference(c *gin.Context) {
 	user := middleware.MyUser(c)
 
@@ -305,12 +305,12 @@ func (nc *NotificationController) CreatePreference(c *gin.Context) {
 	c.JSON(http.StatusCreated, pref)
 }
 
-//	@Summary	Get a notification preference
-//	@Tags		notifications
-//	@Produce	json
-//	@Param		prefId	path		string	true	"Preference ID"
-//	@Success	200		{object}	happydns.NotificationPreference
-//	@Router		/notifications/preferences/{prefId} [get]
+// @Summary	Get a notification preference
+// @Tags		notifications
+// @Produce	json
+// @Param		prefId	path		string	true	"Preference ID"
+// @Success	200		{object}	happydns.NotificationPreference
+// @Router		/notifications/preferences/{prefId} [get]
 func (nc *NotificationController) GetPreference(c *gin.Context) {
 	c.JSON(http.StatusOK, middleware.MyNotificationPreference(c))
 }
@@ -350,11 +350,11 @@ func (nc *NotificationController) UpdatePreference(c *gin.Context) {
 	c.JSON(http.StatusOK, pref)
 }
 
-//	@Summary	Delete a notification preference
-//	@Tags		notifications
-//	@Param		prefId	path	string	true	"Preference ID"
-//	@Success	204
-//	@Router		/notifications/preferences/{prefId} [delete]
+// @Summary	Delete a notification preference
+// @Tags		notifications
+// @Param		prefId	path	string	true	"Preference ID"
+// @Success	204
+// @Router		/notifications/preferences/{prefId} [delete]
 func (nc *NotificationController) DeletePreference(c *gin.Context) {
 	pref := middleware.MyNotificationPreference(c)
 
@@ -366,12 +366,12 @@ func (nc *NotificationController) DeletePreference(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-//	@Summary	List notification history
-//	@Tags		notifications
-//	@Produce	json
-//	@Param		limit	query		int		false	"Maximum number of records (capped at 500)"	default(50)
-//	@Success	200		{array}		happydns.NotificationRecord
-//	@Router		/notifications/history [get]
+// @Summary	List notification history
+// @Tags		notifications
+// @Produce	json
+// @Param		limit	query		int		false	"Maximum number of records (capped at 500)"	default(50)
+// @Success	200		{array}		happydns.NotificationRecord
+// @Router		/notifications/history [get]
 func (nc *NotificationController) ListHistory(c *gin.Context) {
 	user := middleware.MyUser(c)
 
@@ -396,15 +396,15 @@ func (nc *NotificationController) ListHistory(c *gin.Context) {
 	c.JSON(http.StatusOK, records)
 }
 
-//	@Summary	Acknowledge a checker issue
-//	@Tags		checkers
-//	@Accept		json
-//	@Produce	json
-//	@Param		domain		path		string							true	"Domain identifier"
-//	@Param		checkerId	path		string							true	"Checker ID"
-//	@Param		body		body		happydns.AcknowledgeRequest		true	"Acknowledgement"
-//	@Success	200			{object}	happydns.NotificationState
-//	@Router		/domains/{domain}/checkers/{checkerId}/acknowledge [post]
+// @Summary	Acknowledge a checker issue
+// @Tags		checkers
+// @Accept		json
+// @Produce	json
+// @Param		domain		path		string							true	"Domain identifier"
+// @Param		checkerId	path		string							true	"Checker ID"
+// @Param		body		body		happydns.AcknowledgeRequest		true	"Acknowledgement"
+// @Success	200			{object}	happydns.NotificationState
+// @Router		/domains/{domain}/checkers/{checkerId}/acknowledge [post]
 func (nc *NotificationController) AcknowledgeIssue(c *gin.Context) {
 	user := middleware.MyUser(c)
 	target := targetFromContext(c)
@@ -437,13 +437,13 @@ func (nc *NotificationController) AcknowledgeIssue(c *gin.Context) {
 	c.JSON(http.StatusOK, state)
 }
 
-//	@Summary	Clear acknowledgement
-//	@Tags		checkers
-//	@Produce	json
-//	@Param		domain		path		string	true	"Domain identifier"
-//	@Param		checkerId	path		string	true	"Checker ID"
-//	@Success	200			{object}	happydns.NotificationState
-//	@Router		/domains/{domain}/checkers/{checkerId}/acknowledge [delete]
+// @Summary	Clear acknowledgement
+// @Tags		checkers
+// @Produce	json
+// @Param		domain		path		string	true	"Domain identifier"
+// @Param		checkerId	path		string	true	"Checker ID"
+// @Success	200			{object}	happydns.NotificationState
+// @Router		/domains/{domain}/checkers/{checkerId}/acknowledge [delete]
 func (nc *NotificationController) ClearAcknowledgement(c *gin.Context) {
 	user := middleware.MyUser(c)
 	target := targetFromContext(c)
