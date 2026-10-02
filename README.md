@@ -257,6 +257,18 @@ BIND, AdGuard Home, OpenWrt, Mikrotik or UniFi instance you host yourself, name
 its address with `-outbound-allowed-target`. See
 [docs/outbound-targets.md](docs/outbound-targets.md).
 
+#### Encrypting stored credentials?
+
+Provider API keys and other secrets are stored in clear by default. To encrypt
+them under a keyset held by the server, see
+[docs/secret-encryption.md](docs/secret-encryption.md).
+
+Note that this is unrelated to the passwords used for registration and
+authentication: those are hashed in the database, never stored in clear.
+Encryption only applies to secrets that happyDomain has to send back to third
+parties, such as providers' API keys and passwords. Such secrets cannot be
+hashed, because happyDomain needs to read them back in clear to use them.
+
 #### Need OVH API?
 
 OVH doesn't have simple API key or credentials. It depends on a web flow to retrieve the key.
