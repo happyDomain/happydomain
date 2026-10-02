@@ -23,6 +23,7 @@ package secret
 
 import (
 	"bytes"
+	"encoding/binary"
 	"errors"
 	"fmt"
 
@@ -102,6 +103,11 @@ func LoadInstanceKey(path string) (*InstanceKey, error) {
 	return NewInstanceKey(h)
 }
 
+// PrimaryKeyId is the identifier of the key new wrappings are made with.
+func (k *InstanceKey) PrimaryKeyId() uint32 {
+	return k.handle.KeysetInfo().GetPrimaryKeyId()
+}
+
 // VerifyCheck opens the check record stored in store, or creates it under the
 // primary key when there is none. A record the keyset does not open is
 // ErrWrongInstanceKey: starting would make every secret sealed with the
@@ -109,11 +115,7 @@ func LoadInstanceKey(path string) (*InstanceKey, error) {
 func (k *InstanceKey) VerifyCheck(store CheckStorage) error {
 	record, err := store.GetSecretCheck()
 	if errors.Is(err, happydns.ErrNotFound) {
-		ct, err := k.aead.Encrypt([]byte(checkPlaintext), []byte(checkAssociatedData))
-		if err != nil {
-			return err
-		}
-		return store.PutSecretCheck(ct)
+		return k.putCheck(store)
 	}
 	if err != nil {
 		return fmt.Errorf("unable to read the instance keyset check record: %w", err)
@@ -123,5 +125,34 @@ func (k *InstanceKey) VerifyCheck(store CheckStorage) error {
 	if err != nil || !bytes.Equal(pt, []byte(checkPlaintext)) {
 		return ErrWrongInstanceKey
 	}
+
+	// Sealed under an older key, the record would keep that key needed
+	// after every safe has been rewrapped, and removing it, as the key
+	// report allows, would refuse to start: move it under the primary. A
+	// RAW or LEGACY key does not tell its id: resealed, harmlessly, at
+	// every start.
+	if id, err := ciphertextKeyId(record); err != nil || id != k.PrimaryKeyId() {
+		return k.putCheck(store)
+	}
 	return nil
+}
+
+// putCheck seals the check record under the primary key and stores it.
+func (k *InstanceKey) putCheck(store CheckStorage) error {
+	ct, err := k.aead.Encrypt([]byte(checkPlaintext), []byte(checkAssociatedData))
+	if err != nil {
+		return err
+	}
+	return store.PutSecretCheck(ct)
+}
+
+// ciphertextKeyId returns the identifier of the key that produced ct, read
+// from its TINK output prefix: 0x01, then the big-endian key id. The LEGACY
+// and CRUNCHY prefixes are not recognized: the keysets happyDomain generates
+// and rotates never use them.
+func ciphertextKeyId(ct []byte) (uint32, error) {
+	if len(ct) < 5 || ct[0] != 0x01 {
+		return 0, errors.New("ciphertext without a Tink key prefix")
+	}
+	return binary.BigEndian.Uint32(ct[1:5]), nil
 }

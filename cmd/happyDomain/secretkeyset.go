@@ -34,6 +34,7 @@ Manage the instance keyset protecting stored credentials (-secret-keyset-file).
 
 Commands:
   generate <file>  create a new keyset; refuses to overwrite an existing file
+  rotate <file>    add a new primary key; previous keys keep opening what they sealed
   info <file>      list the keys, never their material
 `
 
@@ -58,6 +59,20 @@ func runSecretKeyset(args []string, stdout, stderr io.Writer) int {
 			return 1
 		}
 		fmt.Fprintf(stderr, "Keyset written to %s. Back it up: losing it loses every credential it protects.\n", path)
+
+	case "rotate":
+		h, err := secret.ReadKeysetFile(path)
+		if err == nil {
+			h, err = secret.RotateInstanceKeyset(h)
+		}
+		if err == nil {
+			err = secret.ReplaceKeysetFile(path, h)
+		}
+		if err != nil {
+			fmt.Fprintln(stderr, "Unable to rotate the keyset:", err)
+			return 1
+		}
+		fmt.Fprintln(stderr, "New primary key added. Back the keyset up again, restart happyDomain, then rewrap the safes from the admin interface.")
 
 	case "info":
 		h, err := secret.ReadKeysetFile(path)

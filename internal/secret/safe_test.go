@@ -301,7 +301,7 @@ func TestUnwrapAfterInstanceRotation(t *testing.T) {
 	w, _ := key.Wrap(safe, dek)
 	safe.Keyring = []happydns.WrappedKeyset{w}
 
-	rotated, _ := rotateInstanceKeyset(h)
+	rotated, _ := RotateInstanceKeyset(h)
 	rkey, _ := NewInstanceKey(rotated)
 
 	back, err := rkey.Unwrap(safe)

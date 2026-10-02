@@ -32,6 +32,7 @@ import (
 	"github.com/tink-crypto/tink-go/v2/insecurecleartextkeyset"
 
 	"git.happydns.org/happyDomain/internal/secret"
+	"git.happydns.org/happyDomain/model"
 )
 
 func runKeyset(t *testing.T, args ...string) (int, string, string) {
@@ -65,9 +66,41 @@ func TestSecretKeysetGenerate(t *testing.T) {
 	}
 }
 
+func TestSecretKeysetRotate(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "keyset.json")
+	if code, _, stderr := runKeyset(t, "generate", path); code != 0 {
+		t.Fatal(stderr)
+	}
+
+	key, _ := secret.LoadInstanceKey(path)
+	oldPrimary := key.PrimaryKeyId()
+	store := &memCheck{}
+	if err := key.VerifyCheck(store); err != nil {
+		t.Fatal(err)
+	}
+
+	if code, _, stderr := runKeyset(t, "rotate", path); code != 0 {
+		t.Fatalf("rotate exited %d: %s", code, stderr)
+	}
+
+	rotated, err := secret.LoadInstanceKey(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rotated.PrimaryKeyId() == oldPrimary {
+		t.Error("rotate did not change the primary key")
+	}
+	if err := rotated.VerifyCheck(store); err != nil {
+		t.Errorf("the rotated keyset does not open what the old key sealed: %v", err)
+	}
+}
+
 func TestSecretKeysetInfo(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "keyset.json")
 	if code, _, stderr := runKeyset(t, "generate", path); code != 0 {
+		t.Fatal(stderr)
+	}
+	if code, _, stderr := runKeyset(t, "rotate", path); code != 0 {
 		t.Fatal(stderr)
 	}
 
@@ -77,8 +110,8 @@ func TestSecretKeysetInfo(t *testing.T) {
 	}
 
 	h, _ := secret.ReadKeysetFile(path)
-	if !strings.Contains(stdout, "primary") || strings.Count(stdout, "ENABLED") != 1 {
-		t.Errorf("info = %q, want the key, primary", stdout)
+	if !strings.Contains(stdout, "primary") || strings.Count(stdout, "ENABLED") != 2 {
+		t.Errorf("info = %q, want both keys and the primary", stdout)
 	}
 	for _, key := range insecurecleartextkeyset.KeysetMaterial(h).Key {
 		value := key.GetKeyData().GetValue()
@@ -107,4 +140,23 @@ func TestSecretKeysetUsage(t *testing.T) {
 			t.Errorf("secret-keyset %v succeeded, want a usage error", args)
 		}
 	}
+}
+
+type memCheck struct{ record []byte }
+
+func (m *memCheck) GetSecretCheck() ([]byte, error) {
+	if m.record == nil {
+		return nil, happydns.ErrNotFound
+	}
+	return m.record, nil
+}
+
+func (m *memCheck) PutSecretCheck(b []byte) error {
+	m.record = b
+	return nil
+}
+
+func (m *memCheck) DeleteSecretCheck() error {
+	m.record = nil
+	return nil
 }

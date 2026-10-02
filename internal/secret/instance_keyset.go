@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"syscall"
 
 	"github.com/tink-crypto/tink-go/v2/aead"
 	"github.com/tink-crypto/tink-go/v2/insecurecleartextkeyset"
@@ -34,6 +35,22 @@ import (
 // GenerateInstanceKeyset returns a new keyset holding one AES256-GCM key.
 func GenerateInstanceKeyset() (*keyset.Handle, error) {
 	return keyset.NewHandle(aead.AES256GCMKeyTemplate())
+}
+
+// RotateInstanceKeyset returns h with a new AES256-GCM key as primary. The
+// previous keys are kept: what they sealed still opens.
+func RotateInstanceKeyset(h *keyset.Handle) (*keyset.Handle, error) {
+	m := keyset.NewManagerFromHandle(h)
+
+	id, err := m.Add(aead.AES256GCMKeyTemplate())
+	if err != nil {
+		return nil, err
+	}
+	if err := m.SetPrimary(id); err != nil {
+		return nil, err
+	}
+
+	return m.Handle()
 }
 
 // ReadKeysetFile reads a cleartext JSON keyset, as written by tinkey.
@@ -87,6 +104,60 @@ func syncDir(dir string) error {
 	defer d.Close()
 
 	return d.Sync()
+}
+
+// ReplaceKeysetFile replaces the existing keyset file at path with h, through
+// a rename so that an interruption never leaves a truncated keyset.
+//
+// The new file gets the owner, group and mode of the one it replaces: the
+// service may read its keyset through its group, and a rotation run through
+// sudo must not leave it unreadable. When path is a symbolic link, the file it
+// points at is replaced and the link is kept.
+func ReplaceKeysetFile(path string, h *keyset.Handle) error {
+	target, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		return err
+	}
+	st, err := os.Stat(target)
+	if err != nil {
+		return err
+	}
+
+	tmp, err := os.CreateTemp(filepath.Dir(target), ".keyset-*")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tmp.Name())
+
+	// Owner first: changing it may clear mode bits.
+	if sys, ok := st.Sys().(*syscall.Stat_t); ok {
+		if err := tmp.Chown(int(sys.Uid), int(sys.Gid)); err != nil {
+			tmp.Close()
+			return fmt.Errorf("unable to give the new keyset the owner of %s: %w", target, err)
+		}
+	}
+	if err := tmp.Chmod(st.Mode().Perm()); err != nil {
+		tmp.Close()
+		return err
+	}
+
+	// On disk before taking the place of the previous keyset.
+	err = insecurecleartextkeyset.Write(h, keyset.NewJSONWriter(tmp))
+	if err == nil {
+		err = tmp.Sync()
+	}
+	if cerr := tmp.Close(); err == nil {
+		err = cerr
+	}
+	if err != nil {
+		return err
+	}
+
+	if err := os.Rename(tmp.Name(), target); err != nil {
+		return err
+	}
+
+	return syncDir(filepath.Dir(target))
 }
 
 // KeysetFileTooOpen reports whether the keyset file can be read by others
