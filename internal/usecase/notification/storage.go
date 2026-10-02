@@ -33,6 +33,12 @@ type NotificationChannelStorage interface {
 	CreateChannel(ch *happydns.NotificationChannel) error
 	UpdateChannel(ch *happydns.NotificationChannel) error
 	DeleteChannel(channelId happydns.Identifier) error
+	// ListAllChannels lists the channels of every user, for administrative
+	// passes such as the backup and tidy.
+	ListAllChannels() (happydns.Iterator[happydns.NotificationChannel], error)
+	// RestoreChannel stores ch under its identifier, replacing any channel
+	// stored under it, as a backup restore does.
+	RestoreChannel(ch *happydns.NotificationChannel) error
 }
 
 type NotificationPreferenceStorage interface {
@@ -41,6 +47,12 @@ type NotificationPreferenceStorage interface {
 	CreatePreference(pref *happydns.NotificationPreference) error
 	UpdatePreference(pref *happydns.NotificationPreference) error
 	DeletePreference(prefId happydns.Identifier) error
+	// ListAllPreferences lists the preferences of every user, for
+	// administrative passes such as the backup and tidy.
+	ListAllPreferences() (happydns.Iterator[happydns.NotificationPreference], error)
+	// RestorePreference stores pref under its identifier, replacing any
+	// preference stored under it, as a backup restore does.
+	RestorePreference(pref *happydns.NotificationPreference) error
 }
 
 type NotificationStateStorage interface {

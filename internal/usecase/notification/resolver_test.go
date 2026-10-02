@@ -42,6 +42,10 @@ func (f *fakePrefStore) GetPreference(_ happydns.Identifier) (*happydns.Notifica
 func (f *fakePrefStore) CreatePreference(_ *happydns.NotificationPreference) error { return nil }
 func (f *fakePrefStore) UpdatePreference(_ *happydns.NotificationPreference) error { return nil }
 func (f *fakePrefStore) DeletePreference(_ happydns.Identifier) error              { return nil }
+func (f *fakePrefStore) ListAllPreferences() (happydns.Iterator[happydns.NotificationPreference], error) {
+	return nil, nil
+}
+func (f *fakePrefStore) RestorePreference(_ *happydns.NotificationPreference) error { return nil }
 
 func TestResolvePreferenceFallsBackToDefault(t *testing.T) {
 	user := &happydns.User{Id: happydns.Identifier{1}}

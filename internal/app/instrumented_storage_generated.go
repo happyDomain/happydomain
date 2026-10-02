@@ -427,6 +427,11 @@ func (s *instrumentedStorage) ListAllCachedObservations() (ret happydns.Iterator
 	return s.inner.ListAllCachedObservations()
 }
 
+func (s *instrumentedStorage) ListAllChannels() (ret happydns.Iterator[happydns.NotificationChannel], err error) {
+	defer observe("list", "notification_channel")(&err)
+	return s.inner.ListAllChannels()
+}
+
 func (s *instrumentedStorage) ListAllCheckPlans() (ret happydns.Iterator[happydns.CheckPlan], err error) {
 	defer observe("list", "check_plan")(&err)
 	return s.inner.ListAllCheckPlans()
@@ -465,6 +470,11 @@ func (s *instrumentedStorage) ListAllEvaluations() (ret happydns.Iterator[happyd
 func (s *instrumentedStorage) ListAllExecutions() (ret happydns.Iterator[happydns.Execution], err error) {
 	defer observe("list", "execution")(&err)
 	return s.inner.ListAllExecutions()
+}
+
+func (s *instrumentedStorage) ListAllPreferences() (ret happydns.Iterator[happydns.NotificationPreference], err error) {
+	defer observe("list", "notification_preference")(&err)
+	return s.inner.ListAllPreferences()
 }
 
 func (s *instrumentedStorage) ListAllProviders() (ret happydns.Iterator[happydns.ProviderMessage], err error) {
@@ -624,6 +634,11 @@ func (s *instrumentedStorage) ReplaceDiscoveryEntries(producerID string, target 
 	return s.inner.ReplaceDiscoveryEntries(producerID, target, entries)
 }
 
+func (s *instrumentedStorage) RestoreChannel(ch *happydns.NotificationChannel) (err error) {
+	defer observe("restore", "notification_channel")(&err)
+	return s.inner.RestoreChannel(ch)
+}
+
 func (s *instrumentedStorage) RestoreCheckPlan(plan *happydns.CheckPlan) (err error) {
 	defer observe("restore", "check_plan")(&err)
 	return s.inner.RestoreCheckPlan(plan)
@@ -647,6 +662,11 @@ func (s *instrumentedStorage) RestoreEvaluation(eval *happydns.CheckEvaluation) 
 func (s *instrumentedStorage) RestoreExecution(exec *happydns.Execution) (err error) {
 	defer observe("restore", "execution")(&err)
 	return s.inner.RestoreExecution(exec)
+}
+
+func (s *instrumentedStorage) RestorePreference(pref *happydns.NotificationPreference) (err error) {
+	defer observe("restore", "notification_preference")(&err)
+	return s.inner.RestorePreference(pref)
 }
 
 func (s *instrumentedStorage) RestoreSnapshot(snap *happydns.ObservationSnapshot) (err error) {

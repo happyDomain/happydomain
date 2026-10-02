@@ -83,6 +83,11 @@ func (s *KVStorage) ListPreferencesByUser(userId happydns.Identifier) ([]*happyd
 	return prefs, nil
 }
 
+func (s *KVStorage) ListAllPreferences() (happydns.Iterator[happydns.NotificationPreference], error) {
+	iter := s.db.Search(notifprefPrimaryPrefix)
+	return NewKVIterator[happydns.NotificationPreference](s.db, iter), nil
+}
+
 func (s *KVStorage) GetPreference(prefId happydns.Identifier) (*happydns.NotificationPreference, error) {
 	pref := &happydns.NotificationPreference{}
 	err := s.db.Get(notifprefPrimaryKey(prefId), pref)
@@ -122,5 +127,26 @@ func (s *KVStorage) DeletePreference(prefId happydns.Identifier) error {
 	batch := s.db.NewBatch()
 	batch.Delete(notifprefUserKey(pref.UserId, prefId))
 	batch.Delete(notifprefPrimaryKey(prefId))
+	return batch.Commit()
+}
+
+func (s *KVStorage) RestorePreference(pref *happydns.NotificationPreference) error {
+	if pref.Id.IsEmpty() {
+		return errors.New("a notification preference to restore needs its identifier")
+	}
+
+	batch := s.db.NewBatch()
+	// Stored under another user, its index entry goes with it.
+	if old, err := s.GetPreference(pref.Id); err == nil && !old.UserId.Equals(pref.UserId) {
+		batch.Delete(notifprefUserKey(old.UserId, pref.Id))
+	} else if err != nil && !errors.Is(err, happydns.ErrNotificationPreferenceNotFound) {
+		return err
+	}
+	if err := batch.Put(notifprefPrimaryKey(pref.Id), pref); err != nil {
+		return err
+	}
+	if err := batch.Put(notifprefUserKey(pref.UserId, pref.Id), ""); err != nil {
+		return err
+	}
 	return batch.Commit()
 }

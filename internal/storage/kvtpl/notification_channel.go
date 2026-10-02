@@ -84,6 +84,11 @@ func (s *KVStorage) ListChannelsByUser(userId happydns.Identifier) ([]*happydns.
 	return channels, nil
 }
 
+func (s *KVStorage) ListAllChannels() (happydns.Iterator[happydns.NotificationChannel], error) {
+	iter := s.db.Search(notifchPrimaryPrefix)
+	return NewKVIterator[happydns.NotificationChannel](s.db, iter), nil
+}
+
 func (s *KVStorage) GetChannel(channelId happydns.Identifier) (*happydns.NotificationChannel, error) {
 	ch := &happydns.NotificationChannel{}
 	err := s.db.Get(notifchPrimaryKey(channelId), ch)
@@ -124,5 +129,26 @@ func (s *KVStorage) DeleteChannel(channelId happydns.Identifier) error {
 	batch := s.db.NewBatch()
 	batch.Delete(notifchUserKey(ch.UserId, channelId))
 	batch.Delete(notifchPrimaryKey(channelId))
+	return batch.Commit()
+}
+
+func (s *KVStorage) RestoreChannel(ch *happydns.NotificationChannel) error {
+	if ch.Id.IsEmpty() {
+		return errors.New("a notification channel to restore needs its identifier")
+	}
+
+	batch := s.db.NewBatch()
+	// Stored under another user, its index entry goes with it.
+	if old, err := s.GetChannel(ch.Id); err == nil && !old.UserId.Equals(ch.UserId) {
+		batch.Delete(notifchUserKey(old.UserId, ch.Id))
+	} else if err != nil && !errors.Is(err, happydns.ErrNotificationChannelNotFound) {
+		return err
+	}
+	if err := batch.Put(notifchPrimaryKey(ch.Id), ch); err != nil {
+		return err
+	}
+	if err := batch.Put(notifchUserKey(ch.UserId, ch.Id), ""); err != nil {
+		return err
+	}
 	return batch.Commit()
 }
