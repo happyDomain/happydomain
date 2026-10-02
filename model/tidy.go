@@ -38,6 +38,8 @@ type TidyUpUseCase interface {
 	TidyDomains(dropInvalid bool) error
 	TidyDomainLogs(dropInvalid bool) error
 	TidyProviders(dropInvalid bool) error
+	TidyNotificationChannels(dropInvalid bool) error
+	TidyNotificationPreferences(dropInvalid bool) error
 	TidySessions(dropInvalid bool) error
 	TidyUsers(dropInvalid bool) error
 	TidyZones(dropInvalid bool) error

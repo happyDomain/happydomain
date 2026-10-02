@@ -20,7 +20,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // Per-resource tidy methods live in tidy_*.go siblings (users, sessions,
-// providers, domains, zones, checks). This file holds the type, the shared
+// providers, notifications, domains, zones, checks). This file holds the type, the shared
 // iterator helper, and the TidyAll orchestrator.
 
 package usecase
@@ -73,6 +73,8 @@ func (tu *tidyUpUsecase) TidyAll(dropInvalid bool) error {
 		tu.TidyAuthUsers,
 		tu.TidyUsers,
 		tu.TidyProviders,
+		tu.TidyNotificationChannels,
+		tu.TidyNotificationPreferences,
 		tu.TidyDomains,
 		tu.TidyZones,
 		tu.TidyDomainLogs,
