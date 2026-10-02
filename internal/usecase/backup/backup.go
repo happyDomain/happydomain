@@ -33,12 +33,31 @@ import (
 	happydns "git.happydns.org/happyDomain/model"
 )
 
-type Usecase struct {
-	store storage.Storage
+// ChannelRedactor returns a copy of a notification channel stripped of its
+// secrets, and must withhold the configuration it cannot tell secrets in.
+type ChannelRedactor interface {
+	RedactChannelForExport(ch *happydns.NotificationChannel) (*happydns.NotificationChannel, error)
 }
 
-func NewUsecase(store storage.Storage) *Usecase {
-	return &Usecase{store: store}
+type Usecase struct {
+	store    storage.Storage
+	redactor ChannelRedactor
+}
+
+type Option func(*Usecase)
+
+// WithChannelRedactor lets BackupUser export the notification channels. Without
+// one, it exports none: they cannot leave in clear.
+func WithChannelRedactor(r ChannelRedactor) Option {
+	return func(u *Usecase) { u.redactor = r }
+}
+
+func NewUsecase(store storage.Storage, opts ...Option) *Usecase {
+	u := &Usecase{store: store}
+	for _, opt := range opts {
+		opt(u)
+	}
+	return u
 }
 
 func (u *Usecase) backupOneUser(user *happydns.User, ret *happydns.Backup) {
@@ -114,6 +133,32 @@ func (u *Usecase) Backup() happydns.Backup {
 		defer iter.Close()
 		for iter.Next() {
 			u.backupOneUser(iter.Item(), &ret)
+		}
+	}
+
+	// Notification channels, their configuration as stored.
+	if chIter, err := u.store.ListAllChannels(); err != nil {
+		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve NotificationChannels: %s", err.Error()))
+	} else {
+		defer chIter.Close()
+		for chIter.Next() {
+			ret.NotificationChannels = append(ret.NotificationChannels, chIter.Item())
+		}
+		if err := chIter.Err(); err != nil {
+			ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve every NotificationChannel: %s", err.Error()))
+		}
+	}
+
+	// Notification preferences.
+	if prefIter, err := u.store.ListAllPreferences(); err != nil {
+		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve NotificationPreferences: %s", err.Error()))
+	} else {
+		defer prefIter.Close()
+		for prefIter.Next() {
+			ret.NotificationPreferences = append(ret.NotificationPreferences, prefIter.Item())
+		}
+		if err := prefIter.Err(); err != nil {
+			ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve every NotificationPreference: %s", err.Error()))
 		}
 	}
 
@@ -252,6 +297,28 @@ func (u *Usecase) BackupUser(user *happydns.User) happydns.Backup {
 		ret.Providers[i] = redacted
 	}
 
+	// Notification channels, minus their secrets, and the preferences
+	// pointing at them.
+	if u.redactor != nil {
+		if chs, err := u.store.ListChannelsByUser(user.Id); err != nil {
+			ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve NotificationChannels: %s", err.Error()))
+		} else {
+			for _, ch := range chs {
+				redacted, err := u.redactor.RedactChannelForExport(ch)
+				if err != nil {
+					ret.Errors = append(ret.Errors, fmt.Sprintf("unable to redact NotificationChannel %s: %s", ch.Id.String(), err.Error()))
+					continue
+				}
+				ret.NotificationChannels = append(ret.NotificationChannels, redacted)
+			}
+		}
+	}
+	if prefs, err := u.store.ListPreferencesByUser(user.Id); err != nil {
+		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve NotificationPreferences: %s", err.Error()))
+	} else {
+		ret.NotificationPreferences = append(ret.NotificationPreferences, prefs...)
+	}
+
 	// Checker configurations scoped to this user.
 	if cfgIter, err := u.store.ListAllCheckerConfigurations(); err != nil {
 		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve CheckerConfigurations: %s", err.Error()))
@@ -375,6 +442,21 @@ func (u *Usecase) Restore(backup *happydns.Backup) error {
 	// Sessions
 	for _, session := range backup.Sessions {
 		errs = errors.Join(errs, u.store.UpdateSession(session))
+	}
+
+	// Notification channels, then the preferences pointing at them, under
+	// their own identifiers.
+	for _, ch := range backup.NotificationChannels {
+		if ch == nil {
+			continue
+		}
+		errs = errors.Join(errs, u.store.RestoreChannel(ch))
+	}
+	for _, pref := range backup.NotificationPreferences {
+		if pref == nil {
+			continue
+		}
+		errs = errors.Join(errs, u.store.RestorePreference(pref))
 	}
 
 	// Checker configurations.

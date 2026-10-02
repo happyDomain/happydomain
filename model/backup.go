@@ -31,6 +31,8 @@ type Backup struct {
 	Users                    []*User
 	UsersAuth                UserAuths
 	Zones                    []*ZoneMessage
+	NotificationChannels     []*NotificationChannel
+	NotificationPreferences  []*NotificationPreference
 	CheckerConfigurations    []*CheckerOptionsPositional
 	CheckPlans               []*CheckPlan
 	CheckEvaluations         []*CheckEvaluation

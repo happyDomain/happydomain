@@ -62,7 +62,6 @@ func (app *App) initUsecases() {
 	serviceService := serviceUC.NewServiceUsecases()
 	zoneService := zoneUC.NewZoneUsecases(app.store, serviceService)
 
-	app.usecases.backup = backupUC.NewUsecase(app.store)
 	app.initFaviconService()
 	app.usecases.providerSpecs = usecase.NewProviderSpecsUsecase(app.faviconService)
 	app.usecases.provider = providerService
@@ -185,6 +184,7 @@ func (app *App) initUsecases() {
 	registry.Register(notifPkg.Adapt(notifPkg.NewWebhookSender(baseURL, app.guards.Outbound), app.guards.Outbound))
 	registry.Register(notifPkg.Adapt(notifPkg.NewUnifiedPushSender(baseURL, app.guards.Outbound), app.guards.Outbound))
 	app.usecases.notificationRegistry = registry
+	app.usecases.backup = backupUC.NewUsecase(app.store, backupUC.WithChannelRedactor(registry))
 	resolver := notifUC.NewResolver(app.store, app.store)
 	pool := notifUC.NewPool(registry, app.store)
 	tester := notifUC.NewTester(registry)

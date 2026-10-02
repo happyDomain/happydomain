@@ -282,6 +282,22 @@ func (r *Registry) RedactChannel(ch *happydns.NotificationChannel) (*happydns.No
 	return &copy, nil
 }
 
+// RedactChannelForExport is RedactChannel for a file that leaves happyDomain:
+// the configuration of a channel whose type no sender knows is withheld, as
+// nothing says which of its fields are secret. A sender failing to redact
+// returns an error rather than the configuration in clear.
+func (r *Registry) RedactChannelForExport(ch *happydns.NotificationChannel) (*happydns.NotificationChannel, error) {
+	if ch == nil {
+		return nil, nil
+	}
+	if _, ok := r.Get(ch.Type); !ok {
+		copy := *ch
+		copy.Config = json.RawMessage("{}")
+		return &copy, nil
+	}
+	return r.RedactChannel(ch)
+}
+
 func (r *Registry) RedactChannels(chs []*happydns.NotificationChannel) ([]*happydns.NotificationChannel, error) {
 	out := make([]*happydns.NotificationChannel, 0, len(chs))
 	for _, ch := range chs {
