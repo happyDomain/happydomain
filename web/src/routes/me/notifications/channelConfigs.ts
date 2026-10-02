@@ -23,6 +23,7 @@
 export type FieldKind = "text" | "url" | "secret" | "headers";
 
 export interface ChannelConfigField {
+    // The JSON key of the field in the config the server decodes.
     key: string;
     kind: FieldKind;
     required?: boolean;
@@ -34,12 +35,13 @@ export interface ChannelConfigSchema {
     fields: ChannelConfigField[];
 }
 
-// Field names mirror JSON tags in internal/notification/*_sender.go.
+// Field keys mirror the JSON tags of the configs in internal/notifier/*_sender.go:
+// the form sends the config as it builds it.
 export const CHANNEL_CONFIG_SCHEMAS: Record<string, ChannelConfigSchema> = {
     email: {
         fields: [
             {
-                key: "emailAddress",
+                key: "address",
                 kind: "text",
                 i18nLabel: "settings.notifications.channels.fields.emailAddress",
                 i18nHelp: "settings.notifications.channels.fields.emailAddressHelp",
@@ -49,19 +51,19 @@ export const CHANNEL_CONFIG_SCHEMAS: Record<string, ChannelConfigSchema> = {
     webhook: {
         fields: [
             {
-                key: "webhookUrl",
+                key: "url",
                 kind: "url",
                 required: true,
                 i18nLabel: "settings.notifications.channels.fields.webhookUrl",
             },
             {
-                key: "webhookHeaders",
+                key: "headers",
                 kind: "headers",
                 i18nLabel: "settings.notifications.channels.fields.webhookHeaders",
                 i18nHelp: "settings.notifications.channels.fields.webhookHeadersHelp",
             },
             {
-                key: "webhookSecret",
+                key: "secret",
                 kind: "secret",
                 i18nLabel: "settings.notifications.channels.fields.webhookSecret",
                 i18nHelp: "settings.notifications.channels.fields.webhookSecretHelp",
@@ -71,7 +73,7 @@ export const CHANNEL_CONFIG_SCHEMAS: Record<string, ChannelConfigSchema> = {
     unifiedpush: {
         fields: [
             {
-                key: "unifiedPushEndpoint",
+                key: "endpoint",
                 kind: "url",
                 required: true,
                 i18nLabel: "settings.notifications.channels.fields.unifiedPushEndpoint",
