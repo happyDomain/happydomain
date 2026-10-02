@@ -142,3 +142,53 @@ func TestCreateChannelRefusesPlaceholderSecret(t *testing.T) {
 		t.Errorf("%d channels stored holding the placeholder", len(chs))
 	}
 }
+
+// Header values are sealed and withheld like the signing secret. Echoed back
+// with the placeholder, a header keeps its value; renamed, it has none to
+// keep, and the update is refused rather than the header silently dropped.
+func TestChannelHeadersAreSealed(t *testing.T) {
+	nc, db := channelTestController(t)
+	user := &happydns.User{Id: happydns.Identifier{0x01}, Email: "u@example.com"}
+
+	w, c := channelRequest(t, http.MethodPost, `{"type":"webhook","name":"hook","enabled":true,"config":{"url":"https://192.0.2.10/hook","headers":{"Authorization":"Bearer t0k3n"}}}`, user, nil)
+	nc.CreateChannel(c)
+	if w.Code != http.StatusCreated {
+		t.Fatalf("CreateChannel = %d %s", w.Code, w.Body.String())
+	}
+	if strings.Contains(w.Body.String(), "t0k3n") {
+		t.Errorf("response = %s, want the header value withheld", w.Body.String())
+	}
+
+	var created happydns.NotificationChannel
+	if err := json.Unmarshal(w.Body.Bytes(), &created); err != nil {
+		t.Fatal(err)
+	}
+	stored, err := db.GetChannel(created.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(stored.Config), "t0k3n") || !strings.Contains(string(stored.Config), `"Authorization":"hds:1:`) {
+		t.Fatalf("stored = %s, want the header sealed", stored.Config)
+	}
+
+	// Echoed back: kept.
+	w, c = channelRequest(t, http.MethodPut, `{"name":"renamed","config":{"url":"https://192.0.2.10/hook","headers":{"Authorization":"`+happydns.RedactedSecret+`"}}}`, user, stored)
+	nc.UpdateChannel(c)
+	if w.Code != http.StatusOK {
+		t.Fatalf("UpdateChannel = %d %s", w.Code, w.Body.String())
+	}
+	kept, _ := db.GetChannel(created.Id)
+	if !strings.Contains(string(kept.Config), `"Authorization":"hds:1:`) {
+		t.Errorf("stored = %s, want the header kept", kept.Config)
+	}
+
+	// Renamed: nothing to keep.
+	w, c = channelRequest(t, http.MethodPut, `{"config":{"url":"https://192.0.2.10/hook","headers":{"X-Token":"`+happydns.RedactedSecret+`"}}}`, user, kept)
+	nc.UpdateChannel(c)
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("UpdateChannel = %d %s, want 400", w.Code, w.Body.String())
+	}
+	if after, _ := db.GetChannel(created.Id); string(after.Config) != string(kept.Config) {
+		t.Errorf("stored = %s, want it unchanged", after.Config)
+	}
+}

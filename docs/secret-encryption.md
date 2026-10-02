@@ -1,9 +1,9 @@
 # Encrypting stored credentials
 
 happyDomain stores credentials on behalf of its users: the API keys,
-passwords and TSIG keys of their DNS providers, and the signing secret of
-their webhooks. By default they are stored in clear in the database, as they
-always were.
+passwords and TSIG keys of their DNS providers, and the signing secret and the
+header values (an `Authorization` token, say) of their webhooks. By default
+they are stored in clear in the database, as they always were.
 
 The `instance` policy encrypts them under a keyset held by the server, outside
 the database. A leaked database dump or backup, or a database hosted apart from
@@ -14,8 +14,7 @@ a compromised happyDomain server, which holds the keyset.
 
 This first version covers the common path. Before enabling it, know that:
 
-- the headers of webhooks, the endpoints of UnifiedPush channels and the
-  checker options stay in clear;
+- the endpoints of UnifiedPush channels and the checker options stay in clear;
 - the migrations below (`reseal`, `rewrap`, `drop-safes`) expect a single
   happyDomain process on the database. With several, a reseal may overwrite an
   update made at the same time by another process;

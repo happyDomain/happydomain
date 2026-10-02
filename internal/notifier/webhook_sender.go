@@ -64,8 +64,11 @@ func validateHeader(k, v string) error {
 const ChannelTypeWebhook happydns.NotificationChannelType = "webhook"
 
 type WebhookConfig struct {
-	URL     string            `json:"url"`
-	Headers map[string]string `json:"headers,omitempty"`
+	URL string `json:"url"`
+	// Headers added to every request. Their values may carry credentials,
+	// an Authorization token say: all of them are sealed, and none goes
+	// back to the client.
+	Headers map[string]happydns.Secret `json:"headers,omitempty"`
 	// HMAC-SHA256 signing key.
 	Secret happydns.Secret `json:"secret,omitzero"`
 	// Set only by RedactConfig — never stored or accepted on input.
@@ -77,7 +80,8 @@ func (c WebhookConfig) Validate() error {
 		return errors.New("webhook URL is required")
 	}
 	for k, v := range c.Headers {
-		if err := validateHeader(k, v); err != nil {
+		// A value still sealed reads as empty: only its name is checked.
+		if err := validateHeader(k, v.Reveal()); err != nil {
 			return fmt.Errorf("webhook header: %w", err)
 		}
 	}
@@ -106,15 +110,40 @@ func (s *WebhookSender) Destinations(c WebhookConfig) []Destination {
 func (s *WebhookSender) RedactConfig(cfg WebhookConfig) WebhookConfig {
 	cfg.HasSecret = !cfg.Secret.IsEmpty()
 	cfg.Secret = happydns.Secret{}
+
+	// A new map: cfg shares its own with the caller.
+	if cfg.Headers != nil {
+		headers := make(map[string]happydns.Secret, len(cfg.Headers))
+		for k, v := range cfg.Headers {
+			v.Redact()
+			headers[k] = v
+		}
+		cfg.Headers = headers
+	}
 	return cfg
 }
 
 // Preserve stored secret on empty submit; client never receives it back, so absence means "no change".
+//
+// A header echoed back with the placeholder keeps the value stored under its
+// name. With none stored there, the placeholder is left for sealing to refuse:
+// dropping the header silently could break the receiver's authentication.
 func (s *WebhookSender) MergeForUpdate(existing, incoming WebhookConfig) WebhookConfig {
 	if incoming.Secret.IsEmpty() || incoming.Secret.IsRedacted() {
 		incoming.Secret = existing.Secret
 	}
 	incoming.HasSecret = false
+
+	if incoming.Headers != nil {
+		headers := make(map[string]happydns.Secret, len(incoming.Headers))
+		for k, v := range incoming.Headers {
+			if stored, ok := existing.Headers[k]; ok && v.IsRedacted() {
+				v = stored
+			}
+			headers[k] = v
+		}
+		incoming.Headers = headers
+	}
 	return incoming
 }
 
@@ -124,15 +153,21 @@ func (s *WebhookSender) Send(ctx context.Context, c WebhookConfig, payload *Noti
 		// configuration change to the receiver.
 		return errors.New("webhook signing secret not opened")
 	}
+	for k, v := range c.Headers {
+		if !v.IsEmpty() && v.Reveal() == "" {
+			// Sealed and not opened: the receiver would get it empty.
+			return fmt.Errorf("webhook header %q not opened", k)
+		}
+	}
 
 	return postJSON(ctx, s.client, c.URL, buildHTTPPayload(payload, s.dashboardURL), func(req *http.Request, body []byte) {
 		req.Header.Set("User-Agent", "happyDomain-Notification/1.0")
 		for k, v := range c.Headers {
 			// Defense in depth: catches stored channels that pre-date Validate().
-			if err := validateHeader(k, v); err != nil {
+			if err := validateHeader(k, v.Reveal()); err != nil {
 				continue
 			}
-			req.Header.Set(k, v)
+			req.Header.Set(k, v.Reveal())
 		}
 		if key := c.Secret.Reveal(); key != "" {
 			mac := hmac.New(sha256.New, []byte(key))
