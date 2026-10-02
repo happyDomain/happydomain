@@ -187,7 +187,14 @@ func (pc *ProviderController) UpdateProvider(c *gin.Context) {
 		return
 	}
 
-	pc.writeProvider(c, http.StatusOK, old)
+	// Answer with what is now stored: old predates the update.
+	updated, err := pc.providerService.GetUserProvider(c.Request.Context(), user, old.Id)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	pc.writeProvider(c, http.StatusOK, updated)
 }
 
 // DeleteProvider removes a provider from the database.
