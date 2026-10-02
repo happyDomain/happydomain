@@ -57,6 +57,9 @@ type CheckStorage interface {
 
 	// PutSecretCheck stores the check record.
 	PutSecretCheck(record []byte) error
+
+	// DeleteSecretCheck removes the check record, once no safe is left.
+	DeleteSecretCheck() error
 }
 
 // Storage is what secret management keeps in the database.

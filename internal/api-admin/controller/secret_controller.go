@@ -66,3 +66,19 @@ func (sc *SecretController) Reseal(c *gin.Context) {
 	reports, err := sc.secrets.Reseal(c.Request.Context())
 	apiResponse(c, reports, err)
 }
+
+// DropSafes deletes the safes once every secret is stored in clear.
+//
+//	@Summary	Drop safes
+//	@Schemes
+//	@Description	After going back to the plaintext policy and resealing, deletes the safes and the keyset check record: the keyset is then no longer needed at startup. Refused while a secret is still sealed, or an object could not be looked at.
+//	@Tags		admin
+//	@Produce	json
+//	@Security	securitydefinitions.basic
+//	@Success	200	{integer}	int	"Number of safes deleted"
+//	@Failure	400	{object}	happydns.ErrorResponse	"Secrets are still sealed"
+//	@Router		/secrets/drop-safes [post]
+func (sc *SecretController) DropSafes(c *gin.Context) {
+	n, err := sc.secrets.DropSafes(c.Request.Context())
+	apiResponse(c, n, err)
+}

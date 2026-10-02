@@ -24,6 +24,8 @@ package usecase_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"strings"
 	"testing"
 
 	"git.happydns.org/happyDomain/internal/secret"
@@ -69,7 +71,7 @@ func TestSecretsUsecase(t *testing.T) {
 
 	uc := usecase.NewSecretsUsecase(instance, map[string]usecase.SecretHolder{
 		providerUC.SecretObjectType: providerUC.NewService(db, acceptAll{}, nil, instance),
-	})
+	}, db)
 
 	status, err := uc.Status(ctx)
 	if err != nil {
@@ -93,3 +95,184 @@ func TestSecretsUsecase(t *testing.T) {
 		t.Errorf("after reseal = %+v, want everything sealed", pc)
 	}
 }
+
+// Going back to clear: once nothing is sealed any more, the safes and the
+// check record are deleted, and the keyset is no longer needed at startup.
+func TestSecretsUsecaseDropSafes(t *testing.T) {
+	ctx := context.Background()
+	db, err := inmemory.Instantiate()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	instance, _ := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db})
+	plaintext, _ := secret.NewManager(secret.Config{Policy: secret.PolicyPlaintext, InstanceKey: key, Safes: db})
+	if err := secret.StartupCheck(secret.PolicyInstance, key, db); err != nil {
+		t.Fatal(err)
+	}
+
+	seedSecretProvider(t, db, instance, 1, "sealed-1")
+	seedSecretProvider(t, db, instance, 2, "sealed-2")
+
+	newUsecase := func(m *secret.Manager) *usecase.SecretsUsecase {
+		return usecase.NewSecretsUsecase(m, map[string]usecase.SecretHolder{
+			providerUC.SecretObjectType: providerUC.NewService(db, acceptAll{}, nil, m),
+		}, db)
+	}
+
+	// Still under the instance policy.
+	if _, err := newUsecase(instance).DropSafes(ctx); err == nil {
+		t.Fatal("DropSafes under the instance policy succeeded")
+	}
+
+	// Back to plaintext, but the credentials are still sealed.
+	uc := newUsecase(plaintext)
+	if _, err := uc.DropSafes(ctx); err == nil {
+		t.Fatal("DropSafes with sealed credentials left succeeded")
+	}
+	if _, err := db.GetSafeByOwner(happydns.Identifier{0x01}, secret.KindInstance); err != nil {
+		t.Fatalf("the safe was deleted by a refused DropSafes: %v", err)
+	}
+
+	if _, err := uc.Reseal(ctx); err != nil {
+		t.Fatal(err)
+	}
+	n, err := uc.DropSafes(ctx)
+	if err != nil || n != 1 {
+		t.Fatalf("DropSafes = %d, %v; want the safe dropped", n, err)
+	}
+
+	if err := secret.StartupCheck(secret.PolicyPlaintext, nil, db); err != nil {
+		t.Errorf("StartupCheck without the keyset: %v", err)
+	}
+	// A new keyset is accepted later on.
+	other, _ := secret.GenerateInstanceKeyset()
+	otherKey, _ := secret.NewInstanceKey(other)
+	if err := secret.StartupCheck(secret.PolicyInstance, otherKey, db); err != nil {
+		t.Errorf("StartupCheck with a new keyset: %v", err)
+	}
+
+	// And the credentials are there, in clear.
+	status, err := uc.Status(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c := status.Objects[providerUC.SecretObjectType]; c.Clear != 2 {
+		t.Errorf("counts after dropping = %+v, want 2 in clear", c)
+	}
+}
+
+// A provider that cannot be looked at may hold sealed credentials: the safes
+// are kept.
+func TestSecretsUsecaseDropSafesRefusedWithUndecodable(t *testing.T) {
+	ctx := context.Background()
+	db, err := inmemory.Instantiate()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	instance, _ := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db})
+	plaintext, _ := secret.NewManager(secret.Config{Policy: secret.PolicyPlaintext, InstanceKey: key, Safes: db})
+
+	seedSecretProvider(t, db, instance, 1, "sealed-1")
+	msg, err := db.GetProvider(happydns.Identifier{1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Its type left this build.
+	msg.Type = "RemovedProvider"
+	if err := db.UpdateProvider(&happydns.Provider{ProviderMeta: msg.ProviderMeta, Provider: &removedBody{Raw: msg.Provider}}); err != nil {
+		t.Fatal(err)
+	}
+
+	uc := usecase.NewSecretsUsecase(plaintext, map[string]usecase.SecretHolder{
+		providerUC.SecretObjectType: providerUC.NewService(db, acceptAll{}, nil, plaintext),
+	}, db)
+	if _, err := uc.DropSafes(ctx); err == nil || !strings.Contains(err.Error(), "could not be looked at") {
+		t.Errorf("DropSafes = %v, want it refused for the undecodable provider", err)
+	}
+	if _, err := db.GetSafeByOwner(happydns.Identifier{0x01}, secret.KindInstance); err != nil {
+		t.Errorf("the safe was deleted: %v", err)
+	}
+}
+
+// Secrets sealed under a keyset that is gone do not open: dropping the safes
+// would lose them for good, so the safes are kept.
+func TestSecretsUsecaseDropSafesRefusedWithUnreadable(t *testing.T) {
+	ctx := context.Background()
+	db, err := inmemory.Instantiate()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	instance, _ := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db})
+	seedSecretProvider(t, db, instance, 1, "sealed-1")
+
+	other, _ := secret.GenerateInstanceKeyset()
+	otherKey, _ := secret.NewInstanceKey(other)
+	plaintext, _ := secret.NewManager(secret.Config{Policy: secret.PolicyPlaintext, InstanceKey: otherKey, Safes: db})
+	uc := usecase.NewSecretsUsecase(plaintext, map[string]usecase.SecretHolder{
+		providerUC.SecretObjectType: providerUC.NewService(db, acceptAll{}, nil, plaintext),
+	}, db)
+	_, _ = uc.Reseal(ctx)
+
+	if _, err := uc.DropSafes(ctx); err == nil || !strings.Contains(err.Error(), "still sealed") {
+		t.Errorf("DropSafes = %v, want it refused for the unreadable credential", err)
+	}
+	if _, err := db.GetSafeByOwner(happydns.Identifier{0x01}, secret.KindInstance); err != nil {
+		t.Errorf("the safe was deleted: %v", err)
+	}
+}
+
+// holderStub counts one clear secret and reseals nothing, or fails with err.
+type holderStub struct{ err error }
+
+func (h holderStub) InspectSecrets(context.Context) (secret.Counts, error) {
+	return secret.Counts{Clear: 1}, h.err
+}
+
+func (h holderStub) ResealSecrets(context.Context) (secret.ResealReport, error) {
+	return secret.ResealReport{ObjectType: "a"}, h.err
+}
+
+// A type of object failing stops the walk, names that type, and keeps the
+// reports of the types already resealed.
+func TestSecretsUsecaseHolderFailure(t *testing.T) {
+	ctx := context.Background()
+	db, _ := inmemory.Instantiate()
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	m, _ := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db})
+
+	boom := errors.New("storage unavailable")
+	uc := usecase.NewSecretsUsecase(m, map[string]usecase.SecretHolder{
+		"a": holderStub{},
+		"b": holderStub{err: boom},
+	}, db)
+
+	if status, err := uc.Status(ctx); !errors.Is(err, boom) || status != nil || !strings.HasPrefix(err.Error(), "b: ") {
+		t.Errorf("Status = %+v, %v; want the failure of b", status, err)
+	}
+	reports, err := uc.Reseal(ctx)
+	if !errors.Is(err, boom) || !strings.HasPrefix(err.Error(), "b: ") {
+		t.Errorf("Reseal error = %v, want the failure of b", err)
+	}
+	if len(reports) != 1 || reports[0].ObjectType != "a" {
+		t.Errorf("Reseal reports = %+v, want the one of a, done before b failed", reports)
+	}
+}
+
+// removedBody stores a body as it was, under a type this build does not know.
+type removedBody struct {
+	Raw json.RawMessage
+}
+
+func (b *removedBody) MarshalJSON() ([]byte, error) { return b.Raw, nil }
+
+func (*removedBody) InstantiateProvider() (happydns.ProviderActuator, error) { return nil, nil }
