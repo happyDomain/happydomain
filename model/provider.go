@@ -61,10 +61,11 @@ type ProviderCreator struct {
 	Infos   ProviderInfos
 }
 
-// ProviderMinimal is used for swagger documentation as Provider add.
+// ProviderMinimal is what a client sends to create or update a Provider: the
+// server chooses its identifier and owner.
 type ProviderMinimal struct {
 	// Type is the string representation of the Provider's type.
-	Type string `json:"_srctype"`
+	Type string `json:"_srctype" binding:"required"`
 
 	// Provider holds the settings of the provider, whose shape depends on
 	// the type given above.
@@ -72,6 +73,18 @@ type ProviderMinimal struct {
 
 	// Comment is a string that helps user to distinguish the Provider.
 	Comment string `json:"_comment,omitempty"`
+}
+
+// ToMessage returns the ProviderMessage p stands for, without identifier nor
+// owner, which are the server's to set.
+func (p *ProviderMinimal) ToMessage() *ProviderMessage {
+	return &ProviderMessage{
+		ProviderMeta: ProviderMeta{
+			Type:    p.Type,
+			Comment: p.Comment,
+		},
+		Provider: p.Provider,
+	}
 }
 
 // ProviderMeta holds the metadata associated to a Provider.

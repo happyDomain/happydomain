@@ -136,14 +136,14 @@ func (pc *ProviderController) AddProvider(c *gin.Context) {
 		return
 	}
 
-	var usrc happydns.ProviderMessage
+	var usrc happydns.ProviderMinimal
 	err := c.ShouldBindJSON(&usrc)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Unable to decode given provider: %s", err.Error())})
 		return
 	}
 
-	provider, err := pc.providerService.CreateProvider(c.Request.Context(), user, &usrc)
+	provider, err := pc.providerService.CreateProvider(c.Request.Context(), user, usrc.ToMessage())
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
@@ -174,14 +174,14 @@ func (pc *ProviderController) UpdateProvider(c *gin.Context) {
 	old := c.MustGet("provider").(*happydns.Provider)
 	user := middleware.MyUser(c)
 
-	var provider happydns.ProviderMessage
+	var provider happydns.ProviderMinimal
 	err := c.ShouldBindJSON(&provider)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
 		return
 	}
 
-	err = pc.providerService.UpdateProviderFromMessage(c.Request.Context(), old.Id, user, &provider)
+	err = pc.providerService.UpdateProviderFromMessage(c.Request.Context(), old.Id, user, provider.ToMessage())
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
