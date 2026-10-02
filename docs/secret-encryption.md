@@ -15,10 +15,9 @@ This first version covers the common path. Before enabling it, know that:
 
 - only the credentials of providers are encrypted. The secrets of
   notification channels and the checker options stay in clear;
-- the keyset cannot be rotated yet. Do not add or remove keys;
-- the migrations below (`reseal`, `drop-safes`) expect a single happyDomain
-  process on the database. With several, a reseal may overwrite an update made
-  at the same time by another process;
+- the migrations below (`reseal`, `rewrap`, `drop-safes`) expect a single
+  happyDomain process on the database. With several, a reseal may overwrite an
+  update made at the same time by another process;
 - when a credential no longer decrypts, users get a generic error.
 
 ## Generating the keyset
@@ -63,6 +62,9 @@ file is bind-mounted and keeps the owner and mode of that file on the host.
 that copy apart from the database backups: a backup holding both is no better
 than a database in clear.
 
+Back it up again after each rotation: once the users' keys are re-encrypted
+under the new key, a copy of the keyset taken before no longer opens them.
+
 ## Enabling encryption
 
 ```
@@ -106,11 +108,56 @@ curl --unix-socket happydomain.sock -X POST http://localhost/api/secrets/reseal
 - `undecodable`: providers that could not be looked at, such as a provider of a
   type this version no longer knows. They may hold encrypted credentials.
 
+It also lists, under `instanceKeys`, the keys of the keyset and how many users'
+keys each one protects.
+
 `/api/secrets/reseal` stores every credential the way the current policy stores
 new ones. It reports how many providers it looked at, changed and failed,
 naming the failures under `errors`. A provider that fails is left as it was,
 and the others are resealed. It can be interrupted, and running it again
 resumes the work.
+
+## Rotating the keyset
+
+1. Add a new key, which becomes the one used from then on. The previous keys
+   stay in the keyset and keep decrypting what they encrypted:
+
+   ```
+   happydomain secret-keyset rotate /etc/happydomain/secret-keyset.json
+   ```
+
+   The file keeps its owner, group and mode. Back it up, as described in
+   [Backing up the keyset](#backing-up-the-keyset).
+
+2. Restart happyDomain: until then, it keeps protecting new users' keys with
+   the previous key.
+
+3. Re-encrypt the users' keys under the new key. The credentials themselves are
+   not rewritten:
+
+   ```
+   curl --unix-socket happydomain.sock -X POST http://localhost/api/secrets/rewrap
+   ```
+
+   It reports how many users' keys it looked at, changed and failed. A user's
+   key that fails, for instance because the key protecting it was already
+   removed from the keyset, is left as it was, and the others are
+   re-encrypted. It can be interrupted, and running it again resumes the work.
+
+4. Check that the previous key protects nothing any more:
+
+   ```
+   curl --unix-socket happydomain.sock http://localhost/api/secrets/status
+   happydomain secret-keyset info /etc/happydomain/secret-keyset.json
+   ```
+
+   It can then be removed with `tinkey delete-key`, once a copy of the keyset
+   file is kept. A key still in use shows up as `MISSING` once removed, and
+   what it protects no longer opens: put back the copy. Users' keys too damaged
+   to tell which key protects them are counted under `UNREADABLE`.
+
+Keep the removed keys as long as you may restore a backup taken before the
+rewrap: the users' keys it holds are protected by them.
 
 ## Going back to clear
 

@@ -46,6 +46,10 @@ type SecretsStatus struct {
 
 	// Objects tells how the secrets are stored, by type of object.
 	Objects map[string]secret.Counts `json:"objects"`
+
+	// InstanceKeys lists the keys of the instance keyset and the number of
+	// safes each wraps.
+	InstanceKeys []secret.KeyStatus `json:"instanceKeys"`
 }
 
 // SecretsUsecase lets the administrator follow and migrate how secrets are
@@ -69,7 +73,8 @@ func (u *SecretsUsecase) types() []string {
 	return types
 }
 
-// Status tells how the secrets of every object are stored.
+// Status tells how the secrets of every object are stored, and which key of
+// the instance keyset wraps how many safes.
 func (u *SecretsUsecase) Status(ctx context.Context) (*SecretsStatus, error) {
 	status := &SecretsStatus{
 		Policy:  string(u.manager.Policy()),
@@ -84,7 +89,18 @@ func (u *SecretsUsecase) Status(ctx context.Context) (*SecretsStatus, error) {
 		status.Objects[t] = counts
 	}
 
+	keys, err := u.manager.KeyStatus()
+	if err != nil {
+		return nil, err
+	}
+	status.InstanceKeys = keys
+
 	return status, nil
+}
+
+// Rewrap wraps the key of every safe under the primary instance key.
+func (u *SecretsUsecase) Rewrap(ctx context.Context) (secret.ResealReport, error) {
+	return u.manager.Rewrap(ctx)
 }
 
 // Reseal stores the secrets of every object the way the current policy

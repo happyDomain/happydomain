@@ -31,6 +31,7 @@ func declareSecretsRoutes(router *gin.RouterGroup, dep Dependencies) {
 	sc := controller.NewSecretController(dep.Secrets)
 
 	router.GET("/secrets/status", sc.Status)
+	router.POST("/secrets/rewrap", sc.Rewrap)
 	router.POST("/secrets/reseal", sc.Reseal)
 	router.POST("/secrets/drop-safes", sc.DropSafes)
 }

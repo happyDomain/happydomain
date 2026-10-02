@@ -31,6 +31,7 @@ import (
 	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
+	kv "git.happydns.org/happyDomain/internal/storage/kvtpl"
 	"git.happydns.org/happyDomain/internal/usecase"
 	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
 	"git.happydns.org/happyDomain/model"
@@ -84,6 +85,9 @@ func TestSecretsUsecase(t *testing.T) {
 	if pc.Clear != 2 || pc.Sealed[secret.KindInstance] != 1 || pc.Unreadable != 0 {
 		t.Errorf("provider counts = %+v, want 2 clear and 1 sealed", pc)
 	}
+	if len(status.InstanceKeys) != 1 || status.InstanceKeys[0].Safes != 1 || !status.InstanceKeys[0].Primary {
+		t.Errorf("instance keys = %+v, want the primary wrapping one safe", status.InstanceKeys)
+	}
 
 	reports, err := uc.Reseal(ctx)
 	if err != nil || len(reports) != 1 || reports[0].Changed != 2 {
@@ -93,6 +97,10 @@ func TestSecretsUsecase(t *testing.T) {
 	status, _ = uc.Status(ctx)
 	if pc := status.Objects[providerUC.SecretObjectType]; pc.Clear != 0 || pc.Sealed[secret.KindInstance] != 3 {
 		t.Errorf("after reseal = %+v, want everything sealed", pc)
+	}
+
+	if report, err := uc.Rewrap(ctx); err != nil || report.Processed != 1 || report.Changed != 0 {
+		t.Errorf("Rewrap = %+v, %v; want nothing to do on a single key", report, err)
 	}
 }
 
@@ -200,6 +208,50 @@ func TestSecretsUsecaseDropSafesRefusedWithUndecodable(t *testing.T) {
 	}
 }
 
+// A safe record that does not decode may hold the key of sealed secrets: the
+// readable safes go, but the check record stays, and so does the keyset.
+func TestSecretsUsecaseDropSafesKeepsCheckWithDamagedSafe(t *testing.T) {
+	ctx := context.Background()
+	kvdb, err := inmemory.NewInMemoryStorage()
+	if err != nil {
+		t.Fatal(err)
+	}
+	db, err := kv.NewKVDatabase(kvdb)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	instance, _ := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db})
+	plaintext, _ := secret.NewManager(secret.Config{Policy: secret.PolicyPlaintext, InstanceKey: key, Safes: db})
+	if err := secret.StartupCheck(secret.PolicyInstance, key, db); err != nil {
+		t.Fatal(err)
+	}
+	seedSecretProvider(t, db, instance, 1, "sealed-1")
+	if err := kvdb.Put("safe-damaged", "not a safe"); err != nil {
+		t.Fatal(err)
+	}
+
+	uc := usecase.NewSecretsUsecase(plaintext, map[string]usecase.SecretHolder{
+		providerUC.SecretObjectType: providerUC.NewService(db, acceptAll{}, nil, plaintext),
+	}, db)
+	if _, err := uc.Reseal(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	n, err := uc.DropSafes(ctx)
+	if err == nil || n != 1 {
+		t.Fatalf("DropSafes = %d, %v; want the readable safe dropped and an error for the damaged one", n, err)
+	}
+	if _, err := db.GetSafeByOwner(happydns.Identifier{0x01}, secret.KindInstance); err == nil {
+		t.Error("the readable safe was kept")
+	}
+	if _, err := db.GetSecretCheck(); err != nil {
+		t.Errorf("the check record was deleted with a damaged safe left: %v", err)
+	}
+}
+
 // Secrets sealed under a keyset that is gone do not open: dropping the safes
 // would lose them for good, so the safes are kept.
 func TestSecretsUsecaseDropSafesRefusedWithUnreadable(t *testing.T) {
@@ -276,3 +328,51 @@ type removedBody struct {
 func (b *removedBody) MarshalJSON() ([]byte, error) { return b.Raw, nil }
 
 func (*removedBody) InstantiateProvider() (happydns.ProviderActuator, error) { return nil, nil }
+
+// A safe record that does not decode keeps neither the key report nor the
+// rewrap of the other safes from going through.
+func TestSecretsUsecaseRewrapGoesPastADamagedSafe(t *testing.T) {
+	ctx := context.Background()
+	kvdb, err := inmemory.NewInMemoryStorage()
+	if err != nil {
+		t.Fatal(err)
+	}
+	db, err := kv.NewKVDatabase(kvdb)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	instance, _ := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db})
+	seedSecretProvider(t, db, instance, 1, "sealed-1")
+	if err := kvdb.Put("safe-damaged", "not a safe"); err != nil {
+		t.Fatal(err)
+	}
+
+	rotated, _ := secret.RotateInstanceKeyset(h)
+	newKey, _ := secret.NewInstanceKey(rotated)
+	m, _ := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: newKey, Safes: db})
+	uc := usecase.NewSecretsUsecase(m, map[string]usecase.SecretHolder{
+		providerUC.SecretObjectType: providerUC.NewService(db, acceptAll{}, nil, m),
+	}, db)
+
+	status, err := uc.Status(ctx)
+	if err != nil {
+		t.Fatalf("Status: %v", err)
+	}
+	unreadable := 0
+	for _, k := range status.InstanceKeys {
+		if k.Status == "UNREADABLE" {
+			unreadable = k.Safes
+		}
+	}
+	if unreadable != 1 {
+		t.Errorf("instance keys = %+v, want the damaged safe counted UNREADABLE", status.InstanceKeys)
+	}
+
+	report, err := uc.Rewrap(ctx)
+	if err != nil || report.Changed != 1 || report.Failed != 1 {
+		t.Errorf("Rewrap = %+v, %v; want the readable safe rewrapped, the damaged one failed", report, err)
+	}
+}

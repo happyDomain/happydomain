@@ -39,7 +39,7 @@ func NewSecretController(secrets *usecase.SecretsUsecase) *SecretController {
 //
 //	@Summary	Secrets status
 //	@Schemes
-//	@Description	Counts, for each type of object, the secrets stored in clear, sealed by kind of safe, those that cannot be opened, and the objects that could not be looked at.
+//	@Description	Counts, for each type of object, the secrets stored in clear, sealed by kind of safe, those that cannot be opened, and the objects that could not be looked at; and, for each key of the instance keyset, the number of safes it wraps. A key wrapping no safe any more can be removed from the keyset.
 //	@Tags		admin
 //	@Produce	json
 //	@Security	securitydefinitions.basic
@@ -49,6 +49,22 @@ func NewSecretController(secrets *usecase.SecretsUsecase) *SecretController {
 func (sc *SecretController) Status(c *gin.Context) {
 	status, err := sc.secrets.Status(c.Request.Context())
 	apiResponse(c, status, err)
+}
+
+// Rewrap wraps the key of every safe under the primary instance key.
+//
+//	@Summary	Rewrap safes
+//	@Schemes
+//	@Description	Wraps the key of every safe under the primary key of the instance keyset, after a rotation. Sealed values are left untouched. A safe that fails is reported and left as it was. Idempotent: run it again after an interruption.
+//	@Tags		admin
+//	@Produce	json
+//	@Security	securitydefinitions.basic
+//	@Success	200	{object}	secret.ResealReport
+//	@Failure	400	{object}	happydns.ErrorResponse	"No instance keyset configured"
+//	@Router		/secrets/rewrap [post]
+func (sc *SecretController) Rewrap(c *gin.Context) {
+	report, err := sc.secrets.Rewrap(c.Request.Context())
+	apiResponse(c, report, err)
 }
 
 // Reseal stores every secret the way the current policy stores new ones.
