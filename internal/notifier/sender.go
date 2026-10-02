@@ -133,21 +133,39 @@ type typedAdapter[C ChannelConfig] struct {
 func (a *typedAdapter[C]) Type() happydns.NotificationChannelType { return a.inner.Type() }
 
 func (a *typedAdapter[C]) DecodeConfig(raw json.RawMessage) (ChannelConfig, error) {
+	c, err := a.decode(raw)
+	if err != nil {
+		return nil, err
+	}
+	if err := a.validate(c); err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+// decode decodes raw, without checking it.
+func (a *typedAdapter[C]) decode(raw json.RawMessage) (C, error) {
 	var c C
 	if len(raw) > 0 {
 		if err := json.Unmarshal(raw, &c); err != nil {
-			return nil, fmt.Errorf("decoding %s config: %w", a.inner.Type(), err)
-		}
-	}
-	if err := c.Validate(); err != nil {
-		return nil, err
-	}
-	for _, d := range a.inner.Destinations(c) {
-		if _, err := netguard.ValidateURLShape(d.URL); err != nil {
-			return nil, fmt.Errorf("%s: %w", d.Label, err)
+			return c, fmt.Errorf("decoding %s config: %w", a.inner.Type(), err)
 		}
 	}
 	return c, nil
+}
+
+// validate checks c and the shape of its destinations. A destination held in
+// a secret must be opened first.
+func (a *typedAdapter[C]) validate(c C) error {
+	if err := c.Validate(); err != nil {
+		return err
+	}
+	for _, d := range a.inner.Destinations(c) {
+		if _, err := netguard.ValidateURLShape(d.URL); err != nil {
+			return fmt.Errorf("%s: %w", d.Label, err)
+		}
+	}
+	return nil
 }
 
 // CheckConfig resolves the destinations, so it only runs when a user submits a
@@ -268,12 +286,15 @@ func (a *typedAdapter[C]) ResealConfig(ctx context.Context, secrets *secret.Mana
 }
 
 func (a *typedAdapter[C]) OpenConfig(ctx context.Context, secrets *secret.Manager, sc secret.SecretContext, raw json.RawMessage) (ChannelConfig, error) {
-	cfg, err := a.DecodeConfig(raw)
+	c, err := a.decode(raw)
 	if err != nil {
 		return nil, err
 	}
-	c := cfg.(C)
+	// Opened before being checked: a destination may be a secret.
 	if err := secrets.OpenObject(ctx, sc, &c); err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrChannelSecretsUnavailable, err)
+	}
+	if err := a.validate(c); err != nil {
 		return nil, err
 	}
 	return c, nil
@@ -398,15 +419,18 @@ func (r *Registry) DecodeChannelConfig(ch *happydns.NotificationChannel) (Channe
 }
 
 // AcceptChannelConfig validates a channel a user is submitting: it decodes the
-// config, then checks its destination against runtime policy. Only use it on
-// the administration path; the send path must stick to DecodeChannelConfig, as
-// the destination check can hit the network.
+// config, opens what it carries forward sealed, then checks its destination
+// against runtime policy. Only use it on the administration path; the send
+// path must stick to OpenChannelConfig, as the destination check can hit the
+// network. ch needs its identifier and owner.
+//
+// The config returned holds the secrets in clear: never store it.
 func (r *Registry) AcceptChannelConfig(ctx context.Context, ch *happydns.NotificationChannel) (ChannelConfig, error) {
 	s, ok := r.Get(ch.Type)
 	if !ok {
 		return nil, fmt.Errorf("%w: %q", ErrUnknownChannelType, ch.Type)
 	}
-	cfg, err := s.DecodeConfig(ch.Config)
+	cfg, err := s.OpenConfig(ctx, r.secrets, ChannelSecretContext(ch), ch.Config)
 	if err != nil {
 		return nil, err
 	}
@@ -463,7 +487,8 @@ func (r *Registry) RedactChannels(chs []*happydns.NotificationChannel) ([]*happy
 	return out, nil
 }
 
-// Caller should DecodeConfig the returned raw before persisting.
+// The caller passes the result through AcceptChannelConfig before persisting:
+// it may carry stored secrets forward sealed, which DecodeConfig cannot check.
 //
 // It refuses an update changing the type of the channel with
 // ErrChannelTypeChanged: each type reads its own config, and the stored one,
@@ -481,6 +506,11 @@ func (r *Registry) MergeChannelForUpdate(existing, incoming *happydns.Notificati
 }
 
 var ErrUnknownChannelType = errors.New("unknown channel type")
+
+// ErrChannelSecretsUnavailable is returned, wrapping the reason, when the
+// stored secrets of a channel do not open: the user cannot fix it, and the
+// reason, naming a safe, is for the logs.
+var ErrChannelSecretsUnavailable = errors.New("the stored secrets of this channel cannot be opened")
 
 // ErrChannelTypeChanged is returned by MergeChannelForUpdate when the update
 // changes the type of the channel.

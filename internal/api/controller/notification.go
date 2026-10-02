@@ -67,6 +67,20 @@ func sealError(c *gin.Context, err error) {
 	internalError(c, err)
 }
 
+// acceptError answers a channel config refused before being stored. Stored
+// secrets that do not open are not the user's to fix, and their reason names
+// a safe: it goes to the logs only.
+func acceptError(c *gin.Context, err error) {
+	switch {
+	case errors.Is(err, secret.ErrRedactedSecret):
+		sealError(c, err)
+	case errors.Is(err, notifPkg.ErrChannelSecretsUnavailable):
+		internalError(c, err)
+	default:
+		middleware.ErrorResponse(c, http.StatusBadRequest, err)
+	}
+}
+
 type NotificationController struct {
 	dispatcher   *notifUC.Dispatcher
 	registry     *notifPkg.Registry
@@ -155,7 +169,7 @@ func (nc *NotificationController) CreateChannel(c *gin.Context) {
 	}
 
 	if _, err := nc.registry.AcceptChannelConfig(c.Request.Context(), &ch); err != nil {
-		middleware.ErrorResponse(c, http.StatusBadRequest, err)
+		acceptError(c, err)
 		return
 	}
 
@@ -248,7 +262,7 @@ func (nc *NotificationController) UpdateChannel(c *gin.Context) {
 	ch.Config = merged
 
 	if _, err := nc.registry.AcceptChannelConfig(c.Request.Context(), ch); err != nil {
-		middleware.ErrorResponse(c, http.StatusBadRequest, err)
+		acceptError(c, err)
 		return
 	}
 

@@ -192,3 +192,56 @@ func TestChannelHeadersAreSealed(t *testing.T) {
 		t.Errorf("stored = %s, want it unchanged", after.Config)
 	}
 }
+
+// The UnifiedPush endpoint is a capability URL: sealed, withheld, and kept
+// when echoed back. A stored one that no longer opens is not the user's to
+// fix, and the reason, naming a safe, stays in the logs.
+func TestUnifiedPushEndpointIsSealed(t *testing.T) {
+	nc, db := channelTestController(t)
+	guard, err := netguard.New("outbound", "-outbound-allowed-target", []string{"192.0.2.10"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	nc.registry.Register(notifPkg.Adapt(notifPkg.NewUnifiedPushSender("https://happydomain.example", guard), guard))
+	user := &happydns.User{Id: happydns.Identifier{0x01}, Email: "u@example.com"}
+
+	w, c := channelRequest(t, http.MethodPost, `{"type":"unifiedpush","name":"phone","enabled":true,"config":{"endpoint":"https://192.0.2.10/push/c4p4b1l1ty"}}`, user, nil)
+	nc.CreateChannel(c)
+	if w.Code != http.StatusCreated {
+		t.Fatalf("CreateChannel = %d %s", w.Code, w.Body.String())
+	}
+	if strings.Contains(w.Body.String(), "c4p4b1l1ty") {
+		t.Errorf("response = %s, want the endpoint withheld", w.Body.String())
+	}
+	var created happydns.NotificationChannel
+	if err := json.Unmarshal(w.Body.Bytes(), &created); err != nil {
+		t.Fatal(err)
+	}
+	stored, _ := db.GetChannel(created.Id)
+	if strings.Contains(string(stored.Config), "c4p4b1l1ty") {
+		t.Fatalf("stored = %s, want the endpoint sealed", stored.Config)
+	}
+
+	// Echoed back: kept, and checked once opened.
+	w, c = channelRequest(t, http.MethodPut, `{"name":"renamed","config":{"endpoint":"`+happydns.RedactedSecret+`"}}`, user, stored)
+	nc.UpdateChannel(c)
+	if w.Code != http.StatusOK {
+		t.Fatalf("UpdateChannel = %d %s", w.Code, w.Body.String())
+	}
+	kept, _ := db.GetChannel(created.Id)
+	if kept.Name != "renamed" || string(kept.Config) != string(stored.Config) {
+		t.Errorf("stored = %s %s, want the endpoint kept", kept.Name, kept.Config)
+	}
+
+	// A stored endpoint that no longer opens.
+	broken := *kept
+	broken.Config = json.RawMessage(`{"endpoint":"hds:1:AQ:c2VhbGVk"}`)
+	if err := db.UpdateChannel(&broken); err != nil {
+		t.Fatal(err)
+	}
+	w, c = channelRequest(t, http.MethodPut, `{"name":"again","config":{"endpoint":"`+happydns.RedactedSecret+`"}}`, user, &broken)
+	nc.UpdateChannel(c)
+	if w.Code != http.StatusInternalServerError || strings.Contains(w.Body.String(), "safe") {
+		t.Errorf("UpdateChannel = %d %s, want a 500 naming no safe", w.Code, w.Body.String())
+	}
+}
