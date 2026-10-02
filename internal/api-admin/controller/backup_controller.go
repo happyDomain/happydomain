@@ -75,7 +75,10 @@ func (bc *BackupController) RestoreJSON(c *gin.Context) {
 	}
 
 	if err := bc.backup.Restore(&backup); err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errors": err})
+		log.Printf("%s restores a backup with errors: %s", c.ClientIP(), err.Error())
+		// An error value encodes in JSON as an empty object: answer its
+		// text, every error of the restore included.
+		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: err.Error()})
 		return
 	}
 
