@@ -25,14 +25,17 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
+	"strconv"
 	"strings"
 
 	"git.happydns.org/happyDomain/model"
 )
 
 // ErrUnsupportedSecret is returned when a happydns.Secret sits where Walk
-// cannot reach it for sure: in a map, a slice, an array, behind a pointer to
-// the Secret itself, or in an interface holding a struct by value.
+// cannot reach it for sure: in a slice, an array, a map other than one of
+// Secrets with string keys, behind a pointer to the Secret itself, or in an
+// interface holding a struct by value.
 var ErrUnsupportedSecret = errors.New("secret in an unsupported position")
 
 var secretType = reflect.TypeFor[happydns.Secret]()
@@ -43,8 +46,9 @@ type WalkFunc func(path string, s *happydns.Secret) error
 
 // Walk calls fn on every happydns.Secret held by obj, a non-nil pointer to a
 // struct, in field order. It follows nested and embedded structs, non-nil
-// pointers to structs and interfaces holding one; it skips what encoding/json
-// skips (unexported fields, `json:"-"`).
+// pointers to structs and interfaces holding one, and maps of Secrets with
+// string keys, in key order; it skips what encoding/json skips (unexported
+// fields, `json:"-"`).
 //
 // Secrets are found by their type, no tag needed. One it cannot reach for
 // sure is an error rather than skipped: a secret silently left out would be
@@ -103,6 +107,11 @@ func walkValue(fv reflect.Value, path string, fn WalkFunc) error {
 			return walkStruct(fv.Elem(), path, fn)
 		}
 
+	case reflect.Map:
+		if isSecretMap(fv.Type()) {
+			return walkMap(fv, path, fn)
+		}
+
 	case reflect.Interface:
 		if fv.IsNil() {
 			return nil
@@ -125,6 +134,42 @@ func walkValue(fv reflect.Value, path string, fn WalkFunc) error {
 		return fmt.Errorf("%s: %w", path, ErrUnsupportedSecret)
 	}
 	return nil
+}
+
+// walkMap calls fn on every Secret of the map fv, in key order, under the
+// path of the map followed by the quoted key, such as headers["Authorization"]:
+// a key holding a dot or a bracket cannot pass for another path.
+//
+// This path is bound to the sealed value: changing it makes every secret
+// held in a map unreadable.
+func walkMap(fv reflect.Value, path string, fn WalkFunc) error {
+	keys := fv.MapKeys()
+	slices.SortFunc(keys, func(a, b reflect.Value) int { return strings.Compare(a.String(), b.String()) })
+
+	for _, k := range keys {
+		// Map values cannot be addressed: fn gets a copy.
+		orig := fv.MapIndex(k)
+		val := reflect.New(secretType).Elem()
+		val.Set(orig)
+
+		kpath := path + "[" + strconv.Quote(k.String()) + "]"
+		if err := fn(kpath, val.Addr().Interface().(*happydns.Secret)); err != nil {
+			return fmt.Errorf("%s: %w", kpath, err)
+		}
+
+		// Only when changed: a walk that only reads leaves the map, maybe
+		// shared, untouched.
+		if !reflect.DeepEqual(val.Interface(), orig.Interface()) {
+			fv.SetMapIndex(k, val)
+		}
+	}
+
+	return nil
+}
+
+// isSecretMap reports whether t is a map of Secrets with string keys.
+func isSecretMap(t reflect.Type) bool {
+	return t.Kind() == reflect.Map && t.Key().Kind() == reflect.String && t.Elem() == secretType
 }
 
 // containsSecret reports whether a value of type t may hold a Secret. An

@@ -300,30 +300,22 @@ func CheckIncoming(obj any) error {
 //
 // The result holds secrets in clear: never store it.
 func MarshalIncoming(obj any) ([]byte, error) {
-	type saved struct {
-		s    *happydns.Secret
-		orig happydns.Secret
+	// On a copy: the secrets of a map cannot be put back as they were
+	// through the pointers a walk hands out.
+	cp, err := clone(obj)
+	if err != nil {
+		return nil, err
 	}
-	var changed []saved
 
-	defer func() {
-		for _, c := range changed {
-			*c.s = c.orig
+	err = Walk(cp, func(_ string, s *happydns.Secret) error {
+		if clear, ok := s.ClearForSealing(); ok {
+			s.SetOpened(string(clear), clear)
 		}
-	}()
-
-	err := Walk(obj, func(_ string, s *happydns.Secret) error {
-		clear, ok := s.ClearForSealing()
-		if !ok {
-			return nil
-		}
-		changed = append(changed, saved{s, *s})
-		s.SetOpened(string(clear), clear)
 		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return json.Marshal(obj)
+	return json.Marshal(cp)
 }

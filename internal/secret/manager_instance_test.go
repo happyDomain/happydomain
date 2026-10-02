@@ -303,6 +303,63 @@ func TestSealedTokenGolden(t *testing.T) {
 	}
 }
 
+// The secrets of a map are sealed like those of fields, each bound to its
+// key, and OpenCopy leaves the map of the original sealed.
+func TestInstanceSealsMapValues(t *testing.T) {
+	m, _, _ := instanceManagers(t)
+	sc := objectContext()
+	obj := &mapHolder{Headers: map[string]happydns.Secret{
+		"Authorization": happydns.NewSecret("Bearer t"),
+		"X-Other":       happydns.NewSecret("o"),
+	}}
+	if err := m.SealObject(context.Background(), sc, obj); err != nil {
+		t.Fatalf("SealObject: %v", err)
+	}
+	for k, v := range obj.Headers {
+		if !IsSealed(v.Token()) {
+			t.Errorf("headers[%q] = %q, want it sealed", k, v.Token())
+		}
+	}
+
+	// Stored and read back.
+	stored := &mapHolder{Headers: map[string]happydns.Secret{}}
+	for k, v := range obj.Headers {
+		stored.Headers[k] = sealedFromStorage(t, v.Token())
+	}
+	cp, err := m.OpenCopy(context.Background(), sc, stored)
+	if err != nil {
+		t.Fatalf("OpenCopy: %v", err)
+	}
+	if v := cp.(*mapHolder).Headers["Authorization"].Reveal(); v != "Bearer t" {
+		t.Errorf("opened Authorization = %q", v)
+	}
+	if !stored.Headers["Authorization"].IsSealed() {
+		t.Error("OpenCopy opened the map of the original")
+	}
+
+	// A value moved to another key does not open there.
+	moved := &mapHolder{Headers: map[string]happydns.Secret{"X-Other": stored.Headers["Authorization"]}}
+	if err := m.OpenObject(context.Background(), sc, moved); err == nil {
+		t.Error("a sealed header moved to another key opened")
+	}
+}
+
+// MarshalIncoming leaves the object it encodes as it was, maps included.
+func TestMarshalIncomingLeavesMapsAlone(t *testing.T) {
+	obj := &mapHolder{Headers: map[string]happydns.Secret{"Authorization": happydns.NewSecret("Bearer t")}}
+
+	b, err := MarshalIncoming(obj)
+	if err != nil {
+		t.Fatalf("MarshalIncoming: %v", err)
+	}
+	if string(b) != `{"headers":{"Authorization":"Bearer t"},"token":""}` {
+		t.Errorf("MarshalIncoming = %s", b)
+	}
+	if !obj.Headers["Authorization"].IsClear() {
+		t.Error("MarshalIncoming changed the map of the object")
+	}
+}
+
 // A safe record that does not decode tells no owner: deleting the safes of a
 // user goes past it, and leaves the safes of the others.
 func TestDeleteOwnerSafesSkipsDamagedRecords(t *testing.T) {

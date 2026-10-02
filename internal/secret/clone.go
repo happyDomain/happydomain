@@ -28,8 +28,8 @@ import (
 )
 
 // clone returns a copy of obj, a non-nil pointer to a struct, sharing none of
-// the structs holding a Secret with it. Secrets themselves are shared: they
-// are never modified in place.
+// the structs nor the maps holding a Secret with it. Secrets themselves are
+// shared: they are never modified in place.
 func clone(obj any) (any, error) {
 	v := reflect.ValueOf(obj)
 	if !v.IsValid() || v.Kind() != reflect.Pointer || v.IsNil() || v.Elem().Kind() != reflect.Struct {
@@ -56,7 +56,7 @@ func cloneStruct(ptr reflect.Value) (reflect.Value, error) {
 }
 
 // deepen replaces, in the struct v, every pointer Walk could follow to a
-// Secret by a pointer to a copy.
+// Secret by a pointer to a copy, and every map of Secrets by a copy.
 func deepen(v reflect.Value) error {
 	t := v.Type()
 
@@ -88,6 +88,23 @@ func deepenValue(fv reflect.Value) error {
 			return nil
 		}
 		return replaceWithClone(fv, fv)
+
+	case reflect.Map:
+		if fv.IsNil() || !isSecretMap(fv.Type()) {
+			return nil
+		}
+		if !fv.CanSet() {
+			return errors.New("secret clone: cannot copy a map held in an unexported field")
+		}
+		// Its values are replaced, never modified: a copy of the map is
+		// enough.
+		cp := reflect.MakeMapWithSize(fv.Type(), fv.Len())
+		iter := fv.MapRange()
+		for iter.Next() {
+			cp.SetMapIndex(iter.Key(), iter.Value())
+		}
+		fv.Set(cp)
+		return nil
 
 	case reflect.Interface:
 		if fv.IsNil() {
