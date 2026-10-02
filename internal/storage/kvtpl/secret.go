@@ -46,3 +46,7 @@ func (s *KVStorage) GetSecretCheck() ([]byte, error) {
 func (s *KVStorage) PutSecretCheck(record []byte) error {
 	return s.db.Put(secretCheckKey, record)
 }
+
+func (s *KVStorage) DeleteSecretCheck() error {
+	return s.db.Delete(secretCheckKey)
+}

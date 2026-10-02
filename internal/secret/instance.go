@@ -178,6 +178,9 @@ type CheckStorage interface {
 
 	// PutSecretCheck stores the check record.
 	PutSecretCheck(record []byte) error
+
+	// DeleteSecretCheck removes the check record, once no safe is left.
+	DeleteSecretCheck() error
 }
 
 // VerifyCheck opens the check record stored in store, or creates it under the
