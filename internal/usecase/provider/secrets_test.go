@@ -138,7 +138,7 @@ func Test_Secret_UpdateWithNewValue(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := svc.UpdateProviderFromMessage(ctx, p.Id, user, secretMessage(t, "SecretTestProvider", `{"host":"h2","apikey":"new"}`)); err != nil {
+	if _, err := svc.UpdateProviderFromMessage(ctx, p.Id, user, secretMessage(t, "SecretTestProvider", `{"host":"h2","apikey":"new"}`)); err != nil {
 		t.Fatalf("UpdateProviderFromMessage: %v", err)
 	}
 
@@ -157,7 +157,7 @@ func Test_Secret_UpdateEchoingRedacted(t *testing.T) {
 	}
 
 	body := `{"host":"h2","apikey":"` + happydns.RedactedSecret + `"}`
-	if err := svc.UpdateProviderFromMessage(ctx, p.Id, user, secretMessage(t, "SecretTestProvider", body)); err != nil {
+	if _, err := svc.UpdateProviderFromMessage(ctx, p.Id, user, secretMessage(t, "SecretTestProvider", body)); err != nil {
 		t.Fatalf("UpdateProviderFromMessage: %v", err)
 	}
 
@@ -176,7 +176,7 @@ func Test_Secret_UpdateChangingType(t *testing.T) {
 	}
 
 	body := `{"apikey":"` + happydns.RedactedSecret + `"}`
-	if err := svc.UpdateProviderFromMessage(ctx, p.Id, user, secretMessage(t, "OtherSecretTestProvider", body)); err != nil {
+	if _, err := svc.UpdateProviderFromMessage(ctx, p.Id, user, secretMessage(t, "OtherSecretTestProvider", body)); err != nil {
 		t.Fatalf("UpdateProviderFromMessage: %v", err)
 	}
 
@@ -203,7 +203,7 @@ func Test_Secret_SealedValueFromClientRefused(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = svc.UpdateProviderFromMessage(ctx, p.Id, user, secretMessage(t, "SecretTestProvider", sealed))
+	_, err = svc.UpdateProviderFromMessage(ctx, p.Id, user, secretMessage(t, "SecretTestProvider", sealed))
 	if !errors.As(err, &verr) {
 		t.Errorf("UpdateProviderFromMessage(sealed) = %v, want a ValidationError", err)
 	}
@@ -392,7 +392,7 @@ func Test_Secret_LegacyPlaintextSealedOnNextWrite(t *testing.T) {
 	legacy := storeRaw(t, db, user.Id, `{"host":"h","apikey":"legacy"}`)
 
 	body := `{"host":"renamed","apikey":"` + happydns.RedactedSecret + `"}`
-	if err := svc.UpdateProviderFromMessage(ctx, legacy.Id, user, secretMessage(t, "SecretTestProvider", body)); err != nil {
+	if _, err := svc.UpdateProviderFromMessage(ctx, legacy.Id, user, secretMessage(t, "SecretTestProvider", body)); err != nil {
 		t.Fatalf("UpdateProviderFromMessage: %v", err)
 	}
 
@@ -550,7 +550,7 @@ func Test_Secret_ResealDoesNotLoseConcurrentUpdates(t *testing.T) {
 		defer wg.Done()
 		for i := range rounds {
 			body := fmt.Sprintf(`{"host":"h","apikey":"user-%d"}`, i)
-			if err := userSvc.UpdateProviderFromMessage(ctx, id, user, secretMessage(t, "SecretTestProvider", body)); err != nil {
+			if _, err := userSvc.UpdateProviderFromMessage(ctx, id, user, secretMessage(t, "SecretTestProvider", body)); err != nil {
 				t.Errorf("UpdateProviderFromMessage: %v", err)
 				return
 			}
@@ -641,5 +641,41 @@ func Test_Secret_OneUndecodableRecordDoesNotStopTheOthers(t *testing.T) {
 		if body := storedBody(t, db, id); strings.Contains(body, "legacy") {
 			t.Errorf("provider still in clear: %s", body)
 		}
+	}
+}
+
+// An update gives back the provider as written: its callers answer with it
+// rather than read it again. Encoded, it holds what is stored, never the
+// credential in clear.
+func Test_Secret_UpdateReturnsTheStoredProvider(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	svc := provider.NewService(db, &mockValidator{}, nil, instanceSecrets(t, db))
+	user := createTestUser(t, db, "returned@example.com")
+
+	p, err := svc.CreateProvider(ctx, user, secretMessage(t, "SecretTestProvider", `{"host":"h","apikey":"old"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	msg := secretMessage(t, "SecretTestProvider", `{"host":"h2","apikey":"new-key"}`)
+	msg.Comment = "renamed"
+	updated, err := svc.UpdateProviderFromMessage(ctx, p.Id, user, msg)
+	if err != nil {
+		t.Fatalf("UpdateProviderFromMessage: %v", err)
+	}
+
+	if !updated.Id.Equals(p.Id) || !updated.Owner.Equals(user.Id) || updated.Comment != "renamed" {
+		t.Errorf("returned meta = %+v, want the updated provider", updated.ProviderMeta)
+	}
+
+	body, err := json.Marshal(updated.Provider)
+	if err != nil {
+		t.Fatalf("encoding the returned provider: %v", err)
+	}
+	if strings.Contains(string(body), "new-key") {
+		t.Errorf("returned provider encodes the key in clear: %s", body)
+	}
+	if stored := storedBody(t, db, p.Id); string(body) != stored {
+		t.Errorf("returned body = %s, want what is stored: %s", body, stored)
 	}
 }

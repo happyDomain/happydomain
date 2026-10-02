@@ -554,7 +554,7 @@ func Test_UpdateProvider_RedactedRoundTripKeepsSecret(t *testing.T) {
 	msg := readBackAsClient(t, stored)
 	msg.Comment = "Renamed"
 
-	if err := providerService.UpdateProviderFromMessage(ctx, created.Id, user, msg); err != nil {
+	if _, err := providerService.UpdateProviderFromMessage(ctx, created.Id, user, msg); err != nil {
 		t.Fatalf("unexpected error updating provider: %v", err)
 	}
 
@@ -602,7 +602,7 @@ func Test_UpdateProvider_NewSecretWins(t *testing.T) {
 		t.Fatalf("failed to encode submitted body: %v", err)
 	}
 
-	if err := providerService.UpdateProviderFromMessage(ctx, created.Id, user, msg); err != nil {
+	if _, err := providerService.UpdateProviderFromMessage(ctx, created.Id, user, msg); err != nil {
 		t.Fatalf("unexpected error updating provider: %v", err)
 	}
 

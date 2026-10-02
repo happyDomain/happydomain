@@ -171,58 +171,66 @@ func (s *Service) ListUserProviders(_ context.Context, user *happydns.User) ([]*
 
 // UpdateProvider updates a provider using the provided update function.
 func (s *Service) UpdateProvider(ctx context.Context, providerID happydns.Identifier, user *happydns.User, updateFn func(*happydns.Provider)) error {
+	_, err := s.update(ctx, providerID, user, updateFn)
+	return err
+}
+
+// update updates a provider using updateFn, and returns it as written.
+func (s *Service) update(ctx context.Context, providerID happydns.Identifier, user *happydns.User, updateFn func(*happydns.Provider)) (*happydns.Provider, error) {
 	defer lockProvider(providerID)()
 
 	provider, err := s.GetUserProvider(ctx, user, providerID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	updateFn(provider)
 
 	if !provider.Id.Equals(providerID) {
-		return happydns.ValidationError{Msg: "you cannot change the provider identifier"}
+		return nil, happydns.ValidationError{Msg: "you cannot change the provider identifier"}
 	}
 	if !provider.Owner.Equals(user.Id) {
 		// Secrets are bound to their owner: those carried forward would no
 		// longer open.
-		return happydns.ValidationError{Msg: "you cannot change the provider owner"}
+		return nil, happydns.ValidationError{Msg: "you cannot change the provider owner"}
 	}
 
 	err = s.validator.Validate(ctx, provider)
 	if err != nil {
-		return happydns.ValidationError{Msg: fmt.Sprintf("unable to validate provider attributes: %s", err.Error())}
+		return nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to validate provider attributes: %s", err.Error())}
 	}
 
 	if err := s.seal(ctx, provider); err != nil {
-		return err
+		return nil, err
 	}
 
 	err = s.store.UpdateProvider(provider)
 	if err != nil {
-		return happydns.InternalError{
+		return nil, happydns.InternalError{
 			Err:         fmt.Errorf("unable to UpdateProvider in UpdateProvider: %w", err),
 			UserMessage: "Sorry, we are currently unable to update your provider. Please retry later.",
 		}
 	}
 
-	return nil
+	return provider, nil
 }
 
-// UpdateProviderFromMessage updates a provider from a ProviderMessage.
-func (s *Service) UpdateProviderFromMessage(ctx context.Context, providerID happydns.Identifier, user *happydns.User, p *happydns.ProviderMessage) error {
+// UpdateProviderFromMessage updates a provider from a ProviderMessage, and
+// returns it as written. Its secrets are those stored, opened: withhold them
+// before answering with it.
+func (s *Service) UpdateProviderFromMessage(ctx context.Context, providerID happydns.Identifier, user *happydns.User, p *happydns.ProviderMessage) (*happydns.Provider, error) {
 	newprovider, err := ParseProvider(p)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Before merging: the stored values carried forward are sealed, and
 	// legitimately so.
 	if err := checkIncoming(newprovider); err != nil {
-		return err
+		return nil, err
 	}
 
-	return s.UpdateProvider(ctx, providerID, user, func(provider *happydns.Provider) {
+	return s.update(ctx, providerID, user, func(provider *happydns.Provider) {
 		// provider is what is stored; a secret field still holding
 		// happydns.RedactedSecret means the client is echoing back what the
 		// user API withheld from it, so carry the stored value forward instead
@@ -304,9 +312,9 @@ func (s *RestrictedService) UpdateProvider(ctx context.Context, providerID happy
 }
 
 // UpdateProviderFromMessage refuses the operation when DisableProviders is set, otherwise delegates to Service.
-func (s *RestrictedService) UpdateProviderFromMessage(ctx context.Context, providerID happydns.Identifier, user *happydns.User, p *happydns.ProviderMessage) error {
+func (s *RestrictedService) UpdateProviderFromMessage(ctx context.Context, providerID happydns.Identifier, user *happydns.User, p *happydns.ProviderMessage) (*happydns.Provider, error) {
 	if s.config.DisableProviders {
-		return happydns.ForbiddenError{Msg: "cannot update provider as DisableProviders parameter is set."}
+		return nil, happydns.ForbiddenError{Msg: "cannot update provider as DisableProviders parameter is set."}
 	}
 
 	return s.inner.UpdateProviderFromMessage(ctx, providerID, user, p)

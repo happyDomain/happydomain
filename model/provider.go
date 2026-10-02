@@ -153,7 +153,7 @@ type ProviderUsecase interface {
 	RetrieveZone(context.Context, *Provider, string) ([]Record, error)
 	TestDomainExistence(context.Context, *Provider, string) error
 	UpdateProvider(context.Context, Identifier, *User, func(*Provider)) error
-	UpdateProviderFromMessage(context.Context, Identifier, *User, *ProviderMessage) error
+	UpdateProviderFromMessage(context.Context, Identifier, *User, *ProviderMessage) (*Provider, error)
 }
 
 // AdminProviderUsecase exposes administrative provider operations that are

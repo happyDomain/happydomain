@@ -27,6 +27,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -34,30 +35,33 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-// updatingProviders stores the update it is given, and gives it back.
+// updatedBody holds a credential, as provider bodies do.
+type updatedBody struct {
+	ApiKey happydns.Secret `json:"apikey" happydomain:"secret"`
+}
+
+func (*updatedBody) InstantiateProvider() (happydns.ProviderActuator, error) { return nil, nil }
+
+// updatingProviders gives back, for an update, the provider it would store.
 type updatingProviders struct {
 	happydns.ProviderUsecase
-	stored *happydns.Provider
 }
 
-func (u *updatingProviders) UpdateProviderFromMessage(_ context.Context, id happydns.Identifier, user *happydns.User, msg *happydns.ProviderMessage) error {
-	u.stored = &happydns.Provider{ProviderMeta: msg.ProviderMeta}
-	u.stored.Id = id
-	u.stored.Owner = user.Id
-	return nil
+func (updatingProviders) UpdateProviderFromMessage(_ context.Context, id happydns.Identifier, user *happydns.User, msg *happydns.ProviderMessage) (*happydns.Provider, error) {
+	p := &happydns.Provider{ProviderMeta: msg.ProviderMeta, Provider: &updatedBody{ApiKey: happydns.NewSecret("new-key")}}
+	p.Id = id
+	p.Owner = user.Id
+	return p, nil
 }
 
-func (u *updatingProviders) GetUserProvider(_ context.Context, _ *happydns.User, _ happydns.Identifier) (*happydns.Provider, error) {
-	return u.stored, nil
-}
-
-// The answer to an update is the provider as now stored: a client keeping it
-// would otherwise bring the previous values back on its next save.
+// The answer to an update is the provider as written, its credentials
+// withheld: a client keeping it would otherwise bring the previous values back
+// on its next save.
 func TestUpdateProviderAnswersTheUpdatedProvider(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	user := &happydns.User{Id: happydns.Identifier{0x01}}
 	old := &happydns.Provider{ProviderMeta: happydns.ProviderMeta{Id: happydns.Identifier{0x02}, Owner: user.Id, Type: "DDNSServer", Comment: "before"}}
-	pc := NewProviderController(&updatingProviders{})
+	pc := NewProviderController(updatingProviders{})
 
 	update := old.ProviderMeta
 	update.Comment = "after"
@@ -78,11 +82,19 @@ func TestUpdateProviderAnswersTheUpdatedProvider(t *testing.T) {
 		t.Fatalf("UpdateProvider = %d %s", w.Code, w.Body.String())
 	}
 
-	var got happydns.ProviderMeta
+	var got struct {
+		happydns.ProviderMeta
+		Provider struct {
+			ApiKey string `json:"apikey"`
+		}
+	}
 	if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil {
 		t.Fatal(err)
 	}
 	if got.Comment != "after" {
 		t.Errorf("answered comment = %q, want the updated one", got.Comment)
+	}
+	if got.Provider.ApiKey != happydns.RedactedSecret || strings.Contains(w.Body.String(), "new-key") {
+		t.Errorf("answer = %s, want the credential withheld", w.Body.String())
 	}
 }

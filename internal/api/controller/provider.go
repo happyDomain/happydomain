@@ -47,8 +47,9 @@ func NewProviderController(providerService happydns.ProviderUsecase) *ProviderCo
 // cannot be encoded, and an operator has no use for a sealed one.
 //
 // Redacting in place is safe here: GetUserProvider and the provider middleware
-// both ParseProvider a fresh body out of the store on every request, so p is
-// never shared with anything that still needs the stored values. That is also
+// both ParseProvider a fresh body out of the store on every request, and an
+// update returns the body it just wrote, so p is never shared with anything
+// that still needs the stored values. That is also
 // why the middleware must not redact: ListZones, RetrieveZone and every apply
 // path read the provider from the same context key and do need them.
 func (pc *ProviderController) writeProvider(c *gin.Context, status int, p *happydns.Provider) {
@@ -173,19 +174,13 @@ func (pc *ProviderController) UpdateProvider(c *gin.Context) {
 		return
 	}
 
-	err = pc.providerService.UpdateProviderFromMessage(c.Request.Context(), old.Id, user, provider.ToMessage())
+	updated, err := pc.providerService.UpdateProviderFromMessage(c.Request.Context(), old.Id, user, provider.ToMessage())
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
 	}
 
-	// Answer with what is now stored: old predates the update.
-	updated, err := pc.providerService.GetUserProvider(c.Request.Context(), user, old.Id)
-	if err != nil {
-		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
-		return
-	}
-
+	// What is now stored: old predates the update.
 	pc.writeProvider(c, http.StatusOK, updated)
 }
 

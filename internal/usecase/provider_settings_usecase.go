@@ -88,12 +88,7 @@ func (psu *providerSettingsUsecase) NextProviderSettingsState(ctx context.Contex
 			return provider, nil, nil
 		} else {
 			// Update an existing Provider via the service layer
-			err := psu.providerService.UpdateProviderFromMessage(ctx, *state.Id, user, msg)
-			if err != nil {
-				return nil, nil, err
-			}
-
-			provider, err := psu.providerService.GetUserProvider(ctx, user, *state.Id)
+			provider, err := psu.providerService.UpdateProviderFromMessage(ctx, *state.Id, user, msg)
 			if err != nil {
 				return nil, nil, err
 			}
