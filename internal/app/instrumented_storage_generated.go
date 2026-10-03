@@ -267,6 +267,11 @@ func (s *instrumentedStorage) DeleteProvider(prvdid happydns.Identifier) (err er
 	return s.inner.DeleteProvider(prvdid)
 }
 
+func (s *instrumentedStorage) DeleteRecord(recId happydns.Identifier) (err error) {
+	defer observe("delete", "notification_record")(&err)
+	return s.inner.DeleteRecord(recId)
+}
+
 func (s *instrumentedStorage) DeleteRecordsOlderThan(before time.Time) (err error) {
 	defer observe("delete", "notification_record")(&err)
 	return s.inner.DeleteRecordsOlderThan(before)
@@ -482,6 +487,11 @@ func (s *instrumentedStorage) ListAllProviders() (ret happydns.Iterator[happydns
 	return s.inner.ListAllProviders()
 }
 
+func (s *instrumentedStorage) ListAllRecords() (ret happydns.Iterator[happydns.NotificationRecord], err error) {
+	defer observe("list", "notification_record")(&err)
+	return s.inner.ListAllRecords()
+}
+
 func (s *instrumentedStorage) ListAllSessions() (ret happydns.Iterator[happydns.Session], err error) {
 	defer observe("list", "session")(&err)
 	return s.inner.ListAllSessions()
@@ -490,6 +500,11 @@ func (s *instrumentedStorage) ListAllSessions() (ret happydns.Iterator[happydns.
 func (s *instrumentedStorage) ListAllSnapshots() (ret happydns.Iterator[happydns.ObservationSnapshot], err error) {
 	defer observe("list", "observation_snapshot")(&err)
 	return s.inner.ListAllSnapshots()
+}
+
+func (s *instrumentedStorage) ListAllStates() (ret happydns.Iterator[happydns.NotificationState], err error) {
+	defer observe("list", "notification_state")(&err)
+	return s.inner.ListAllStates()
 }
 
 func (s *instrumentedStorage) ListAllUsers() (ret happydns.Iterator[happydns.User], err error) {
@@ -667,6 +682,11 @@ func (s *instrumentedStorage) RestoreExecution(exec *happydns.Execution) (err er
 func (s *instrumentedStorage) RestorePreference(pref *happydns.NotificationPreference) (err error) {
 	defer observe("restore", "notification_preference")(&err)
 	return s.inner.RestorePreference(pref)
+}
+
+func (s *instrumentedStorage) RestoreRecord(rec *happydns.NotificationRecord) (err error) {
+	defer observe("restore", "notification_record")(&err)
+	return s.inner.RestoreRecord(rec)
 }
 
 func (s *instrumentedStorage) RestoreSnapshot(snap *happydns.ObservationSnapshot) (err error) {

@@ -62,6 +62,11 @@ func (s *KVStorage) DeleteState(checkerID string, target happydns.CheckTarget, u
 	return s.db.Delete(notifStateKey(checkerID, target, userId))
 }
 
+func (s *KVStorage) ListAllStates() (happydns.Iterator[happydns.NotificationState], error) {
+	iter := s.db.Search(notificationStatePrimaryPrefix)
+	return NewKVIterator[happydns.NotificationState](s.db, iter), nil
+}
+
 func (s *KVStorage) ListStatesByUser(userId happydns.Identifier) ([]*happydns.NotificationState, error) {
 	prefix := fmt.Sprintf("%s%s|", notificationStatePrimaryPrefix, userId.String())
 	iter := s.db.Search(prefix)

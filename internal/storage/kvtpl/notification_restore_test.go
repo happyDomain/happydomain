@@ -129,3 +129,99 @@ func TestRestorePreference(t *testing.T) {
 		t.Error("RestorePreference without an identifier succeeded")
 	}
 }
+
+func TestListAllStates(t *testing.T) {
+	s := newStorage(t)
+	for _, owner := range []happydns.Identifier{{0x01}, {0x02}} {
+		if err := s.PutState(&happydns.NotificationState{CheckerID: "ping", UserId: owner, LastStatus: 2}); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	iter, err := s.ListAllStates()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer iter.Close()
+	n := 0
+	for iter.Next() {
+		if iter.Item().CheckerID != "ping" {
+			t.Errorf("listed state = %+v, want the stored one", iter.Item())
+		}
+		n++
+	}
+	if n != 2 {
+		t.Errorf("ListAllStates listed %d states, want 2", n)
+	}
+}
+
+func TestListAllRecords(t *testing.T) {
+	s := newStorage(t)
+	for _, owner := range []happydns.Identifier{{0x01}, {0x02}} {
+		if err := s.CreateRecord(&happydns.NotificationRecord{UserId: owner, CheckerID: "ping"}); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	iter, err := s.ListAllRecords()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer iter.Close()
+	n := 0
+	for iter.Next() {
+		n++
+	}
+	if n != 2 {
+		t.Errorf("ListAllRecords listed %d records, want 2", n)
+	}
+}
+
+func TestDeleteRecord(t *testing.T) {
+	s := newStorage(t)
+	owner := happydns.Identifier{0x01}
+	keep := &happydns.NotificationRecord{UserId: owner, CheckerID: "keep"}
+	drop := &happydns.NotificationRecord{UserId: owner, CheckerID: "drop"}
+	for _, rec := range []*happydns.NotificationRecord{keep, drop} {
+		if err := s.CreateRecord(rec); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := s.DeleteRecord(drop.Id); err != nil {
+		t.Fatalf("DeleteRecord: %v", err)
+	}
+	if got, err := s.ListRecordsByUser(owner, 0); err != nil || len(got) != 1 || got[0].CheckerID != "keep" {
+		t.Errorf("ListRecordsByUser = %v, %v; want only the kept record", got, err)
+	}
+	if err := s.DeleteRecord(drop.Id); err != nil {
+		t.Errorf("DeleteRecord of a missing record: %v", err)
+	}
+}
+
+func TestRestoreRecord(t *testing.T) {
+	s := newStorage(t)
+	id, _ := happydns.NewRandomIdentifier()
+	first, second := happydns.Identifier{0x01}, happydns.Identifier{0x02}
+
+	if err := s.RestoreRecord(&happydns.NotificationRecord{Id: id, UserId: first, CheckerID: "a"}); err != nil {
+		t.Fatalf("RestoreRecord(missing): %v", err)
+	}
+	if got, err := s.ListRecordsByUser(first, 0); err != nil || len(got) != 1 || !got[0].Id.Equals(id) {
+		t.Fatalf("ListRecordsByUser = %v, %v; want the restored record", got, err)
+	}
+
+	if err := s.RestoreRecord(&happydns.NotificationRecord{Id: id, UserId: second, CheckerID: "b"}); err != nil {
+		t.Fatalf("RestoreRecord(existing): %v", err)
+	}
+	if got, _ := s.ListRecordsByUser(first, 0); len(got) != 0 {
+		t.Errorf("the previous user still lists %d records", len(got))
+	}
+	if got, _ := s.ListRecordsByUser(second, 0); len(got) != 1 || got[0].CheckerID != "b" {
+		t.Errorf("ListRecordsByUser(new user) = %v, want the restored record", got)
+	}
+
+	if err := s.RestoreRecord(&happydns.NotificationRecord{UserId: first}); err == nil {
+		t.Error("RestoreRecord without an identifier succeeded")
+	}
+}

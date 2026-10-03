@@ -85,6 +85,32 @@ func (s *KVStorage) CreateRecord(rec *happydns.NotificationRecord) error {
 	return batch.Commit()
 }
 
+func (s *KVStorage) ListAllRecords() (happydns.Iterator[happydns.NotificationRecord], error) {
+	iter := s.db.Search(notificationRecordPrimaryPrefix)
+	return NewKVIterator[happydns.NotificationRecord](s.db, iter), nil
+}
+
+func (s *KVStorage) RestoreRecord(rec *happydns.NotificationRecord) error {
+	if rec.Id.IsEmpty() {
+		return errors.New("a notification record to restore needs its identifier")
+	}
+
+	batch := s.db.NewBatch()
+	// Stored under another user, its index entry goes with it.
+	if old, err := s.getRecord(rec.Id); err == nil && !old.UserId.Equals(rec.UserId) {
+		batch.Delete(notifrecUserKey(old.UserId, rec.Id))
+	} else if err != nil && !errors.Is(err, happydns.ErrNotFound) {
+		return err
+	}
+	if err := batch.Put(notifrecPrimaryKey(rec.Id), rec); err != nil {
+		return err
+	}
+	if err := batch.Put(notifrecUserKey(rec.UserId, rec.Id), ""); err != nil {
+		return err
+	}
+	return batch.Commit()
+}
+
 func (s *KVStorage) ListRecordsByUser(userId happydns.Identifier, limit int) ([]*happydns.NotificationRecord, error) {
 	prefix := notificationRecordUserIndexPrefix + userId.String() + "|"
 	iter := s.db.Search(prefix)
@@ -118,6 +144,20 @@ func (s *KVStorage) ListRecordsByUser(userId happydns.Identifier, limit int) ([]
 		records = records[:limit]
 	}
 	return records, nil
+}
+
+func (s *KVStorage) DeleteRecord(recId happydns.Identifier) error {
+	rec, err := s.getRecord(recId)
+	if errors.Is(err, happydns.ErrNotFound) {
+		return nil
+	} else if err != nil {
+		return err
+	}
+
+	batch := s.db.NewBatch()
+	batch.Delete(notifrecUserKey(rec.UserId, rec.Id))
+	batch.Delete(notifrecPrimaryKey(rec.Id))
+	return batch.Commit()
 }
 
 func (s *KVStorage) DeleteRecordsOlderThan(before time.Time) error {

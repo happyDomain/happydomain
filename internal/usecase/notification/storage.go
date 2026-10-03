@@ -60,12 +60,24 @@ type NotificationStateStorage interface {
 	PutState(state *happydns.NotificationState) error
 	DeleteState(checkerID string, target happydns.CheckTarget, userId happydns.Identifier) error
 	ListStatesByUser(userId happydns.Identifier) ([]*happydns.NotificationState, error)
+	// ListAllStates lists the states of every user, for administrative
+	// passes such as the backup.
+	ListAllStates() (happydns.Iterator[happydns.NotificationState], error)
 }
 
 type NotificationRecordStorage interface {
 	CreateRecord(rec *happydns.NotificationRecord) error
 	ListRecordsByUser(userId happydns.Identifier, limit int) ([]*happydns.NotificationRecord, error)
+	// ListAllRecords lists the records of every user, for administrative
+	// passes such as the backup.
+	ListAllRecords() (happydns.Iterator[happydns.NotificationRecord], error)
+	// RestoreRecord stores rec under its identifier, replacing any record
+	// stored under it, as a backup restore does.
+	RestoreRecord(rec *happydns.NotificationRecord) error
 	DeleteRecordsOlderThan(before time.Time) error
+	// DeleteRecord removes one record with its user index entry, a record
+	// already gone being no error.
+	DeleteRecord(recId happydns.Identifier) error
 }
 
 type UserGetter interface {
