@@ -177,3 +177,93 @@ func TestBackupUserWithoutRedactorCarriesNoChannel(t *testing.T) {
 		t.Errorf("the user export carries %d channels", len(ret.NotificationChannels))
 	}
 }
+
+// The notification states (acknowledgements included) and records travel in
+// the backup, and come back under the same user.
+func TestBackupRestoreNotificationStatesAndRecords(t *testing.T) {
+	src, user := seed(t)
+
+	target := happydns.CheckTarget{UserId: user.Id.String(), DomainId: "d1"}
+	state := &happydns.NotificationState{CheckerID: "ping", Target: target, UserId: user.Id, LastStatus: 3, Acknowledged: true, AcknowledgedBy: "me", Annotation: "known"}
+	if err := src.PutState(state); err != nil {
+		t.Fatal(err)
+	}
+	rec := &happydns.NotificationRecord{UserId: user.Id, ChannelType: "webhook", CheckerID: "ping", Target: target, OldStatus: 1, NewStatus: 3, Success: true}
+	if err := src.CreateRecord(rec); err != nil {
+		t.Fatal(err)
+	}
+
+	dump := backup.NewUsecase(src).Backup()
+	if len(dump.Errors) > 0 {
+		t.Fatalf("backup errors: %v", dump.Errors)
+	}
+	if len(dump.NotificationStates) != 1 || len(dump.NotificationRecords) != 1 {
+		t.Fatalf("backup holds %d states and %d records, want 1 and 1", len(dump.NotificationStates), len(dump.NotificationRecords))
+	}
+
+	raw, err := json.Marshal(dump)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var restored happydns.Backup
+	if err := json.Unmarshal(raw, &restored); err != nil {
+		t.Fatal(err)
+	}
+
+	dst, err := inmemory.Instantiate()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := backup.NewUsecase(dst).Restore(&restored); err != nil {
+		t.Fatalf("Restore: %v", err)
+	}
+
+	got, err := dst.GetState("ping", target, user.Id)
+	if err != nil {
+		t.Fatalf("GetState: %v", err)
+	}
+	if !got.Acknowledged || got.AcknowledgedBy != "me" || got.Annotation != "known" || got.LastStatus != 3 {
+		t.Errorf("restored state = %+v, want %+v", got, state)
+	}
+
+	recs, err := dst.ListRecordsByUser(user.Id, 0)
+	if err != nil || len(recs) != 1 {
+		t.Fatalf("ListRecordsByUser = %v, %v; want the record", recs, err)
+	}
+	if !recs[0].Id.Equals(rec.Id) || recs[0].NewStatus != 3 || !recs[0].Success {
+		t.Errorf("restored record = %+v, want %+v", recs[0], rec)
+	}
+
+	if err := backup.NewUsecase(dst).Restore(&restored); err != nil {
+		t.Fatalf("second Restore: %v", err)
+	}
+	if recs, _ := dst.ListRecordsByUser(user.Id, 0); len(recs) != 1 {
+		t.Errorf("%d records after restoring twice, want 1", len(recs))
+	}
+}
+
+// BackupUser carries only the states and records of that user.
+func TestBackupUserCarriesItsStatesAndRecords(t *testing.T) {
+	src, user := seed(t)
+	other := happydns.Identifier{0x77}
+
+	for _, owner := range []happydns.Identifier{user.Id, other} {
+		if err := src.PutState(&happydns.NotificationState{CheckerID: "ping", UserId: owner}); err != nil {
+			t.Fatal(err)
+		}
+		if err := src.CreateRecord(&happydns.NotificationRecord{UserId: owner, CheckerID: "ping"}); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	ret := backup.NewUsecase(src).BackupUser(user)
+	if len(ret.Errors) > 0 {
+		t.Fatalf("backup errors: %v", ret.Errors)
+	}
+	if len(ret.NotificationStates) != 1 || !ret.NotificationStates[0].UserId.Equals(user.Id) {
+		t.Errorf("NotificationStates = %v, want only the user's", ret.NotificationStates)
+	}
+	if len(ret.NotificationRecords) != 1 || !ret.NotificationRecords[0].UserId.Equals(user.Id) {
+		t.Errorf("NotificationRecords = %v, want only the user's", ret.NotificationRecords)
+	}
+}

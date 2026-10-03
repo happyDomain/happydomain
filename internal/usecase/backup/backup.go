@@ -162,6 +162,32 @@ func (u *Usecase) Backup() happydns.Backup {
 		}
 	}
 
+	// Notification states, acknowledgements included.
+	if stIter, err := u.store.ListAllStates(); err != nil {
+		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve NotificationStates: %s", err.Error()))
+	} else {
+		defer stIter.Close()
+		for stIter.Next() {
+			ret.NotificationStates = append(ret.NotificationStates, stIter.Item())
+		}
+		if err := stIter.Err(); err != nil {
+			ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve every NotificationState: %s", err.Error()))
+		}
+	}
+
+	// Notification records, the history of what was sent.
+	if recIter, err := u.store.ListAllRecords(); err != nil {
+		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve NotificationRecords: %s", err.Error()))
+	} else {
+		defer recIter.Close()
+		for recIter.Next() {
+			ret.NotificationRecords = append(ret.NotificationRecords, recIter.Item())
+		}
+		if err := recIter.Err(); err != nil {
+			ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve every NotificationRecord: %s", err.Error()))
+		}
+	}
+
 	// Checker configurations (positional, one entry per (checker, user?, domain?, service?)).
 	if cfgIter, err := u.store.ListAllCheckerConfigurations(); err != nil {
 		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve CheckerConfigurations: %s", err.Error()))
@@ -318,6 +344,16 @@ func (u *Usecase) BackupUser(user *happydns.User) happydns.Backup {
 	} else {
 		ret.NotificationPreferences = append(ret.NotificationPreferences, prefs...)
 	}
+	if states, err := u.store.ListStatesByUser(user.Id); err != nil {
+		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve NotificationStates: %s", err.Error()))
+	} else {
+		ret.NotificationStates = append(ret.NotificationStates, states...)
+	}
+	if recs, err := u.store.ListRecordsByUser(user.Id, 0); err != nil {
+		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve NotificationRecords: %s", err.Error()))
+	} else {
+		ret.NotificationRecords = append(ret.NotificationRecords, recs...)
+	}
 
 	// Checker configurations scoped to this user.
 	if cfgIter, err := u.store.ListAllCheckerConfigurations(); err != nil {
@@ -457,6 +493,18 @@ func (u *Usecase) Restore(backup *happydns.Backup) error {
 			continue
 		}
 		errs = errors.Join(errs, u.store.RestorePreference(pref))
+	}
+	for _, state := range backup.NotificationStates {
+		if state == nil {
+			continue
+		}
+		errs = errors.Join(errs, u.store.PutState(state))
+	}
+	for _, rec := range backup.NotificationRecords {
+		if rec == nil {
+			continue
+		}
+		errs = errors.Join(errs, u.store.RestoreRecord(rec))
 	}
 
 	// Checker configurations.

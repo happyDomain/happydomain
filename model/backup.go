@@ -33,6 +33,8 @@ type Backup struct {
 	Zones                    []*ZoneMessage
 	NotificationChannels     []*NotificationChannel
 	NotificationPreferences  []*NotificationPreference
+	NotificationStates       []*NotificationState
+	NotificationRecords      []*NotificationRecord
 	CheckerConfigurations    []*CheckerOptionsPositional
 	CheckPlans               []*CheckPlan
 	CheckEvaluations         []*CheckEvaluation
