@@ -37,7 +37,12 @@ import (
 func TestTidyRemovesOrphanNotifications(t *testing.T) {
 	for name, tidy := range map[string]func(happydns.TidyUpUseCase) error{
 		"TidyNotifications": func(tu happydns.TidyUpUseCase) error {
-			return errors.Join(tu.TidyNotificationChannels(true), tu.TidyNotificationPreferences(true))
+			return errors.Join(
+				tu.TidyNotificationChannels(true),
+				tu.TidyNotificationPreferences(true),
+				tu.TidyNotificationStates(true),
+				tu.TidyNotificationRecords(true),
+			)
 		},
 		"TidyAll": func(tu happydns.TidyUpUseCase) error { return tu.TidyAll(true) },
 	} {
@@ -76,6 +81,16 @@ func TestTidyRemovesOrphanNotifications(t *testing.T) {
 			orphan := newChannel(gone)
 			orphanPref := newPreference(gone, orphan)
 
+			target := happydns.CheckTarget{DomainId: "d1"}
+			for _, owner := range []happydns.Identifier{alive.Id, gone} {
+				if err := db.PutState(&happydns.NotificationState{CheckerID: "ping", Target: target, UserId: owner, Acknowledged: true}); err != nil {
+					t.Fatal(err)
+				}
+				if err := db.CreateRecord(&happydns.NotificationRecord{UserId: owner, CheckerID: "ping", Target: target}); err != nil {
+					t.Fatal(err)
+				}
+			}
+
 			if err := tidy(usecase.NewTidyUpUsecase(db)); err != nil {
 				t.Fatalf("%s: %v", name, err)
 			}
@@ -97,6 +112,30 @@ func TestTidyRemovesOrphanNotifications(t *testing.T) {
 			}
 			if prefs, err := db.ListPreferencesByUser(gone); err != nil || len(prefs) != 0 {
 				t.Errorf("ListPreferencesByUser(gone) = %v, %v; want nothing", prefs, err)
+			}
+			if _, err := db.GetState("ping", target, alive.Id); err != nil {
+				t.Errorf("the state of an existing user was removed: %v", err)
+			}
+			if _, err := db.GetState("ping", target, gone); !errors.Is(err, happydns.ErrNotificationStateNotFound) {
+				t.Errorf("the orphan state is still there: %v", err)
+			}
+			if recs, err := db.ListRecordsByUser(alive.Id, 0); err != nil || len(recs) != 1 {
+				t.Errorf("ListRecordsByUser(alive) = %v, %v; want its record", recs, err)
+			}
+			if recs, err := db.ListRecordsByUser(gone, 0); err != nil || len(recs) != 0 {
+				t.Errorf("ListRecordsByUser(gone) = %v, %v; want nothing", recs, err)
+			}
+			if iter, err := db.ListAllRecords(); err != nil {
+				t.Error(err)
+			} else {
+				n := 0
+				for iter.Next() {
+					n++
+				}
+				iter.Close()
+				if n != 1 {
+					t.Errorf("%d records left in the storage, want 1", n)
+				}
 			}
 		})
 	}

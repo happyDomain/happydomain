@@ -92,3 +92,67 @@ func (tu *tidyUpUsecase) TidyNotificationPreferences(dropInvalid bool) error {
 
 	return nil
 }
+
+// TidyNotificationStates deletes the notification states whose user no longer
+// exists.
+func (tu *tidyUpUsecase) TidyNotificationStates(dropInvalid bool) error {
+	iter, err := tu.store.ListAllStates()
+	if err != nil {
+		return err
+	}
+
+	var orphans []*happydns.NotificationState
+	err = iterateTidy(iter, dropInvalid, func(state *happydns.NotificationState) error {
+		_, err := tu.store.GetUser(state.UserId)
+		if errors.Is(err, happydns.ErrUserNotFound) {
+			orphans = append(orphans, state)
+			return nil
+		}
+		return err
+	})
+	iter.Close()
+	if err != nil {
+		return err
+	}
+
+	for _, state := range orphans {
+		log.Printf("Deleting orphan notification state of %s for %s (user not found)", state.CheckerID, state.UserId.String())
+		if err := tu.store.DeleteState(state.CheckerID, state.Target, state.UserId); err != nil && !errors.Is(err, happydns.ErrNotificationStateNotFound) {
+			return fmt.Errorf("unable to delete orphan notification state of %s for %s: %w", state.CheckerID, state.UserId.String(), err)
+		}
+	}
+
+	return nil
+}
+
+// TidyNotificationRecords deletes the notification records whose user no
+// longer exists, with their user index entry.
+func (tu *tidyUpUsecase) TidyNotificationRecords(dropInvalid bool) error {
+	iter, err := tu.store.ListAllRecords()
+	if err != nil {
+		return err
+	}
+
+	var orphans []happydns.Identifier
+	err = iterateTidy(iter, dropInvalid, func(rec *happydns.NotificationRecord) error {
+		_, err := tu.store.GetUser(rec.UserId)
+		if errors.Is(err, happydns.ErrUserNotFound) {
+			orphans = append(orphans, rec.Id)
+			return nil
+		}
+		return err
+	})
+	iter.Close()
+	if err != nil {
+		return err
+	}
+
+	for _, id := range orphans {
+		log.Printf("Deleting orphan notification record %s (user not found)", id.String())
+		if err := tu.store.DeleteRecord(id); err != nil {
+			return fmt.Errorf("unable to delete orphan notification record %s: %w", id.String(), err)
+		}
+	}
+
+	return nil
+}
