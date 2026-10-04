@@ -39,6 +39,7 @@ type Service struct {
 	closeUserSessions happydns.SessionCloserUsecase
 	emailValidation   *EmailValidationUsecase
 	recovery          *RecoverAccountUsecase
+	onDeleted         func(happydns.Identifier) error
 }
 
 // NewAuthUserUsecases initializes and returns a new AuthUserService, containing all use cases.
@@ -62,6 +63,13 @@ func NewAuthUserUsecases(
 	s.recovery = NewRecoverAccountUsecase(store, mailer, cfg, s)
 
 	return s
+}
+
+// SetOnDeleted installs a callback invoked when a user deletes their account,
+// to delete the account itself, its profile. It runs before the credentials
+// are removed, which its failure prevents.
+func (s *Service) SetOnDeleted(fn func(happydns.Identifier) error) {
+	s.onDeleted = fn
 }
 
 // CanRegister checks if user registration is allowed on this instance.
@@ -247,6 +255,15 @@ func (s *Service) DeleteAuthUser(user *happydns.UserAuth, password string) error
 	// Delete the user's sessions
 	if err := s.closeUserSessions.CloseAll(user); err != nil {
 		return fmt.Errorf("unable to delete user sessions: %w", err)
+	}
+
+	// The account before its credentials: should deleting it fail, the user
+	// can still log in and try again, while credentials left without an
+	// account are removed by tidy.
+	if s.onDeleted != nil {
+		if err := s.onDeleted(user.Id); err != nil {
+			return fmt.Errorf("unable to delete the account of user: %w", err)
+		}
 	}
 
 	// Delete the user from the storage

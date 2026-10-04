@@ -109,6 +109,9 @@ func (app *App) initUsecases() {
 	)
 	app.usecases.user = userService
 	app.usecases.userAdmin = userService
+	// A user deleting their local account deletes the account itself, not
+	// only its credentials.
+	authUserService.SetOnDeleted(userService.DeleteUserByID)
 	app.usecases.authentication = usecase.NewAuthenticationUsecase(app.cfg, app.store, app.usecases.user)
 	app.usecases.authUser = authUserService
 	app.usecases.authUserAdmin = authUserService

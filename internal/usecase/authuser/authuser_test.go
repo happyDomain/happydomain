@@ -488,6 +488,68 @@ func TestCheckNewPassword(t *testing.T) {
 	})
 }
 
+// A user deleting their account deletes the account itself, not only the
+// credentials used to log into it: SetOnDeleted is how the rest of the
+// account, its profile, goes too.
+func TestDeleteAuthUserDeletesTheAccount(t *testing.T) {
+	newService := func(t *testing.T) (*authuser.Service, *happydns.UserAuth, storage.Storage) {
+		service, store := setupTestService()
+		user := &happydns.UserAuth{Email: "test@example.com"}
+		helpers.DefinePassword(user, "TestPassword123!")
+		if err := store.CreateAuthUser(user); err != nil {
+			t.Fatal(err)
+		}
+		return service, user, store
+	}
+
+	t.Run("called with the user, then credentials removed", func(t *testing.T) {
+		service, user, store := newService(t)
+		var deleted []happydns.Identifier
+		service.SetOnDeleted(func(id happydns.Identifier) error {
+			deleted = append(deleted, id)
+			return nil
+		})
+
+		if err := service.DeleteAuthUser(user, "TestPassword123!"); err != nil {
+			t.Fatalf("DeleteAuthUser: %v", err)
+		}
+		if len(deleted) != 1 || !deleted[0].Equals(user.Id) {
+			t.Errorf("hook called with %v, want once with %s", deleted, user.Id.String())
+		}
+		if _, err := store.GetAuthUser(user.Id); !errors.Is(err, happydns.ErrAuthUserNotFound) {
+			t.Errorf("credentials still there: %v", err)
+		}
+	})
+
+	t.Run("not called on a wrong password", func(t *testing.T) {
+		service, user, _ := newService(t)
+		service.SetOnDeleted(func(happydns.Identifier) error {
+			t.Error("hook called although the password was wrong")
+			return nil
+		})
+
+		if err := service.DeleteAuthUser(user, "WrongPassword"); err == nil {
+			t.Error("expected an error for a wrong password")
+		}
+	})
+
+	// The credentials are kept, so that the user can log in and try again:
+	// nothing would clean up an account left without them.
+	t.Run("its failure is reported and keeps the credentials", func(t *testing.T) {
+		service, user, store := newService(t)
+		service.SetOnDeleted(func(happydns.Identifier) error {
+			return errors.New("cannot delete the profile")
+		})
+
+		if err := service.DeleteAuthUser(user, "TestPassword123!"); err == nil {
+			t.Error("expected the failure of the hook to be reported")
+		}
+		if _, err := store.GetAuthUser(user.Id); err != nil {
+			t.Errorf("credentials removed although the account was not: %v", err)
+		}
+	})
+}
+
 // ========== DeleteAuthUser Tests ==========
 
 func TestDeleteAuthUser(t *testing.T) {
