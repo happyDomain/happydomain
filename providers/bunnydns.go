@@ -30,7 +30,7 @@ import (
 )
 
 type BunnyDNSAPI struct {
-	APIKey string `json:"api_key,omitempty" happydomain:"label=API Key,required,secret"`
+	APIKey happydns.Secret `json:"api_key,omitzero" happydomain:"label=API Key,required,secret"`
 }
 
 func (s *BunnyDNSAPI) DNSControlName() string {
@@ -43,7 +43,7 @@ func (s *BunnyDNSAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 
 func (s *BunnyDNSAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"api_key": s.APIKey,
+		"api_key": s.APIKey.Reveal(),
 	}, nil
 }
 

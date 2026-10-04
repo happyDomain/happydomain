@@ -30,7 +30,7 @@ import (
 )
 
 type DeSECAPI struct {
-	Token string `json:"token,omitempty" happydomain:"label=API Token,placeholder=your-api-key,required,secret,description=deSEC API authentication token"`
+	Token happydns.Secret `json:"token,omitzero" happydomain:"label=API Token,placeholder=your-api-key,required,secret,description=deSEC API authentication token"`
 }
 
 func (s *DeSECAPI) DNSControlName() string {
@@ -43,7 +43,7 @@ func (s *DeSECAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 
 func (s *DeSECAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"auth-token": s.Token,
+		"auth-token": s.Token.Reveal(),
 	}, nil
 }
 

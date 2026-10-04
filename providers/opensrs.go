@@ -30,9 +30,9 @@ import (
 )
 
 type OpensrsAPI struct {
-	ApiKey   string `json:"apiKey,omitempty" happydomain:"label=API key,placeholder=xxxxxxxx,required,secret,description=Your API key."`
-	Username string `json:"username,omitempty" happydomain:"label=Username,placeholder=xxxxxxxx,required,description=Your username."`
-	BaseUrl  string `json:"base_url,omitempty" happydomain:"label=Base URL,placeholder=xxxxxxxx,description=Alternate base URL.,endpoint"`
+	ApiKey   happydns.Secret `json:"apiKey,omitzero" happydomain:"label=API key,placeholder=xxxxxxxx,required,secret,description=Your API key."`
+	Username string          `json:"username,omitempty" happydomain:"label=Username,placeholder=xxxxxxxx,required,description=Your username."`
+	BaseUrl  string          `json:"base_url,omitempty" happydomain:"label=Base URL,placeholder=xxxxxxxx,description=Alternate base URL.,endpoint"`
 }
 
 func (s *OpensrsAPI) DNSControlName() string {
@@ -45,7 +45,7 @@ func (s *OpensrsAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 
 func (s *OpensrsAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"apikey":   s.ApiKey,
+		"apikey":   s.ApiKey.Reveal(),
 		"username": s.Username,
 		"baseurl":  s.BaseUrl,
 	}, nil

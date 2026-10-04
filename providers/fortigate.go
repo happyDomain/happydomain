@@ -30,10 +30,10 @@ import (
 )
 
 type FortiGateAPI struct {
-	Host        string `json:"host,omitempty" happydomain:"label=Host,placeholder=https://fortigate.example.com,required,endpoint"`
-	VDOM        string `json:"vdom,omitempty" happydomain:"label=Virtual Domain,placeholder=root,required"`
-	APIKey      string `json:"apiKey,omitempty" happydomain:"label=API Key,required,secret"`
-	InsecureTLS bool   `json:"insecure_tls,omitempty" happydomain:"label=Insecure TLS,description=Skip TLS certificate verification"`
+	Host        string          `json:"host,omitempty" happydomain:"label=Host,placeholder=https://fortigate.example.com,required,endpoint"`
+	VDOM        string          `json:"vdom,omitempty" happydomain:"label=Virtual Domain,placeholder=root,required"`
+	APIKey      happydns.Secret `json:"apiKey,omitzero" happydomain:"label=API Key,required,secret"`
+	InsecureTLS bool            `json:"insecure_tls,omitempty" happydomain:"label=Insecure TLS,description=Skip TLS certificate verification"`
 }
 
 func (s *FortiGateAPI) DNSControlName() string {
@@ -48,7 +48,7 @@ func (s *FortiGateAPI) ToDNSControlConfig() (map[string]string, error) {
 	config := map[string]string{
 		"host":   s.Host,
 		"vdom":   s.VDOM,
-		"apiKey": s.APIKey,
+		"apiKey": s.APIKey.Reveal(),
 	}
 
 	if s.InsecureTLS {

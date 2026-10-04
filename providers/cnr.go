@@ -30,9 +30,9 @@ import (
 )
 
 type CNRAPI struct {
-	APILogin    string `json:"apilogin,omitempty" happydomain:"label=API Login,required"`
-	APIPassword string `json:"apipassword,omitempty" happydomain:"label=API Password,required,secret"`
-	APIEntity   string `json:"apientity,omitempty" happydomain:"label=API Entity,choices=OTE;LIVE,default=LIVE,required,description=Use OTE for testing or LIVE for production"`
+	APILogin    string          `json:"apilogin,omitempty" happydomain:"label=API Login,required"`
+	APIPassword happydns.Secret `json:"apipassword,omitzero" happydomain:"label=API Password,required,secret"`
+	APIEntity   string          `json:"apientity,omitempty" happydomain:"label=API Entity,choices=OTE;LIVE,default=LIVE,required,description=Use OTE for testing or LIVE for production"`
 }
 
 func (s *CNRAPI) DNSControlName() string {
@@ -46,7 +46,7 @@ func (s *CNRAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 func (s *CNRAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
 		"apilogin":    s.APILogin,
-		"apipassword": s.APIPassword,
+		"apipassword": s.APIPassword.Reveal(),
 		"apientity":   s.APIEntity,
 	}, nil
 }

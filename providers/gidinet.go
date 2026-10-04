@@ -30,8 +30,8 @@ import (
 )
 
 type GidinetAPI struct {
-	Username string `json:"username,omitempty" happydomain:"label=Username,placeholder=your-username,required,description=Your Gidinet account username"`
-	Password string `json:"password,omitempty" happydomain:"label=Password,placeholder=xxxxxxxx,required,secret,description=Your Gidinet account password"`
+	Username string          `json:"username,omitempty" happydomain:"label=Username,placeholder=your-username,required,description=Your Gidinet account username"`
+	Password happydns.Secret `json:"password,omitzero" happydomain:"label=Password,placeholder=xxxxxxxx,required,secret,description=Your Gidinet account password"`
 }
 
 func (s *GidinetAPI) DNSControlName() string {
@@ -45,7 +45,7 @@ func (s *GidinetAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 func (s *GidinetAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
 		"username": s.Username,
-		"password": s.Password,
+		"password": s.Password.Reveal(),
 	}, nil
 }
 

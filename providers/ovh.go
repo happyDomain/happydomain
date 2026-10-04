@@ -37,8 +37,8 @@ var (
 )
 
 type OVHAPI struct {
-	Endpoint    string `json:"endpoint,omitempty" happydomain:"label=Endpoint,placeholder=ovh-eu,description=API endpoint: ovh-eu or ovh-ca or ovh-us…"`
-	ConsumerKey string `json:"consumerkey,omitempty" happydomain:"label=Consumer Key,required,secret,description=OVH Consumer Key obtained from API token generation"`
+	Endpoint    string          `json:"endpoint,omitempty" happydomain:"label=Endpoint,placeholder=ovh-eu,description=API endpoint: ovh-eu or ovh-ca or ovh-us…"`
+	ConsumerKey happydns.Secret `json:"consumerkey,omitzero" happydomain:"label=Consumer Key,required,secret,description=OVH Consumer Key obtained from API token generation"`
 }
 
 func (s *OVHAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
@@ -53,7 +53,7 @@ func (s *OVHAPI) ToDNSControlConfig() (map[string]string, error) {
 	config := map[string]string{
 		"app-key":        appKey,
 		"app-secret-key": appSecret,
-		"consumer-key":   s.ConsumerKey,
+		"consumer-key":   s.ConsumerKey.Reveal(),
 	}
 
 	return config, nil

@@ -30,14 +30,14 @@ import (
 )
 
 type SpaceshipAPI struct {
-	APIKey    string `json:"api_key,omitempty" happydomain:"label=API Key,secret,required,description=Your Spaceship API key"`
-	APISecret string `json:"api_secret,omitempty" happydomain:"label=API Secret,secret,required,description=Your Spaceship API secret"`
+	APIKey    happydns.Secret `json:"api_key,omitzero" happydomain:"label=API Key,secret,required,description=Your Spaceship API key"`
+	APISecret happydns.Secret `json:"api_secret,omitzero" happydomain:"label=API Secret,secret,required,description=Your Spaceship API secret"`
 }
 
 func (s *SpaceshipAPI) LibdnsProvider() any {
 	return &spaceship.Provider{
-		APIKey:    s.APIKey,
-		APISecret: s.APISecret,
+		APIKey:    s.APIKey.Reveal(),
+		APISecret: s.APISecret.Reveal(),
 	}
 }
 

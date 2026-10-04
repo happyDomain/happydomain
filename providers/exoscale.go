@@ -30,9 +30,9 @@ import (
 )
 
 type ExoscaleAPI struct {
-	ApiKey      string `json:"apikey,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxx,required,secret,description=Your API key."`
-	SecretKey   string `json:"secretkey,omitempty" happydomain:"label=Secret Key,placeholder=xxxxxxxx,required,secret,description=Your secret key."`
-	DnsEndpoint string `json:"dns_endpoint,omitempty" happydomain:"label=DNS endpoint,placeholder=xxxxxxxx,description=DNS endpointy.,endpoint"`
+	ApiKey      happydns.Secret `json:"apikey,omitzero" happydomain:"label=API Key,placeholder=xxxxxxxx,required,secret,description=Your API key."`
+	SecretKey   happydns.Secret `json:"secretkey,omitzero" happydomain:"label=Secret Key,placeholder=xxxxxxxx,required,secret,description=Your secret key."`
+	DnsEndpoint string          `json:"dns_endpoint,omitempty" happydomain:"label=DNS endpoint,placeholder=xxxxxxxx,description=DNS endpointy.,endpoint"`
 }
 
 func (s *ExoscaleAPI) DNSControlName() string {
@@ -45,8 +45,8 @@ func (s *ExoscaleAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 
 func (s *ExoscaleAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"apikey":       s.ApiKey,
-		"secretkey":    s.SecretKey,
+		"apikey":       s.ApiKey.Reveal(),
+		"secretkey":    s.SecretKey.Reveal(),
 		"dns-endpoint": s.DnsEndpoint,
 	}, nil
 }

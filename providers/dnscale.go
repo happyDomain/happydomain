@@ -30,8 +30,8 @@ import (
 )
 
 type DNScaleAPI struct {
-	ApiKey string `json:"api_key,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxx,required,secret,description=Your DNScale API key"`
-	ApiURL string `json:"api_url,omitempty" happydomain:"label=API URL,placeholder=https://api.dnscale.eu/v1,description=Custom API endpoint if needed,endpoint"`
+	ApiKey happydns.Secret `json:"api_key,omitzero" happydomain:"label=API Key,placeholder=xxxxxxxx,required,secret,description=Your DNScale API key"`
+	ApiURL string          `json:"api_url,omitempty" happydomain:"label=API URL,placeholder=https://api.dnscale.eu/v1,description=Custom API endpoint if needed,endpoint"`
 }
 
 func (s *DNScaleAPI) DNSControlName() string {
@@ -44,7 +44,7 @@ func (s *DNScaleAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 
 func (s *DNScaleAPI) ToDNSControlConfig() (map[string]string, error) {
 	config := map[string]string{
-		"api_key": s.ApiKey,
+		"api_key": s.ApiKey.Reveal(),
 	}
 
 	if s.ApiURL != "" {

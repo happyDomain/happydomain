@@ -30,9 +30,9 @@ import (
 )
 
 type AutoDNSAPI struct {
-	Username string `json:"username,omitempty" happydomain:"label=Username,placeholder=autodns.service-account@example.com,required,description=Your AutoDNS user name."`
-	Password string `json:"password,omitempty" happydomain:"label=Password,placeholder=xxxxxxxx,required,secret,description=Your AutoDNS password."`
-	Context  string `json:"context,omitempty" happydomain:"label=Context,placeholder=33004,description=Your AutoDNS context."`
+	Username string          `json:"username,omitempty" happydomain:"label=Username,placeholder=autodns.service-account@example.com,required,description=Your AutoDNS user name."`
+	Password happydns.Secret `json:"password,omitzero" happydomain:"label=Password,placeholder=xxxxxxxx,required,secret,description=Your AutoDNS password."`
+	Context  string          `json:"context,omitempty" happydomain:"label=Context,placeholder=33004,description=Your AutoDNS context."`
 }
 
 func (s *AutoDNSAPI) DNSControlName() string {
@@ -46,7 +46,7 @@ func (s *AutoDNSAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 func (s *AutoDNSAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
 		"username": s.Username,
-		"password": s.Password,
+		"password": s.Password.Reveal(),
 		"context":  s.Context,
 	}, nil
 }

@@ -30,13 +30,13 @@ import (
 )
 
 type IonosAPI struct {
-	APIPublicPrefix string `json:"api_public_prefix,omitempty" happydomain:"label=API Public Prefix,required,description=The public prefix part of your IONOS API token"`
-	APISecret       string `json:"api_secret,omitempty" happydomain:"label=API Secret,secret,required,description=The secret part of your IONOS API token"`
+	APIPublicPrefix string          `json:"api_public_prefix,omitempty" happydomain:"label=API Public Prefix,required,description=The public prefix part of your IONOS API token"`
+	APISecret       happydns.Secret `json:"api_secret,omitzero" happydomain:"label=API Secret,secret,required,description=The secret part of your IONOS API token"`
 }
 
 func (s *IonosAPI) LibdnsProvider() any {
 	return &ionos.Provider{
-		AuthAPIToken: s.APIPublicPrefix + "." + s.APISecret,
+		AuthAPIToken: s.APIPublicPrefix + "." + s.APISecret.Reveal(),
 	}
 }
 

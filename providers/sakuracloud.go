@@ -30,9 +30,9 @@ import (
 )
 
 type SakuraCloudAPI struct {
-	AccessToken       string `json:"access_token,omitempty" happydomain:"label=Access Token,placeholder=xxxxxxxx,required,description=Your access token"`
-	AccessTokenSecret string `json:"access_token_secret,omitempty" happydomain:"label=Access Token Secret,placeholder=xxxxxxxx,required,secret,description=Your secret"`
-	Endpoint          string `json:"endpoint,omitempty" happydomain:"label=Endpoint,placeholder=https://secure.sakura.ad.jp/cloud/zone/is1a/api/cloud/1.1,description=Any zone endpoint (as DNS service is independent of zone),endpoint"`
+	AccessToken       string          `json:"access_token,omitempty" happydomain:"label=Access Token,placeholder=xxxxxxxx,required,description=Your access token"`
+	AccessTokenSecret happydns.Secret `json:"access_token_secret,omitzero" happydomain:"label=Access Token Secret,placeholder=xxxxxxxx,required,secret,description=Your secret"`
+	Endpoint          string          `json:"endpoint,omitempty" happydomain:"label=Endpoint,placeholder=https://secure.sakura.ad.jp/cloud/zone/is1a/api/cloud/1.1,description=Any zone endpoint (as DNS service is independent of zone),endpoint"`
 }
 
 func (s *SakuraCloudAPI) DNSControlName() string {
@@ -46,7 +46,7 @@ func (s *SakuraCloudAPI) InstantiateProvider() (happydns.ProviderActuator, error
 func (s *SakuraCloudAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
 		"access_token":        s.AccessToken,
-		"access_token_secret": s.AccessTokenSecret,
+		"access_token_secret": s.AccessTokenSecret.Reveal(),
 		"endpoint":            s.Endpoint,
 	}, nil
 }

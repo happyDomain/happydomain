@@ -30,7 +30,7 @@ import (
 )
 
 type DigitalOceanAPI struct {
-	Token string `json:"token,omitempty" happydomain:"label=API Token,placeholder=your-token,required,secret,description=DigitalOcean OAuth Token"`
+	Token happydns.Secret `json:"token,omitzero" happydomain:"label=API Token,placeholder=your-token,required,secret,description=DigitalOcean OAuth Token"`
 }
 
 func (s *DigitalOceanAPI) DNSControlName() string {
@@ -43,7 +43,7 @@ func (s *DigitalOceanAPI) InstantiateProvider() (happydns.ProviderActuator, erro
 
 func (s *DigitalOceanAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"token": s.Token,
+		"token": s.Token.Reveal(),
 	}, nil
 }
 

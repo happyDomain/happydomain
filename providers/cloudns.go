@@ -30,9 +30,9 @@ import (
 )
 
 type ClouDNSAPI struct {
-	AuthID    string `json:"AuthID,omitempty" happydomain:"label=Auth ID,placeholder=xxxxxxxx,required,secret,description=Your ClouDNS auth ID"`
-	SubAuthID string `json:"SubAuthID,omitempty" happydomain:"label=Sub Auth ID,placeholder=xxxxxxxx,secret,description=Your ClouDNS subauth token"`
-	Password  string `json:"Password,omitempty" happydomain:"label=Password,placeholder=xxxxxxxx,required,secret,description=Your ClouDNS API password token"`
+	AuthID    happydns.Secret `json:"AuthID,omitzero" happydomain:"label=Auth ID,placeholder=xxxxxxxx,required,secret,description=Your ClouDNS auth ID"`
+	SubAuthID happydns.Secret `json:"SubAuthID,omitzero" happydomain:"label=Sub Auth ID,placeholder=xxxxxxxx,secret,description=Your ClouDNS subauth token"`
+	Password  happydns.Secret `json:"Password,omitzero" happydomain:"label=Password,placeholder=xxxxxxxx,required,secret,description=Your ClouDNS API password token"`
 }
 
 func (s *ClouDNSAPI) DNSControlName() string {
@@ -45,9 +45,9 @@ func (s *ClouDNSAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 
 func (s *ClouDNSAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"auth-id":       s.AuthID,
-		"sub-auth-id":   s.SubAuthID,
-		"auth-password": s.Password,
+		"auth-id":       s.AuthID.Reveal(),
+		"sub-auth-id":   s.SubAuthID.Reveal(),
+		"auth-password": s.Password.Reveal(),
 	}, nil
 }
 

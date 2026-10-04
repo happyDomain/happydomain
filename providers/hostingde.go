@@ -30,8 +30,8 @@ import (
 )
 
 type HostingdeAPI struct {
-	Token          string `json:"token,omitempty" happydomain:"label=Token,placeholder=your-api-key,required,secret,description=Provide your Hosting.de account access token."`
-	OwnerAccountId string `json:"ownerAccountId,omitempty" happydomain:"label=Owner Account,placeholder=xxxxxxxxx,description=Identifier of the account owner."`
+	Token          happydns.Secret `json:"token,omitzero" happydomain:"label=Token,placeholder=your-api-key,required,secret,description=Provide your Hosting.de account access token."`
+	OwnerAccountId string          `json:"ownerAccountId,omitempty" happydomain:"label=Owner Account,placeholder=xxxxxxxxx,description=Identifier of the account owner."`
 }
 
 func (s *HostingdeAPI) DNSControlName() string {
@@ -44,7 +44,7 @@ func (s *HostingdeAPI) InstantiateProvider() (happydns.ProviderActuator, error) 
 
 func (s *HostingdeAPI) ToDNSControlConfig() (map[string]string, error) {
 	config := map[string]string{
-		"authToken": s.Token,
+		"authToken": s.Token.Reveal(),
 	}
 
 	if s.OwnerAccountId != "" {

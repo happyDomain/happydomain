@@ -30,8 +30,8 @@ import (
 )
 
 type SoftLayerAPI struct {
-	Username string `json:"username,omitempty" happydomain:"label=Username,placeholder=yourUsername,required"`
-	APIKey   string `json:"api_key,omitempty" happydomain:"label=API Key,placeholder=yourApiKeyFromSoftLayer,required,secret"`
+	Username string          `json:"username,omitempty" happydomain:"label=Username,placeholder=yourUsername,required"`
+	APIKey   happydns.Secret `json:"api_key,omitzero" happydomain:"label=API Key,placeholder=yourApiKeyFromSoftLayer,required,secret"`
 }
 
 func (s *SoftLayerAPI) DNSControlName() string {
@@ -44,7 +44,7 @@ func (s *SoftLayerAPI) InstantiateProvider() (happydns.ProviderActuator, error) 
 
 func (s *SoftLayerAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"api_key":  s.APIKey,
+		"api_key":  s.APIKey.Reveal(),
 		"username": s.Username,
 	}, nil
 }

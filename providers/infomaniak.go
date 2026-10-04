@@ -30,7 +30,7 @@ import (
 )
 
 type InfomaniakAPI struct {
-	Token string `json:"token,omitempty" happydomain:"label=API Token,placeholder=xxxxxxxx,required,secret,description=Your Infomaniak personal access token"`
+	Token happydns.Secret `json:"token,omitzero" happydomain:"label=API Token,placeholder=xxxxxxxx,required,secret,description=Your Infomaniak personal access token"`
 }
 
 func (s *InfomaniakAPI) DNSControlName() string {
@@ -43,7 +43,7 @@ func (s *InfomaniakAPI) InstantiateProvider() (happydns.ProviderActuator, error)
 
 func (s *InfomaniakAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"token": s.Token,
+		"token": s.Token.Reveal(),
 	}, nil
 }
 

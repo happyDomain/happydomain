@@ -30,12 +30,12 @@ import (
 )
 
 type AkamaiEdgeDnsAPI struct {
-	ClientSecret string `json:"clientsecret,omitempty" happydomain:"label=Client Secret,placeholder=xxxxxxxx,required,secret,description=Your Akamai Client Secret (You must enable API-Access for your account)."`
-	Host         string `json:"host,omitempty" happydomain:"label=Host,placeholder=akaa-xxxxxxxxxxx.xxxx.akamaiapis.net,required,description=Your Akamai Host.,endpoint"`
-	AccessToken  string `json:"accesstoken,omitempty" happydomain:"label=Access Token,placeholder=akaa-xxxxxxxxxxx,secret,description=Your Akamai Access Token."`
-	ClientToken  string `json:"clienttoken,omitempty" happydomain:"label=Client Token,placeholder=akaa-xxxxxxxxxxx,secret,description=Your Akamai Client Token"`
-	ContractId   string `json:"contractid,omitempty" happydomain:"label=Contract ID,placeholder=X-XXXX,description=Your Akamai Contract ID."`
-	GroupId      string `json:"groupId,omitempty" happydomain:"label=Group ID,placeholder=NNNNNN,description=Your Akamai Group ID."`
+	ClientSecret happydns.Secret `json:"clientsecret,omitzero" happydomain:"label=Client Secret,placeholder=xxxxxxxx,required,secret,description=Your Akamai Client Secret (You must enable API-Access for your account)."`
+	Host         string          `json:"host,omitempty" happydomain:"label=Host,placeholder=akaa-xxxxxxxxxxx.xxxx.akamaiapis.net,required,description=Your Akamai Host.,endpoint"`
+	AccessToken  happydns.Secret `json:"accesstoken,omitzero" happydomain:"label=Access Token,placeholder=akaa-xxxxxxxxxxx,secret,description=Your Akamai Access Token."`
+	ClientToken  happydns.Secret `json:"clienttoken,omitzero" happydomain:"label=Client Token,placeholder=akaa-xxxxxxxxxxx,secret,description=Your Akamai Client Token"`
+	ContractId   string          `json:"contractid,omitempty" happydomain:"label=Contract ID,placeholder=X-XXXX,description=Your Akamai Contract ID."`
+	GroupId      string          `json:"groupId,omitempty" happydomain:"label=Group ID,placeholder=NNNNNN,description=Your Akamai Group ID."`
 }
 
 func (s *AkamaiEdgeDnsAPI) DNSControlName() string {
@@ -48,10 +48,10 @@ func (s *AkamaiEdgeDnsAPI) InstantiateProvider() (happydns.ProviderActuator, err
 
 func (s *AkamaiEdgeDnsAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"client_secret": s.ClientSecret,
+		"client_secret": s.ClientSecret.Reveal(),
 		"host":          s.Host,
-		"access_token":  s.AccessToken,
-		"client_token":  s.ClientToken,
+		"access_token":  s.AccessToken.Reveal(),
+		"client_token":  s.ClientToken.Reveal(),
 		"contract_id":   s.ContractId,
 		"group_id":      s.GroupId,
 	}, nil

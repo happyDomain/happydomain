@@ -30,12 +30,12 @@ import (
 )
 
 type DreamhostAPI struct {
-	APIKey string `json:"api_key,omitempty" happydomain:"label=API Key,secret,required,description=Your DreamHost API key with dns-* permissions"`
+	APIKey happydns.Secret `json:"api_key,omitzero" happydomain:"label=API Key,secret,required,description=Your DreamHost API key with dns-* permissions"`
 }
 
 func (s *DreamhostAPI) LibdnsProvider() any {
 	return &dreamhost.Provider{
-		APIKey: s.APIKey,
+		APIKey: s.APIKey.Reveal(),
 	}
 }
 

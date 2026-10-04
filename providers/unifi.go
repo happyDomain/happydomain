@@ -30,12 +30,12 @@ import (
 )
 
 type UnifiAPI struct {
-	Host          string `json:"host,omitempty" happydomain:"label=Host,placeholder=https://192.168.1.1,description=Local UniFi controller URL (use either Host or Console ID),endpoint"`
-	ConsoleID     string `json:"console_id,omitempty" happydomain:"label=Console ID,placeholder=28704E24...:1008810555,description=UniFi cloud console ID (use either Host or Console ID)"`
-	APIKey        string `json:"api_key,omitempty" happydomain:"label=API Key,required,secret"`
-	Site          string `json:"site,omitempty" happydomain:"label=Site,placeholder=default,description=UniFi site name (defaults to 'default')"`
-	APIVersion    string `json:"api_version,omitempty" happydomain:"label=API Version,choices=auto;new;legacy,default=auto,description=API version to use (auto detects automatically)"`
-	SkipTLSVerify bool   `json:"skip_tls_verify,omitempty" happydomain:"label=Skip TLS Verify,description=Don't check the validity of the presented certificate (THIS IS INSECURE)"`
+	Host          string          `json:"host,omitempty" happydomain:"label=Host,placeholder=https://192.168.1.1,description=Local UniFi controller URL (use either Host or Console ID),endpoint"`
+	ConsoleID     string          `json:"console_id,omitempty" happydomain:"label=Console ID,placeholder=28704E24...:1008810555,description=UniFi cloud console ID (use either Host or Console ID)"`
+	APIKey        happydns.Secret `json:"api_key,omitzero" happydomain:"label=API Key,required,secret"`
+	Site          string          `json:"site,omitempty" happydomain:"label=Site,placeholder=default,description=UniFi site name (defaults to 'default')"`
+	APIVersion    string          `json:"api_version,omitempty" happydomain:"label=API Version,choices=auto;new;legacy,default=auto,description=API version to use (auto detects automatically)"`
+	SkipTLSVerify bool            `json:"skip_tls_verify,omitempty" happydomain:"label=Skip TLS Verify,description=Don't check the validity of the presented certificate (THIS IS INSECURE)"`
 }
 
 func (s *UnifiAPI) DNSControlName() string {
@@ -48,7 +48,7 @@ func (s *UnifiAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 
 func (s *UnifiAPI) ToDNSControlConfig() (map[string]string, error) {
 	config := map[string]string{
-		"api_key": s.APIKey,
+		"api_key": s.APIKey.Reveal(),
 	}
 
 	if s.Host != "" {

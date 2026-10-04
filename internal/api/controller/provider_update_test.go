@@ -37,7 +37,7 @@ import (
 
 // updatedBody holds a credential, as provider bodies do.
 type updatedBody struct {
-	ApiKey string `json:"apikey" happydomain:"secret"`
+	ApiKey happydns.Secret `json:"apikey" happydomain:"secret"`
 }
 
 func (*updatedBody) InstantiateProvider() (happydns.ProviderActuator, error) { return nil, nil }
@@ -48,7 +48,7 @@ type updatingProviders struct {
 }
 
 func (updatingProviders) UpdateProviderFromMessage(_ context.Context, id happydns.Identifier, user *happydns.User, msg *happydns.ProviderMessage) (*happydns.Provider, error) {
-	p := &happydns.Provider{ProviderMeta: msg.ProviderMeta, Provider: &updatedBody{ApiKey: "new-key"}}
+	p := &happydns.Provider{ProviderMeta: msg.ProviderMeta, Provider: &updatedBody{ApiKey: happydns.NewSecret("new-key")}}
 	p.Id = id
 	p.Owner = user.Id
 	return p, nil

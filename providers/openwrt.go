@@ -30,9 +30,9 @@ import (
 )
 
 type OpenWRTAPI struct {
-	Host     string `json:"host,omitempty" happydomain:"label=Host,placeholder=http://192.168.1.1,required,description=URL of your OpenWRT router (http:// is assumed if no scheme is given),endpoint"`
-	Username string `json:"username,omitempty" happydomain:"label=Username,placeholder=root,required,description=OpenWRT LuCI username"`
-	Password string `json:"password,omitempty" happydomain:"label=Password,required,secret,description=OpenWRT LuCI password"`
+	Host     string          `json:"host,omitempty" happydomain:"label=Host,placeholder=http://192.168.1.1,required,description=URL of your OpenWRT router (http:// is assumed if no scheme is given),endpoint"`
+	Username string          `json:"username,omitempty" happydomain:"label=Username,placeholder=root,required,description=OpenWRT LuCI username"`
+	Password happydns.Secret `json:"password,omitzero" happydomain:"label=Password,required,secret,description=OpenWRT LuCI password"`
 }
 
 func (s *OpenWRTAPI) DNSControlName() string {
@@ -47,7 +47,7 @@ func (s *OpenWRTAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
 		"host":     s.Host,
 		"username": s.Username,
-		"password": s.Password,
+		"password": s.Password.Reveal(),
 	}, nil
 }
 

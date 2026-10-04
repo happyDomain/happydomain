@@ -30,9 +30,9 @@ import (
 )
 
 type CscGlobalAPI struct {
-	ApiKey             string `json:"ApiKey,omitempty" happydomain:"label=API key,placeholder=xxxxxxxx,required,secret,description=Your API key"`
-	UserToken          string `json:"UserToken,omitempty" happydomain:"label=User token,placeholder=xxxxxxxx,required,secret,description=Your user token"`
-	NotificationEmails string `json:"NotificationEmails,omitempty" happydomain:"label=Notification emails,placeholder=xxxxxxxx,description=Optional comma-separated list of email addresses to send notifications to"`
+	ApiKey             happydns.Secret `json:"ApiKey,omitzero" happydomain:"label=API key,placeholder=xxxxxxxx,required,secret,description=Your API key"`
+	UserToken          happydns.Secret `json:"UserToken,omitzero" happydomain:"label=User token,placeholder=xxxxxxxx,required,secret,description=Your user token"`
+	NotificationEmails string          `json:"NotificationEmails,omitempty" happydomain:"label=Notification emails,placeholder=xxxxxxxx,description=Optional comma-separated list of email addresses to send notifications to"`
 }
 
 func (s *CscGlobalAPI) DNSControlName() string {
@@ -45,8 +45,8 @@ func (s *CscGlobalAPI) InstantiateProvider() (happydns.ProviderActuator, error) 
 
 func (s *CscGlobalAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"api-key":             s.ApiKey,
-		"user-token":          s.UserToken,
+		"api-key":             s.ApiKey.Reveal(),
+		"user-token":          s.UserToken.Reveal(),
 		"notification_emails": s.NotificationEmails,
 	}, nil
 }

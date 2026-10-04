@@ -30,9 +30,9 @@ import (
 )
 
 type RealtimeRegisterAPI struct {
-	APIKey  string `json:"apikey,omitempty" happydomain:"label=API Key,required,secret"`
-	Premium bool   `json:"premium,omitempty" happydomain:"label=Premium Service,description=Enable PREMIUM service type instead of BASIC"`
-	Sandbox bool   `json:"sandbox,omitempty" happydomain:"label=Sandbox Mode,description=Use sandbox API for testing"`
+	APIKey  happydns.Secret `json:"apikey,omitzero" happydomain:"label=API Key,required,secret"`
+	Premium bool            `json:"premium,omitempty" happydomain:"label=Premium Service,description=Enable PREMIUM service type instead of BASIC"`
+	Sandbox bool            `json:"sandbox,omitempty" happydomain:"label=Sandbox Mode,description=Use sandbox API for testing"`
 }
 
 func (s *RealtimeRegisterAPI) DNSControlName() string {
@@ -45,7 +45,7 @@ func (s *RealtimeRegisterAPI) InstantiateProvider() (happydns.ProviderActuator, 
 
 func (s *RealtimeRegisterAPI) ToDNSControlConfig() (map[string]string, error) {
 	config := map[string]string{
-		"apikey": s.APIKey,
+		"apikey": s.APIKey.Reveal(),
 	}
 
 	if s.Premium {

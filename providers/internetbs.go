@@ -30,8 +30,8 @@ import (
 )
 
 type InternetbsAPI struct {
-	ApiKey   string `json:"apikey,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxx,required,secret,description=Your API key."`
-	Password string `json:"password,omitempty" happydomain:"label=Password,placeholder=xxxxxxxx,required,secret,description=Your account password."`
+	ApiKey   happydns.Secret `json:"apikey,omitzero" happydomain:"label=API Key,placeholder=xxxxxxxx,required,secret,description=Your API key."`
+	Password happydns.Secret `json:"password,omitzero" happydomain:"label=Password,placeholder=xxxxxxxx,required,secret,description=Your account password."`
 }
 
 func (s *InternetbsAPI) DNSControlName() string {
@@ -44,8 +44,8 @@ func (s *InternetbsAPI) InstantiateProvider() (happydns.ProviderActuator, error)
 
 func (s *InternetbsAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"api-key":  s.ApiKey,
-		"password": s.Password,
+		"api-key":  s.ApiKey.Reveal(),
+		"password": s.Password.Reveal(),
 	}, nil
 }
 

@@ -30,10 +30,10 @@ import (
 )
 
 type GCloudAPI struct {
-	ProjectId     string `json:"project_id,omitempty" happydomain:"label=Project ID,placeholder=my-project-id,required,description=Google Cloud project ID"`
-	PrivateKey    string `json:"private_key,omitempty" happydomain:"label=Private Key,placeholder=-----BEGIN PRIVATE KEY-----...,secret,description=Service account private key in PEM format"`
-	ClientEmail   string `json:"client_email,omitempty" happydomain:"label=Client Email,placeholder=service-account@project-id.iam.gserviceaccount.com,description=Service account email address"`
-	NameServerSet string `json:"name_server_set,omitempty" happydomain:"label=Name Server Set,placeholder=,description=Optional name server set (requires special permission from your TAM at Google)"`
+	ProjectId     string          `json:"project_id,omitempty" happydomain:"label=Project ID,placeholder=my-project-id,required,description=Google Cloud project ID"`
+	PrivateKey    happydns.Secret `json:"private_key,omitzero" happydomain:"label=Private Key,placeholder=-----BEGIN PRIVATE KEY-----...,secret,description=Service account private key in PEM format"`
+	ClientEmail   string          `json:"client_email,omitempty" happydomain:"label=Client Email,placeholder=service-account@project-id.iam.gserviceaccount.com,description=Service account email address"`
+	NameServerSet string          `json:"name_server_set,omitempty" happydomain:"label=Name Server Set,placeholder=,description=Optional name server set (requires special permission from your TAM at Google)"`
 }
 
 func (s *GCloudAPI) DNSControlName() string {
@@ -47,7 +47,7 @@ func (s *GCloudAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 func (s *GCloudAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
 		"project_id":      s.ProjectId,
-		"private_key":     s.PrivateKey,
+		"private_key":     s.PrivateKey.Reveal(),
 		"client_email":    s.ClientEmail,
 		"name_server_set": s.NameServerSet,
 	}, nil

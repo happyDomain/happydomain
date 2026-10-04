@@ -30,7 +30,7 @@ import (
 )
 
 type NS1API struct {
-	Token string `json:"api_token,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxxxx,required,secret,description=NS1 API token"`
+	Token happydns.Secret `json:"api_token,omitzero" happydomain:"label=API Key,placeholder=xxxxxxxxxx,required,secret,description=NS1 API token"`
 }
 
 func (s *NS1API) DNSControlName() string {
@@ -43,7 +43,7 @@ func (s *NS1API) InstantiateProvider() (happydns.ProviderActuator, error) {
 
 func (s *NS1API) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"api_token": s.Token,
+		"api_token": s.Token.Reveal(),
 	}, nil
 }
 

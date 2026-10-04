@@ -30,8 +30,8 @@ import (
 )
 
 type PorkbunAPI struct {
-	APIKey    string `json:"api_key,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxxxx,required,description=Get your API key on https://porkbun.com/account/api."`
-	SecretKey string `json:"secret_key,omitempty" happydomain:"label=Secret Key,placeholder=xxxxxxxxxx,required,secret,description=Write the secret key corresponding to your API key."`
+	APIKey    string          `json:"api_key,omitempty" happydomain:"label=API Key,placeholder=xxxxxxxxxx,required,description=Get your API key on https://porkbun.com/account/api."`
+	SecretKey happydns.Secret `json:"secret_key,omitzero" happydomain:"label=Secret Key,placeholder=xxxxxxxxxx,required,secret,description=Write the secret key corresponding to your API key."`
 }
 
 func (s *PorkbunAPI) DNSControlName() string {
@@ -45,7 +45,7 @@ func (s *PorkbunAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 func (s *PorkbunAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
 		"api_key":    s.APIKey,
-		"secret_key": s.SecretKey,
+		"secret_key": s.SecretKey.Reveal(),
 	}, nil
 }
 

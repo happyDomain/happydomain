@@ -30,7 +30,7 @@ import (
 )
 
 type PacketframeAPI struct {
-	Token string `json:"token,omitempty" happydomain:"label=Token,placeholder=xxxxxxxx,required,secret,description=Your Packetframe Token."`
+	Token happydns.Secret `json:"token,omitzero" happydomain:"label=Token,placeholder=xxxxxxxx,required,secret,description=Your Packetframe Token."`
 }
 
 func (s *PacketframeAPI) DNSControlName() string {
@@ -43,7 +43,7 @@ func (s *PacketframeAPI) InstantiateProvider() (happydns.ProviderActuator, error
 
 func (s *PacketframeAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"token": s.Token,
+		"token": s.Token.Reveal(),
 	}, nil
 }
 

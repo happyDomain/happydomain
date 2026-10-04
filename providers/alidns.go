@@ -30,9 +30,9 @@ import (
 )
 
 type AliDNSAPI struct {
-	AccessKeyID     string `json:"access_key_id,omitempty" happydomain:"label=Access Key ID,required"`
-	AccessKeySecret string `json:"access_key_secret,omitempty" happydomain:"label=Access Key Secret,required,secret"`
-	RegionID        string `json:"region_id,omitempty" happydomain:"label=Region ID,placeholder=cn-hangzhou,description=Defaults to cn-hangzhou if not specified"`
+	AccessKeyID     string          `json:"access_key_id,omitempty" happydomain:"label=Access Key ID,required"`
+	AccessKeySecret happydns.Secret `json:"access_key_secret,omitzero" happydomain:"label=Access Key Secret,required,secret"`
+	RegionID        string          `json:"region_id,omitempty" happydomain:"label=Region ID,placeholder=cn-hangzhou,description=Defaults to cn-hangzhou if not specified"`
 }
 
 func (s *AliDNSAPI) DNSControlName() string {
@@ -46,7 +46,7 @@ func (s *AliDNSAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 func (s *AliDNSAPI) ToDNSControlConfig() (map[string]string, error) {
 	config := map[string]string{
 		"access_key_id":     s.AccessKeyID,
-		"access_key_secret": s.AccessKeySecret,
+		"access_key_secret": s.AccessKeySecret.Reveal(),
 	}
 
 	if s.RegionID != "" {

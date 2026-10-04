@@ -30,8 +30,8 @@ import (
 )
 
 type NamecheapAPI struct {
-	APIKey  string `json:"apikey,omitempty" happydomain:"label=API Key,placeholder=yourApiKeyFromNameCheap,required,secret,description=Namecheap API key"`
-	APIUser string `json:"apiuser,omitempty" happydomain:"label=API User,placeholder=yourUsername,required,description=Namecheap account username"`
+	APIKey  happydns.Secret `json:"apikey,omitzero" happydomain:"label=API Key,placeholder=yourApiKeyFromNameCheap,required,secret,description=Namecheap API key"`
+	APIUser string          `json:"apiuser,omitempty" happydomain:"label=API User,placeholder=yourUsername,required,description=Namecheap account username"`
 }
 
 func (s *NamecheapAPI) DNSControlName() string {
@@ -44,7 +44,7 @@ func (s *NamecheapAPI) InstantiateProvider() (happydns.ProviderActuator, error) 
 
 func (s *NamecheapAPI) ToDNSControlConfig() (map[string]string, error) {
 	return map[string]string{
-		"apikey":  s.APIKey,
+		"apikey":  s.APIKey.Reveal(),
 		"apiuser": s.APIUser,
 	}, nil
 }
