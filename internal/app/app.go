@@ -42,6 +42,7 @@ import (
 
 	"git.happydns.org/happyDomain/internal/captcha"
 	notifPkg "git.happydns.org/happyDomain/internal/notifier"
+	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/pkg/favicon"
@@ -94,6 +95,7 @@ type App struct {
 	mailer          happydns.Mailer
 	newsletter      happydns.NewsletterSubscriptor
 	router          *gin.Engine
+	secrets         *secret.Manager
 	srv             *http.Server
 	store           storage.Storage
 	usecases        Usecases
@@ -107,6 +109,7 @@ func NewApp(cfg *happydns.Options) *App {
 	app.initGuards()
 	app.initMailer()
 	app.initStorageEngine()
+	app.initSecrets()
 	app.initNewsletter()
 	app.initInsights()
 	if err := app.initPlugins(); err != nil {
@@ -127,6 +130,7 @@ func NewAppWithStorage(cfg *happydns.Options, store storage.Storage) *App {
 
 	app.initGuards()
 	app.initMailer()
+	app.initSecrets()
 	app.initNewsletter()
 	if err := app.initPlugins(); err != nil {
 		log.Fatalf("Plugin initialization error: %s", err)

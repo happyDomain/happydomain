@@ -22,11 +22,13 @@
 package backup
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 
 	"git.happydns.org/happyDomain/internal/forms"
+	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/internal/storage"
 	providerUC "git.happydns.org/happyDomain/internal/usecase/provider"
 	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
@@ -41,6 +43,7 @@ type ChannelRedactor interface {
 
 type Usecase struct {
 	store    storage.Storage
+	secrets  *secret.Manager
 	redactor ChannelRedactor
 }
 
@@ -52,8 +55,8 @@ func WithChannelRedactor(r ChannelRedactor) Option {
 	return func(u *Usecase) { u.redactor = r }
 }
 
-func NewUsecase(store storage.Storage, opts ...Option) *Usecase {
-	u := &Usecase{store: store}
+func NewUsecase(store storage.Storage, secrets *secret.Manager, opts ...Option) *Usecase {
+	u := &Usecase{store: store, secrets: secrets}
 	for _, opt := range opts {
 		opt(u)
 	}
@@ -424,7 +427,7 @@ func (u *Usecase) BackupUser(user *happydns.User) happydns.Backup {
 	return ret
 }
 
-func (u *Usecase) Restore(backup *happydns.Backup) error {
+func (u *Usecase) Restore(ctx context.Context, backup *happydns.Backup) error {
 	if current := u.store.SchemaVersion(); backup.Version != 0 && backup.Version != current {
 		return fmt.Errorf("backup schema version %d does not match current database schema version %d", backup.Version, current)
 	}
@@ -448,6 +451,13 @@ func (u *Usecase) Restore(backup *happydns.Backup) error {
 		p, err := providerUC.ParseProvider(provider)
 		if err != nil {
 			errs = errors.Join(errs, err)
+			continue
+		}
+
+		// Sealed values are restored as they are; clear ones, from a backup
+		// taken before sealing existed, are sealed under the current policy.
+		if err := u.secrets.SealObject(ctx, providerUC.SecretContext(p), p.Provider); err != nil {
+			errs = errors.Join(errs, fmt.Errorf("provider %s: %w", p.Id.String(), err))
 			continue
 		}
 

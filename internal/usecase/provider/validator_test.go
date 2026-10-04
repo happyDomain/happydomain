@@ -30,6 +30,14 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+// validatedMeta is what a provider carries by the time it is validated: its
+// secrets are bound to its owner and identifier.
+var validatedMeta = happydns.ProviderMeta{
+	Type:  "spyProviderBody",
+	Id:    happydns.Identifier{0x02},
+	Owner: happydns.Identifier{0x01},
+}
+
 // spyProviderBody records whether it was ever instantiated. Whether the
 // endpoint check runs before that happens is the security property under test:
 // several backends dial while being constructed, and the credentials are
@@ -92,10 +100,11 @@ func TestValidatorChecksEndpointBeforeInstantiating(t *testing.T) {
 
 			var reached bool
 			p := &happydns.Provider{
-				Provider: &spyProviderBody{ApiUrl: tt.apiURL, instantiated: &reached},
+				ProviderMeta: validatedMeta,
+				Provider:     &spyProviderBody{ApiUrl: tt.apiURL, instantiated: &reached},
 			}
 
-			err = provider.NewValidator(guard).Validate(t.Context(), p)
+			err = provider.NewValidator(guard, plaintextSecrets(t)).Validate(t.Context(), p)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -127,9 +136,9 @@ func TestValidatorAppliesTheEndpointDefault(t *testing.T) {
 
 	t.Run("an empty field carrying a loopback default is refused", func(t *testing.T) {
 		var reached bool
-		p := &happydns.Provider{Provider: &ddnsLikeBody{instantiated: &reached}}
+		p := &happydns.Provider{ProviderMeta: validatedMeta, Provider: &ddnsLikeBody{instantiated: &reached}}
 
-		if err := provider.NewValidator(guard).Validate(t.Context(), p); err == nil {
+		if err := provider.NewValidator(guard, plaintextSecrets(t)).Validate(t.Context(), p); err == nil {
 			t.Fatal("Validate() = nil: an empty field that means 127.0.0.1 must be checked, not skipped")
 		}
 		if reached {
@@ -139,9 +148,9 @@ func TestValidatorAppliesTheEndpointDefault(t *testing.T) {
 
 	t.Run("an empty field with no default is skipped", func(t *testing.T) {
 		var reached bool
-		p := &happydns.Provider{Provider: &spyProviderBody{instantiated: &reached}}
+		p := &happydns.Provider{ProviderMeta: validatedMeta, Provider: &spyProviderBody{instantiated: &reached}}
 
-		if err := provider.NewValidator(guard).Validate(t.Context(), p); err == nil {
+		if err := provider.NewValidator(guard, plaintextSecrets(t)).Validate(t.Context(), p); err == nil {
 			t.Fatal("Validate() = nil, want the spy's instantiation error")
 		}
 		if !reached {

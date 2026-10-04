@@ -74,7 +74,7 @@ func (bc *BackupController) RestoreJSON(c *gin.Context) {
 		return
 	}
 
-	if err := bc.backup.Restore(&backup); err != nil {
+	if err := bc.backup.Restore(c.Request.Context(), &backup); err != nil {
 		log.Printf("%s restores a backup with errors: %s", c.ClientIP(), err.Error())
 		// An error value encodes in JSON as an empty object: answer its
 		// text, every error of the restore included.

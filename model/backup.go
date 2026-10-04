@@ -21,6 +21,8 @@
 
 package happydns
 
+import "context"
+
 type Backup struct {
 	Version                  int
 	Domains                  []*Domain
@@ -50,5 +52,5 @@ type Backup struct {
 type BackupUsecase interface {
 	Backup() Backup
 	BackupUser(user *User) Backup
-	Restore(*Backup) error
+	Restore(context.Context, *Backup) error
 }

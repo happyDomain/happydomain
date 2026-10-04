@@ -29,6 +29,7 @@ import (
 	"git.happydns.org/happyDomain/internal/mailer"
 	"git.happydns.org/happyDomain/internal/metrics"
 	"git.happydns.org/happyDomain/internal/newsletter"
+	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/internal/storage"
 )
 
@@ -88,6 +89,14 @@ func (app *App) initStorageEngine() {
 
 		metrics.NewStorageStatsCollector(storage.NewStatsProvider(app.store))
 		app.store = newInstrumentedStorage(app.store)
+	}
+}
+
+func (app *App) initSecrets() {
+	var err error
+	app.secrets, err = secret.NewManager(secret.PolicyPlaintext)
+	if err != nil {
+		log.Fatalf("Unable to initialize secret management: %s", err)
 	}
 }
 

@@ -27,6 +27,7 @@ import (
 	"testing"
 
 	providerReg "git.happydns.org/happyDomain/internal/providerregistry"
+	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	"git.happydns.org/happyDomain/internal/usecase/domain"
@@ -124,7 +125,11 @@ func createTestProvider(t *testing.T, store storage.Storage, user *happydns.User
 
 func setupTestService(store storage.Storage) (*domain.Service, *mockDomainLogAppender) {
 	// Create the provider service
-	providerService := providerUC.NewService(store, nil, nil)
+	secrets, err := secret.NewManager(secret.PolicyPlaintext)
+	if err != nil {
+		panic(err)
+	}
+	providerService := providerUC.NewService(store, nil, nil, secrets)
 
 	// Create the zone usecase
 	getZone := zoneUC.NewGetZoneUsecase(store)

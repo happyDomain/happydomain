@@ -22,6 +22,7 @@
 package backup_test
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -53,7 +54,7 @@ func TestBackupRestoreNotifications(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	dump := backup.NewUsecase(src).Backup()
+	dump := backup.NewUsecase(src, plaintextSecrets(t)).Backup()
 	if len(dump.Errors) > 0 {
 		t.Fatalf("backup errors: %v", dump.Errors)
 	}
@@ -75,7 +76,7 @@ func TestBackupRestoreNotifications(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := backup.NewUsecase(dst).Restore(&restored); err != nil {
+	if err := backup.NewUsecase(dst, plaintextSecrets(t)).Restore(context.Background(), &restored); err != nil {
 		t.Fatalf("Restore: %v", err)
 	}
 
@@ -96,7 +97,7 @@ func TestBackupRestoreNotifications(t *testing.T) {
 	}
 
 	// Restored again over itself: still one of each.
-	if err := backup.NewUsecase(dst).Restore(&restored); err != nil {
+	if err := backup.NewUsecase(dst, plaintextSecrets(t)).Restore(context.Background(), &restored); err != nil {
 		t.Fatalf("second Restore: %v", err)
 	}
 	if chs, _ := dst.ListChannelsByUser(user.Id); len(chs) != 1 {
@@ -123,7 +124,7 @@ func TestBackupUserRedactsChannelSecrets(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ret := backup.NewUsecase(db, backup.WithChannelRedactor(exportRegistry())).BackupUser(user)
+	ret := backup.NewUsecase(db, plaintextSecrets(t), backup.WithChannelRedactor(exportRegistry())).BackupUser(user)
 	if len(ret.Errors) > 0 {
 		t.Fatalf("export errors: %v", ret.Errors)
 	}
@@ -156,7 +157,7 @@ func TestBackupUserWithholdsUnknownChannelConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ret := backup.NewUsecase(db, backup.WithChannelRedactor(exportRegistry())).BackupUser(user)
+	ret := backup.NewUsecase(db, plaintextSecrets(t), backup.WithChannelRedactor(exportRegistry())).BackupUser(user)
 	if len(ret.NotificationChannels) != 1 {
 		t.Fatalf("export holds %d channels, want 1", len(ret.NotificationChannels))
 	}
@@ -172,7 +173,7 @@ func TestBackupUserWithoutRedactorCarriesNoChannel(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ret := backup.NewUsecase(db).BackupUser(user)
+	ret := backup.NewUsecase(db, plaintextSecrets(t)).BackupUser(user)
 	if len(ret.NotificationChannels) != 0 {
 		t.Errorf("the user export carries %d channels", len(ret.NotificationChannels))
 	}
@@ -193,7 +194,7 @@ func TestBackupRestoreNotificationStatesAndRecords(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	dump := backup.NewUsecase(src).Backup()
+	dump := backup.NewUsecase(src, plaintextSecrets(t)).Backup()
 	if len(dump.Errors) > 0 {
 		t.Fatalf("backup errors: %v", dump.Errors)
 	}
@@ -214,7 +215,7 @@ func TestBackupRestoreNotificationStatesAndRecords(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := backup.NewUsecase(dst).Restore(&restored); err != nil {
+	if err := backup.NewUsecase(dst, plaintextSecrets(t)).Restore(context.Background(), &restored); err != nil {
 		t.Fatalf("Restore: %v", err)
 	}
 
@@ -234,7 +235,7 @@ func TestBackupRestoreNotificationStatesAndRecords(t *testing.T) {
 		t.Errorf("restored record = %+v, want %+v", recs[0], rec)
 	}
 
-	if err := backup.NewUsecase(dst).Restore(&restored); err != nil {
+	if err := backup.NewUsecase(dst, plaintextSecrets(t)).Restore(context.Background(), &restored); err != nil {
 		t.Fatalf("second Restore: %v", err)
 	}
 	if recs, _ := dst.ListRecordsByUser(user.Id, 0); len(recs) != 1 {
@@ -256,7 +257,7 @@ func TestBackupUserCarriesItsStatesAndRecords(t *testing.T) {
 		}
 	}
 
-	ret := backup.NewUsecase(src).BackupUser(user)
+	ret := backup.NewUsecase(src, plaintextSecrets(t)).BackupUser(user)
 	if len(ret.Errors) > 0 {
 		t.Fatalf("backup errors: %v", ret.Errors)
 	}
