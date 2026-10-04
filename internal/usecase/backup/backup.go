@@ -448,6 +448,7 @@ func (u *Usecase) Restore(backup *happydns.Backup) error {
 		p, err := providerUC.ParseProvider(provider)
 		if err != nil {
 			errs = errors.Join(errs, err)
+			continue
 		}
 
 		errs = errors.Join(errs, u.store.UpdateProvider(p))

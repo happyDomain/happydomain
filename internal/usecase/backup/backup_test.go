@@ -123,3 +123,34 @@ func TestBackupKeepsProviderSecrets(t *testing.T) {
 		t.Errorf("admin backup lost the key material: %s", ret.Providers[0].Provider)
 	}
 }
+
+// A provider of a type this build does not know, from a backup taken by
+// another version say, is reported and skipped, the others still restored.
+func TestRestoreSkipsUnparsableProvider(t *testing.T) {
+	src, _ := seed(t)
+	dump := backup.NewUsecase(src).Backup()
+	if len(dump.Providers) != 1 {
+		t.Fatalf("backup carries %d providers, want 1", len(dump.Providers))
+	}
+	good := dump.Providers[0]
+
+	bad := *good
+	bad.Id = happydns.Identifier([]byte("unknown-provider"))
+	bad.Type = "NoSuchProvider"
+	dump.Providers = append([]*happydns.ProviderMessage{&bad}, dump.Providers...)
+
+	dst, err := inmemory.Instantiate()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := backup.NewUsecase(dst).Restore(&dump); err == nil {
+		t.Error("Restore of an unknown provider type succeeded, want an error")
+	}
+
+	if _, err := dst.GetProvider(good.Id); err != nil {
+		t.Errorf("the known provider was not restored: %v", err)
+	}
+	if _, err := dst.GetProvider(bad.Id); err == nil {
+		t.Error("the unknown provider was stored")
+	}
+}
