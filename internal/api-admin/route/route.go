@@ -52,6 +52,7 @@ type Dependencies struct {
 	CheckerOptionsUC      *checkerUC.CheckerOptionsUsecase
 	CheckScheduler        *checkerUC.Scheduler
 	TidyUp                happydns.TidyUpUseCase
+	Purge                 happydns.PurgeUsecase
 }
 
 func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, dep Dependencies) {

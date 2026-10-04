@@ -104,6 +104,7 @@ func NewAdmin(app *App) *Admin {
 			CheckerOptionsUC:      app.usecases.checkerOptionsUC,
 			CheckScheduler:        app.usecases.checkerScheduler,
 			TidyUp:                usecase.NewTidyUpUsecase(app.store),
+			Purge:                 usecase.NewPurgeUsecase(app.store),
 		},
 	)
 	web.DeclareRoutes(app.cfg, router)

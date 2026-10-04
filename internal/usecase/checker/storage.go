@@ -124,6 +124,15 @@ type ObservationSnapshotStorage interface {
 	ClearSnapshots() error
 }
 
+// CheckerHistoryPurger wipes every piece of data the checkers produce and
+// recreate on their next run: executions, evaluations, observation
+// snapshots, the observation cache and discovery data. Check plans and
+// checker options are kept.
+type CheckerHistoryPurger interface {
+	// PurgeCheckerHistory returns how many keys it deleted.
+	PurgeCheckerHistory() (int, error)
+}
+
 // ObservationCacheStorage provides a lightweight cache mapping (target, observation key)
 // to the snapshot that holds the most recent data.
 type ObservationCacheStorage interface {

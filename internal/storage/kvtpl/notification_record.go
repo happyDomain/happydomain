@@ -160,6 +160,13 @@ func (s *KVStorage) DeleteRecord(recId happydns.Identifier) error {
 	return batch.Commit()
 }
 
+// ClearRecords deletes every notification record with its user index, and
+// returns how many keys it deleted. The index goes first, so that no index
+// entry is left pointing at a missing record.
+func (s *KVStorage) ClearRecords() (int, error) {
+	return s.deleteByPrefixes(notificationRecordUserIndexPrefix, notificationRecordPrimaryPrefix)
+}
+
 func (s *KVStorage) DeleteRecordsOlderThan(before time.Time) error {
 	iter := s.db.Search(notificationRecordPrimaryPrefix)
 	defer iter.Release()

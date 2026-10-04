@@ -331,14 +331,58 @@ func (s *KVStorage) tidyValueIndex(prefix, label string, entityExists func(happy
 
 // clearByPrefix deletes all KV entries matching the given prefix.
 func (s *KVStorage) clearByPrefix(prefix string) error {
-	iter := s.db.Search(prefix)
-	defer iter.Release()
-	for iter.Next() {
-		if err := s.db.Delete(iter.Key()); err != nil {
-			return err
+	_, err := s.deleteByPrefixes(prefix)
+	return err
+}
+
+// deleteBatchSize bounds how many deletes deleteByPrefixes stages in one
+// batch, so a purge of millions of keys does not hold them all in memory.
+const deleteBatchSize = 1000
+
+// deleteByPrefixes deletes every KV entry matching one of the given
+// prefixes, in batches, and returns how many keys it deleted.
+func (s *KVStorage) deleteByPrefixes(prefixes ...string) (int, error) {
+	n := 0
+	for _, prefix := range prefixes {
+		iter := s.db.Search(prefix)
+		batch := s.db.NewBatch()
+		staged := 0
+		for iter.Next() {
+			batch.Delete(iter.Key())
+			staged++
+			if staged == deleteBatchSize {
+				if err := batch.Commit(); err != nil {
+					iter.Release()
+					return n, err
+				}
+				n += staged
+				batch = s.db.NewBatch()
+				staged = 0
+			}
+		}
+		err := iter.Err()
+		iter.Release()
+		if err != nil {
+			return n, err
+		}
+		if staged > 0 {
+			if err := batch.Commit(); err != nil {
+				return n, err
+			}
+			n += staged
 		}
 	}
-	return nil
+	return n, nil
+}
+
+// Compact asks the backend to reclaim the space left by deleted keys. It
+// reports false when the backend has no such operation.
+func (s *KVStorage) Compact() (bool, error) {
+	c, ok := s.db.(interface{ Compact() error })
+	if !ok {
+		return false, nil
+	}
+	return true, c.Compact()
 }
 
 // countByPrefix counts the number of keys matching the given prefix without

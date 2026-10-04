@@ -56,6 +56,7 @@
         return formatDuration(Math.floor((sec * 1e9) / unitNs) * unitNs);
     }
     import DatabaseBackupCard from "./DatabaseBackupCard.svelte";
+    import PurgeCard from "./PurgeCard.svelte";
     import TidyCard from "./TidyCard.svelte";
 
     let metrics: Metrics | undefined = $state();
@@ -169,29 +170,22 @@
                 <Icon name="speedometer2" class="text-primary"></Icon>
                 Admin Dashboard
             </h1>
-            <p class="text-muted mb-0">
-                Live telemetry from <code>/metrics</code>, refreshed every 15s.
-            </p>
+            <ul class="list-inline text-muted small mb-0">
+                {#if buildVersion}
+                    <li class="list-inline-item">
+                        <Icon name="tag" class="me-1"
+                        ></Icon>{#if !buildVersion?.startsWith("v")}v{/if}{buildVersion}
+                    </li>
+                {/if}
+                <li class="list-inline-item">
+                    <i class="bi bi-clock me-1"></i>uptime {fmtSeconds(uptime)}
+                </li>
+            </ul>
         </div>
         <Button type="button" color="secondary" outline disabled={isRefreshing} on:click={refresh}>
             <Icon name="arrow-repeat" class="me-1 {isRefreshing ? 'spin' : ''}"></Icon>
             Refresh
         </Button>
-    </div>
-
-    <div class="d-flex flex-wrap gap-2 mb-4">
-        {#if buildVersion}
-            <Badge class="bg-secondary-subtle text-secondary-emphasis border">
-                <Icon name="tag" class="me-1"></Icon>v{buildVersion}
-            </Badge>
-        {/if}
-        <Badge class="bg-secondary-subtle text-secondary-emphasis border tnum">
-            <i class="bi bi-clock me-1"></i>uptime {fmtSeconds(uptime)}
-        </Badge>
-        <Badge class="bg-success-subtle text-success-emphasis border tnum">
-            <Icon name="broadcast" class="me-1"></Icon>
-            {lastUpdated ? `updated ${lastUpdated.toLocaleTimeString()}` : "connecting…"}
-        </Badge>
     </div>
 
     {#if metricsError}
@@ -201,7 +195,12 @@
         </Alert>
     {/if}
 
-    <h2 class="h5 text-muted text-uppercase small fw-bold mt-4 mb-3">Inventory</h2>
+    <div class="d-flex justify-content-between align-items-center gap-2 mt-4 mb-3 text-muted">
+        <h2 class="h5 text-uppercase small fw-bold mb-0">Inventory</h2>
+        <small>
+            {lastUpdated ? `updated ${lastUpdated.toLocaleTimeString()}` : "connecting…"}
+        </small>
+    </div>
     <div class="row row-cols-2 row-cols-lg-4 g-3 mb-4">
         {@render tile("Users", fmt(totalUsers), "registered", "people-fill", "primary")}
         {@render tile("Domains", fmt(totalDomains), "managed", "globe2", "primary")}
@@ -282,9 +281,18 @@
         </Card>
     </Collapse>
 
-    <TidyCard class="my-4" />
-
-    <DatabaseBackupCard class="my-4" />
+    <section class="my-4">
+        <h2 class="h4 mb-3">Database Management</h2>
+        <div class="row g-3">
+            <div class="col-lg-6 d-flex flex-column gap-3">
+                <DatabaseBackupCard />
+                <TidyCard />
+            </div>
+            <div class="col-lg-6">
+                <PurgeCard />
+            </div>
+        </div>
+    </section>
 </Container>
 
 <style>

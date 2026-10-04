@@ -1,5 +1,5 @@
 // This file is part of the happyDomain (R) project.
-// Copyright (c) 2020-2024 happyDomain
+// Copyright (c) 2020-2026 happyDomain
 // Authors: Pierre-Olivier Mercier, et al.
 //
 // This program is offered under a commercial and under the AGPL license.
@@ -19,20 +19,29 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package route
+package database
 
-import (
-	"github.com/gin-gonic/gin"
-
-	"git.happydns.org/happyDomain/internal/api-admin/controller"
-)
-
-func declareTidyRoutes(router *gin.RouterGroup, dep Dependencies) {
-	tc := controller.NewTidyController(dep.TidyUp)
-
-	router.POST("/tidy", tc.TidyDB)
-
-	pc := controller.NewPurgeController(dep.Purge)
-
-	router.POST("/purge", pc.Purge)
+// PurgeCheckerHistory deletes everything the checkers recreate on their next
+// run. Observation cache entries and discovery observation refs point at
+// snapshots, so they go with them. Check plans and checker options are kept.
+func (s *KVStorage) PurgeCheckerHistory() (int, error) {
+	// Indexes go before the primaries they point at, so that a purge that
+	// fails, or a write landing while it runs, leaves no index pointing at
+	// a missing key.
+	return s.deleteByPrefixes(
+		ExecutionByCheckerIndexPrefix,
+		ExecutionByDomainIndexPrefix,
+		ExecutionByPlanIndexPrefix,
+		ExecutionByUserIndexPrefix,
+		ExecutionPrimaryPrefix,
+		evaluationByPlanIndexPrefix,
+		evaluationByCheckerIndexPrefix,
+		evaluationPrimaryPrefix,
+		discoveryTargetIndex,
+		discoveryPrimaryPrefix,
+		"dscobs-snap|",
+		"dscobs|",
+		observationSnapshotPrefix,
+		observationCachePrefix,
+	)
 }

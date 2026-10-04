@@ -44,6 +44,7 @@ var entityMap = map[string]string{
 	"CheckPlanStorage":         "check_plan",
 	"CheckerOptionsStorage":    "check_config",
 	"CheckEvaluationStorage":   "check_evaluation",
+	"CheckerHistoryPurger":     "checker_history",
 	"ExecutionStorage":         "execution",
 	"DiscoveryEntryStorage":       "discovery_entry",
 	"DiscoveryObservationStorage": "discovery_observation",
@@ -70,6 +71,7 @@ var operationOverrides = map[string]string{
 	"LastInsightsRun":         "get",
 	"CreateOrUpdateUser":      "update",
 	"ReplaceDiscoveryEntries": "update",
+	"PurgeCheckerHistory":     "delete",
 }
 
 // skipMethods lists methods that should be passed through without instrumentation.
@@ -77,6 +79,7 @@ var skipMethods = map[string]bool{
 	"SchemaVersion": true,
 	"MigrateSchema": true,
 	"Close":         true,
+	"Compact":       true,
 }
 
 func main() {

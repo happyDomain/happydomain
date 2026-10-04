@@ -105,37 +105,35 @@
     }
 </script>
 
-<section class={className}>
-    <h2 class="h4 mb-3">Database Management</h2>
-    <div class="card">
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <button type="button" class="btn btn-primary w-100" onclick={downloadBackup}>
-                        <i class="bi bi-download me-2"></i>
-                        Download Database Backup
+<div class="card {className}">
+    <div class="card-body">
+        <h3 class="h5 mb-3">Backup and restore</h3>
+        <div class="row g-3">
+            <div class="col-12">
+                <button type="button" class="btn btn-primary w-100" onclick={downloadBackup}>
+                    <i class="bi bi-download me-2"></i>
+                    Download Database Backup
+                </button>
+            </div>
+            <div class="col-12">
+                <div class="input-group">
+                    <input
+                        type="file"
+                        class="form-control"
+                        accept=".json"
+                        onchange={handleFileChange}
+                    />
+                    <button
+                        type="button"
+                        class="btn btn-primary"
+                        disabled={file == null}
+                        onclick={restoreBackup}
+                    >
+                        <i class="bi bi-upload me-2"></i>
+                        Restore
                     </button>
-                </div>
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <input
-                            type="file"
-                            class="form-control"
-                            accept=".json"
-                            onchange={handleFileChange}
-                        />
-                        <button
-                            type="button"
-                            class="btn btn-primary"
-                            disabled={file == null}
-                            onclick={restoreBackup}
-                        >
-                            <i class="bi bi-upload me-2"></i>
-                            Restore
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>
     </div>
-</section>
+</div>

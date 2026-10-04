@@ -45,6 +45,7 @@ type Storage interface {
 	checker.CheckPlanStorage
 	checker.CheckerOptionsStorage
 	checker.CheckEvaluationStorage
+	checker.CheckerHistoryPurger
 	checker.ExecutionStorage
 	checker.DiscoveryEntryStorage
 	checker.DiscoveryObservationStorage
@@ -68,6 +69,10 @@ type Storage interface {
 
 	// DoMigration is the first function called.
 	MigrateSchema() error
+
+	// Compact asks the backend to reclaim the space left by deleted keys.
+	// It reports false when the backend has no such operation.
+	Compact() (bool, error)
 
 	// Close shutdown the connection with the database and releases all structure.
 	Close() error

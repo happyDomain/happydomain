@@ -54,22 +54,20 @@
     }
 </script>
 
-<section class={className}>
-    <h2 class="h4 mb-3">Database Maintenance</h2>
-    <div class="card">
-        <div class="card-body">
-            <p class="text-muted mb-3">
-                Performs cleanup and maintenance operations on the database, removing orphaned records and optimizing storage.
-            </p>
-            <button
-                type="button"
-                class="btn btn-primary"
-                disabled={isProcessing}
-                onclick={tidyDatabase}
-            >
-                <i class="bi bi-arrow-repeat me-2"></i>
-                {isProcessing ? "Processing..." : "Tidy Database"}
-            </button>
-        </div>
+<div class="card {className}">
+    <div class="card-body">
+        <h3 class="h5 mb-3">Tidy</h3>
+        <p class="text-muted mb-3">
+            Performs cleanup and maintenance operations on the database, removing orphaned records and optimizing storage.
+        </p>
+        <button
+            type="button"
+            class="btn btn-primary"
+            disabled={isProcessing}
+            onclick={tidyDatabase}
+        >
+            <i class="bi bi-arrow-repeat me-2"></i>
+            {isProcessing ? "Processing..." : "Tidy Database"}
+        </button>
     </div>
-</section>
+</div>

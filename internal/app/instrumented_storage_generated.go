@@ -90,6 +90,11 @@ func (s *instrumentedStorage) ClearProviders() (err error) {
 	return s.inner.ClearProviders()
 }
 
+func (s *instrumentedStorage) ClearRecords() (ret int, err error) {
+	defer observe("delete", "notification_record")(&err)
+	return s.inner.ClearRecords()
+}
+
 func (s *instrumentedStorage) ClearSessions() (err error) {
 	defer observe("delete", "session")(&err)
 	return s.inner.ClearSessions()
@@ -111,6 +116,8 @@ func (s *instrumentedStorage) ClearZones() (err error) {
 }
 
 func (s *instrumentedStorage) Close() error { return s.inner.Close() }
+
+func (s *instrumentedStorage) Compact() (bool, error) { return s.inner.Compact() }
 
 func (s *instrumentedStorage) CountDomains() (ret int, err error) {
 	defer observe("count", "domain")(&err)
@@ -628,6 +635,11 @@ func (s *instrumentedStorage) ListUserSessions(userid happydns.Identifier) (ret 
 }
 
 func (s *instrumentedStorage) MigrateSchema() error { return s.inner.MigrateSchema() }
+
+func (s *instrumentedStorage) PurgeCheckerHistory() (ret int, err error) {
+	defer observe("delete", "checker_history")(&err)
+	return s.inner.PurgeCheckerHistory()
+}
 
 func (s *instrumentedStorage) PutCachedObservation(target happydns.CheckTarget, key happydns.ObservationKey, entry *happydns.ObservationCacheEntry) (err error) {
 	defer observe("put", "observation_cache")(&err)

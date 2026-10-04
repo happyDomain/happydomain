@@ -75,6 +75,9 @@ type NotificationRecordStorage interface {
 	// stored under it, as a backup restore does.
 	RestoreRecord(rec *happydns.NotificationRecord) error
 	DeleteRecordsOlderThan(before time.Time) error
+	// ClearRecords deletes the records of every user and returns how many
+	// keys it deleted.
+	ClearRecords() (int, error)
 	// DeleteRecord removes one record with its user index entry, a record
 	// already gone being no error.
 	DeleteRecord(recId happydns.Identifier) error
