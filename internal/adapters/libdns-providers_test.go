@@ -398,3 +398,74 @@ func TestLibdnsAdapterSkipsPseudoTypesOnImport(t *testing.T) {
 		t.Errorf("got %d corrections, want none: %v", nb, corrections)
 	}
 }
+
+// providerRecord stands for the concrete type a real libdns provider hands
+// back, carrying the identifier it needs to delete the record afterwards.
+type providerRecord struct {
+	rr libdns.RR
+	id string
+}
+
+func (p providerRecord) RR() libdns.RR { return p.rr }
+
+// TestLibdnsAdapterDeleteKeepsProviderRecord checks a deletion is asked with
+// the very record the provider gave us, and not with the plain libdns.RR the
+// conversion rebuilds: providers identify the record to delete by the data they
+// attached to it, which only their own type carries.
+//
+// The records below are all spelled the way a provider may spell them, rather
+// than the way miekg/dns writes them back.
+func TestLibdnsAdapterDeleteKeepsProviderRecord(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		rrType string
+		data   string
+	}{
+		{"absolute target", "MX", "10 mail.example.com."},
+		{"relative target", "MX", "10 mail"},
+		{"relative CNAME target", "CNAME", "target"},
+		{"quoted TXT", "TXT", `"hello world"`},
+		{"unquoted TXT", "TXT", "hello world"},
+		{"TXT in several strings", "TXT", `"part one " "part two"`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			original := providerRecord{
+				rr: libdns.RR{Name: "sub", TTL: 300 * time.Second, Type: tc.rrType, Data: tc.data},
+				id: "provider-id-42",
+			}
+
+			mock := &mockLibdnsProvider{records: []libdns.Record{original}}
+			adapter, err := NewLibdnsProviderAdapter(&mockLibdnsConfig{provider: mock})
+			if err != nil {
+				t.Fatalf("NewLibdnsProviderAdapter: %v", err)
+			}
+
+			// An empty desired zone: the record has to be deleted.
+			corrections, nb, err := adapter.GetZoneCorrections("example.com", nil)
+			if err != nil {
+				t.Fatalf("GetZoneCorrections: %v", err)
+			}
+			if nb != 1 {
+				t.Fatalf("got %d corrections, expected the deletion alone", nb)
+			}
+			if corrections[0].Kind != happydns.CorrectionKindDeletion {
+				t.Fatalf("correction kind is %v, expected a deletion", corrections[0].Kind)
+			}
+
+			if err := corrections[0].F(); err != nil {
+				t.Fatalf("applying the correction: %v", err)
+			}
+
+			if len(mock.deleted) != 1 {
+				t.Fatalf("%d records deleted, expected 1", len(mock.deleted))
+			}
+			deleted, ok := mock.deleted[0].(providerRecord)
+			if !ok {
+				t.Fatalf("the deletion was asked with a %T rebuilt from the diff (%v), not with the record the provider gave us", mock.deleted[0], mock.deleted[0].RR())
+			}
+			if deleted.id != original.id {
+				t.Errorf("the deleted record carries the id %q, expected %q", deleted.id, original.id)
+			}
+		})
+	}
+}
