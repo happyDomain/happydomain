@@ -86,8 +86,8 @@ func (psc *ProviderSettingsController) NextProviderSettingsState(c *gin.Context)
 	}
 
 	if provider != nil {
-		// The wizard is done and the provider was read back from the store, so
-		// this body carries stored credentials.
+		// The wizard is done and the provider is the one just written to the
+		// store, so this body carries stored credentials.
 		forms.RedactSecrets(provider.Provider)
 		c.JSON(http.StatusOK, provider)
 	} else {

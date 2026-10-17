@@ -561,7 +561,7 @@ func Test_UpdateProvider_RedactedRoundTripKeepsSecret(t *testing.T) {
 	msg := readBackAsClient(t, stored)
 	msg.Comment = "Renamed"
 
-	if err := providerService.UpdateProviderFromMessage(ctx, created.Id, user, msg); err != nil {
+	if _, err := providerService.UpdateProviderFromMessage(ctx, created.Id, user, msg); err != nil {
 		t.Fatalf("unexpected error updating provider: %v", err)
 	}
 
@@ -609,7 +609,7 @@ func Test_UpdateProvider_NewSecretWins(t *testing.T) {
 		t.Fatalf("failed to encode submitted body: %v", err)
 	}
 
-	if err := providerService.UpdateProviderFromMessage(ctx, created.Id, user, msg); err != nil {
+	if _, err := providerService.UpdateProviderFromMessage(ctx, created.Id, user, msg); err != nil {
 		t.Fatalf("unexpected error updating provider: %v", err)
 	}
 
@@ -621,6 +621,56 @@ func Test_UpdateProvider_NewSecretWins(t *testing.T) {
 	body := updated.Provider.(*providers.DDNSServer)
 	if !bytes.Equal(body.KeyBlob, []byte("rotated")) {
 		t.Errorf("KeyBlob = %q, want the newly submitted value", body.KeyBlob)
+	}
+}
+
+// An update gives back the provider as written: its callers answer with it
+// rather than read it again.
+func Test_UpdateProviderFromMessage_ReturnsTheWrittenProvider(t *testing.T) {
+	providerService, db := newTestService(t)
+
+	user := createTestUser(t, db, "returned@example.com")
+	created, err := providerService.CreateProvider(ctx, user, createTestProviderMessage(t, "DDNSServer", "Test Provider"))
+	if err != nil {
+		t.Fatalf("unexpected error creating provider: %v", err)
+	}
+
+	msg := createTestProviderMessage(t, "DDNSServer", "Renamed")
+	var submitted providers.DDNSServer
+	if err := json.Unmarshal(msg.Provider, &submitted); err != nil {
+		t.Fatalf("failed to decode submitted body: %v", err)
+	}
+	submitted.KeyBlob = []byte("rotated")
+	if msg.Provider, err = json.Marshal(&submitted); err != nil {
+		t.Fatalf("failed to encode submitted body: %v", err)
+	}
+
+	updated, err := providerService.UpdateProviderFromMessage(ctx, created.Id, user, msg)
+	if err != nil {
+		t.Fatalf("unexpected error updating provider: %v", err)
+	}
+
+	if !updated.Id.Equals(created.Id) || !updated.Owner.Equals(user.Id) || updated.Comment != "Renamed" {
+		t.Errorf("returned meta = %+v, want the updated provider", updated.ProviderMeta)
+	}
+
+	stored, err := providerService.GetUserProvider(ctx, user, created.Id)
+	if err != nil {
+		t.Fatalf("unexpected error re-reading provider: %v", err)
+	}
+	got, err := json.Marshal(updated.Provider)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want, err := json.Marshal(stored.Provider)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(got, want) {
+		t.Errorf("returned body = %s, want what is stored: %s", got, want)
+	}
+	if !bytes.Equal(updated.Provider.(*providers.DDNSServer).KeyBlob, []byte("rotated")) {
+		t.Errorf("returned body = %s, want the submitted credential", got)
 	}
 }
 
