@@ -448,3 +448,42 @@ func mustUnwrap(t *testing.T, key *InstanceKey, safe *happydns.Safe) *keyset.Han
 	}
 	return dek
 }
+
+// The entries of a store configured here that reports no keys, as one whose
+// key its owner holds, are no keys missing: they are left out of the key
+// status, unless the store is not configured.
+func TestKeyStatusLeavesOutStoresWithoutKeys(t *testing.T) {
+	store := newMemSafeStorage()
+	safe := happydns.Safe{
+		Id:      happydns.Identifier{0xb0},
+		Owner:   happydns.Identifier{0x01},
+		Kind:    passphraseKind,
+		Name:    "Mine",
+		Keyring: []happydns.WrappedKeyset{{KEK: passphraseKind, Blob: digest("open sesame")}},
+	}
+	if err := store.CreateSafe(&safe); err != nil {
+		t.Fatal(err)
+	}
+
+	keys, err := newTestManager(t, Config{Policy: PolicyPlaintext, Safes: store}).KeyStatus()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, k := range keys {
+		if k.KEK == passphraseKind {
+			t.Errorf("keys = %+v, want no row for a configured store reporting no keys", keys)
+		}
+	}
+
+	keys, err = newTestManager(t, Config{Policy: PolicyPlaintext, Safes: store, Stores: []string{string(PolicyPlaintext)}}).KeyStatus()
+	if err != nil {
+		t.Fatal(err)
+	}
+	missing := false
+	for _, k := range keys {
+		missing = missing || (k.KEK == passphraseKind && k.Status == "MISSING" && k.Safes == 1)
+	}
+	if !missing {
+		t.Errorf("keys = %+v, want the entry of a store not configured MISSING", keys)
+	}
+}

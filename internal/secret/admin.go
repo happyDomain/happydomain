@@ -23,6 +23,7 @@ package secret
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"git.happydns.org/happyDomain/model"
@@ -38,6 +39,10 @@ type Counts struct {
 
 	// Unreadable counts the sealed secrets that do not open.
 	Unreadable int `json:"unreadable"`
+
+	// Locked counts the sealed secrets of keystores only their owners
+	// unlock: whether they open is not known.
+	Locked int `json:"locked"`
 
 	// Undecodable counts the objects that could not be looked at, such as
 	// a provider of a type this version no longer knows. They may hold
@@ -112,6 +117,10 @@ func (m *Manager) inspectOne(ctx context.Context, sc SecretContext, s *happydns.
 		// Cut short, it tells nothing of whether the secret opens.
 		if ctxErr := ctx.Err(); ctxErr != nil {
 			return ctxErr
+		}
+		if errors.Is(err, happydns.ErrKeystoreLocked) {
+			c.Locked++
+			return nil
 		}
 		c.Unreadable++
 		return nil

@@ -102,6 +102,15 @@ func (m *Manager) ownerLock(key string) *sync.Mutex {
 // of its kind, or else through a copy of its key, an entry of its keyring a
 // KEK here unwraps.
 func (m *Manager) unlock(ctx context.Context, safe *happydns.Safe) (UnlockedSafe, error) {
+	// Only what its owner gives opens it: a copy of its key would make
+	// that of no use.
+	if store, ok := m.stores[safe.Kind].(Interactive); ok {
+		if u, ok := m.unlocked.get(UnlockScopeFromContext(ctx), safe); ok {
+			return u, nil
+		}
+		return nil, lockedError(safe, store)
+	}
+
 	var errs []error
 	if store, ok := m.stores[safe.Kind]; ok {
 		u, err := store.Unlock(ctx, safe)
@@ -172,15 +181,36 @@ func (m *Manager) checkSafeKinds() error {
 	return errors.Join(errs...)
 }
 
-// CheckSafe returns an error when this instance cannot open safe, one coming
-// from elsewhere such as a backup: stored, it would only hold values that
-// never open here.
+// CheckSafe returns an error when this instance could not keep safe, one
+// coming from elsewhere such as a backup: stored, it would keep happyDomain
+// from starting, or only hold values that never open here.
+//
+// It asks for what startup asks: a store of its kind, or a copy of its key a
+// store here opens. Beyond that, only the instance keyset, which is held here,
+// is tried: the services of the other stores may not answer at the time of a
+// restore, and the safe only waits for them.
 func (m *Manager) CheckSafe(ctx context.Context, safe *happydns.Safe) error {
 	if m == nil {
 		return errNoManager
 	}
 	if m.safes == nil {
 		return fmt.Errorf("safe %s cannot be kept: no safe storage is configured", safe.Id.String())
+	}
+
+	store, ok := m.stores[safe.Kind]
+	if !ok {
+		if m.hasCopy(safe) {
+			return nil
+		}
+		err := fmt.Errorf("safe %s needs the %q secret store, which is not enabled or not configured", safe.Id.String(), safe.Kind)
+		if why, ok := m.unavailable[safe.Kind]; ok {
+			err = fmt.Errorf("%w: %w", err, why)
+		}
+		return err
+	}
+
+	if _, ok := store.(*instanceStore); !ok {
+		return nil
 	}
 	_, err := m.unlock(ctx, safe)
 	return err

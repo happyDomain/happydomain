@@ -24,6 +24,7 @@ package secrettest
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -133,5 +134,124 @@ func (d *Defaults) DeleteDefaultKeystore(owner happydns.Identifier) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	delete(d.refs, owner.String())
+	return nil
+}
+
+// PassphraseKind is a personal keystore opening with a passphrase its owner
+// gives, at creation and to unlock it: {"passphrase": "..."}.
+const PassphraseKind = "test-passphrase"
+
+// PasswordKind is a personal keystore bound to the login password of its
+// owner: {"password": "..."}.
+const PasswordKind = "test-password"
+
+// WithInteractiveStores returns cfg knowing PassphraseKind and PasswordKind.
+func WithInteractiveStores(cfg secret.Config) secret.Config {
+	return cfg.WithStores(map[string]secret.StoreFactory{
+		PassphraseKind: func(secret.Config) (secret.Store, error) {
+			return interactiveStore{kind: PassphraseKind, field: "passphrase"}, nil
+		},
+		PasswordKind: func(secret.Config) (secret.Store, error) {
+			return passwordStore{interactiveStore{kind: PasswordKind, field: secret.PasswordParam}}, nil
+		},
+	})
+}
+
+// Material returns the JSON object holding value under field, to create or
+// unlock a keystore of PassphraseKind ("passphrase") or PasswordKind
+// ("password").
+func Material(field, value string) json.RawMessage {
+	b, _ := json.Marshal(map[string]string{field: value})
+	return b
+}
+
+func digest(s string) []byte {
+	d := sha256.Sum256([]byte(s))
+	return d[:]
+}
+
+// interactiveStore keeps the digest of what opens its safes in their
+// keyring, as only a test can afford.
+type interactiveStore struct{ kind, field string }
+
+func (s interactiveStore) Unlock(context.Context, *happydns.Safe) (secret.UnlockedSafe, error) {
+	return nil, errors.New("an interactive safe is not opened without its owner")
+}
+
+func (s interactiveStore) UnlockForm() []happydns.Field {
+	return []happydns.Field{{Id: s.field, Type: "string", Secret: true, Required: true}}
+}
+
+func (s interactiveStore) CreateForm() []happydns.Field { return s.UnlockForm() }
+
+func (s interactiveStore) read(raw json.RawMessage) (string, error) {
+	var p map[string]string
+	if err := json.Unmarshal(raw, &p); err != nil {
+		return "", err
+	}
+	if p[s.field] == "" {
+		return "", errors.New(s.field + " is required")
+	}
+	return p[s.field], nil
+}
+
+func (s interactiveStore) Create(_ context.Context, safe *happydns.Safe, params json.RawMessage) error {
+	v, err := s.read(params)
+	if err != nil {
+		return err
+	}
+	safe.Keyring = []happydns.WrappedKeyset{{KEK: s.kind, Blob: digest(v)}}
+	return nil
+}
+
+func (s interactiveStore) open(safe *happydns.Safe, v string) (secret.UnlockedSafe, error) {
+	for _, w := range safe.Keyring {
+		if w.KEK == s.kind && bytes.Equal(w.Blob, digest(v)) {
+			return personalUnlocked{id: safe.Id}, nil
+		}
+	}
+	return nil, secret.ErrWrongUnlockMaterial
+}
+
+func (s interactiveStore) UnlockWith(_ context.Context, safe *happydns.Safe, material json.RawMessage) (secret.UnlockedSafe, error) {
+	v, err := s.read(material)
+	if err != nil {
+		return nil, secret.ErrWrongUnlockMaterial
+	}
+	return s.open(safe, v)
+}
+
+// passwordStore is no Creator: the Manager creates its keystores from the
+// login password alone, through Bind.
+type passwordStore struct{ inner interactiveStore }
+
+func (s passwordStore) Unlock(ctx context.Context, safe *happydns.Safe) (secret.UnlockedSafe, error) {
+	return s.inner.Unlock(ctx, safe)
+}
+
+func (s passwordStore) UnlockForm() []happydns.Field { return s.inner.UnlockForm() }
+
+func (s passwordStore) UnlockWith(ctx context.Context, safe *happydns.Safe, material json.RawMessage) (secret.UnlockedSafe, error) {
+	return s.inner.UnlockWith(ctx, safe, material)
+}
+
+func (s passwordStore) Bind(_ context.Context, safe *happydns.Safe, password string) error {
+	safe.Keyring = []happydns.WrappedKeyset{{KEK: s.inner.kind, Blob: digest(password)}}
+	return nil
+}
+
+func (s passwordStore) UnlockWithPassword(_ context.Context, safe *happydns.Safe, password string) (secret.UnlockedSafe, error) {
+	return s.inner.open(safe, password)
+}
+
+func (s passwordStore) Rebind(_ context.Context, safe *happydns.Safe, old, new string) error {
+	if _, err := s.inner.open(safe, old); err != nil {
+		return err
+	}
+	for i := range safe.Keyring {
+		if safe.Keyring[i].KEK == s.inner.kind {
+			safe.Keyring[i].Blob = digest(new)
+		}
+	}
 	return nil
 }

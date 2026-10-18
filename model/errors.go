@@ -40,6 +40,7 @@ var (
 	ErrProviderNotFound               = errors.New("provider not found")
 	ErrSessionNotFound                = errors.New("session not found")
 	ErrSafeNotFound                   = errors.New("safe not found")
+	ErrKeystoreLocked                 = errors.New("keystore locked")
 	ErrSnapshotNotFound               = errors.New("snapshot not found")
 	ErrUserNotFound                   = errors.New("user not found")
 	ErrUserAlreadyExist               = errors.New("user already exists")
@@ -55,6 +56,9 @@ type ErrorResponse struct {
 
 	// Link is a link that can help the user to fix the error.
 	Link string `json:"href,omitempty"`
+
+	// Locked names the keystore to unlock before trying again.
+	Locked *KeystoreLock `json:"locked,omitempty"`
 }
 
 type HTTPError interface {
@@ -163,4 +167,42 @@ func (err ValidationError) ToErrorResponse() ErrorResponse {
 
 func (err ValidationError) HTTPStatus() int {
 	return http.StatusBadRequest
+}
+
+// KeystoreLock tells which keystore has to be unlocked, and with what.
+type KeystoreLock struct {
+	// Ref names the keystore, see POST /keystores/{ref}/unlock.
+	Ref  string `json:"ref"`
+	Kind string `json:"kind"`
+	Name string `json:"name,omitempty"`
+
+	// Form describes what unlocks it, such as a passphrase.
+	Form []Field `json:"form"`
+}
+
+// KeystoreLockedError is returned when a secret is sealed in a keystore that
+// opens only with what its owner gives, and they have not unlocked it during
+// this session.
+type KeystoreLockedError struct {
+	KeystoreLock
+}
+
+func (err KeystoreLockedError) Error() string {
+	return "keystore " + err.Ref + " is locked: unlock it to go on"
+}
+
+func (err KeystoreLockedError) Is(target error) bool {
+	return target == ErrKeystoreLocked
+}
+
+func (err KeystoreLockedError) ToErrorResponse() ErrorResponse {
+	lock := err.KeystoreLock
+	return ErrorResponse{
+		Message: err.Error(),
+		Locked:  &lock,
+	}
+}
+
+func (err KeystoreLockedError) HTTPStatus() int {
+	return http.StatusLocked
 }

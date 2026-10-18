@@ -23,6 +23,7 @@ package happydns_test
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -397,5 +398,26 @@ func TestPredefinedErrors(t *testing.T) {
 				t.Errorf("Error message = %q; want %q", tt.err.Error(), tt.msg)
 			}
 		})
+	}
+}
+
+func TestKeystoreLockedError(t *testing.T) {
+	err := happydns.KeystoreLockedError{KeystoreLock: happydns.KeystoreLock{
+		Ref:  "abc",
+		Kind: "passphrase",
+		Form: []happydns.Field{{Id: "passphrase", Secret: true}},
+	}}
+	wrapped := fmt.Errorf("unable to open provider credentials: %w", err)
+
+	if !errors.Is(wrapped, happydns.ErrKeystoreLocked) {
+		t.Error("a wrapped KeystoreLockedError is not ErrKeystoreLocked")
+	}
+	var httpErr happydns.HTTPError
+	if !errors.As(wrapped, &httpErr) || httpErr.HTTPStatus() != http.StatusLocked {
+		t.Errorf("HTTPError = %v, want a 423", httpErr)
+	}
+	resp := err.ToErrorResponse()
+	if resp.Locked == nil || resp.Locked.Ref != "abc" || len(resp.Locked.Form) != 1 {
+		t.Errorf("ToErrorResponse = %+v, want the keystore to unlock", resp)
 	}
 }

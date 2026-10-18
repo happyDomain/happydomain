@@ -110,6 +110,25 @@ func TestOpenThroughACopyStaysBound(t *testing.T) {
 
 // A safe whose kind has no store here, but that a copy opens, does not keep
 // happyDomain from starting.
+// A safe of a backup whose kind has no store here, but that a copy opens, is
+// restored, as it does not keep happyDomain from starting.
+func TestCheckSafeAcceptsACopy(t *testing.T) {
+	store := newMemSafeStorage()
+	sc := objectContext()
+	escrowedSafe(t, store, sc, "kept")
+	safe, err := store.GetSafeByOwner(sc.Owner, KindInstance)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := newTestManager(t, Config{Policy: PolicyPlaintext, Safes: store}).CheckSafe(context.Background(), safe); err != nil {
+		t.Errorf("CheckSafe with the escrow store: %v", err)
+	}
+	if err := newTestManager(t, Config{Policy: PolicyPlaintext, Safes: store, Stores: []string{string(PolicyPlaintext), fakeKind}}).CheckSafe(context.Background(), safe); err == nil {
+		t.Error("CheckSafe with neither the instance nor the escrow store succeeded")
+	}
+}
+
 func TestCheckSafeKindsAcceptsACopy(t *testing.T) {
 	store := newMemSafeStorage()
 	escrowedSafe(t, store, objectContext(), "kept")

@@ -158,9 +158,10 @@ type KeyStatus struct {
 // KeyStatus lists the keys of every store that reports them, with the number
 // of safes each wraps. The entries made by a key no longer in its store, or by
 // a store not configured here, are listed with the status MISSING: they do not
-// open. Those whose wrapping key cannot be told, and the safe records that do
-// not decode, are counted under the status UNREADABLE, the latter without a
-// store.
+// open. Those of a store configured here that reports no keys, as one whose
+// key its owner holds, are left out. Those whose wrapping key cannot be told,
+// and the safe records that do not decode, are counted under the status
+// UNREADABLE, the latter without a store.
 func (m *Manager) KeyStatus() ([]KeyStatus, error) {
 	if m == nil || m.safes == nil {
 		return nil, errNoManager
@@ -171,9 +172,14 @@ func (m *Manager) KeyStatus() ([]KeyStatus, error) {
 	unreadable := map[string]int{}
 	err := eachSafe(m.safes, func(safe *happydns.Safe) {
 		for _, w := range safe.Keyring {
-			r, ok := m.stores[w.KEK].(KeyReporter)
+			store, configured := m.stores[w.KEK]
+			r, ok := store.(KeyReporter)
 			if !ok {
-				unreported[w.KEK]++
+				// A store reporting no keys, as one whose key its owner
+				// holds, has none to miss.
+				if !configured {
+					unreported[w.KEK]++
+				}
 				continue
 			}
 			id, err := r.WrappingKey(w)

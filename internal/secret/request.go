@@ -23,7 +23,10 @@ package secret
 
 import "context"
 
-type keystoreKey struct{}
+type (
+	keystoreKey    struct{}
+	unlockScopeKey struct{}
+)
 
 // WithKeystore returns ctx carrying ref, the keystore the request chose for
 // the secrets of the object it writes: see Destination.Keystore.
@@ -39,4 +42,20 @@ func WithKeystore(ctx context.Context, ref string) context.Context {
 func KeystoreFromContext(ctx context.Context) string {
 	ref, _ := ctx.Value(keystoreKey{}).(string)
 	return ref
+}
+
+// WithUnlockScope returns ctx carrying scope, the session of the request: the
+// keystores unlocked during it open for the requests carrying the same scope.
+func WithUnlockScope(ctx context.Context, scope string) context.Context {
+	if scope == "" {
+		return ctx
+	}
+	return context.WithValue(ctx, unlockScopeKey{}, scope)
+}
+
+// UnlockScopeFromContext returns the scope ctx carries, empty for none, as in
+// the background.
+func UnlockScopeFromContext(ctx context.Context) string {
+	scope, _ := ctx.Value(unlockScopeKey{}).(string)
+	return scope
 }

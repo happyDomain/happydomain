@@ -80,6 +80,53 @@ type Creator interface {
 	Create(ctx context.Context, safe *happydns.Safe, params json.RawMessage) error
 }
 
+// Interactive is a Store whose safes only open with what their owner gives,
+// such as a passphrase. Once unlocked, a safe stays open for the session of
+// the request that unlocked it, see Manager.UnlockKeystore; it never opens in
+// the background, nor through a copy of its key under another store.
+type Interactive interface {
+	Store
+
+	// UnlockForm describes what UnlockWith takes, for the owner to fill.
+	UnlockForm() []happydns.Field
+
+	// UnlockWith opens safe with material, a JSON object following
+	// UnlockForm, or fails with ErrWrongUnlockMaterial.
+	UnlockWith(ctx context.Context, safe *happydns.Safe, material json.RawMessage) (UnlockedSafe, error)
+}
+
+// PasswordBound is an Interactive store whose safes open with the login
+// password of their owner: they are unlocked when the owner logs in, and
+// bound to the new password when they change it. Its keystores are created
+// from the login password alone, given as PasswordParam.
+type PasswordBound interface {
+	Interactive
+
+	// Bind fills the keyring of safe, new and not stored yet, so that it
+	// opens with password.
+	Bind(ctx context.Context, safe *happydns.Safe, password string) error
+
+	// UnlockWithPassword opens safe with the login password of its owner,
+	// or fails with ErrWrongUnlockMaterial.
+	UnlockWithPassword(ctx context.Context, safe *happydns.Safe, password string) (UnlockedSafe, error)
+
+	// Rebind binds safe, opening with old, to new instead.
+	Rebind(ctx context.Context, safe *happydns.Safe, old, new string) error
+}
+
+// PasswordParam names the login password in the parameters creating a
+// keystore of a PasswordBound store.
+const PasswordParam = "password"
+
+// passwordForm is the creation form of a PasswordBound store.
+func passwordForm() []happydns.Field {
+	return []happydns.Field{{Id: PasswordParam, Type: "string", Label: "Login password", Secret: true, Required: true}}
+}
+
+// ErrWrongUnlockMaterial is returned by an Interactive store given what does
+// not open the safe.
+var ErrWrongUnlockMaterial = errors.New("this does not unlock the keystore")
+
 // Unattended is a Store whose safes open without their owner, as for a
 // notification or a scheduled check run in the background. A store that is
 // not an Unattended one is taken as needing its owner.

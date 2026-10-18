@@ -93,6 +93,13 @@ type Keystore struct {
 	// Default tells whether new secrets go there when nothing is chosen.
 	Default bool `json:"default"`
 
+	// Interactive tells whether the keystore only opens with what its
+	// owner gives, following UnlockForm; Locked whether they have not
+	// unlocked it during this session.
+	Interactive bool             `json:"interactive"`
+	Locked      bool             `json:"locked"`
+	UnlockForm  []happydns.Field `json:"unlockForm,omitempty"`
+
 	// SafeId is the safe behind the keystore, empty for a keystore of the
 	// instance not created yet.
 	SafeId happydns.Identifier `json:"safeId,omitempty" swaggertype:"string"`
@@ -106,6 +113,10 @@ type KindInfo struct {
 
 	// Unattended tells whether its keystores open without their owner.
 	Unattended bool `json:"unattended"`
+
+	// PasswordBound tells whether its keystores open with the login
+	// password of their owner, who needs one.
+	PasswordBound bool `json:"passwordBound"`
 
 	// Form describes the parameters of its creation.
 	Form []happydns.Field `json:"form"`
@@ -195,10 +206,34 @@ func (m *Manager) Keystores(ctx context.Context, owner happydns.Identifier) ([]K
 		list = append(list, instance[kind])
 	}
 	list = append(list, personal...)
+	scope := UnlockScopeFromContext(ctx)
 	for i := range list {
 		list[i].Default = list[i].Ref == def
+		var safe *happydns.Safe
+		for _, s := range safes {
+			if s.Id.Equals(list[i].SafeId) {
+				safe = s
+			}
+		}
+		m.describeLock(scope, &list[i], safe)
 	}
 	return list, nil
+}
+
+// describeLock fills the lock fields of ks for scope. safe is nil for an
+// instance keystore not created yet: nothing unlocked it, so it shows locked.
+func (m *Manager) describeLock(scope string, ks *Keystore, safe *happydns.Safe) {
+	store, ok := m.stores[ks.Kind].(Interactive)
+	if !ok {
+		return
+	}
+	ks.Interactive = true
+	ks.UnlockForm = store.UnlockForm()
+	ks.Locked = true
+	if safe != nil {
+		_, open := m.unlocked.get(scope, safe)
+		ks.Locked = !open
+	}
 }
 
 // CreatableKinds lists the kinds of personal keystore owners may create here.
@@ -208,7 +243,10 @@ func (m *Manager) CreatableKinds() []KindInfo {
 	}
 	var kinds []KindInfo
 	for _, kind := range slices.Sorted(maps.Keys(m.stores)) {
-		if c, ok := m.stores[kind].(Creator); ok {
+		switch c := m.stores[kind].(type) {
+		case PasswordBound:
+			kinds = append(kinds, KindInfo{Kind: kind, PasswordBound: true, Form: passwordForm()})
+		case Creator:
 			kinds = append(kinds, KindInfo{Kind: kind, Unattended: opensUnattended(c), Form: c.CreateForm()})
 		}
 	}
@@ -222,8 +260,10 @@ func (m *Manager) CreateKeystore(ctx context.Context, owner happydns.Identifier,
 		return Keystore{}, errNoManager
 	}
 
-	creator, ok := m.stores[kind].(Creator)
-	if !ok {
+	store := m.stores[kind]
+	_, bound := store.(PasswordBound)
+	creator, ok := store.(Creator)
+	if !ok && !bound {
 		return Keystore{}, fmt.Errorf("%w: no store here creates keystores of kind %q", ErrInvalidKeystore, kind)
 	}
 
@@ -264,13 +304,35 @@ func (m *Manager) CreateKeystore(ctx context.Context, owner happydns.Identifier,
 	if len(params) == 0 {
 		params = json.RawMessage("{}")
 	}
-	if err := creator.Create(ctx, safe, params); err != nil {
+	if bound {
+		// Whether it is the login password of owner is for the caller to
+		// check.
+		var p map[string]string
+		if err := json.Unmarshal(params, &p); err != nil || p[PasswordParam] == "" {
+			return Keystore{}, fmt.Errorf("%w: a keystore of kind %q needs the login password, as %q", ErrInvalidKeystore, kind, PasswordParam)
+		}
+		if err := store.(PasswordBound).Bind(ctx, safe, p[PasswordParam]); err != nil {
+			return Keystore{}, fmt.Errorf("%w: %w", ErrInvalidKeystore, err)
+		}
+	} else if err := creator.Create(ctx, safe, params); err != nil {
 		return Keystore{}, fmt.Errorf("%w: %w", ErrInvalidKeystore, err)
 	}
 	if err := m.safes.CreateSafe(safe); err != nil {
 		return Keystore{}, err
 	}
-	return m.describe(safe), nil
+
+	// Its owner just gave what opens it: it stays open for their session.
+	// Failing that, it shows locked and they unlock it as any other.
+	scope := UnlockScopeFromContext(ctx)
+	if store, ok := store.(Interactive); ok && scope != "" {
+		if u, err := store.UnlockWith(ctx, safe, params); err == nil {
+			m.unlocked.put(scope, safe, u)
+		}
+	}
+
+	ks := m.describe(safe)
+	m.describeLock(scope, &ks, safe)
+	return ks, nil
 }
 
 // keystoreSafe returns the safe ref names among those of owner: nil, without

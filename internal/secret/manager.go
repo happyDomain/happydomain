@@ -94,6 +94,10 @@ type Manager struct {
 
 	// locks holds one mutex per owner and kind, see ownerSafe.
 	locks sync.Map
+
+	// unlocked keeps the safes of Interactive stores their owners
+	// unlocked, by session.
+	unlocked *unlockCache
 }
 
 // Config tells a Manager how to seal new secrets and how to open stored ones.
@@ -132,6 +136,7 @@ func NewManager(cfg Config) (*Manager, error) {
 		policy:      cfg.Policy,
 		safes:       cfg.Safes,
 		defaults:    cfg.Defaults,
+		unlocked:    newUnlockCache(),
 		stores:      map[string]Store{},
 		unavailable: map[string]error{},
 	}
@@ -394,11 +399,10 @@ func (x *sealer) sealClear(ctx context.Context, sc SecretContext, s *happydns.Se
 			}
 			x.safe = safe
 		}
-		store, ok := x.m.stores[x.safe.Kind]
-		if !ok {
+		if _, ok := x.m.stores[x.safe.Kind]; !ok {
 			return fmt.Errorf("safe %s needs the %q secret store, which is not configured", x.safe.Id.String(), x.safe.Kind)
 		}
-		unlocked, err := store.Unlock(ctx, x.safe)
+		unlocked, err := x.m.unlock(ctx, x.safe)
 		if err != nil {
 			return err
 		}

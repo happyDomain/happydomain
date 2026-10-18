@@ -98,6 +98,16 @@ func (failingStartStore) CheckStartup(context.Context) error {
 	return errors.New("the store cannot be reached")
 }
 
+// unreachableKind is a store of a service that does not answer: it never
+// unlocks.
+const unreachableKind = "test-unreachable"
+
+type unreachableStore struct{ nopStore }
+
+func (unreachableStore) Unlock(context.Context, *happydns.Safe) (UnlockedSafe, error) {
+	return nil, errors.New("the service cannot be reached")
+}
+
 var fakeUnlocks atomic.Int64
 
 type fakeStore struct{}
@@ -138,10 +148,17 @@ func withFakeStores(cfg Config) Config {
 		cfg.factories = maps.Clone(builtinStores)
 		cfg.factories[fakeKind] = func(Config) (Store, error) { return fakeStore{}, nil }
 		cfg.factories[noProvisionKind] = nopFactory
+		cfg.factories[unreachableKind] = func(Config) (Store, error) { return unreachableStore{}, nil }
 		cfg.factories[failingStartKind] = func(Config) (Store, error) { return failingStartStore{}, nil }
 		cfg.factories[reportingKind] = func(Config) (Store, error) { return reportingStore{}, nil }
 		cfg.factories[escrowKind] = func(Config) (Store, error) { return escrowStore{}, nil }
 		cfg.factories[creatorKind] = func(Config) (Store, error) { return creatorStore{kind: creatorKind}, nil }
+		cfg.factories[passphraseKind] = func(Config) (Store, error) {
+			return passphraseStore{kind: passphraseKind, field: "passphrase"}, nil
+		}
+		cfg.factories[passwordKind] = func(Config) (Store, error) {
+			return passwordStore{passphraseStore{kind: passwordKind, field: PasswordParam}}, nil
+		}
 		cfg.factories[unattendedCreatorKind] = func(Config) (Store, error) {
 			return unattendedCreatorStore{creatorStore{kind: unattendedCreatorKind}}, nil
 		}
@@ -281,6 +298,26 @@ func TestOpenSafeOfAnUnconfiguredKind(t *testing.T) {
 	fakeSafe := happydns.Safe{Id: happydns.Identifier{0x0e}, Owner: sc.Owner, Kind: fakeKind}
 	if err := m.CheckSafe(context.Background(), &fakeSafe); err != nil {
 		t.Errorf("CheckSafe refused a safe of a configured kind: %v", err)
+	}
+}
+
+// A safe kept by a store of an external service is accepted while the service
+// does not answer: the safe only waits for it, as at startup, which does not
+// call the services either.
+func TestCheckSafeDoesNotCallExternalStores(t *testing.T) {
+	sc := objectContext()
+	m := newTestManager(t, Config{Policy: PolicyPlaintext, Safes: newMemSafeStorage()})
+
+	safe := happydns.Safe{Id: happydns.Identifier{0x0d}, Owner: sc.Owner, Kind: unreachableKind}
+	if err := m.CheckSafe(context.Background(), &safe); err != nil {
+		t.Errorf("CheckSafe refused a safe of a store that does not answer: %v", err)
+	}
+
+	// The instance keyset is held here: a safe it does not open is refused.
+	instance := happydns.Safe{Id: happydns.Identifier{0x0c}, Owner: sc.Owner, Kind: KindInstance}
+	im := newTestManager(t, Config{Policy: PolicyInstance, InstanceKey: testInstanceKey(t), Safes: newMemSafeStorage()})
+	if err := im.CheckSafe(context.Background(), &instance); err == nil {
+		t.Error("CheckSafe accepted an instance safe holding no key of this keyset")
 	}
 }
 
