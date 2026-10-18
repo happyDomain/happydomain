@@ -49,6 +49,7 @@
     import ResourceInput from "$lib/components/inputs/basic.svelte";
     import type { Field } from "$lib/model/custom_form.svelte";
     import { keystores, refreshKeystores } from "$lib/stores/keystores";
+    import { keystoreKindLabel } from "$lib/stores/keystores";
     import { toasts } from "$lib/stores/toasts";
     import { requestUnlock } from "$lib/stores/unlock";
     import { t } from "$lib/translations";
@@ -208,6 +209,11 @@
                             <Badge color="danger">{$t("keystores.unavailable")}</Badge>
                         {/if}
                     </div>
+                    <div class="small">
+                        <span class="text-muted">{$t("keystores.kind")}</span>
+                        {keystoreKindLabel($t, ks.kind ?? "")}
+                        <code class="text-muted">{ks.kind}</code>
+                    </div>
                     <div class="text-muted small">
                         {#if objects.length === 0}
                             {$t("keystores.unused")}
@@ -313,7 +319,8 @@
                         <label for="keystore-kind">{$t("keystores.kind")}</label>
                         <Input id="keystore-kind" type="select" bind:value={newKind}>
                             {#each kinds as k (k.kind)}
-                                <option value={k.kind}>{k.kind}</option>
+                                <option value={k.kind}>{keystoreKindLabel($t, k.kind ?? "")}</option
+                                >
                             {/each}
                         </Input>
                     </div>

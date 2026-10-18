@@ -596,6 +596,9 @@
         "delete-used": "Migrez ses identifiants vers un autre coffre avant de le supprimer",
         "create": "Créer un coffre",
         "kind": "Type",
+        "kinds": {
+            "instance": "Chiffré avec la clé de l'instance"
+        },
         "name": "Nom",
         "choose": "Coffre contenant les identifiants de cet objet",
         "policy": "Par défaut de l'instance",

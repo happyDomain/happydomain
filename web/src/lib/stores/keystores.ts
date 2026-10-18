@@ -68,3 +68,11 @@ export function effectiveKeystore(
         eligibleKeystores(list, unattended).find((ks) => ks.default)
     );
 }
+
+/** The name of a kind of keystore, its identifier when not translated. */
+export function keystoreKindLabel(translate: (key: string) => string, kind: string): string {
+    const key = `keystores.kinds.${kind}`;
+    const name = translate(key);
+    // sveltekit-i18n echoes the key back when it has no translation for it.
+    return name === key ? kind : name;
+}

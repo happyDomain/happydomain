@@ -942,6 +942,9 @@
         "delete-used": "Migrate its credentials to another keystore before deleting it",
         "create": "Create a keystore",
         "kind": "Kind",
+        "kinds": {
+            "instance": "Encrypted with the key of the instance"
+        },
         "name": "Name",
         "choose": "Keystore holding the credentials of this object",
         "policy": "Instance default",

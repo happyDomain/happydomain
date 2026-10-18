@@ -22,7 +22,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { Keystore } from "$lib/api/keystores";
-import { effectiveKeystore, eligibleKeystores, keystoreOf } from "./keystores";
+import { effectiveKeystore, eligibleKeystores, keystoreKindLabel, keystoreOf } from "./keystores";
 
 const list: Array<Keystore> = [
     {
@@ -122,5 +122,21 @@ describe("effectiveKeystore", () => {
             },
         ];
         expect(effectiveKeystore(attended, "channel", undefined, "", true)).toBeUndefined();
+    });
+});
+
+// Stands for sveltekit-i18n, which echoes the key back when it is unknown.
+function translator(translations: Record<string, string>) {
+    return (key: string) => translations[key] ?? key;
+}
+
+describe("keystoreKindLabel", () => {
+    it("names a kind by its translation", () => {
+        const t = translator({ "keystores.kinds.instance": "Encrypted by the instance" });
+        expect(keystoreKindLabel(t, "instance")).toBe("Encrypted by the instance");
+    });
+
+    it("falls back on the identifier of a kind not translated", () => {
+        expect(keystoreKindLabel(translator({}), "hsm")).toBe("hsm");
     });
 });
