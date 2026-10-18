@@ -34,4 +34,16 @@ func declareSecretsRoutes(router *gin.RouterGroup, dep Dependencies) {
 	router.POST("/secrets/rewrap", sc.Rewrap)
 	router.POST("/secrets/reseal", sc.Reseal)
 	router.POST("/secrets/drop-safes", sc.DropSafes)
+
+	if dep.Keystores == nil {
+		return
+	}
+	kc := controller.NewKeystoreController(dep.Keystores)
+	router.GET("/secrets/keystore-kinds", kc.ListKeystoreKinds)
+	owner := router.Group("/secrets/owners/:owner", kc.OwnerHandler)
+	owner.GET("/keystores", kc.ListKeystores)
+	owner.POST("/keystores", kc.CreateKeystore)
+	owner.PUT("/keystores/default", kc.SetDefaultKeystore)
+	owner.DELETE("/keystores/:ref", kc.DeleteKeystore)
+	owner.POST("/keystores/:ref/migrate", kc.MigrateKeystore)
 }

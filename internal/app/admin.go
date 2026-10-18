@@ -106,6 +106,7 @@ func NewAdmin(app *App) *Admin {
 			TidyUp:                usecase.NewTidyUpUsecase(app.store),
 			Purge:                 usecase.NewPurgeUsecase(app.store),
 			Secrets:               usecase.NewSecretsUsecase(app.secrets, app.secretHolders(), app.store),
+			Keystores:             app.usecases.keystores,
 		},
 	)
 	web.DeclareRoutes(app.cfg, router)

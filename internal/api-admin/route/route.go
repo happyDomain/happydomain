@@ -55,6 +55,7 @@ type Dependencies struct {
 	TidyUp                happydns.TidyUpUseCase
 	Purge                 happydns.PurgeUsecase
 	Secrets               *usecase.SecretsUsecase
+	Keystores             *usecase.KeystoreUsecase
 }
 
 func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, dep Dependencies) {
