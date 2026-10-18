@@ -35,6 +35,7 @@
     import { toasts } from "$lib/stores/toasts";
 
     import InstanceKeysTable from "./InstanceKeysTable.svelte";
+    import OwnerKeystoresCard from "./OwnerKeystoresCard.svelte";
     import PolicyCard from "./PolicyCard.svelte";
     import ResealReportTable from "./ResealReportTable.svelte";
     import SecretActionCard from "./SecretActionCard.svelte";
@@ -64,7 +65,9 @@
     // The keys of the instance keyset, among those of every store.
     const keys = $derived((status?.keys ?? []).filter((k) => k.kek === "instance"));
     // MISSING and UNREADABLE rows count safes no key opens, they are not keys.
-    const hasKeyset = $derived(keys.some((k) => k.status !== "MISSING" && k.status !== "UNREADABLE"));
+    const hasKeyset = $derived(
+        keys.some((k) => k.status !== "MISSING" && k.status !== "UNREADABLE"),
+    );
 
     const totals = $derived(
         Object.values(status?.objects ?? {}).reduce(
@@ -114,7 +117,9 @@
                         <Icon name="shield-lock"></Icon>
                         Secrets
                     </h1>
-                    <p class="text-muted lead">Follow how credentials are stored, and migrate them</p>
+                    <p class="text-muted lead">
+                        Follow how credentials are stored, and migrate them
+                    </p>
                 </div>
                 <Button size="sm" color="secondary" outline onclick={fetchStatus}>
                     <Icon name="arrow-clockwise"></Icon> Refresh
@@ -147,10 +152,12 @@
 
         <SecretCountsTable class="mb-4" objects={status.objects ?? {}} />
 
+        <OwnerKeystoresCard class="mb-4" />
+
         <h2 class="h4 mb-3">Migrations</h2>
         <p class="text-muted">
-            Run them with a single happyDomain process on the database. They can be interrupted: running them
-            again resumes the work.
+            Run them with a single happyDomain process on the database. They can be interrupted:
+            running them again resumes the work.
         </p>
         <Row class="g-4">
             <Col md={4}>
@@ -163,7 +170,8 @@
                     run={postSecretsReseal}
                     onDone={fetchStatus}
                 >
-                    Stores every credential the way the current policy stores new ones: encrypted under
+                    Stores every credential the way the current policy stores new ones: encrypted
+                    under
                     <code>instance</code>, in clear under <code>plaintext</code>.
                     {#if resealNeeded}
                         <strong class="d-block mt-2 text-primary">
@@ -186,8 +194,9 @@
                     disabledReason="No instance keyset configured."
                     onDone={fetchStatus}
                 >
-                    After <code>happydomain secret-keyset rotate</code> and a restart, re-encrypts the users' keys
-                    under the new primary key. The credentials themselves are not rewritten.
+                    After <code>happydomain secret-keyset rotate</code> and a restart, re-encrypts
+                    the users' keys under the new primary key. The credentials themselves are not
+                    rewritten.
                     {#snippet result(report: SecretResealReport)}
                         <ResealReportTable reports={[report]} />
                     {/snippet}
@@ -205,8 +214,8 @@
                     disabledReason={dropSafesBlocker}
                     onDone={droppedSafes}
                 >
-                    Once back to clear, deletes the users' keys and the keyset check record: the keyset is then
-                    no longer needed at startup.
+                    Once back to clear, deletes the users' keys and the keyset check record: the
+                    keyset is then no longer needed at startup.
                 </SecretActionCard>
             </Col>
         </Row>
