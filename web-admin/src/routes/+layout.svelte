@@ -105,6 +105,9 @@
                 <NavLink href="/providers" active={page && page.url.pathname.startsWith('/providers')}>Providers</NavLink>
             </NavItem>
             <NavItem>
+                <NavLink href="/secrets" active={page && page.url.pathname.startsWith('/secrets')}>Secrets</NavLink>
+            </NavItem>
+            <NavItem>
                 <NavLink href="/sessions" active={page && page.url.pathname.startsWith('/sessions')}>Sessions</NavLink>
             </NavItem>
             <NavItem>
