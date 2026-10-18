@@ -93,19 +93,20 @@ func (s *KVStorage) ListCheckerConfiguration(checkerName string) ([]*happydns.Ch
 func (s *KVStorage) GetCheckerConfiguration(checkerName string, userId *happydns.Identifier, domainId *happydns.Identifier, serviceId *happydns.Identifier) ([]*happydns.CheckerOptionsPositional, error) {
 	var results []*happydns.CheckerOptionsPositional
 
-	// Try each scope level from admin up to the requested specificity.
+	// Each scope level from admin up to the requested specificity, read only
+	// when its own identifier is given: otherwise its key is the previous one.
 	scopes := []struct {
 		uid, did, sid *happydns.Identifier
+		given         bool
 	}{
-		{nil, nil, nil},
-		{userId, nil, nil},
-		{userId, domainId, nil},
-		{userId, domainId, serviceId},
+		{nil, nil, nil, true},
+		{userId, nil, nil, userId != nil},
+		{userId, domainId, nil, domainId != nil},
+		{userId, domainId, serviceId, serviceId != nil},
 	}
 
 	for _, sc := range scopes {
-		// Skip levels that require identifiers not provided.
-		if (sc.uid != nil && userId == nil) || (sc.did != nil && domainId == nil) || (sc.sid != nil && serviceId == nil) {
+		if !sc.given {
 			continue
 		}
 
