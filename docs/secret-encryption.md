@@ -88,6 +88,42 @@ at once, see [Migrating existing credentials](#migrating-existing-credentials).
 
 Nothing changes for users.
 
+## Keystores
+
+A keystore is where the credentials of a user are sealed. Each user has:
+
+- the keystores of the instance, such as `instance`: happyDomain creates
+  them on first use, and only the administrator deletes them;
+- the personal keystores they create themselves, under a name, from a kind
+  the instance offers (none in this version: see
+  [Adding a kind of keystore](#adding-a-kind-of-keystore)).
+
+The settings of a user list their keystores, with what each holds. There they
+choose a default keystore, migrate what one holds into another, and delete a
+personal keystore once empty: one still holding credentials is refused.
+
+Next to each secret field, a selector chooses the keystore of the object being
+saved, shared by all its fields. Through the API, every write of a provider,
+a notification channel or checker options takes a `keystore` query parameter.
+The credentials of the object go there, those stored elsewhere included.
+
+Without a choice, nothing moves:
+
+- an object in a personal keystore stays there;
+- an object in a keystore of the instance follows the policy;
+- a new object goes to the default keystore of its owner, else under the
+  policy.
+
+Notification channels and checker options are used in the background, when a
+scheduled check completes: they only go to a keystore opening without its
+owner, such as `instance`. A default keystore that needs its owner gives way
+to the policy for them.
+
+The administrator manages the keystores of any user, and of the instance
+itself (owner of the options of the admin scope), on the secrets page or
+under `/api/secrets/owners/{owner}/keystores`. A reseal leaves the credentials
+in a personal keystore where their owner put them.
+
 ## Startup checks
 
 happyDomain refuses to start rather than fail credential by credential when:
@@ -281,3 +317,21 @@ keys, and decrypt them with the keyset for as long as both are kept. A key
 left behind, for instance when the database was briefly unavailable, is
 deleted by the next `tidy`.
 
+## Adding a kind of keystore
+
+A kind of keystore is a `secret.Store`, in a file of its own under
+`internal/secret`, whose factory is listed in `builtinStores`. Besides
+`Unlock`, it implements the interfaces of what it can do:
+
+- `Creator`: its keystores are created by their owner, from the parameters
+  its `CreateForm` describes. Several of a kind may belong to one owner;
+- `Provisioner`: the instance creates its keystore for each owner on first
+  use. Only such a store can be the policy;
+- `Unattended`: its keystores open without their owner, as objects used in
+  the background need. A store that does not implement it is taken as
+  needing its owner;
+- `StartupChecker`, `Rewrapper`, `KeyReporter`, `KEK`: see their
+  documentation in `internal/secret/store.go`.
+
+A store reaching outside happyDomain is only enabled on purpose: list it in
+`secret-store`.
