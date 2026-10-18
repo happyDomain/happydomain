@@ -41,6 +41,15 @@ const fakeKind = "test-fake"
 // noProvisionKind is a store that does not create safes.
 const noProvisionKind = "test-no-provision"
 
+// failingStartKind is a store whose startup check fails.
+const failingStartKind = "test-failing-start"
+
+type failingStartStore struct{ nopStore }
+
+func (failingStartStore) CheckStartup(context.Context) error {
+	return errors.New("the store cannot be reached")
+}
+
 var fakeUnlocks atomic.Int64
 
 type fakeStore struct{}
@@ -81,6 +90,7 @@ func withFakeStores(cfg Config) Config {
 		cfg.factories = maps.Clone(builtinStores)
 		cfg.factories[fakeKind] = func(Config) (Store, error) { return fakeStore{}, nil }
 		cfg.factories[noProvisionKind] = nopFactory
+		cfg.factories[failingStartKind] = func(Config) (Store, error) { return failingStartStore{}, nil }
 	}
 	return cfg
 }
@@ -327,23 +337,23 @@ func TestCheckSafeKinds(t *testing.T) {
 	key := testInstanceKey(t)
 
 	all := newTestManager(t, Config{Policy: PolicyPlaintext, InstanceKey: key, Safes: store})
-	if err := all.CheckSafeKinds(); err != nil {
+	if err := all.checkSafeKinds(); err != nil {
 		t.Errorf("CheckSafeKinds with every store: %v", err)
 	}
 
 	m := newTestManager(t, Config{Policy: PolicyPlaintext, InstanceKey: key, Safes: store, Stores: []string{string(PolicyPlaintext), KindInstance}})
-	err := m.CheckSafeKinds()
+	err := m.checkSafeKinds()
 	if err == nil || !strings.Contains(err.Error(), fakeKind) || !strings.Contains(err.Error(), "2") {
 		t.Errorf("CheckSafeKinds = %v, want an error naming the kind and its 2 safes", err)
 	}
 
 	empty := newTestManager(t, Config{Policy: PolicyPlaintext, Safes: newMemSafeStorage(), Stores: []string{string(PolicyPlaintext)}})
-	if err := empty.CheckSafeKinds(); err != nil {
+	if err := empty.checkSafeKinds(); err != nil {
 		t.Errorf("CheckSafeKinds without any safe: %v", err)
 	}
 
 	var nilManager *Manager
-	if err := nilManager.CheckSafeKinds(); err == nil {
+	if err := nilManager.checkSafeKinds(); err == nil {
 		t.Error("CheckSafeKinds on a nil Manager succeeded")
 	}
 }
@@ -355,7 +365,21 @@ func TestCheckSafeKindsSkipsDamagedRecords(t *testing.T) {
 	store.damaged["safe-broken"] = errors.New("does not decode")
 
 	m := newTestManager(t, Config{Policy: PolicyPlaintext, InstanceKey: testInstanceKey(t), Safes: store})
-	if err := m.CheckSafeKinds(); err != nil {
+	if err := m.checkSafeKinds(); err != nil {
 		t.Errorf("CheckSafeKinds beside a damaged record: %v", err)
+	}
+}
+
+// A store checks itself at startup: when it fails, happyDomain does not
+// start, unless the store is left out.
+func TestStartRunsTheStoreChecks(t *testing.T) {
+	_, err := Start(context.Background(), withFakeStores(Config{Policy: PolicyPlaintext, Safes: newMemSafeStorage()}))
+	if err == nil || !strings.Contains(err.Error(), failingStartKind) {
+		t.Errorf("Start with a failing store = %v, want an error naming it", err)
+	}
+
+	cfg := withFakeStores(Config{Policy: PolicyPlaintext, Safes: newMemSafeStorage(), Stores: []string{string(PolicyPlaintext), fakeKind}})
+	if _, err := Start(context.Background(), cfg); err != nil {
+		t.Errorf("Start with the failing store left out: %v", err)
 	}
 }

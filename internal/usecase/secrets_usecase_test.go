@@ -117,7 +117,7 @@ func TestSecretsUsecaseDropSafes(t *testing.T) {
 	key, _ := secret.NewInstanceKey(h)
 	instance, _ := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db})
 	plaintext, _ := secret.NewManager(secret.Config{Policy: secret.PolicyPlaintext, InstanceKey: key, Safes: db})
-	if err := secret.StartupCheck(secret.PolicyInstance, key, db); err != nil {
+	if err := startSecrets(secret.PolicyInstance, key, db); err != nil {
 		t.Fatal(err)
 	}
 
@@ -152,14 +152,14 @@ func TestSecretsUsecaseDropSafes(t *testing.T) {
 		t.Fatalf("DropSafes = %d, %v; want the safe dropped", n, err)
 	}
 
-	if err := secret.StartupCheck(secret.PolicyPlaintext, nil, db); err != nil {
-		t.Errorf("StartupCheck without the keyset: %v", err)
+	if err := startSecrets(secret.PolicyPlaintext, nil, db); err != nil {
+		t.Errorf("Start without the keyset: %v", err)
 	}
 	// A new keyset is accepted later on.
 	other, _ := secret.GenerateInstanceKeyset()
 	otherKey, _ := secret.NewInstanceKey(other)
-	if err := secret.StartupCheck(secret.PolicyInstance, otherKey, db); err != nil {
-		t.Errorf("StartupCheck with a new keyset: %v", err)
+	if err := startSecrets(secret.PolicyInstance, otherKey, db); err != nil {
+		t.Errorf("Start with a new keyset: %v", err)
 	}
 
 	// And the credentials are there, in clear.
@@ -225,7 +225,7 @@ func TestSecretsUsecaseDropSafesKeepsCheckWithDamagedSafe(t *testing.T) {
 	key, _ := secret.NewInstanceKey(h)
 	instance, _ := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db})
 	plaintext, _ := secret.NewManager(secret.Config{Policy: secret.PolicyPlaintext, InstanceKey: key, Safes: db})
-	if err := secret.StartupCheck(secret.PolicyInstance, key, db); err != nil {
+	if err := startSecrets(secret.PolicyInstance, key, db); err != nil {
 		t.Fatal(err)
 	}
 	seedSecretProvider(t, db, instance, 1, "sealed-1")
@@ -375,4 +375,11 @@ func TestSecretsUsecaseRewrapGoesPastADamagedSafe(t *testing.T) {
 	if err != nil || report.Changed != 1 || report.Failed != 1 {
 		t.Errorf("Rewrap = %+v, %v; want the readable safe rewrapped, the damaged one failed", report, err)
 	}
+}
+
+// startSecrets starts secret management under policy, with key when not nil,
+// on db, as happyDomain does.
+func startSecrets(policy secret.Policy, key *secret.InstanceKey, db secret.Storage) error {
+	_, err := secret.Start(context.Background(), secret.Config{Policy: policy, InstanceKey: key, Safes: db, Checks: db})
+	return err
 }

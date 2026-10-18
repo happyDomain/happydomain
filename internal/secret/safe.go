@@ -102,10 +102,10 @@ func (m *Manager) unlock(ctx context.Context, safe *happydns.Safe) (UnlockedSafe
 	return store.Unlock(ctx, safe)
 }
 
-// CheckSafeKinds returns an error when safes are stored whose kind has no
+// checkSafeKinds returns an error when safes are stored whose kind has no
 // store here, not enabled or not configured: the secrets they hold would fail
 // one at a time. A safe record that does not decode is left to the reports.
-func (m *Manager) CheckSafeKinds() error {
+func (m *Manager) checkSafeKinds() error {
 	if m == nil {
 		return errNoManager
 	}
@@ -125,7 +125,11 @@ func (m *Manager) CheckSafeKinds() error {
 
 	var errs []error
 	for _, kind := range slices.Sorted(maps.Keys(missing)) {
-		errs = append(errs, fmt.Errorf("%d safes of kind %q are stored, but its secret store is not enabled or not configured", missing[kind], kind))
+		err := fmt.Errorf("%d safes of kind %q are stored, but its secret store is not enabled or not configured", missing[kind], kind)
+		if why, ok := m.unavailable[kind]; ok {
+			err = fmt.Errorf("%w: %w", err, why)
+		}
+		errs = append(errs, err)
 	}
 	return errors.Join(errs...)
 }

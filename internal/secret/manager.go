@@ -86,6 +86,9 @@ type Manager struct {
 	// stores holds the store of each kind of safe configured, by kind.
 	stores map[string]Store
 
+	// unavailable tells, by kind, why a store enabled is not configured.
+	unavailable map[string]error
+
 	// locks holds one mutex per owner and kind, see ownerSafe.
 	locks sync.Map
 }
@@ -103,6 +106,10 @@ type Config struct {
 	// other than plaintext.
 	Safes SafeStorage
 
+	// Checks keeps the check records of the stores that have one, such as
+	// the instance keyset. Required by them at startup.
+	Checks CheckStorage
+
 	// Stores lists the kinds of safe the administrator enabled: the others
 	// are left out. "plaintext" is not a kind of safe but is listed too:
 	// left out, it forbids the plaintext policy. Nil enables everything.
@@ -115,9 +122,10 @@ type Config struct {
 // NewManager returns a Manager for cfg.
 func NewManager(cfg Config) (*Manager, error) {
 	m := &Manager{
-		policy: cfg.Policy,
-		safes:  cfg.Safes,
-		stores: map[string]Store{},
+		policy:      cfg.Policy,
+		safes:       cfg.Safes,
+		stores:      map[string]Store{},
+		unavailable: map[string]error{},
 	}
 
 	factories := cfg.storeFactories()
@@ -136,6 +144,7 @@ func NewManager(cfg Config) (*Manager, error) {
 	for _, kind := range kinds {
 		store, err := factories[kind](cfg)
 		if errors.Is(err, ErrStoreUnavailable) {
+			m.unavailable[kind] = err
 			continue
 		}
 		if err != nil {
@@ -159,7 +168,7 @@ func NewManager(cfg Config) (*Manager, error) {
 	}
 	store, ok := m.stores[string(cfg.Policy)]
 	if !ok {
-		return nil, fmt.Errorf("the %q secret policy needs its store, which is not configured", cfg.Policy)
+		return nil, fmt.Errorf("the %q secret policy needs its store, which is not configured: %w", cfg.Policy, m.unavailable[string(cfg.Policy)])
 	}
 	if _, ok := store.(Provisioner); !ok {
 		return nil, fmt.Errorf("the %q secret store does not create safes: it cannot be the policy", cfg.Policy)
@@ -177,6 +186,37 @@ func (m *Manager) Policy() Policy {
 		return ""
 	}
 	return m.policy
+}
+
+// Start returns the Manager for cfg, once sure that the secrets stored can
+// be opened with it: a configuration that would leave them unreadable is
+// refused, rather than fail one credential at a time.
+func Start(ctx context.Context, cfg Config) (*Manager, error) {
+	m, err := NewManager(cfg)
+	if err != nil {
+		return nil, err
+	}
+	if err := m.checkStartup(ctx); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// checkStartup checks that every safe stored has its store here, then has
+// each store check itself. The first is only reading: a store may write, as
+// the instance one creates its check record.
+func (m *Manager) checkStartup(ctx context.Context) error {
+	if err := m.checkSafeKinds(); err != nil {
+		return err
+	}
+	for _, kind := range slices.Sorted(maps.Keys(m.stores)) {
+		if c, ok := m.stores[kind].(StartupChecker); ok {
+			if err := c.CheckStartup(ctx); err != nil {
+				return fmt.Errorf("secret store %q: %w", kind, err)
+			}
+		}
+	}
+	return nil
 }
 
 // SealObject seals every clear Secret of obj, a pointer to a struct, under

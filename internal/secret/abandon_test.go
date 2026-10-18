@@ -85,7 +85,7 @@ func TestAbandonLetsStartAgainDespiteDamagedRecords(t *testing.T) {
 	if len(store.damaged) != 1 {
 		t.Errorf("%d damaged records left, want the one left as it is", len(store.damaged))
 	}
-	if err := StartupCheck(PolicyPlaintext, nil, store); err != nil {
+	if err := startOn(PolicyPlaintext, nil, store); err != nil {
 		t.Errorf("plaintext without a keyset after abandoning: %v", err)
 	}
 }
@@ -109,7 +109,7 @@ func TestAbandonDeletesSafesAndCheckRecord(t *testing.T) {
 // a new one.
 func TestAbandonLetsStartAgain(t *testing.T) {
 	store, _ := lostKeysetStore(t)
-	if err := StartupCheck(PolicyPlaintext, nil, store); err == nil {
+	if err := startOn(PolicyPlaintext, nil, store); err == nil {
 		t.Fatal("the lost keyset store started without a keyset: the test proves nothing")
 	}
 
@@ -117,10 +117,10 @@ func TestAbandonLetsStartAgain(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := StartupCheck(PolicyPlaintext, nil, store); err != nil {
+	if err := startOn(PolicyPlaintext, nil, store); err != nil {
 		t.Errorf("plaintext without a keyset after abandoning: %v", err)
 	}
-	if err := StartupCheck(PolicyInstance, testInstanceKey(t), store); err != nil {
+	if err := startOn(PolicyInstance, testInstanceKey(t), store); err != nil {
 		t.Errorf("instance with a new keyset after abandoning: %v", err)
 	}
 }
@@ -134,7 +134,7 @@ func TestAbandonedSecretsCanBeEnteredAgain(t *testing.T) {
 	}
 
 	newKey := testInstanceKey(t)
-	if err := StartupCheck(PolicyInstance, newKey, store); err != nil {
+	if err := startOn(PolicyInstance, newKey, store); err != nil {
 		t.Fatal(err)
 	}
 	m, err := NewManager(Config{Policy: PolicyInstance, InstanceKey: newKey, Safes: store})

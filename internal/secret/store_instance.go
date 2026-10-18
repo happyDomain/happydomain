@@ -47,16 +47,28 @@ const (
 // held by the server outside the database.
 type instanceStore struct {
 	key *InstanceKey
+
+	// checks keeps the check record, verified at startup.
+	checks CheckStorage
 }
 
 func newInstanceStore(cfg Config) (Store, error) {
 	if cfg.InstanceKey == nil {
-		return nil, ErrStoreUnavailable
+		return nil, fmt.Errorf("%w: no instance keyset, set -secret-keyset-file (see `happydomain secret-keyset generate`)", ErrStoreUnavailable)
 	}
 	if cfg.Safes == nil {
 		return nil, errors.New("an instance keyset requires a safe storage")
 	}
-	return &instanceStore{key: cfg.InstanceKey}, nil
+	return &instanceStore{key: cfg.InstanceKey, checks: cfg.Checks}, nil
+}
+
+// CheckStartup refuses a keyset that is not the one the database was used
+// with, see VerifyCheck.
+func (s *instanceStore) CheckStartup(context.Context) error {
+	if s.checks == nil {
+		return errors.New("no storage for the instance keyset check record")
+	}
+	return s.key.VerifyCheck(s.checks)
 }
 
 // Provision gives safe a new key, wrapped by the instance keyset.

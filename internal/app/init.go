@@ -22,6 +22,7 @@
 package app
 
 import (
+	"context"
 	"log"
 	"time"
 
@@ -112,22 +113,15 @@ func (app *App) initSecrets() {
 	}
 
 	// Refuse to start rather than fail provider by provider.
-	if err := secret.StartupCheck(policy, key, app.store); err != nil {
-		log.Fatalf("Refusing to start: %s", err)
-	}
-
 	var err error
-	app.secrets, err = secret.NewManager(secret.Config{
+	app.secrets, err = secret.Start(context.Background(), secret.Config{
 		Policy:      policy,
 		InstanceKey: key,
 		Safes:       app.store,
+		Checks:      app.store,
 		Stores:      app.cfg.SecretStores,
 	})
 	if err != nil {
-		log.Fatalf("Unable to initialize secret management: %s", err)
-	}
-
-	if err := app.secrets.CheckSafeKinds(); err != nil {
 		log.Fatalf("Refusing to start: %s", err)
 	}
 }

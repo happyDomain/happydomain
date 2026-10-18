@@ -62,8 +62,19 @@ type Provisioner interface {
 	Provision(ctx context.Context, safe *happydns.Safe) error
 }
 
+// StartupChecker is a Store that checks, before happyDomain starts, that what
+// it holds can still be opened: refusing to start beats failing one
+// credential at a time.
+type StartupChecker interface {
+	Store
+
+	// CheckStartup returns an error when happyDomain must not start with
+	// this store as configured.
+	CheckStartup(ctx context.Context) error
+}
+
 // StoreFactory returns the store of a kind for cfg, or ErrStoreUnavailable
-// when cfg lacks what it needs.
+// when cfg lacks what it needs, wrapped with how to configure it.
 type StoreFactory func(cfg Config) (Store, error)
 
 // ErrStoreUnavailable is returned by a StoreFactory that is not configured:

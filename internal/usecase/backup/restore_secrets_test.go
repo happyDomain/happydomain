@@ -288,7 +288,7 @@ func TestBackupRestoreSafes(t *testing.T) {
 	}
 
 	// The same database without the keyset: refuse to start.
-	if err := secret.StartupCheck(secret.PolicyPlaintext, nil, dst); err == nil {
+	if err := startSecrets(secret.PolicyPlaintext, nil, dst); err == nil {
 		t.Error("an instance holding restored safes started without the keyset")
 	}
 
@@ -381,4 +381,11 @@ func TestRestoreHonoursContext(t *testing.T) {
 	if _, err := db.GetProvider(happydns.Identifier{1}); err == nil {
 		t.Error("a provider was restored despite the cancelled context")
 	}
+}
+
+// startSecrets starts secret management under policy, with key when not nil,
+// on db, as happyDomain does.
+func startSecrets(policy secret.Policy, key *secret.InstanceKey, db secret.Storage) error {
+	_, err := secret.Start(context.Background(), secret.Config{Policy: policy, InstanceKey: key, Safes: db, Checks: db})
+	return err
 }

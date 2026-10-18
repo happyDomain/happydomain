@@ -240,17 +240,17 @@ func TestWrappedKeysetGolden(t *testing.T) {
 	}
 }
 
-func TestStartupCheckRefusesOrphanedInstanceSafes(t *testing.T) {
+func TestStartRefusesOrphanedInstanceSafes(t *testing.T) {
 	store := &memStartupStorage{memCheckStorage: &memCheckStorage{}, memSafeStorage: newMemSafeStorage()}
 
-	if err := StartupCheck(PolicyPlaintext, nil, store); err != nil {
+	if err := startOn(PolicyPlaintext, nil, store); err != nil {
 		t.Fatalf("no keyset, no safe: %v", err)
 	}
 
 	if err := store.CreateSafe(newTestSafe(t, happydns.Identifier{0x01})); err != nil {
 		t.Fatal(err)
 	}
-	if err := StartupCheck(PolicyPlaintext, nil, store); err == nil {
+	if err := startOn(PolicyPlaintext, nil, store); err == nil {
 		t.Error("instance safes exist but no keyset is configured: want a refusal")
 	}
 }
@@ -304,18 +304,18 @@ func TestEachSafeReportsListingError(t *testing.T) {
 
 // A safe record that does not decode tells no kind: it neither keeps
 // happyDomain from starting, nor hides an instance safe listed after it.
-func TestStartupCheckSkipsDamagedSafeRecords(t *testing.T) {
+func TestStartSkipsDamagedSafeRecords(t *testing.T) {
 	store := &memStartupStorage{memCheckStorage: &memCheckStorage{}, memSafeStorage: newMemSafeStorage()}
 	store.damaged["safe-broken"] = errors.New("does not decode")
 
-	if err := StartupCheck(PolicyPlaintext, nil, store); err != nil {
+	if err := startOn(PolicyPlaintext, nil, store); err != nil {
 		t.Fatalf("no keyset, a damaged record only: %v", err)
 	}
 
 	if err := store.CreateSafe(newTestSafe(t, happydns.Identifier{0x01})); err != nil {
 		t.Fatal(err)
 	}
-	if err := StartupCheck(PolicyPlaintext, nil, store); err == nil {
+	if err := startOn(PolicyPlaintext, nil, store); err == nil {
 		t.Error("an instance safe exists beside a damaged record, but no keyset is configured: want a refusal")
 	}
 }

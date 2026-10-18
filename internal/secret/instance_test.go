@@ -23,6 +23,7 @@ package secret
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"errors"
 	"os"
@@ -319,17 +320,50 @@ func TestCheckRecordGolden(t *testing.T) {
 	}
 }
 
-func TestStartupCheck(t *testing.T) {
+// startOn starts a Manager under policy, with key when not nil, on store.
+func startOn(policy Policy, key *InstanceKey, store *memStartupStorage) error {
+	_, err := Start(context.Background(), Config{Policy: policy, InstanceKey: key, Safes: store, Checks: store})
+	return err
+}
+
+// What to do is told, not only what is wrong: these are the errors an
+// administrator meets first.
+func TestStartExplainsTheMissingKeyset(t *testing.T) {
+	err := startOn(PolicyInstance, nil, &memStartupStorage{memCheckStorage: &memCheckStorage{}, memSafeStorage: newMemSafeStorage()})
+	if err == nil || !strings.Contains(err.Error(), "secret-keyset generate") {
+		t.Errorf("instance policy without a keyset = %v, want it to tell how to generate one", err)
+	}
+
+	store := &memStartupStorage{memCheckStorage: &memCheckStorage{}, memSafeStorage: newMemSafeStorage()}
+	if err := store.CreateSafe(newTestSafe(t, happydns.Identifier{0x01})); err != nil {
+		t.Fatal(err)
+	}
+	err = startOn(PolicyPlaintext, nil, store)
+	if err == nil || !strings.Contains(err.Error(), "-secret-keyset-file") {
+		t.Errorf("instance safes without a keyset = %v, want it to tell how to configure one", err)
+	}
+}
+
+// Without its check storage, the instance store cannot tell whether its
+// keyset is the right one: starting is refused.
+func TestStartRequiresTheCheckStorage(t *testing.T) {
+	_, err := Start(context.Background(), Config{Policy: PolicyInstance, InstanceKey: testInstanceKey(t), Safes: newMemSafeStorage()})
+	if err == nil {
+		t.Error("Start of the instance store without a check storage succeeded")
+	}
+}
+
+func TestStart(t *testing.T) {
 	h, _ := GenerateInstanceKeyset()
 	key, _ := NewInstanceKey(h)
 
-	if err := StartupCheck(PolicyInstance, nil, &memStartupStorage{memCheckStorage: &memCheckStorage{}, memSafeStorage: newMemSafeStorage()}); err == nil {
+	if err := startOn(PolicyInstance, nil, &memStartupStorage{memCheckStorage: &memCheckStorage{}, memSafeStorage: newMemSafeStorage()}); err == nil {
 		t.Error("the instance policy without a keyset must refuse to start")
 	}
-	if err := StartupCheck(PolicyPlaintext, nil, &memStartupStorage{memCheckStorage: &memCheckStorage{}, memSafeStorage: newMemSafeStorage()}); err != nil {
+	if err := startOn(PolicyPlaintext, nil, &memStartupStorage{memCheckStorage: &memCheckStorage{}, memSafeStorage: newMemSafeStorage()}); err != nil {
 		t.Errorf("plaintext without a keyset: %v", err)
 	}
-	if err := StartupCheck(PolicyInstance, key, &memStartupStorage{memCheckStorage: &memCheckStorage{}, memSafeStorage: newMemSafeStorage()}); err != nil {
+	if err := startOn(PolicyInstance, key, &memStartupStorage{memCheckStorage: &memCheckStorage{}, memSafeStorage: newMemSafeStorage()}); err != nil {
 		t.Errorf("instance with a keyset: %v", err)
 	}
 
@@ -337,7 +371,7 @@ func TestStartupCheck(t *testing.T) {
 	okey, _ := NewInstanceKey(other)
 	store := &memCheckStorage{}
 	_ = key.VerifyCheck(store)
-	if err := StartupCheck(PolicyPlaintext, okey, &memStartupStorage{memCheckStorage: store, memSafeStorage: newMemSafeStorage()}); err == nil {
+	if err := startOn(PolicyPlaintext, okey, &memStartupStorage{memCheckStorage: store, memSafeStorage: newMemSafeStorage()}); err == nil {
 		t.Error("a keyset that does not open the check record must refuse to start")
 	}
 }
