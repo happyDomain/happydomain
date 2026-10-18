@@ -93,11 +93,13 @@ func (s *instanceStore) Unlock(_ context.Context, safe *happydns.Safe) (Unlocked
 	if err != nil {
 		return nil, err
 	}
-	primitive, err := aead.New(dek)
-	if err != nil {
-		return nil, err
-	}
-	return &aeadSafe{id: safe.Id, primitive: primitive}, nil
+	return newAEADSafe(safe.Id, dek)
+}
+
+// Unwrap returns the key of safe from w, one of its instance entries: kept
+// in a safe of another kind, it is a copy opening that safe.
+func (s *instanceStore) Unwrap(_ context.Context, safe *happydns.Safe, w happydns.WrappedKeyset) (*keyset.Handle, error) {
+	return s.key.unwrapEntry(safe, w)
 }
 
 // Rewrap wraps w again under the primary instance key, when another one made

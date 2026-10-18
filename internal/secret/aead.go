@@ -24,6 +24,8 @@ package secret
 import (
 	"context"
 
+	"github.com/tink-crypto/tink-go/v2/aead"
+	"github.com/tink-crypto/tink-go/v2/keyset"
 	"github.com/tink-crypto/tink-go/v2/tink"
 
 	"git.happydns.org/happyDomain/model"
@@ -34,6 +36,14 @@ import (
 type aeadSafe struct {
 	id        happydns.Identifier
 	primitive tink.AEAD
+}
+
+func newAEADSafe(id happydns.Identifier, dek *keyset.Handle) (UnlockedSafe, error) {
+	primitive, err := aead.New(dek)
+	if err != nil {
+		return nil, err
+	}
+	return &aeadSafe{id: id, primitive: primitive}, nil
 }
 
 func (u *aeadSafe) Seal(_ context.Context, sc SecretContext, clear []byte) ([]byte, error) {

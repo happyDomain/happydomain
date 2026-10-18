@@ -27,6 +27,8 @@ import (
 	"maps"
 	"slices"
 
+	"github.com/tink-crypto/tink-go/v2/keyset"
+
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -60,6 +62,18 @@ type Provisioner interface {
 
 	// Provision fills the keyring of safe, new and not stored yet.
 	Provision(ctx context.Context, safe *happydns.Safe) error
+}
+
+// KEK is a Store that wraps the key of a safe in a keyring entry named after
+// its kind. Through such an entry, a copy, it opens any safe holding one,
+// whatever the kind of the safe: the copy is kept for when the store of that
+// kind is lost. The key copied is the Tink AEAD keyset sealing the values of
+// the safe, as aeadSafe does.
+type KEK interface {
+	Store
+
+	// Unwrap returns the key of safe from w, an entry made by this store.
+	Unwrap(ctx context.Context, safe *happydns.Safe, w happydns.WrappedKeyset) (*keyset.Handle, error)
 }
 
 // StartupChecker is a Store that checks, before happyDomain starts, that what

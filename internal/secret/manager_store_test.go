@@ -32,6 +32,9 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"github.com/tink-crypto/tink-go/v2/insecurecleartextkeyset"
+	"github.com/tink-crypto/tink-go/v2/keyset"
+
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -64,6 +67,26 @@ func (s reportingStore) Rewrap(_ context.Context, _ *happydns.Safe, w *happydns.
 	}
 	w.Blob = []byte("2")
 	return true, nil
+}
+
+// escrowKind is a store keeping, in its entries, copies of the key of safes
+// of other kinds: in clear, as only a test can afford.
+const escrowKind = "test-escrow"
+
+type escrowStore struct{ nopStore }
+
+func (escrowStore) Unwrap(_ context.Context, _ *happydns.Safe, w happydns.WrappedKeyset) (*keyset.Handle, error) {
+	return insecurecleartextkeyset.Read(keyset.NewBinaryReader(bytes.NewReader(w.Blob)))
+}
+
+// escrowEntry returns an entry of the escrow store holding dek.
+func escrowEntry(t *testing.T, dek *keyset.Handle) happydns.WrappedKeyset {
+	t.Helper()
+	var buf bytes.Buffer
+	if err := insecurecleartextkeyset.Write(dek, keyset.NewBinaryWriter(&buf)); err != nil {
+		t.Fatal(err)
+	}
+	return happydns.WrappedKeyset{KEK: escrowKind, Blob: buf.Bytes()}
 }
 
 // failingStartKind is a store whose startup check fails.
@@ -117,6 +140,7 @@ func withFakeStores(cfg Config) Config {
 		cfg.factories[noProvisionKind] = nopFactory
 		cfg.factories[failingStartKind] = func(Config) (Store, error) { return failingStartStore{}, nil }
 		cfg.factories[reportingKind] = func(Config) (Store, error) { return reportingStore{}, nil }
+		cfg.factories[escrowKind] = func(Config) (Store, error) { return escrowStore{}, nil }
 	}
 	return cfg
 }

@@ -92,19 +92,51 @@ func (m *Manager) ownerSafe(ctx context.Context, owner happydns.Identifier, kind
 	return safe, nil
 }
 
-// unlock returns what seals and opens the secrets of safe, through the store
-// of its kind.
+// unlock returns what seals and opens the secrets of safe: through the store
+// of its kind, or else through a copy of its key, an entry of its keyring a
+// KEK here unwraps.
 func (m *Manager) unlock(ctx context.Context, safe *happydns.Safe) (UnlockedSafe, error) {
-	store, ok := m.stores[safe.Kind]
-	if !ok {
-		return nil, fmt.Errorf("safe %s needs the %q secret store, which is not configured", safe.Id.String(), safe.Kind)
+	var errs []error
+	if store, ok := m.stores[safe.Kind]; ok {
+		u, err := store.Unlock(ctx, safe)
+		if err == nil {
+			return u, nil
+		}
+		errs = append(errs, err)
+	} else {
+		errs = append(errs, fmt.Errorf("safe %s needs the %q secret store, which is not configured", safe.Id.String(), safe.Kind))
 	}
-	return store.Unlock(ctx, safe)
+
+	// The store of its kind missing or failing, a copy of its key kept by
+	// another store opens it all the same: that is what the copy is for.
+	for _, w := range safe.Keyring {
+		kek, ok := m.stores[w.KEK].(KEK)
+		if !ok || w.KEK == safe.Kind {
+			continue
+		}
+		dek, err := kek.Unwrap(ctx, safe, w)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("through its copy under %q: %w", w.KEK, err))
+			continue
+		}
+		return newAEADSafe(safe.Id, dek)
+	}
+
+	return nil, errors.Join(errs...)
+}
+
+// hasCopy tells whether a store here opens safe through a copy of its key.
+func (m *Manager) hasCopy(safe *happydns.Safe) bool {
+	return slices.ContainsFunc(safe.Keyring, func(w happydns.WrappedKeyset) bool {
+		_, ok := m.stores[w.KEK].(KEK)
+		return ok && w.KEK != safe.Kind
+	})
 }
 
 // checkSafeKinds returns an error when safes are stored whose kind has no
-// store here, not enabled or not configured: the secrets they hold would fail
-// one at a time. A safe record that does not decode is left to the reports.
+// store here, not enabled or not configured, and that no copy of their key
+// opens: the secrets they hold would fail one at a time. A safe record that
+// does not decode is left to the reports.
 func (m *Manager) checkSafeKinds() error {
 	if m == nil {
 		return errNoManager
@@ -115,7 +147,7 @@ func (m *Manager) checkSafeKinds() error {
 
 	missing := map[string]int{}
 	err := eachSafe(m.safes, func(safe *happydns.Safe) {
-		if _, ok := m.stores[safe.Kind]; !ok {
+		if _, ok := m.stores[safe.Kind]; !ok && !m.hasCopy(safe) {
 			missing[safe.Kind]++
 		}
 	}, nil)
