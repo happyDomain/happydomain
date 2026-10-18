@@ -194,3 +194,63 @@ func TestTargetListSet(t *testing.T) {
 		})
 	}
 }
+
+func TestSecretStoreListSet(t *testing.T) {
+	tests := []struct {
+		name    string
+		values  []string
+		want    []string
+		wantErr bool
+	}{
+		{
+			name:   "the instance keyset",
+			values: []string{"instance"},
+			want:   []string{"instance"},
+		},
+		{
+			name:   "none clears what a lower-precedence source set",
+			values: []string{"instance", "none"},
+			want:   []string{},
+		},
+		{
+			// A typo would leave a store out, and its safes unopened.
+			name:    "an unknown store is refused",
+			values:  []string{"instnace"},
+			wantErr: true,
+		},
+		{
+			// Left out, it forbids the plaintext policy.
+			name:   "plaintext can be enabled besides a store",
+			values: []string{"plaintext", "instance"},
+			want:   []string{"plaintext", "instance"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var got []string
+			p := secretStoreList(&got)
+
+			var err error
+			for _, value := range tt.values {
+				if err = p.Set(value); err != nil {
+					break
+				}
+			}
+
+			if tt.wantErr {
+				if err == nil {
+					t.Fatalf("Set(%v) = nil error, want an error", tt.values)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("Set(%v) => %s", tt.values, err.Error())
+			}
+			if !slices.Equal(got, tt.want) || got == nil {
+				t.Fatalf("Set(%v) = %#v, want %#v", tt.values, got, tt.want)
+			}
+		})
+	}
+}

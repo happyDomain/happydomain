@@ -27,9 +27,11 @@ import (
 	"net/mail"
 	"net/netip"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 
+	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/pkg/favicon"
 )
@@ -167,6 +169,22 @@ func faviconSourceList(values *[]string) *entryList {
 		stringSlice: stringSlice{values},
 		validate: func(item string) (string, error) {
 			return item, favicon.ValidateSourceName(item)
+		},
+	}
+}
+
+// secretStoreList builds the flag.Value behind -secret-store. Kinds are
+// checked against the known stores, so that a typo stops happyDomain at
+// startup rather than leave a store out, and the secrets it holds unopened.
+func secretStoreList(values *[]string) *entryList {
+	return &entryList{
+		stringSlice: stringSlice{values},
+		validate: func(item string) (string, error) {
+			choices := append(secret.KnownStores(), string(secret.PolicyPlaintext))
+			if !slices.Contains(choices, item) {
+				return "", fmt.Errorf("unknown secret store %q, expected one of: %s", item, strings.Join(choices, ", "))
+			}
+			return item, nil
 		},
 	}
 }

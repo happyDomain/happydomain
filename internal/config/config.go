@@ -32,6 +32,7 @@ import (
 	"path"
 	"strings"
 
+	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/pkg/favicon"
 )
@@ -163,6 +164,12 @@ func ConsolidateConfig() (opts *happydns.Options, err error) {
 	// overridden with a single, unrelated source.
 	if opts.FaviconSources == nil {
 		opts.FaviconSources = favicon.DefaultSourceList
+	}
+
+	// SecretStores defaults to secret.DefaultStores, for the same reason as
+	// FaviconSources.
+	if opts.SecretStores == nil {
+		opts.SecretStores = secret.DefaultStores()
 	}
 
 	err = ExtendsConfigWithOIDC(opts)

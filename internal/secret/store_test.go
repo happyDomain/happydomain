@@ -48,25 +48,38 @@ func TestBuiltinStoresKinds(t *testing.T) {
 	}
 }
 
-func TestRegisteredStores(t *testing.T) {
-	kinds := RegisteredStores()
+func TestKnownStores(t *testing.T) {
+	kinds := KnownStores()
 	if len(kinds) != len(builtinStores) || !slices.IsSorted(kinds) {
-		t.Errorf("RegisteredStores() = %v, want every builtin kind, sorted", kinds)
+		t.Errorf("KnownStores() = %v, want every builtin kind, sorted", kinds)
 	}
 	for _, kind := range kinds {
 		if _, ok := builtinStores[kind]; !ok {
-			t.Errorf("RegisteredStores() holds %q, which is not builtin", kind)
+			t.Errorf("KnownStores() holds %q, which is not builtin", kind)
 		}
 	}
 }
 
-func TestRegisteredStoresIsACopy(t *testing.T) {
-	before := RegisteredStores()
-	kinds := RegisteredStores()
+func TestKnownStoresIsACopy(t *testing.T) {
+	before := KnownStores()
+	kinds := KnownStores()
 	for i := range kinds {
 		kinds[i] = "changed"
 	}
-	if !slices.Equal(RegisteredStores(), before) {
+	if !slices.Equal(KnownStores(), before) {
 		t.Error("changing the returned list changed the known stores")
+	}
+}
+
+func TestDefaultStores(t *testing.T) {
+	got := DefaultStores()
+
+	if !slices.Contains(got, string(PolicyPlaintext)) {
+		t.Errorf("DefaultStores() = %v, want it to hold %q", got, PolicyPlaintext)
+	}
+	for _, kind := range KnownStores() {
+		if !slices.Contains(got, kind) {
+			t.Errorf("DefaultStores() = %v, want it to hold the store %q", got, kind)
+		}
 	}
 }

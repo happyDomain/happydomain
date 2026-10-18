@@ -102,6 +102,10 @@ type Options struct {
 	// default) or "instance", encrypted under SecretKeysetFile.
 	SecretPolicy string
 
+	// SecretStores lists the kinds of safe credentials may be kept in.
+	// Defaults to "plaintext" and "instance".
+	SecretStores []string
+
 	// TrustedProxies lists the IP addresses or CIDR blocks of the reverse
 	// proxies allowed to set client IP headers (X-Forwarded-For, X-Real-IP).
 	// Requests coming from any other peer have those headers ignored and are

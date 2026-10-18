@@ -31,9 +31,9 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func TestInstanceStoreIsRegistered(t *testing.T) {
-	if !slices.Contains(RegisteredStores(), KindInstance) {
-		t.Errorf("RegisteredStores() = %v, want it to hold %q", RegisteredStores(), KindInstance)
+func TestInstanceStoreIsKnown(t *testing.T) {
+	if !slices.Contains(KnownStores(), KindInstance) {
+		t.Errorf("KnownStores() = %v, want it to hold %q", KnownStores(), KindInstance)
 	}
 }
 

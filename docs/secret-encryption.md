@@ -96,7 +96,15 @@ happyDomain refuses to start rather than fail credential by credential when:
 - the keyset does not open the check record stored in the database the first
   time a keyset was used with it: this is not the keyset the credentials were
   encrypted with;
-- credentials are encrypted in the database but no keyset is configured.
+- credentials are encrypted in the database but no keyset is configured;
+- safes of a kind are stored in the database, but that kind is left out of
+  `secret-store` (by default `plaintext` and every kind of safe): the
+  credentials they hold would no longer decrypt;
+- `secret-policy=plaintext` while `plaintext` is left out of `secret-store`.
+
+To forbid credentials in clear, set `secret-store=instance` (leaving
+`plaintext` out) and `secret-policy=instance`. Credentials already in clear
+stay readable, and are encrypted as described below.
 
 ## Migrating existing credentials
 

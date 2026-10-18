@@ -26,6 +26,7 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
+	"maps"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -73,14 +74,20 @@ func (u fakeUnlocked) Open(_ context.Context, sc SecretContext, payload []byte) 
 	return clear, nil
 }
 
-func init() {
-	builtinStores[fakeKind] = func(Config) (Store, error) { return fakeStore{}, nil }
-	builtinStores[noProvisionKind] = nopFactory
+// withFakeStores returns cfg knowing the fake stores besides the builtin ones,
+// unless it already chose its own.
+func withFakeStores(cfg Config) Config {
+	if cfg.factories == nil {
+		cfg.factories = maps.Clone(builtinStores)
+		cfg.factories[fakeKind] = func(Config) (Store, error) { return fakeStore{}, nil }
+		cfg.factories[noProvisionKind] = nopFactory
+	}
+	return cfg
 }
 
 func newTestManager(t *testing.T, cfg Config) *Manager {
 	t.Helper()
-	m, err := NewManager(cfg)
+	m, err := NewManager(withFakeStores(cfg))
 	if err != nil {
 		t.Fatalf("NewManager(%s): %v", cfg.Policy, err)
 	}
@@ -217,8 +224,138 @@ func TestNewManagerChecksThePolicyStore(t *testing.T) {
 		{Policy: Policy(fakeKind)},
 		{Policy: PolicyInstance, Safes: newMemSafeStorage()},
 	} {
-		if _, err := NewManager(cfg); err == nil {
+		if _, err := NewManager(withFakeStores(cfg)); err == nil {
 			t.Errorf("NewManager(%+v) succeeded, want an error", cfg)
 		}
+	}
+}
+
+// The stores a test gives are known to its Manager only: another one knows
+// the builtin stores alone.
+func TestNewManagerKnowsTheBuiltinStoresOnly(t *testing.T) {
+	newTestManager(t, Config{Policy: Policy(fakeKind), Safes: newMemSafeStorage()})
+
+	if _, err := NewManager(Config{Policy: Policy(fakeKind), Safes: newMemSafeStorage()}); err == nil {
+		t.Error("a Manager without the fake stores accepted their kind as policy")
+	}
+	if _, err := NewManager(Config{Policy: PolicyPlaintext, Safes: newMemSafeStorage(), Stores: []string{string(PolicyPlaintext), fakeKind}}); err == nil {
+		t.Error("a Manager without the fake stores accepted to enable one")
+	}
+}
+
+// Only the stores the administrator enabled are built: the safes of the
+// others do not open, and none is created.
+func TestNewManagerBuildsTheEnabledStoresOnly(t *testing.T) {
+	key := testInstanceKey(t)
+	store := newMemSafeStorage()
+	sc := objectContext()
+
+	inInstance := &managedObject{ApiKey: happydns.NewSecret("a")}
+	inFake := &managedObject{ApiKey: happydns.NewSecret("b")}
+	if err := newTestManager(t, Config{Policy: PolicyInstance, InstanceKey: key, Safes: store}).SealObject(context.Background(), sc, inInstance); err != nil {
+		t.Fatal(err)
+	}
+	if err := newTestManager(t, Config{Policy: Policy(fakeKind), Safes: store}).SealObject(context.Background(), sc, inFake); err != nil {
+		t.Fatal(err)
+	}
+
+	m := newTestManager(t, Config{Policy: Policy(fakeKind), InstanceKey: key, Safes: store, Stores: []string{fakeKind}})
+	if err := m.OpenObject(context.Background(), sc, &managedObject{ApiKey: sealedFromStorage(t, inFake.ApiKey.Token())}); err != nil {
+		t.Errorf("a secret of an enabled store does not open: %v", err)
+	}
+	err := m.OpenObject(context.Background(), sc, &managedObject{ApiKey: sealedFromStorage(t, inInstance.ApiKey.Token())})
+	if err == nil || !strings.Contains(err.Error(), KindInstance) {
+		t.Errorf("OpenObject of a secret of a disabled store = %v, want an error naming it", err)
+	}
+
+	none := newTestManager(t, Config{Policy: PolicyPlaintext, InstanceKey: key, Safes: store, Stores: []string{string(PolicyPlaintext)}})
+	if err := none.OpenObject(context.Background(), sc, &managedObject{ApiKey: sealedFromStorage(t, inFake.ApiKey.Token())}); err == nil {
+		t.Error("a secret opened with no store enabled")
+	}
+}
+
+func TestNewManagerPlaintextMustBeEnabled(t *testing.T) {
+	safes := newMemSafeStorage()
+	key := testInstanceKey(t)
+
+	// Left out of the stores, plaintext is refused as the policy...
+	if _, err := NewManager(Config{Policy: PolicyPlaintext, Safes: safes, Stores: []string{KindInstance}}); err == nil {
+		t.Error("the plaintext policy was accepted with plaintext left out")
+	}
+	if _, err := NewManager(Config{Policy: PolicyPlaintext, Safes: safes, Stores: []string{}}); err == nil {
+		t.Error("the plaintext policy was accepted with no store enabled")
+	}
+
+	// ... but not when enabled, nor when no choice was made.
+	for _, stores := range [][]string{nil, {string(PolicyPlaintext)}, {string(PolicyPlaintext), KindInstance}} {
+		if _, err := NewManager(Config{Policy: PolicyPlaintext, Safes: safes, Stores: stores}); err != nil {
+			t.Errorf("NewManager with stores %v => %s", stores, err)
+		}
+	}
+
+	// Plaintext does not have to be the policy, and being left out does not
+	// stop the instance policy.
+	if _, err := NewManager(Config{Policy: PolicyInstance, InstanceKey: key, Safes: safes, Stores: []string{KindInstance}}); err != nil {
+		t.Errorf("the instance policy without plaintext => %s", err)
+	}
+	if _, err := NewManager(Config{Policy: PolicyInstance, InstanceKey: key, Safes: safes, Stores: []string{string(PolicyPlaintext)}}); err == nil {
+		t.Error("the instance policy was accepted with the instance store left out")
+	}
+}
+
+func TestNewManagerChecksTheEnabledStores(t *testing.T) {
+	for _, cfg := range []Config{
+		{Policy: PolicyPlaintext, Safes: newMemSafeStorage(), Stores: []string{"test-unregistered"}},
+		{Policy: PolicyInstance, InstanceKey: testInstanceKey(t), Safes: newMemSafeStorage(), Stores: []string{fakeKind}},
+	} {
+		if _, err := NewManager(withFakeStores(cfg)); err == nil {
+			t.Errorf("NewManager(%+v) succeeded, want an error", cfg)
+		}
+	}
+}
+
+// Safes of a kind without a store hold secrets that no longer open: better
+// refuse to start than fail credential by credential.
+func TestCheckSafeKinds(t *testing.T) {
+	store := newMemSafeStorage()
+	for i, kind := range []string{KindInstance, fakeKind, fakeKind} {
+		safe := happydns.Safe{Id: happydns.Identifier{byte(i)}, Owner: happydns.Identifier{byte(i)}, Kind: kind}
+		if err := store.CreateSafe(&safe); err != nil {
+			t.Fatal(err)
+		}
+	}
+	key := testInstanceKey(t)
+
+	all := newTestManager(t, Config{Policy: PolicyPlaintext, InstanceKey: key, Safes: store})
+	if err := all.CheckSafeKinds(); err != nil {
+		t.Errorf("CheckSafeKinds with every store: %v", err)
+	}
+
+	m := newTestManager(t, Config{Policy: PolicyPlaintext, InstanceKey: key, Safes: store, Stores: []string{string(PolicyPlaintext), KindInstance}})
+	err := m.CheckSafeKinds()
+	if err == nil || !strings.Contains(err.Error(), fakeKind) || !strings.Contains(err.Error(), "2") {
+		t.Errorf("CheckSafeKinds = %v, want an error naming the kind and its 2 safes", err)
+	}
+
+	empty := newTestManager(t, Config{Policy: PolicyPlaintext, Safes: newMemSafeStorage(), Stores: []string{string(PolicyPlaintext)}})
+	if err := empty.CheckSafeKinds(); err != nil {
+		t.Errorf("CheckSafeKinds without any safe: %v", err)
+	}
+
+	var nilManager *Manager
+	if err := nilManager.CheckSafeKinds(); err == nil {
+		t.Error("CheckSafeKinds on a nil Manager succeeded")
+	}
+}
+
+// A safe record that does not decode tells no kind: it is left to the
+// reports, and does not keep happyDomain from starting.
+func TestCheckSafeKindsSkipsDamagedRecords(t *testing.T) {
+	store := newMemSafeStorage()
+	store.damaged["safe-broken"] = errors.New("does not decode")
+
+	m := newTestManager(t, Config{Policy: PolicyPlaintext, InstanceKey: testInstanceKey(t), Safes: store})
+	if err := m.CheckSafeKinds(); err != nil {
+		t.Errorf("CheckSafeKinds beside a damaged record: %v", err)
 	}
 }

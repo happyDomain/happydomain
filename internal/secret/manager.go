@@ -26,6 +26,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 	"sync"
 
@@ -100,6 +102,14 @@ type Config struct {
 	// Safes keeps the safes. Required by every store, and by a policy
 	// other than plaintext.
 	Safes SafeStorage
+
+	// Stores lists the kinds of safe the administrator enabled: the others
+	// are left out. "plaintext" is not a kind of safe but is listed too:
+	// left out, it forbids the plaintext policy. Nil enables everything.
+	Stores []string
+
+	// factories replaces builtinStores, for tests.
+	factories map[string]StoreFactory
 }
 
 // NewManager returns a Manager for cfg.
@@ -110,9 +120,21 @@ func NewManager(cfg Config) (*Manager, error) {
 		stores: map[string]Store{},
 	}
 
-	for _, kind := range RegisteredStores() {
-		factory, _ := storeFactory(kind)
-		store, err := factory(cfg)
+	factories := cfg.storeFactories()
+	kinds := slices.Sorted(maps.Keys(factories))
+	if cfg.Stores != nil {
+		for _, kind := range cfg.Stores {
+			if _, known := factories[kind]; !known && kind != string(PolicyPlaintext) {
+				return nil, fmt.Errorf("unknown secret store %q", kind)
+			}
+		}
+		kinds = slices.DeleteFunc(kinds, func(kind string) bool {
+			return !slices.Contains(cfg.Stores, kind)
+		})
+	}
+
+	for _, kind := range kinds {
+		store, err := factories[kind](cfg)
 		if errors.Is(err, ErrStoreUnavailable) {
 			continue
 		}
@@ -123,11 +145,17 @@ func NewManager(cfg Config) (*Manager, error) {
 	}
 
 	if cfg.Policy == PolicyPlaintext {
+		if cfg.Stores != nil && !slices.Contains(cfg.Stores, string(PolicyPlaintext)) {
+			return nil, fmt.Errorf("the %q secret policy is not enabled: list it in the secret stores, or choose another policy", cfg.Policy)
+		}
 		return m, nil
 	}
 
-	if _, registered := storeFactory(string(cfg.Policy)); !registered {
+	if _, known := factories[string(cfg.Policy)]; !known {
 		return nil, fmt.Errorf("unknown secret policy %q", cfg.Policy)
+	}
+	if cfg.Stores != nil && !slices.Contains(cfg.Stores, string(cfg.Policy)) {
+		return nil, fmt.Errorf("the %q secret policy names a store that is not enabled", cfg.Policy)
 	}
 	store, ok := m.stores[string(cfg.Policy)]
 	if !ok {

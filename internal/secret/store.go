@@ -77,12 +77,24 @@ var builtinStores = map[string]StoreFactory{
 	KindInstance: newInstanceStore,
 }
 
-// RegisteredStores returns the kinds of safe happyDomain knows, sorted.
-func RegisteredStores() []string {
+// KnownStores returns the kinds of safe happyDomain knows, sorted.
+func KnownStores() []string {
 	return slices.Sorted(maps.Keys(builtinStores))
 }
 
-func storeFactory(kind string) (StoreFactory, bool) {
-	f, ok := builtinStores[kind]
-	return f, ok
+// DefaultStores returns the stores enabled when the administrator lists none:
+// plaintext, as happyDomain always did, and every kind of safe. A kind not
+// configured is enabled all the same: it is offered to nobody, see
+// ErrStoreUnavailable.
+func DefaultStores() []string {
+	return append([]string{string(PolicyPlaintext)}, KnownStores()...)
+}
+
+// storeFactories returns the factories cfg builds its stores from: the
+// builtin ones, unless a test gave others.
+func (cfg Config) storeFactories() map[string]StoreFactory {
+	if cfg.factories != nil {
+		return cfg.factories
+	}
+	return builtinStores
 }

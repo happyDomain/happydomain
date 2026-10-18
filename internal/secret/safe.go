@@ -26,6 +26,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"maps"
+	"slices"
 	"sync"
 	"time"
 
@@ -98,6 +100,34 @@ func (m *Manager) unlock(ctx context.Context, safe *happydns.Safe) (UnlockedSafe
 		return nil, fmt.Errorf("safe %s needs the %q secret store, which is not configured", safe.Id.String(), safe.Kind)
 	}
 	return store.Unlock(ctx, safe)
+}
+
+// CheckSafeKinds returns an error when safes are stored whose kind has no
+// store here, not enabled or not configured: the secrets they hold would fail
+// one at a time. A safe record that does not decode is left to the reports.
+func (m *Manager) CheckSafeKinds() error {
+	if m == nil {
+		return errNoManager
+	}
+	if m.safes == nil {
+		return nil
+	}
+
+	missing := map[string]int{}
+	err := eachSafe(m.safes, func(safe *happydns.Safe) {
+		if _, ok := m.stores[safe.Kind]; !ok {
+			missing[safe.Kind]++
+		}
+	}, nil)
+	if err != nil {
+		return fmt.Errorf("unable to list safes: %w", err)
+	}
+
+	var errs []error
+	for _, kind := range slices.Sorted(maps.Keys(missing)) {
+		errs = append(errs, fmt.Errorf("%d safes of kind %q are stored, but its secret store is not enabled or not configured", missing[kind], kind))
+	}
+	return errors.Join(errs...)
 }
 
 // CheckSafe returns an error when this instance cannot open safe, one coming

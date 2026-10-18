@@ -121,9 +121,14 @@ func (app *App) initSecrets() {
 		Policy:      policy,
 		InstanceKey: key,
 		Safes:       app.store,
+		Stores:      app.cfg.SecretStores,
 	})
 	if err != nil {
 		log.Fatalf("Unable to initialize secret management: %s", err)
+	}
+
+	if err := app.secrets.CheckSafeKinds(); err != nil {
+		log.Fatalf("Refusing to start: %s", err)
 	}
 }
 
