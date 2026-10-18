@@ -198,6 +198,12 @@
                                 {$t(ks.locked ? "keystores.locked" : "keystores.unlocked")}
                             </Badge>
                         {/if}
+                        {#if ks.references}
+                            <Badge color="info" title={ks.referenceHint}>
+                                <i class="bi bi-link-45deg"></i>
+                                {$t("keystores.references")}
+                            </Badge>
+                        {/if}
                         {#if !ks.available}
                             <Badge color="danger">{$t("keystores.unavailable")}</Badge>
                         {/if}
@@ -236,8 +242,9 @@
                         </Button>
                     {/if}
                     {#if objects.length > 0}
+                        <!-- A keystore of references would take the secrets for references. -->
                         {@const targets = ($keystores ?? []).filter(
-                            (o) => o.ref !== ks.ref && o.available,
+                            (o) => o.ref !== ks.ref && o.available && !o.references,
                         )}
                         {#if targets.length > 0}
                             <InputGroup size="sm" class="w-auto">
@@ -314,6 +321,11 @@
                         <label for="keystore-name">{$t("keystores.name")}</label>
                         <Input id="keystore-name" type="text" required bind:value={newName} />
                     </div>
+                    {#if kind?.references}
+                        <p class="text-muted small">
+                            {$t("keystores.references-help", { hint: kind.referenceHint ?? "" })}
+                        </p>
+                    {/if}
                     {#each kind?.form ?? [] as field (field.id)}
                         <ResourceInput
                             edit

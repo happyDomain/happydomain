@@ -22,7 +22,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { Keystore } from "$lib/api/keystores";
-import { eligibleKeystores, keystoreOf } from "./keystores";
+import { effectiveKeystore, eligibleKeystores, keystoreOf } from "./keystores";
 
 const list: Array<Keystore> = [
     {
@@ -42,6 +42,16 @@ const list: Array<Keystore> = [
         objects: [{ objectType: "provider", objectId: "p1" }],
     },
     {
+        ref: "file",
+        scope: "personal",
+        name: "My file",
+        available: true,
+        unattended: true,
+        references: true,
+        referenceHint: "the key of the secret in your file",
+        objects: [{ objectType: "provider", objectId: "p2" }],
+    },
+    {
         ref: "gone",
         scope: "personal",
         name: "Gone",
@@ -53,11 +63,15 @@ const list: Array<Keystore> = [
 
 describe("eligibleKeystores", () => {
     it("offers every available keystore to an object used with its owner", () => {
-        expect(eligibleKeystores(list, false).map((ks) => ks.ref)).toEqual(["instance", "mine"]);
+        expect(eligibleKeystores(list, false).map((ks) => ks.ref)).toEqual([
+            "instance",
+            "mine",
+            "file",
+        ]);
     });
 
     it("offers only those opening without the owner to a background object", () => {
-        expect(eligibleKeystores(list, true).map((ks) => ks.ref)).toEqual(["instance"]);
+        expect(eligibleKeystores(list, true).map((ks) => ks.ref)).toEqual(["instance", "file"]);
     });
 });
 
@@ -72,5 +86,41 @@ describe("keystoreOf", () => {
 
     it("finds none for an object not stored yet", () => {
         expect(keystoreOf(list, "provider", undefined)).toBeUndefined();
+    });
+});
+
+describe("effectiveKeystore", () => {
+    it("is the keystore chosen", () => {
+        expect(effectiveKeystore(list, "provider", "p1", "file", false)?.ref).toBe("file");
+    });
+
+    it("is the keystore the object uses, without a choice", () => {
+        expect(effectiveKeystore(list, "provider", "p2", "", false)?.references).toBe(true);
+    });
+
+    it("is the default keystore for a new object", () => {
+        expect(effectiveKeystore(list, "provider", undefined, "", false)?.ref).toBe("instance");
+    });
+
+    it("is no keystore when the one chosen is unknown", () => {
+        expect(effectiveKeystore(list, "provider", "p1", "nope", false)).toBeUndefined();
+    });
+
+    it("is the default keystore for a stored object no keystore claims", () => {
+        expect(effectiveKeystore(list, "provider", "p9", "", false)?.ref).toBe("instance");
+    });
+
+    it("skips a default keystore needing its owner for a background object", () => {
+        const attended: Array<Keystore> = [
+            {
+                ref: "mine",
+                scope: "personal",
+                available: true,
+                unattended: false,
+                default: true,
+                objects: [],
+            },
+        ];
+        expect(effectiveKeystore(attended, "channel", undefined, "", true)).toBeUndefined();
     });
 });

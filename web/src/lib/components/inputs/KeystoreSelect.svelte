@@ -23,7 +23,8 @@
 
 <script lang="ts">
     import type { Keystore } from "$lib/api/keystores";
-    import { eligibleKeystores, keystoreOf, keystores } from "$lib/stores/keystores";
+    import { effectiveKeystore, eligibleKeystores, keystores } from "$lib/stores/keystores";
+    import { toasts } from "$lib/stores/toasts";
     import { t } from "$lib/translations";
 
     import { useKeystoreChoice } from "./keystoreChoice.svelte";
@@ -44,8 +45,13 @@
     // already uses, else the default one.
     let current: Keystore | undefined = $derived(
         $keystores && choice
-            ? (keystoreOf($keystores, choice.objectType, choice.objectId) ??
-                  eligible.find((ks) => ks.default))
+            ? effectiveKeystore(
+                  $keystores,
+                  choice.objectType,
+                  choice.objectId,
+                  "",
+                  choice.unattended,
+              )
             : undefined,
     );
 
@@ -56,10 +62,32 @@
     }
 
     function select(e: Event) {
-        if (!choice) return;
+        if (!choice || !$keystores) return;
         const ref = (e.target as HTMLSelectElement).value;
+        const before = effectiveKeystore(
+            $keystores,
+            choice.objectType,
+            choice.objectId,
+            choice.value,
+            choice.unattended,
+        );
         // Back to where the secrets already are: nothing to move.
         choice.value = ref === current?.ref ? "" : ref;
+        const after = $keystores.find((ks) => ks.ref === ref);
+
+        // A reference is no secret, nor the other way round: whatever the
+        // fields hold has to be entered again.
+        if (Boolean(before?.references) !== Boolean(after?.references)) {
+            choice.resetSecrets++;
+            toasts.addToast({
+                title: $t("keystores.reentry-title"),
+                message: after?.references
+                    ? $t("keystores.reentry-references")
+                    : $t("keystores.reentry-secrets"),
+                type: "info",
+                timeout: 5000,
+            });
+        }
     }
 </script>
 

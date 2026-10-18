@@ -37,6 +37,11 @@ export class KeystoreChoice {
     // Empty for an object not stored yet.
     objectId: string | undefined = $state(undefined);
 
+    // Bumped when the choice goes from a keystore keeping references to one
+    // keeping secrets, or back: what the secret fields hold no longer means
+    // the same, so each of them empties itself.
+    resetSecrets = $state(0);
+
     constructor(
         readonly objectType: string,
         objectId: string | undefined,

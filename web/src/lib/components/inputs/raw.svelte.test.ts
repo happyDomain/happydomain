@@ -4,8 +4,17 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { Field, REDACTED_SECRET, REDACTED_SECRET_B64 } from "$lib/model/custom_form.svelte";
+import { keystores } from "$lib/stores/keystores";
 import { loadTranslations } from "$lib/translations";
+import { KeystoreChoice } from "./keystoreChoice.svelte";
 import RawInput from "./raw.svelte";
+
+// The context key of the choice is private: the tests hand it over here.
+const keystoreChoice = vi.hoisted(() => ({ current: undefined as KeystoreChoice | undefined }));
+vi.mock("./keystoreChoice.svelte", async (importOriginal) => ({
+    ...(await importOriginal<typeof import("./keystoreChoice.svelte")>()),
+    useKeystoreChoice: () => keystoreChoice.current,
+}));
 
 beforeAll(async () => {
     await loadTranslations("en", "/");
@@ -13,6 +22,8 @@ beforeAll(async () => {
 
 afterEach(() => {
     document.querySelectorAll("form").forEach((form) => form.remove());
+    keystoreChoice.current = undefined;
+    keystores.set(undefined);
 });
 
 function field(props: Partial<Field>): Field {
@@ -303,5 +314,55 @@ describe("Raw input", () => {
         await fireEvent.input(screen.getByRole("spinbutton"), { target: { value: "007" } });
 
         expect(state.current()).toBe(0);
+    });
+});
+
+describe("Raw input in a keystore of references", () => {
+    function useReferences(): KeystoreChoice {
+        keystores.set([
+            {
+                ref: "file",
+                scope: "personal",
+                available: true,
+                unattended: true,
+                default: true,
+                references: true,
+                referenceHint: "the key of the secret in your file",
+                objects: [],
+            },
+        ]);
+        keystoreChoice.current = new KeystoreChoice("provider", undefined, false);
+        return keystoreChoice.current;
+    }
+
+    it("shows the reference in clear, with the hint as placeholder and no eye", () => {
+        useReferences();
+        const specs = field({ id: "token", type: "string", secret: true, placeholder: "xyz" });
+        mount({ specs, value: "vault/token" });
+
+        const input = screen.getByRole("textbox");
+        expect(input).toHaveAttribute("type", "text");
+        expect(input).toHaveAttribute("placeholder", "the key of the secret in your file");
+        expect(screen.queryAllByRole("button")).toHaveLength(0);
+    });
+
+    it("empties a secret field when the choice crosses between references and secrets", async () => {
+        const choice = useReferences();
+        const specs = field({ id: "token", type: "string", secret: true });
+        const state = mount({ specs, value: "vault/token" });
+
+        choice.resetSecrets++;
+        await tick();
+
+        expect(state.current()).toBe("");
+    });
+
+    it("keeps the value it was mounted with", async () => {
+        useReferences();
+        const specs = field({ id: "token", type: "string", secret: true });
+        const state = mount({ specs, value: "vault/token" });
+        await tick();
+
+        expect(state.current()).toBe("vault/token");
     });
 });

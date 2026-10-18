@@ -50,3 +50,21 @@ export function keystoreOf(
         ks.objects?.some((o) => o.objectType === objectType && o.objectId === objectId),
     );
 }
+
+/**
+ * The keystore the secrets of an object go to: the one chosen, else the one it
+ * already uses, else the default one among those that fit it.
+ */
+export function effectiveKeystore(
+    list: Array<Keystore>,
+    objectType: string,
+    objectId: string | undefined,
+    chosen: string,
+    unattended: boolean,
+): Keystore | undefined {
+    if (chosen) return list.find((ks) => ks.ref === chosen);
+    return (
+        keystoreOf(list, objectType, objectId) ??
+        eligibleKeystores(list, unattended).find((ks) => ks.default)
+    );
+}

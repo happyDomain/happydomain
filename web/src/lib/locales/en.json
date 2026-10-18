@@ -951,6 +951,12 @@
         "lock": "Lock",
         "unlock-title": "Unlock {{name}}",
         "unlock-description": "This keystore opens only with what you give. It stays unlocked until you log out.",
-        "still-locked": "The keystore stayed locked: the action was not done."
+        "still-locked": "The keystore stayed locked: the action was not done.",
+        "references": "References",
+        "reference": "Reference to a secret kept outside happyDomain",
+        "references-help": "Keystores of this kind keep no credential: in place of each, you enter a reference to it ({{hint}}), which happyDomain resolves when it uses it. Credentials already stored elsewhere cannot be migrated into it.",
+        "reentry-title": "Credentials to enter again",
+        "reentry-references": "This keystore keeps references, not credentials: enter a reference in each credential field.",
+        "reentry-secrets": "This keystore keeps credentials, not references: enter each credential itself."
     }
 }

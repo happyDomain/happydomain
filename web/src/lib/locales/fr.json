@@ -605,6 +605,12 @@
         "lock": "Verrouiller",
         "unlock-title": "Déverrouiller {{name}}",
         "unlock-description": "Ce coffre ne s'ouvre qu'avec ce que vous fournissez. Il reste déverrouillé jusqu'à votre déconnexion.",
-        "still-locked": "Le coffre est resté verrouillé : l'action n'a pas été faite."
+        "still-locked": "Le coffre est resté verrouillé : l'action n'a pas été faite.",
+        "references": "Références",
+        "reference": "Référence à un secret conservé hors de happyDomain",
+        "references-help": "Les coffres de ce type ne conservent aucun identifiant : à la place de chacun, vous saisissez une référence vers lui ({{hint}}), que happyDomain résout quand il l'utilise. Les identifiants déjà enregistrés ailleurs ne peuvent pas y être migrés.",
+        "reentry-title": "Identifiants à saisir à nouveau",
+        "reentry-references": "Ce coffre conserve des références, pas des identifiants : saisissez une référence dans chaque champ d'identifiant.",
+        "reentry-secrets": "Ce coffre conserve des identifiants, pas des références : saisissez chaque identifiant lui-même."
     }
 }

@@ -33,10 +33,16 @@
         type InputType,
     } from "@sveltestrap/sveltestrap";
 
-    import { REDACTED_SECRET, REDACTED_SECRET_B64, type Field } from "$lib/model/custom_form.svelte";
+    import {
+        REDACTED_SECRET,
+        REDACTED_SECRET_B64,
+        type Field,
+    } from "$lib/model/custom_form.svelte";
+    import { effectiveKeystore, keystores } from "$lib/stores/keystores";
     import { t } from "$lib/translations";
 
     import KeystoreSelect from "./KeystoreSelect.svelte";
+    import { useKeystoreChoice } from "./keystoreChoice.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -68,6 +74,36 @@
 
     // svelte-ignore state_referenced_locally
     let secretVisible = $state(revealed);
+
+    const choice = useKeystoreChoice();
+
+    // The object's keystore keeps references: this field holds a pointer to a
+    // secret kept elsewhere, not the secret itself, so it is shown in clear.
+    let referenceHint: string | undefined = $derived.by(() => {
+        if (!specs.secret || !choice || !$keystores) return undefined;
+        const ks = effectiveKeystore(
+            $keystores,
+            choice.objectType,
+            choice.objectId,
+            choice.value,
+            choice.unattended,
+        );
+        return ks?.references ? (ks.referenceHint ?? "") : undefined;
+    });
+    let isReference: boolean = $derived(referenceHint !== undefined);
+
+    // Counted from mount: the effect also runs then, and must not empty the
+    // value the form was opened with.
+    let seenReset = choice?.resetSecrets ?? 0;
+    $effect(() => {
+        const reset = choice?.resetSecrets ?? 0;
+        if (reset === seenReset) return;
+        seenReset = reset;
+        if (specs.secret && edit && !readonly) {
+            replacing = false;
+            value = "";
+        }
+    });
 
     // The server withheld this value: what we hold is the placeholder standing
     // in for a stored credential, and submitting it back unchanged is what
@@ -114,7 +150,7 @@
               ? "checkbox"
               : specs.textarea
                 ? "textarea"
-                : specs.secret && !secretVisible
+                : specs.secret && !secretVisible && !isReference
                   ? "password"
                   : "text",
     );
@@ -124,9 +160,11 @@
     // HTML attribute is not masked by type="password". Replace with bullets of
     // the same length while the eye toggle is off.
     let displayPlaceholder: string | undefined = $derived(
-        specs.secret && !secretVisible && specs.placeholder
-            ? "•".repeat(specs.placeholder.length)
-            : specs.placeholder,
+        isReference
+            ? referenceHint || specs.placeholder
+            : specs.secret && !secretVisible && specs.placeholder
+              ? "•".repeat(specs.placeholder.length)
+              : specs.placeholder,
     );
 
     let inputmax: number | undefined = $derived(computeInputmax(specs));
@@ -289,17 +327,23 @@
     {/if}
 
     {#if specs.secret}
-        <Button
-            color="secondary"
-            outline
-            size="sm"
-            type="button"
-            disabled={isRedacted}
-            onclick={() => (secretVisible = !secretVisible)}
-            title={isRedacted ? "Hidden by the server" : secretVisible ? "Hide" : "Show"}
-        >
-            <Icon name={secretVisible ? "eye-slash" : "eye"} />
-        </Button>
+        {#if isReference}
+            <InputGroupText title={referenceHint || $t("keystores.reference")}>
+                <Icon name="link-45deg" />
+            </InputGroupText>
+        {:else}
+            <Button
+                color="secondary"
+                outline
+                size="sm"
+                type="button"
+                disabled={isRedacted}
+                onclick={() => (secretVisible = !secretVisible)}
+                title={isRedacted ? "Hidden by the server" : secretVisible ? "Hide" : "Show"}
+            >
+                <Icon name={secretVisible ? "eye-slash" : "eye"} />
+            </Button>
+        {/if}
 
         {#if edit && !readonly && isRedacted}
             <Button
