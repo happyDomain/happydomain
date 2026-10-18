@@ -22,7 +22,15 @@
 -->
 
 <script lang="ts">
-    import { Badge, Card, CardBody, CardFooter, CardHeader, Icon, Table } from "@sveltestrap/sveltestrap";
+    import {
+        Badge,
+        Card,
+        CardBody,
+        CardFooter,
+        CardHeader,
+        Icon,
+        Table,
+    } from "@sveltestrap/sveltestrap";
 
     import type { SecretCounts } from "$lib/api-admin";
     import { sealedCount } from "./secrets";
@@ -41,10 +49,11 @@
             (acc, t) => ({
                 clear: acc.clear + (objects[t].clear ?? 0),
                 sealed: acc.sealed + sealedCount(objects[t]),
+                locked: acc.locked + (objects[t].locked ?? 0),
                 unreadable: acc.unreadable + (objects[t].unreadable ?? 0),
                 undecodable: acc.undecodable + (objects[t].undecodable ?? 0),
             }),
-            { clear: 0, sealed: 0, unreadable: 0, undecodable: 0 },
+            { clear: 0, sealed: 0, locked: 0, unreadable: 0, undecodable: 0 },
         ),
     );
 
@@ -55,9 +64,17 @@
     }
 </script>
 
-{#snippet counters(clear: number, sealed: number, unreadable: number, undecodable: number, detail?: string)}
+{#snippet counters(
+    clear: number,
+    sealed: number,
+    locked: number,
+    unreadable: number,
+    undecodable: number,
+    detail?: string,
+)}
     <td class="text-end">{clear}</td>
     <td class="text-end" title={detail}>{sealed}</td>
+    <td class="text-end">{locked}</td>
     <td class="text-end">
         {#if unreadable > 0}
             <Badge color="danger">{unreadable}</Badge>
@@ -87,6 +104,7 @@
                         <th>Object type</th>
                         <th class="text-end">Clear</th>
                         <th class="text-end">Sealed</th>
+                        <th class="text-end">Locked</th>
                         <th class="text-end">Unreadable</th>
                         <th class="text-end">Undecodable</th>
                     </tr>
@@ -94,7 +112,7 @@
                 <tbody>
                     {#if types.length === 0}
                         <tr>
-                            <td colspan="5" class="text-center text-muted py-3">
+                            <td colspan="6" class="text-center text-muted py-3">
                                 No object type holds credentials
                             </td>
                         </tr>
@@ -105,6 +123,7 @@
                                 {@render counters(
                                     objects[t].clear ?? 0,
                                     sealedCount(objects[t]),
+                                    objects[t].locked ?? 0,
                                     objects[t].unreadable ?? 0,
                                     objects[t].undecodable ?? 0,
                                     sealedDetail(objects[t]),
@@ -117,7 +136,13 @@
                     <tfoot>
                         <tr class="fw-bold">
                             <td>Total</td>
-                            {@render counters(totals.clear, totals.sealed, totals.unreadable, totals.undecodable)}
+                            {@render counters(
+                                totals.clear,
+                                totals.sealed,
+                                totals.locked,
+                                totals.unreadable,
+                                totals.undecodable,
+                            )}
                         </tr>
                     </tfoot>
                 {/if}
@@ -127,8 +152,10 @@
     <CardFooter class="small text-muted">
         <strong>Clear</strong>: stored in clear.
         <strong>Sealed</strong>: encrypted, and decrypting.
+        <strong>Locked</strong>: encrypted in a keystore only its owner unlocks; whether it decrypts
+        is not known.
         <strong>Unreadable</strong>: encrypted, but no longer decrypting.
-        <strong>Undecodable</strong>: objects that could not be looked at, such as a provider of a type this
-        version no longer knows; they may hold encrypted credentials.
+        <strong>Undecodable</strong>: objects that could not be looked at, such as a provider of a
+        type this version no longer knows; they may hold encrypted credentials.
     </CardFooter>
 </Card>
