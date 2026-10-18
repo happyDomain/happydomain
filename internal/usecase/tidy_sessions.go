@@ -50,5 +50,12 @@ func (tu *tidyUpUsecase) TidySessions(dropInvalid bool) error {
 		return err
 	}
 
+	if tu.unlocked != nil {
+		tu.unlocked.PurgeScopes(func(scope string) bool {
+			_, err := tu.store.GetSession(scope)
+			return err == nil
+		})
+	}
+
 	return tu.store.TidySessionIndexes()
 }

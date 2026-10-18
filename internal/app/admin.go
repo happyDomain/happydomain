@@ -103,7 +103,7 @@ func NewAdmin(app *App) *Admin {
 			ZoneService:           app.usecases.zoneService,
 			CheckerOptionsUC:      app.usecases.checkerOptionsUC,
 			CheckScheduler:        app.usecases.checkerScheduler,
-			TidyUp:                usecase.NewTidyUpUsecase(app.store),
+			TidyUp:                usecase.NewTidyUpUsecase(app.store, usecase.TidyUnlockedKeystores(app.secrets)),
 			Purge:                 usecase.NewPurgeUsecase(app.store),
 			Secrets:               usecase.NewSecretsUsecase(app.secrets, app.secretHolders(), app.store),
 			Keystores:             app.usecases.keystores,

@@ -25,6 +25,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"testing"
 
 	"git.happydns.org/happyDomain/internal/forms"
@@ -752,5 +753,41 @@ func Test_CreateProviderIgnoresClientId(t *testing.T) {
 	stored, err := db.GetProvider(first.Id)
 	if err != nil || stored.Comment != "first" {
 		t.Errorf("first provider = %v, %v; want it untouched", stored, err)
+	}
+}
+
+// switchValidator succeeds until locked is set, then meets a keystore its
+// owner has not unlocked.
+type switchValidator struct{ locked bool }
+
+func (v *switchValidator) Validate(_ context.Context, _ *happydns.Provider) error {
+	if v.locked {
+		return happydns.KeystoreLockedError{KeystoreLock: happydns.KeystoreLock{Ref: "passphrase"}}
+	}
+	return nil
+}
+
+// A locked keystore met while validating an update reaches the API as it is,
+// to ask its owner to unlock it.
+func Test_UpdateProvider_KeystoreLockedPassesThrough(t *testing.T) {
+	v := &switchValidator{}
+	providerService, db := newTestServiceWithValidator(t, v)
+	user := createTestUser(t, db, "locked-update@example.com")
+
+	created, err := providerService.CreateProvider(ctx, user, createTestProviderMessage(t, "DDNSServer", "Original"))
+	if err != nil {
+		t.Fatalf("CreateProvider: %v", err)
+	}
+
+	v.locked = true
+	err = providerService.UpdateProvider(ctx, created.Id, user, func(p *happydns.Provider) {
+		p.Comment = "Updated"
+	})
+	if !errors.Is(err, happydns.ErrKeystoreLocked) {
+		t.Fatalf("UpdateProvider() = %T %v, want the KeystoreLockedError", err, err)
+	}
+	var validation happydns.ValidationError
+	if errors.As(err, &validation) {
+		t.Errorf("UpdateProvider() = %v, want no ValidationError", err)
 	}
 }

@@ -34,12 +34,33 @@ import (
 
 type tidyUpUsecase struct {
 	store storage.Storage
+
+	unlocked ScopePurger
 }
 
-func NewTidyUpUsecase(store storage.Storage) happydns.TidyUpUseCase {
-	return &tidyUpUsecase{
+// ScopePurger forgets what was unlocked during the sessions for which alive
+// returns false.
+type ScopePurger interface {
+	PurgeScopes(alive func(scope string) bool)
+}
+
+// TidyOption configures the tidy use case.
+type TidyOption func(*tidyUpUsecase)
+
+// TidyUnlockedKeystores has the tidy of the sessions also forget the
+// keystores unlocked during those gone.
+func TidyUnlockedKeystores(p ScopePurger) TidyOption {
+	return func(tu *tidyUpUsecase) { tu.unlocked = p }
+}
+
+func NewTidyUpUsecase(store storage.Storage, opts ...TidyOption) happydns.TidyUpUseCase {
+	tu := &tidyUpUsecase{
 		store: store,
 	}
+	for _, opt := range opts {
+		opt(tu)
+	}
+	return tu
 }
 
 // iterateTidy drives an iterator using NextWithError so Tidy can decide

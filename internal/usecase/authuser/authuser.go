@@ -22,6 +22,7 @@
 package authuser
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/mail"
@@ -40,6 +41,7 @@ type Service struct {
 	emailValidation   *EmailValidationUsecase
 	recovery          *RecoverAccountUsecase
 	onDeleted         func(happydns.Identifier) error
+	onPasswordChanged func(ctx context.Context, user happydns.Identifier, old, new string) error
 }
 
 // NewAuthUserUsecases initializes and returns a new AuthUserService, containing all use cases.
@@ -63,6 +65,45 @@ func NewAuthUserUsecases(
 	s.recovery = NewRecoverAccountUsecase(store, mailer, cfg, s)
 
 	return s
+}
+
+// SetOnPasswordChanged installs a callback invoked once a user changed their
+// password knowing the previous one, to bind to the new one what the previous
+// one opened. Its failure does not undo the change: it is logged.
+func (s *Service) SetOnPasswordChanged(fn func(ctx context.Context, user happydns.Identifier, old, new string) error) {
+	s.onPasswordChanged = fn
+}
+
+// ChangeKnownPassword changes the password of user, who gave old, the
+// previous one, as ChangePassword does, then runs the callback set by
+// SetOnPasswordChanged.
+func (s *Service) ChangeKnownPassword(ctx context.Context, user *happydns.UserAuth, old, new string) error {
+	if err := s.ChangePassword(user, new); err != nil {
+		return err
+	}
+	if s.onPasswordChanged != nil {
+		if err := s.onPasswordChanged(ctx, user.Id, old, new); err != nil {
+			log.Printf("unable to bind to the new password of %s what the previous one opened: %s", user.Email, err)
+		}
+	}
+	return nil
+}
+
+// HasLoginPassword tells whether user logs in with a password, rather than
+// through an external provider.
+func (s *Service) HasLoginPassword(user happydns.Identifier) bool {
+	_, err := s.store.GetAuthUser(user)
+	return err == nil
+}
+
+// CheckLoginPassword returns an error unless password is the login password
+// of user.
+func (s *Service) CheckLoginPassword(user happydns.Identifier, password string) error {
+	u, err := s.store.GetAuthUser(user)
+	if err != nil || !helpers.CheckPassword(u, password) {
+		return happydns.ValidationError{Msg: "bad current password"}
+	}
+	return nil
 }
 
 // SetOnDeleted installs a callback invoked when a user deletes their account,

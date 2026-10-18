@@ -102,7 +102,7 @@ func TestKeystoreUsecaseLifecycle(t *testing.T) {
 	uc, _, holder := keystoreUsecase(t)
 	owner := happydns.Identifier{0x01}
 
-	if kinds := uc.Kinds(); len(kinds) != 1 || kinds[0].Kind != secrettest.PersonalKind {
+	if kinds := uc.Kinds(owner); len(kinds) != 1 || kinds[0].Kind != secrettest.PersonalKind {
 		t.Errorf("Kinds = %+v, want the personal test kind only", kinds)
 	}
 
@@ -173,6 +173,137 @@ func TestKeystoreUsecaseLifecycle(t *testing.T) {
 		}
 		if ks.Ref == b.Ref && (!ks.Default || len(ks.Objects) != 2) {
 			t.Errorf("B = %+v, want default and used by both objects", ks)
+		}
+	}
+}
+
+// loginPasswords knows the login password of the owners that have one.
+type loginPasswords map[string]string
+
+func (p loginPasswords) HasLoginPassword(owner happydns.Identifier) bool {
+	_, ok := p[owner.String()]
+	return ok
+}
+
+func (p loginPasswords) CheckLoginPassword(owner happydns.Identifier, password string) error {
+	if pw, ok := p[owner.String()]; !ok || pw != password {
+		return happydns.ValidationError{Msg: "bad current password"}
+	}
+	return nil
+}
+
+func interactiveKeystoreUsecase(t *testing.T, passwords loginPasswords) (*usecase.KeystoreUsecase, *secret.Manager) {
+	t.Helper()
+	db, err := inmemory.Instantiate()
+	if err != nil {
+		t.Fatal(err)
+	}
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	m, err := secret.NewManager(secrettest.WithInteractiveStores(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db, Defaults: db}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return usecase.NewKeystoreUsecase(m, nil).WithLoginPasswords(passwords), m
+}
+
+func TestKeystoreUsecaseUnlock(t *testing.T) {
+	uc, _ := interactiveKeystoreUsecase(t, loginPasswords{})
+	owner := happydns.Identifier{0x01}
+	ctx := secret.WithUnlockScope(context.Background(), "session")
+
+	ks, err := uc.Create(ctx, owner, secrettest.PassphraseKind, "Mine", secrettest.Material("passphrase", "p"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := uc.Unlock(ctx, owner, ks.Ref, secrettest.Material("passphrase", "wrong")); httpStatus(err) != http.StatusForbidden {
+		t.Errorf("Unlock(wrong) = %v, want a 403", err)
+	}
+	if err := uc.Unlock(ctx, owner, "nope", secrettest.Material("passphrase", "p")); httpStatus(err) != http.StatusNotFound {
+		t.Errorf("Unlock(unknown) = %v, want a 404", err)
+	}
+	if err := uc.Unlock(ctx, owner, secret.KindInstance, nil); httpStatus(err) != http.StatusBadRequest {
+		t.Errorf("Unlock(instance) = %v, want a 400", err)
+	}
+	if err := uc.Unlock(ctx, owner, ks.Ref, secrettest.Material("passphrase", "p")); err != nil {
+		t.Fatal(err)
+	}
+	list, _ := uc.List(ctx, owner)
+	for _, k := range list {
+		if k.Ref == ks.Ref && k.Locked {
+			t.Error("the keystore unlocked is listed locked")
+		}
+	}
+
+	if err := uc.Lock(ctx, owner, ks.Ref); err != nil {
+		t.Fatal(err)
+	}
+	list, _ = uc.List(ctx, owner)
+	for _, k := range list {
+		if k.Ref == ks.Ref && !k.Locked {
+			t.Error("the keystore locked is listed unlocked")
+		}
+	}
+}
+
+func TestKeystoreUsecasePasswordBound(t *testing.T) {
+	local := happydns.Identifier{0x01}
+	oidc := happydns.Identifier{0x02}
+	uc, m := interactiveKeystoreUsecase(t, loginPasswords{local.String(): "login-pw"})
+	ctx := context.Background()
+
+	hasKind := func(owner happydns.Identifier) bool {
+		for _, k := range uc.Kinds(owner) {
+			if k.Kind == secrettest.PasswordKind {
+				return true
+			}
+		}
+		return false
+	}
+	if !hasKind(local) {
+		t.Error("a password bound kind is not offered to an account with a password")
+	}
+	if hasKind(oidc) {
+		t.Error("a password bound kind is offered to an account without a password")
+	}
+	if hasKind(nil) {
+		t.Error("a password bound kind is offered to the administrator")
+	}
+
+	if _, err := uc.Create(ctx, oidc, secrettest.PasswordKind, "Login", secrettest.Material(secret.PasswordParam, "x")); httpStatus(err) != http.StatusBadRequest {
+		t.Errorf("Create(password bound, no password) = %v, want a 400", err)
+	}
+	if _, err := uc.Create(ctx, local, secrettest.PasswordKind, "Login", secrettest.Material(secret.PasswordParam, "guess")); httpStatus(err) != http.StatusForbidden {
+		t.Errorf("Create(password bound, wrong password) = %v, want a 403", err)
+	}
+	for _, params := range []string{`not json`, `{}`} {
+		if _, err := uc.Create(ctx, local, secrettest.PasswordKind, "Login", []byte(params)); httpStatus(err) != http.StatusForbidden {
+			t.Errorf("Create(password bound, %s) = %v, want a 403", params, err)
+		}
+	}
+	ks, err := uc.Create(ctx, local, secrettest.PasswordKind, "Login", secrettest.Material(secret.PasswordParam, "login-pw"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	session := secret.WithUnlockScope(ctx, "s1")
+	uc.UnlockAtLogin(session, local, "login-pw")
+	list, _ := uc.List(session, local)
+	for _, k := range list {
+		if k.Ref == ks.Ref && k.Locked {
+			t.Error("a password bound keystore is still locked after the login")
+		}
+	}
+
+	if err := uc.PasswordChanged(ctx, local, "login-pw", "new-pw"); err != nil {
+		t.Fatal(err)
+	}
+	session2 := secret.WithUnlockScope(ctx, "s2")
+	m.UnlockAtLogin(session2, local, "new-pw")
+	list, _ = uc.List(session2, local)
+	for _, k := range list {
+		if k.Ref == ks.Ref && k.Locked {
+			t.Error("a password bound keystore does not open with the new password")
 		}
 	}
 }

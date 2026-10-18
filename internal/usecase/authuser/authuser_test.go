@@ -22,6 +22,7 @@
 package authuser_test
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/mail"
@@ -1094,5 +1095,70 @@ func TestSendValidationLink(t *testing.T) {
 	err = service.SendValidationLink(user)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
+	}
+}
+
+// Changing a password known, the keystores bound to the old one follow; a
+// failure there does not undo the change.
+func TestChangeKnownPassword(t *testing.T) {
+	service, store := setupTestService()
+	user := &happydns.UserAuth{Email: "known@example.com"}
+	helpers.DefinePassword(user, "OldPassword123!")
+	if err := store.CreateAuthUser(user); err != nil {
+		t.Fatal(err)
+	}
+
+	var got []string
+	service.SetOnPasswordChanged(func(_ context.Context, id happydns.Identifier, old, new string) error {
+		if !id.Equals(user.Id) {
+			t.Errorf("hook called for %s, want %s", id.String(), user.Id.String())
+		}
+		got = []string{old, new}
+		return errors.New("the keystores did not follow")
+	})
+
+	if err := service.ChangeKnownPassword(context.Background(), user, "OldPassword123!", "NewPa$$w0rd"); err != nil {
+		t.Fatalf("ChangeKnownPassword = %v", err)
+	}
+	if len(got) != 2 || got[0] != "OldPassword123!" || got[1] != "NewPa$$w0rd" {
+		t.Errorf("hook got %v", got)
+	}
+	updated, _ := store.GetAuthUser(user.Id)
+	if !helpers.CheckPassword(updated, "NewPa$$w0rd") {
+		t.Error("the password did not change")
+	}
+
+	// A weak password stops before the hook.
+	got = nil
+	if err := service.ChangeKnownPassword(context.Background(), updated, "NewPa$$w0rd", "short"); err == nil {
+		t.Error("a weak password was accepted")
+	}
+	if got != nil {
+		t.Error("the hook ran for a refused change")
+	}
+}
+
+func TestLoginPasswords(t *testing.T) {
+	service, store := setupTestService()
+	user := &happydns.UserAuth{Email: "pw@example.com"}
+	helpers.DefinePassword(user, "Password123!")
+	if err := store.CreateAuthUser(user); err != nil {
+		t.Fatal(err)
+	}
+
+	if !service.HasLoginPassword(user.Id) {
+		t.Error("a local account has no login password")
+	}
+	if service.HasLoginPassword(happydns.Identifier{0x42}) {
+		t.Error("an account without credentials has a login password")
+	}
+	if err := service.CheckLoginPassword(user.Id, "Password123!"); err != nil {
+		t.Errorf("CheckLoginPassword(right) = %v", err)
+	}
+	if err := service.CheckLoginPassword(user.Id, "wrong"); err == nil {
+		t.Error("CheckLoginPassword(wrong) succeeded")
+	}
+	if err := service.CheckLoginPassword(happydns.Identifier{0x42}, "x"); err == nil {
+		t.Error("CheckLoginPassword(no account) succeeded")
 	}
 }

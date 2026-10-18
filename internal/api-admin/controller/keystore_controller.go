@@ -188,12 +188,13 @@ func (kc *KeystoreController) SetDefaultKeystore(c *gin.Context) {
 //
 //	@Summary	List keystore kinds
 //	@Schemes
-//	@Description	List the kinds of personal keystore this instance lets owners create, each with the form of its parameters.
+//	@Description	List the kinds of personal keystore the administrator can create for an owner, each with the form of its parameters: not those bound to the login password of their owner.
 //	@Tags		admin
 //	@Produce	json
 //	@Security	securitydefinitions.basic
 //	@Success	200	{array}	secret.KindInfo
 //	@Router		/secrets/keystore-kinds [get]
 func (kc *KeystoreController) ListKeystoreKinds(c *gin.Context) {
-	c.JSON(http.StatusOK, kc.keystores.Kinds())
+	// None bound to a login password: the administrator does not know it.
+	c.JSON(http.StatusOK, kc.keystores.Kinds(nil))
 }

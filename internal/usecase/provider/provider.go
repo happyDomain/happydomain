@@ -24,6 +24,7 @@ package provider
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"git.happydns.org/happyDomain/internal/forms"
@@ -199,6 +200,10 @@ func (s *Service) update(ctx context.Context, providerID happydns.Identifier, us
 	}
 
 	err = s.validator.Validate(ctx, provider)
+	if errors.Is(err, happydns.ErrKeystoreLocked) {
+		// The owner unlocks it, and tries again.
+		return nil, err
+	}
 	if err != nil {
 		return nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to validate provider attributes: %s", err.Error())}
 	}

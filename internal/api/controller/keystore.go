@@ -98,7 +98,7 @@ func (kc *KeystoreController) ListKeystores(c *gin.Context) {
 //	@Failure		401	{object}	happydns.ErrorResponse	"Authentication failure"
 //	@Router			/keystores/kinds [get]
 func (kc *KeystoreController) ListKeystoreKinds(c *gin.Context) {
-	c.JSON(http.StatusOK, kc.keystores.Kinds())
+	c.JSON(http.StatusOK, kc.keystores.Kinds(middleware.MyUser(c).Id))
 }
 
 // CreateKeystore creates a personal keystore.

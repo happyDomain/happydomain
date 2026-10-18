@@ -918,6 +918,62 @@ func Test_Secret_MoveOwnerSecrets(t *testing.T) {
 	}
 }
 
+// A provider in a keystore its owner has not unlocked during the session
+// tells which one to unlock, whatever touches it.
+func Test_Secret_LockedKeystore(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	m, err := secret.NewManager(secrettest.WithInteractiveStores(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db, Defaults: db}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	svc := provider.NewService(db, &mockValidator{}, nil, m)
+	user := createTestUser(t, db, "locked@example.com")
+
+	ks, err := m.CreateKeystore(ctx, user.Id, secrettest.PassphraseKind, "Mine", secrettest.Material("passphrase", "p"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	session := secret.WithUnlockScope(ctx, "s1")
+	if err := m.UnlockKeystore(session, user.Id, ks.Ref, secrettest.Material("passphrase", "p")); err != nil {
+		t.Fatal(err)
+	}
+	p, err := svc.CreateProvider(secret.WithKeystore(session, ks.Ref), user, secretMessage(t, "SecretTestProvider", `{"host":"h","apikey":"my-key"}`))
+	if err != nil {
+		t.Fatalf("CreateProvider(unlocked) = %v", err)
+	}
+
+	isLocked := func(err error) bool {
+		var le happydns.KeystoreLockedError
+		return errors.As(err, &le) && le.Ref == ks.Ref
+	}
+
+	other := secret.WithUnlockScope(ctx, "s2")
+	stored, err := svc.GetUserProvider(other, user, p.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.RetrieveZone(other, stored, "example.com"); !isLocked(err) {
+		t.Errorf("RetrieveZone(other session) = %v, want the keystore to unlock", err)
+	}
+
+	// A new credential is sealed there: that needs it unlocked.
+	body := `{"host":"h","apikey":"new-key"}`
+	if _, err := svc.UpdateProviderFromMessage(other, p.Id, user, secretMessage(t, "SecretTestProvider", body)); !isLocked(err) {
+		t.Errorf("UpdateProviderFromMessage(new key, other session) = %v, want the keystore to unlock", err)
+	}
+	if _, err := svc.UpdateProviderFromMessage(session, p.Id, user, secretMessage(t, "SecretTestProvider", body)); err != nil {
+		t.Errorf("UpdateProviderFromMessage(new key, unlocked session) = %v", err)
+	}
+
+	// Renaming it opens nothing: no need to unlock it.
+	renamed := `{"host":"renamed","apikey":"` + happydns.RedactedSecret + `"}`
+	if _, err := svc.UpdateProviderFromMessage(other, p.Id, user, secretMessage(t, "SecretTestProvider", renamed)); err != nil {
+		t.Errorf("UpdateProviderFromMessage(renamed, other session) = %v", err)
+	}
+}
+
 // Replacing every credential of a provider keeps it in its keystore: the
 // stored version tells where it is.
 func Test_Secret_ReplacedCredentialsStayInTheirKeystore(t *testing.T) {

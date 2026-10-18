@@ -530,3 +530,22 @@ func TestInspectCountsLocked(t *testing.T) {
 		t.Errorf("Inspect = %+v, want 1 locked", c)
 	}
 }
+
+// Deleting the safes of an owner forgets what they unlocked.
+func TestDeleteOwnerSafesLocks(t *testing.T) {
+	f := interactiveFixture(t)
+	owner := objectContext().Owner
+	ks, err := f.m.CreateKeystore(context.Background(), owner, passphraseKind, "Mine", phrase("p"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := f.m.UnlockKeystore(scoped("s1"), owner, ks.Ref, phrase("p")); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.m.DeleteOwnerSafes(owner); err != nil {
+		t.Fatal(err)
+	}
+	if len(f.m.unlocked.scopes) != 0 {
+		t.Errorf("unlocked = %v, want nothing left", f.m.unlocked.scopes)
+	}
+}

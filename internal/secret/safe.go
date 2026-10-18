@@ -246,6 +246,9 @@ func (m *Manager) DeleteOwnerSafes(owner happydns.Identifier) error {
 		}
 	}
 
+	// What they unlocked would no longer open anyway.
+	m.LockOwner(owner)
+
 	if m.defaults != nil {
 		if err := m.defaults.DeleteDefaultKeystore(owner); err != nil && !errors.Is(err, happydns.ErrNotFound) {
 			return fmt.Errorf("unable to forget the default keystore of %s: %w", owner.String(), err)

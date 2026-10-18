@@ -189,7 +189,9 @@ func (app *App) initUsecases() {
 	registry.Register(notifPkg.Adapt(notifPkg.NewWebhookSender(baseURL, app.guards.Outbound), app.guards.Outbound))
 	registry.Register(notifPkg.Adapt(notifPkg.NewUnifiedPushSender(baseURL, app.guards.Outbound), app.guards.Outbound))
 	app.usecases.notificationRegistry = registry
-	app.usecases.keystores = usecase.NewKeystoreUsecase(app.secrets, app.secretHolders())
+	app.usecases.keystores = usecase.NewKeystoreUsecase(app.secrets, app.secretHolders()).
+		WithLoginPasswords(authUserService)
+	authUserService.SetOnPasswordChanged(app.usecases.keystores.PasswordChanged)
 	app.usecases.backup = backupUC.NewUsecase(app.store, app.secrets, backupUC.WithChannelRedactor(registry))
 	resolver := notifUC.NewResolver(app.store, app.store)
 	pool := notifUC.NewPool(registry, app.store)

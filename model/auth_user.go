@@ -22,6 +22,7 @@
 package happydns
 
 import (
+	"context"
 	"time"
 )
 
@@ -79,6 +80,9 @@ type AuthUserUsecase interface {
 	CanRegister(UserRegistration) error
 	CheckPassword(*UserAuth, ChangePasswordForm) error
 	ChangePassword(*UserAuth, string) error
+	// ChangeKnownPassword changes the password of a user who gave the
+	// previous one, so the keystores bound to it follow the new one.
+	ChangeKnownPassword(ctx context.Context, user *UserAuth, old, new string) error
 	CreateAuthUser(UserRegistration) (*UserAuth, error)
 	DeleteAuthUser(*UserAuth, string) error
 	GenerateRecoveryLink(*UserAuth) (string, error)

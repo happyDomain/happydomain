@@ -45,8 +45,23 @@ type KeystoreUsage struct {
 // KeystoreUsecase lets an owner, or the administrator on their behalf,
 // manage the keystores their secrets are sealed in.
 type KeystoreUsecase struct {
-	manager *secret.Manager
-	holders map[string]SecretHolder
+	manager   *secret.Manager
+	holders   map[string]SecretHolder
+	passwords LoginPasswords
+}
+
+// LoginPasswords tells whether owners log in with a password, and checks it:
+// a keystore bound to the login password is only created knowing it.
+type LoginPasswords interface {
+	HasLoginPassword(owner happydns.Identifier) bool
+	CheckLoginPassword(owner happydns.Identifier, password string) error
+}
+
+// WithLoginPasswords lets owners logging in with a password create keystores
+// bound to it.
+func (u *KeystoreUsecase) WithLoginPasswords(passwords LoginPasswords) *KeystoreUsecase {
+	u.passwords = passwords
+	return u
 }
 
 func NewKeystoreUsecase(manager *secret.Manager, holders map[string]SecretHolder) *KeystoreUsecase {
@@ -62,7 +77,7 @@ func keystoreError(err error) error {
 		return happydns.NotFoundError{Msg: err.Error()}
 	case errors.Is(err, secret.ErrInvalidKeystore), errors.Is(err, secret.ErrKeystoreNotUnattended):
 		return happydns.ValidationError{Msg: err.Error()}
-	case errors.Is(err, secret.ErrInstanceKeystore):
+	case errors.Is(err, secret.ErrInstanceKeystore), errors.Is(err, secret.ErrWrongUnlockMaterial):
 		return happydns.ForbiddenError{Msg: err.Error()}
 	}
 	return err
@@ -108,19 +123,71 @@ func (u *KeystoreUsecase) List(ctx context.Context, owner happydns.Identifier) (
 	return list, nil
 }
 
-// Kinds lists the kinds of personal keystore owners may create.
-func (u *KeystoreUsecase) Kinds() []secret.KindInfo {
-	kinds := u.manager.CreatableKinds()
-	if kinds == nil {
-		return []secret.KindInfo{}
+// hasLoginPassword tells whether owner logs in with a password.
+func (u *KeystoreUsecase) hasLoginPassword(owner happydns.Identifier) bool {
+	return u.passwords != nil && u.passwords.HasLoginPassword(owner)
+}
+
+// Kinds lists the kinds of personal keystore owner may create: those bound
+// to the login password only when they have one.
+func (u *KeystoreUsecase) Kinds(owner happydns.Identifier) []secret.KindInfo {
+	kinds := []secret.KindInfo{}
+	for _, k := range u.manager.CreatableKinds() {
+		if !k.PasswordBound || u.hasLoginPassword(owner) {
+			kinds = append(kinds, k)
+		}
 	}
 	return kinds
 }
 
-// Create creates a personal keystore of kind for owner.
+// Create creates a personal keystore of kind for owner. One bound to the
+// login password needs it, checked here.
 func (u *KeystoreUsecase) Create(ctx context.Context, owner happydns.Identifier, kind, name string, params json.RawMessage) (secret.Keystore, error) {
+	for _, k := range u.manager.CreatableKinds() {
+		if k.Kind != kind || !k.PasswordBound {
+			continue
+		}
+		if !u.hasLoginPassword(owner) {
+			return secret.Keystore{}, happydns.ValidationError{Msg: fmt.Sprintf("a keystore of kind %q opens with the login password: this account has none", kind)}
+		}
+		var p map[string]string
+		// Params that do not decode give an empty password, refused below.
+		_ = json.Unmarshal(params, &p)
+		if err := u.passwords.CheckLoginPassword(owner, p[secret.PasswordParam]); err != nil {
+			return secret.Keystore{}, happydns.ForbiddenError{Msg: "this is not the login password of the account"}
+		}
+	}
+
 	ks, err := u.manager.CreateKeystore(ctx, owner, kind, name, params)
 	return ks, keystoreError(err)
+}
+
+// Unlock opens ref, a keystore of owner, with material, for the session of
+// ctx.
+func (u *KeystoreUsecase) Unlock(ctx context.Context, owner happydns.Identifier, ref string, material json.RawMessage) error {
+	return keystoreError(u.manager.UnlockKeystore(ctx, owner, ref, material))
+}
+
+// Lock closes ref, a keystore of owner, for the session of ctx.
+func (u *KeystoreUsecase) Lock(ctx context.Context, owner happydns.Identifier, ref string) error {
+	return keystoreError(u.manager.LockKeystore(ctx, owner, ref))
+}
+
+// UnlockAtLogin opens, for the session of ctx, the keystores of owner bound
+// to password, their login password.
+func (u *KeystoreUsecase) UnlockAtLogin(ctx context.Context, owner happydns.Identifier, password string) {
+	u.manager.UnlockAtLogin(ctx, owner, password)
+}
+
+// LockSession closes every keystore unlocked during scope, a session ending.
+func (u *KeystoreUsecase) LockSession(scope string) {
+	u.manager.LockScope(scope)
+}
+
+// PasswordChanged binds the keystores of owner bound to old, their previous
+// login password, to new.
+func (u *KeystoreUsecase) PasswordChanged(ctx context.Context, owner happydns.Identifier, old, new string) error {
+	return u.manager.PasswordChanged(ctx, owner, old, new)
 }
 
 // Delete deletes ref, a keystore of owner, once it holds no secret: they are

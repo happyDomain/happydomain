@@ -92,6 +92,10 @@ func (i instantiator) seal(ctx context.Context, p *happydns.Provider, keystore s
 	if errors.Is(err, secret.ErrUnknownKeystore) {
 		return happydns.ValidationError{Msg: err.Error()}
 	}
+	if errors.Is(err, happydns.ErrKeystoreLocked) {
+		// The owner unlocks it, and tries again.
+		return err
+	}
 	if err != nil {
 		return happydns.InternalError{
 			Err:         fmt.Errorf("unable to seal provider credentials: %w", err),
