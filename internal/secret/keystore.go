@@ -100,6 +100,12 @@ type Keystore struct {
 	Locked      bool             `json:"locked"`
 	UnlockForm  []happydns.Field `json:"unlockForm,omitempty"`
 
+	// References tells whether the keystore keeps references to secrets
+	// kept outside happyDomain, which its owner enters in place of the
+	// secrets, following ReferenceHint.
+	References    bool   `json:"references"`
+	ReferenceHint string `json:"referenceHint,omitempty"`
+
 	// SafeId is the safe behind the keystore, empty for a keystore of the
 	// instance not created yet.
 	SafeId happydns.Identifier `json:"safeId,omitempty" swaggertype:"string"`
@@ -117,6 +123,11 @@ type KindInfo struct {
 	// PasswordBound tells whether its keystores open with the login
 	// password of their owner, who needs one.
 	PasswordBound bool `json:"passwordBound"`
+
+	// References tells whether its keystores keep references, see
+	// Keystore.References.
+	References    bool   `json:"references"`
+	ReferenceHint string `json:"referenceHint,omitempty"`
 
 	// Form describes the parameters of its creation.
 	Form []happydns.Field `json:"form"`
@@ -158,7 +169,15 @@ func (m *Manager) describe(safe *happydns.Safe) Keystore {
 		ks.Ref = safe.Kind
 		ks.Scope = ScopeInstance
 	}
+	m.describeReferences(&ks)
 	return ks
+}
+
+// describeReferences tells whether ks keeps references.
+func (m *Manager) describeReferences(ks *Keystore) {
+	if r, ok := m.referencing(ks.Kind); ok {
+		ks.References, ks.ReferenceHint = true, r.ReferenceHint()
+	}
 }
 
 // Keystores lists the keystores of owner: those of the instance, created or
@@ -192,7 +211,9 @@ func (m *Manager) Keystores(ctx context.Context, owner happydns.Identifier) ([]K
 			continue
 		}
 		if _, seen := instance[kind]; !seen {
-			instance[kind] = Keystore{Ref: kind, Kind: kind, Scope: ScopeInstance, Unattended: opensUnattended(store), Available: true}
+			ks := Keystore{Ref: kind, Kind: kind, Scope: ScopeInstance, Unattended: opensUnattended(store), Available: true}
+			m.describeReferences(&ks)
+			instance[kind] = ks
 		}
 	}
 
@@ -247,7 +268,11 @@ func (m *Manager) CreatableKinds() []KindInfo {
 		case PasswordBound:
 			kinds = append(kinds, KindInfo{Kind: kind, PasswordBound: true, Form: passwordForm()})
 		case Creator:
-			kinds = append(kinds, KindInfo{Kind: kind, Unattended: opensUnattended(c), Form: c.CreateForm()})
+			k := KindInfo{Kind: kind, Unattended: opensUnattended(c), Form: c.CreateForm()}
+			if r, ok := c.(Referencing); ok {
+				k.References, k.ReferenceHint = true, r.ReferenceHint()
+			}
+			kinds = append(kinds, k)
 		}
 	}
 	return kinds
@@ -496,7 +521,7 @@ func (m *Manager) newSealer(ctx context.Context, owner happydns.Identifier, dst 
 	if err != nil {
 		return nil, err
 	}
-	x.m, x.owner, x.move = m, owner, dst.Keystore != ""
+	x.m, x.owner, x.move, x.references = m, owner, dst.Keystore != "", dst.References
 	return x, nil
 }
 

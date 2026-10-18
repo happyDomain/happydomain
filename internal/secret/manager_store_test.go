@@ -162,6 +162,7 @@ func withFakeStores(cfg Config) Config {
 		cfg.factories[unattendedCreatorKind] = func(Config) (Store, error) {
 			return unattendedCreatorStore{creatorStore{kind: unattendedCreatorKind}}, nil
 		}
+		cfg.factories[referenceKind] = func(Config) (Store, error) { return referenceStore{}, nil }
 		cfg.factories[provisioningCreatorKind] = func(Config) (Store, error) {
 			return provisioningCreatorStore{unattendedCreatorStore{creatorStore{kind: provisioningCreatorKind}}}, nil
 		}

@@ -127,6 +127,25 @@ func passwordForm() []happydns.Field {
 // not open the safe.
 var ErrWrongUnlockMaterial = errors.New("this does not unlock the keystore")
 
+// Referencing is a Store whose safes keep no secret: what the owner enters in
+// a secret field is a reference, such as the key of the secret in a file of
+// theirs, which Seal checks and keeps as the payload, and Open resolves to the
+// secret, kept outside happyDomain.
+//
+// The Manager never moves a secret into such a safe, where it would be taken
+// for a reference, and shows the references to their owner: they are not
+// secret.
+type Referencing interface {
+	Store
+
+	// ReferenceHint tells the owner what to enter in place of a secret.
+	ReferenceHint() string
+
+	// Reference returns the reference payload, made by Seal, carries, as
+	// the owner entered it. It never resolves it.
+	Reference(payload []byte) (string, error)
+}
+
 // Unattended is a Store whose safes open without their owner, as for a
 // notification or a scheduled check run in the background. A store that is
 // not an Unattended one is taken as needing its owner.

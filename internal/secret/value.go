@@ -62,9 +62,6 @@ func (m *Manager) SealValueInto(ctx context.Context, sc SecretContext, value str
 	if err := m.SealSecretInto(ctx, sc, &s, dst); err != nil {
 		return "", err
 	}
-	if s.IsSealed() {
-		return value, nil
-	}
 	return s.Token(), nil
 }
 

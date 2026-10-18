@@ -255,3 +255,85 @@ func (s passwordStore) Rebind(_ context.Context, safe *happydns.Safe, old, new s
 	}
 	return nil
 }
+
+// ReferenceKind is a personal keystore keeping no secret, opening without its
+// owner: they give, at creation, the secrets it resolves by reference, as a
+// file of theirs would: {"values": {"<reference>": "<secret>"}}.
+const ReferenceKind = "test-reference"
+
+// WithReferenceStore returns cfg knowing ReferenceKind.
+func WithReferenceStore(cfg secret.Config) secret.Config {
+	return cfg.WithStores(map[string]secret.StoreFactory{
+		ReferenceKind: func(secret.Config) (secret.Store, error) { return referenceStore{}, nil },
+	})
+}
+
+// ReferenceParams returns the parameters creating a keystore of ReferenceKind
+// resolving the references of values.
+func ReferenceParams(values map[string]string) json.RawMessage {
+	b, _ := json.Marshal(map[string]any{"values": values})
+	return b
+}
+
+type referenceStore struct{}
+
+func (referenceStore) OpensUnattended() bool { return true }
+
+func (referenceStore) ReferenceHint() string { return "the key of the secret in your file" }
+
+func (referenceStore) Reference(payload []byte) (string, error) {
+	if len(payload) == 0 {
+		return "", errors.New("empty reference")
+	}
+	return string(payload), nil
+}
+
+func (referenceStore) CreateForm() []happydns.Field {
+	return []happydns.Field{{Id: "values", Type: "string", Required: true}}
+}
+
+func (referenceStore) Create(_ context.Context, safe *happydns.Safe, params json.RawMessage) error {
+	var p struct {
+		Values map[string]string `json:"values"`
+	}
+	if err := json.Unmarshal(params, &p); err != nil {
+		return err
+	}
+	if len(p.Values) == 0 {
+		return errors.New("no values")
+	}
+	b, err := json.Marshal(p.Values)
+	if err != nil {
+		return err
+	}
+	safe.Keyring = []happydns.WrappedKeyset{{KEK: ReferenceKind, Params: b}}
+	return nil
+}
+
+func (referenceStore) Unlock(_ context.Context, safe *happydns.Safe) (secret.UnlockedSafe, error) {
+	if safe.Kind != ReferenceKind || len(safe.Keyring) == 0 {
+		return nil, errors.New("not a reference test safe")
+	}
+	var values map[string]string
+	if err := json.Unmarshal(safe.Keyring[0].Params, &values); err != nil {
+		return nil, err
+	}
+	return referenceUnlocked(values), nil
+}
+
+type referenceUnlocked map[string]string
+
+func (u referenceUnlocked) Seal(_ context.Context, _ secret.SecretContext, ref []byte) ([]byte, error) {
+	if _, ok := u[string(ref)]; !ok {
+		return nil, errors.New("unknown reference")
+	}
+	return ref, nil
+}
+
+func (u referenceUnlocked) Open(_ context.Context, _ secret.SecretContext, payload []byte) ([]byte, error) {
+	v, ok := u[string(payload)]
+	if !ok {
+		return nil, errors.New("unknown reference")
+	}
+	return []byte(v), nil
+}

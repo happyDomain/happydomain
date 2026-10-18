@@ -112,6 +112,17 @@ func (m *Manager) inspectOne(ctx context.Context, sc SecretContext, s *happydns.
 		return fmt.Errorf("unexpected secret state in a stored object")
 	}
 
+	// A reference is read, never resolved: resolving it may run what its
+	// owner set up, which an inspection has no business doing.
+	if _, kind, ok, err := m.referenceOf(sc, *s, referenceSafes{}); kind != "" || err != nil {
+		if ok {
+			c.Sealed[kind]++
+		} else {
+			c.Unreadable++
+		}
+		return nil
+	}
+
 	kind, err := m.open(ctx, sc, s, unlocked)
 	if err != nil {
 		// Cut short, it tells nothing of whether the secret opens.

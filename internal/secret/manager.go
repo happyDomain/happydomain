@@ -249,6 +249,12 @@ type Destination struct {
 	// outside of a struct. SealObjectInto finds them itself.
 	Current []happydns.Identifier
 
+	// References holds, by field, the references the stored version of the
+	// object keeps: see ReferencesOf. A clear value equal to one is the
+	// reference sent back as shown, not a secret, so it is refused unless
+	// the destination keeps references.
+	References map[string]string
+
 	// policyOnly ignores the keystores of the owner, for a reseal.
 	policyOnly bool
 }
@@ -273,6 +279,8 @@ func (m *Manager) SealObject(ctx context.Context, sc SecretContext, obj any) err
 // up in it. A redacted one is an error. dst is checked before obj is touched.
 //
 // A sealed secret stays opened: obj can still be used, and is now storable.
+// One sealed into a keystore keeping references is left sealed instead, its
+// clear value being the reference: OpenCopy resolves it.
 func (m *Manager) SealObjectInto(ctx context.Context, sc SecretContext, obj any, dst Destination) error {
 	if m == nil {
 		return errNoManager
@@ -347,6 +355,18 @@ type sealer struct {
 
 	// opened holds the safes unlocked to open what moves.
 	opened unlockedSafes
+
+	// references are those of Destination.References.
+	references map[string]string
+}
+
+// keepsReferences tells whether the keystore of the sealer keeps references.
+func (x *sealer) keepsReferences() bool {
+	if x.plaintext {
+		return false
+	}
+	_, ok := x.m.referencing(x.kind)
+	return ok
 }
 
 func (x *sealer) seal(ctx context.Context, sc SecretContext, s *happydns.Secret) error {
@@ -370,6 +390,10 @@ func (x *sealer) seal(ctx context.Context, sc SecretContext, s *happydns.Secret)
 	clear, ok := s.ClearForSealing()
 	if !ok {
 		return errors.New("secret in an unknown state")
+	}
+
+	if ref, ok := x.references[sc.Field]; ok && ref == string(clear) && !x.keepsReferences() {
+		return fmt.Errorf("%w: %s", ErrReferenceAsSecret, sc.Field)
 	}
 
 	if x.plaintext {
@@ -410,8 +434,19 @@ func (x *sealer) sealClear(ctx context.Context, sc SecretContext, s *happydns.Se
 	}
 
 	payload, err := x.unlocked.Seal(ctx, sc, clear)
+	// A cancellation is not the owner's mistake: it is not told them as a
+	// reference that does not resolve.
+	if err != nil && x.keepsReferences() && ctx.Err() == nil {
+		return fmt.Errorf("%w: %w", ErrUnresolvedReference, err)
+	}
 	if err != nil {
 		return err
+	}
+	if x.keepsReferences() {
+		// Its clear value is the reference: opened, it would be used as
+		// the secret. Sealed, it is resolved where it is used.
+		s.SetSealed(FormatSealed(x.safe.Id, payload))
+		return nil
 	}
 	s.SetOpened(FormatSealed(x.safe.Id, payload), clear)
 	return nil
@@ -435,6 +470,10 @@ func (x *sealer) moveHere(ctx context.Context, sc SecretContext, s *happydns.Sec
 	}
 	if x.safe != nil && x.safe.Id.Equals(id) {
 		return nil
+	}
+	if x.keepsReferences() {
+		// The secret would be taken for a reference.
+		return fmt.Errorf("%w: %s", ErrReferencesOnly, sc.Field)
 	}
 
 	if s.IsSealed() {
