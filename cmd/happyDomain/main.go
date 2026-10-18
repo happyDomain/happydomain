@@ -25,6 +25,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -66,7 +67,10 @@ func main() {
 	}
 	v := Version
 	if Version == "custom-build" {
-		v = versioninfo.Short()
+		v = strings.TrimSuffix(versioninfo.Version, "+dirty")
+		if versioninfo.DirtyBuild {
+			v += "-dirty"
+		}
 		controller.HDVersion.Version = v
 	} else {
 		versioninfo.Version = Version
@@ -78,7 +82,7 @@ func main() {
 		versioninfo.DirtyBuild,
 	)
 
-	log.Println("This is happyDomain", versioninfo.Short())
+	log.Println("This is happyDomain", v)
 
 	// Disabled colors in dnscontrol corrections
 	color.NoColor = true
