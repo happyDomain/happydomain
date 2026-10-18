@@ -174,3 +174,44 @@ func ciphertextKeyId(ct []byte) (uint32, error) {
 	}
 	return binary.BigEndian.Uint32(ct[1:5]), nil
 }
+
+// wrapAssociatedData binds a wrapped keyset to its safe and owner, so that it
+// cannot be moved to another safe. Same length-prefixed layout as
+// AssociatedData.
+//
+// This is a persisted format: changing it makes every safe unreadable.
+func wrapAssociatedData(safe *happydns.Safe) []byte {
+	var ad []byte
+	for _, p := range [][]byte{[]byte(wrapVersion), safe.Id, safe.Owner} {
+		ad = binary.BigEndian.AppendUint32(ad, uint32(len(p)))
+		ad = append(ad, p...)
+	}
+	return ad
+}
+
+// Wrap encrypts dek, the key of safe, under the instance keyset.
+func (k *InstanceKey) Wrap(safe *happydns.Safe, dek *keyset.Handle) (happydns.WrappedKeyset, error) {
+	var buf bytes.Buffer
+	if err := dek.WriteWithAssociatedData(keyset.NewBinaryWriter(&buf), k.aead, wrapAssociatedData(safe)); err != nil {
+		return happydns.WrappedKeyset{}, fmt.Errorf("unable to wrap the key of safe %s: %w", safe.Id.String(), err)
+	}
+
+	return happydns.WrappedKeyset{KEK: KEKInstance, Blob: buf.Bytes()}, nil
+}
+
+// Unwrap decrypts the key of safe from its instance keyring entry.
+func (k *InstanceKey) Unwrap(safe *happydns.Safe) (*keyset.Handle, error) {
+	for _, w := range safe.Keyring {
+		if w.KEK != KEKInstance {
+			continue
+		}
+
+		h, err := keyset.ReadWithAssociatedData(keyset.NewBinaryReader(bytes.NewReader(w.Blob)), k.aead, wrapAssociatedData(safe))
+		if err != nil {
+			return nil, fmt.Errorf("unable to unwrap the key of safe %s: %w", safe.Id.String(), err)
+		}
+		return h, nil
+	}
+
+	return nil, fmt.Errorf("safe %s has no key wrapped by the instance keyset", safe.Id.String())
+}

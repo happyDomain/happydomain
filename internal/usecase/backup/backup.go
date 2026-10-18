@@ -467,7 +467,7 @@ func (u *Usecase) Restore(ctx context.Context, backup *happydns.Backup) error {
 	// Safes, before the providers: sealing a clear value restored below
 	// must find the owner's safe rather than create another one.
 	for _, safe := range backup.Safes {
-		errs = errors.Join(errs, u.restoreSafe(safe))
+		errs = errors.Join(errs, u.restoreSafe(ctx, safe))
 	}
 
 	// Providers
@@ -605,13 +605,13 @@ func (u *Usecase) Restore(ctx context.Context, backup *happydns.Backup) error {
 	return errs
 }
 
-func (u *Usecase) restoreSafe(safe *happydns.Safe) error {
+func (u *Usecase) restoreSafe(ctx context.Context, safe *happydns.Safe) error {
 	if safe == nil {
 		return nil
 	}
 
 	// Restored with another keyset, or none, it would never open.
-	if err := u.secrets.CheckSafe(safe); err != nil {
+	if err := u.secrets.CheckSafe(ctx, safe); err != nil {
 		return fmt.Errorf("safe %s not restored: %w", safe.Id.String(), err)
 	}
 

@@ -22,29 +22,14 @@
 package secret
 
 import (
-	"bytes"
-	"encoding/binary"
+	"context"
 	"errors"
 	"fmt"
 	"log"
 	"sync"
 	"time"
 
-	"github.com/tink-crypto/tink-go/v2/aead"
-	"github.com/tink-crypto/tink-go/v2/keyset"
-	"github.com/tink-crypto/tink-go/v2/tink"
-
 	"git.happydns.org/happyDomain/model"
-)
-
-const (
-	// KindInstance is a safe whose key is wrapped by the instance keyset.
-	KindInstance = "instance"
-
-	// KEKInstance names the instance keyset in a keyring.
-	KEKInstance = "instance"
-
-	wrapVersion = "hds:1:safe"
 )
 
 // instanceOwner owns the secrets of the instance itself. It is persisted, in
@@ -68,72 +53,16 @@ func IsInstanceOwner(owner happydns.Identifier) bool {
 	return string(owner) == instanceOwner
 }
 
-// wrapAssociatedData binds a wrapped keyset to its safe and owner, so that it
-// cannot be moved to another safe. Same length-prefixed layout as
-// AssociatedData.
-//
-// This is a persisted format: changing it makes every safe unreadable.
-func wrapAssociatedData(safe *happydns.Safe) []byte {
-	var ad []byte
-	for _, p := range [][]byte{[]byte(wrapVersion), safe.Id, safe.Owner} {
-		ad = binary.BigEndian.AppendUint32(ad, uint32(len(p)))
-		ad = append(ad, p...)
-	}
-	return ad
-}
-
-// Wrap encrypts dek, the key of safe, under the instance keyset.
-func (k *InstanceKey) Wrap(safe *happydns.Safe, dek *keyset.Handle) (happydns.WrappedKeyset, error) {
-	var buf bytes.Buffer
-	if err := dek.WriteWithAssociatedData(keyset.NewBinaryWriter(&buf), k.aead, wrapAssociatedData(safe)); err != nil {
-		return happydns.WrappedKeyset{}, fmt.Errorf("unable to wrap the key of safe %s: %w", safe.Id.String(), err)
-	}
-
-	return happydns.WrappedKeyset{KEK: KEKInstance, Blob: buf.Bytes()}, nil
-}
-
-// Unwrap decrypts the key of safe from its instance keyring entry.
-func (k *InstanceKey) Unwrap(safe *happydns.Safe) (*keyset.Handle, error) {
-	for _, w := range safe.Keyring {
-		if w.KEK != KEKInstance {
-			continue
-		}
-
-		h, err := keyset.ReadWithAssociatedData(keyset.NewBinaryReader(bytes.NewReader(w.Blob)), k.aead, wrapAssociatedData(safe))
-		if err != nil {
-			return nil, fmt.Errorf("unable to unwrap the key of safe %s: %w", safe.Id.String(), err)
-		}
-		return h, nil
-	}
-
-	return nil, fmt.Errorf("safe %s has no key wrapped by the instance keyset", safe.Id.String())
-}
-
-// safeRegistry finds, creates and opens the safes.
-type safeRegistry struct {
-	store SafeStorage
-	key   *InstanceKey
-
-	// locks holds one mutex per owner, so that two requests of the same
-	// user do not both create their instance safe.
-	locks sync.Map
-}
-
-func newSafeRegistry(store SafeStorage, key *InstanceKey) *safeRegistry {
-	return &safeRegistry{store: store, key: key}
-}
-
-// instanceSafe returns the instance safe of owner, creating it on first use.
-func (r *safeRegistry) instanceSafe(owner happydns.Identifier) (*happydns.Safe, error) {
-	if r.key == nil {
-		return nil, errors.New("no instance keyset configured")
-	}
-
-	mu, _ := r.locks.LoadOrStore(owner.String(), &sync.Mutex{})
+// ownerSafe returns the safe of kind owned by owner, having store create it
+// on first use.
+func (m *Manager) ownerSafe(ctx context.Context, owner happydns.Identifier, kind string, store Provisioner) (*happydns.Safe, error) {
+	// One mutex per owner and kind, so that two requests of the same user
+	// do not both create their safe.
+	mu, _ := m.locks.LoadOrStore(kind+":"+owner.String(), &sync.Mutex{})
 	mu.(*sync.Mutex).Lock()
 	defer mu.(*sync.Mutex).Unlock()
 
-	safe, err := r.store.GetSafeByOwner(owner, KindInstance)
+	safe, err := m.safes.GetSafeByOwner(owner, kind)
 	if err == nil {
 		return safe, nil
 	}
@@ -148,53 +77,40 @@ func (r *safeRegistry) instanceSafe(owner happydns.Identifier) (*happydns.Safe, 
 	safe = &happydns.Safe{
 		Id:        id,
 		Owner:     owner,
-		Kind:      KindInstance,
+		Kind:      kind,
 		CreatedAt: time.Now().UTC(),
 	}
-
-	dek, err := keyset.NewHandle(aead.AES256GCMKeyTemplate())
-	if err != nil {
+	if err := store.Provision(ctx, safe); err != nil {
 		return nil, err
 	}
-	w, err := r.key.Wrap(safe, dek)
-	if err != nil {
-		return nil, err
-	}
-	safe.Keyring = []happydns.WrappedKeyset{w}
 
-	if err := r.store.CreateSafe(safe); err != nil {
+	if err := m.safes.CreateSafe(safe); err != nil {
 		return nil, fmt.Errorf("unable to create the safe of %s: %w", owner.String(), err)
 	}
 	return safe, nil
 }
 
-// aead returns the primitive sealing and opening the values of safe.
-func (r *safeRegistry) aead(safe *happydns.Safe) (tink.AEAD, error) {
-	if safe.Kind != KindInstance {
-		return nil, fmt.Errorf("safe %s is of unsupported kind %q", safe.Id.String(), safe.Kind)
+// unlock returns what seals and opens the secrets of safe, through the store
+// of its kind.
+func (m *Manager) unlock(ctx context.Context, safe *happydns.Safe) (UnlockedSafe, error) {
+	store, ok := m.stores[safe.Kind]
+	if !ok {
+		return nil, fmt.Errorf("safe %s needs the %q secret store, which is not configured", safe.Id.String(), safe.Kind)
 	}
-	if r.key == nil {
-		return nil, fmt.Errorf("safe %s needs the instance keyset, which is not configured", safe.Id.String())
-	}
-
-	dek, err := r.key.Unwrap(safe)
-	if err != nil {
-		return nil, err
-	}
-	return aead.New(dek)
+	return store.Unlock(ctx, safe)
 }
 
 // CheckSafe returns an error when this instance cannot open safe, one coming
 // from elsewhere such as a backup: stored, it would only hold values that
 // never open here.
-func (m *Manager) CheckSafe(safe *happydns.Safe) error {
+func (m *Manager) CheckSafe(ctx context.Context, safe *happydns.Safe) error {
 	if m == nil {
 		return errNoManager
 	}
 	if m.safes == nil {
-		return fmt.Errorf("safe %s needs the instance keyset, which is not configured", safe.Id.String())
+		return fmt.Errorf("safe %s cannot be kept: no safe storage is configured", safe.Id.String())
 	}
-	_, err := m.safes.aead(safe)
+	_, err := m.unlock(ctx, safe)
 	return err
 }
 
@@ -211,7 +127,7 @@ func (m *Manager) DeleteOwnerSafes(owner happydns.Identifier) error {
 	// A record that does not decode tells no owner: it is left as it is,
 	// rather than keep every account from being deleted.
 	var ids []happydns.Identifier
-	err := eachSafe(m.safes.store, func(safe *happydns.Safe) {
+	err := eachSafe(m.safes, func(safe *happydns.Safe) {
 		if safe.Owner.Equals(owner) {
 			ids = append(ids, safe.Id)
 		}
@@ -223,7 +139,7 @@ func (m *Manager) DeleteOwnerSafes(owner happydns.Identifier) error {
 	}
 
 	for _, id := range ids {
-		if err := m.safes.store.DeleteSafe(id); err != nil {
+		if err := m.safes.DeleteSafe(id); err != nil {
 			return fmt.Errorf("unable to delete safe %s: %w", id.String(), err)
 		}
 	}

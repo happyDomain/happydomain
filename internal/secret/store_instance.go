@@ -23,11 +23,72 @@ package secret
 
 import (
 	"bytes"
+	"context"
+	"errors"
+	"fmt"
 
+	"github.com/tink-crypto/tink-go/v2/aead"
 	"github.com/tink-crypto/tink-go/v2/keyset"
 
 	"git.happydns.org/happyDomain/model"
 )
+
+const (
+	// KindInstance is a safe whose key is wrapped by the instance keyset.
+	KindInstance = "instance"
+
+	// KEKInstance names the instance keyset in a keyring.
+	KEKInstance = "instance"
+
+	wrapVersion = "hds:1:safe"
+)
+
+// instanceStore keeps the key of each safe wrapped by the instance keyset,
+// held by the server outside the database.
+type instanceStore struct {
+	key *InstanceKey
+}
+
+func newInstanceStore(cfg Config) (Store, error) {
+	if cfg.InstanceKey == nil {
+		return nil, ErrStoreUnavailable
+	}
+	if cfg.Safes == nil {
+		return nil, errors.New("an instance keyset requires a safe storage")
+	}
+	return &instanceStore{key: cfg.InstanceKey}, nil
+}
+
+// Provision gives safe a new key, wrapped by the instance keyset.
+func (s *instanceStore) Provision(_ context.Context, safe *happydns.Safe) error {
+	dek, err := keyset.NewHandle(aead.AES256GCMKeyTemplate())
+	if err != nil {
+		return err
+	}
+	w, err := s.key.Wrap(safe, dek)
+	if err != nil {
+		return err
+	}
+	safe.Keyring = []happydns.WrappedKeyset{w}
+	return nil
+}
+
+// Unlock unwraps the key of safe with the instance keyset.
+func (s *instanceStore) Unlock(_ context.Context, safe *happydns.Safe) (UnlockedSafe, error) {
+	if safe.Kind != KindInstance {
+		return nil, fmt.Errorf("safe %s is of kind %q, not %q", safe.Id.String(), safe.Kind, KindInstance)
+	}
+
+	dek, err := s.key.Unwrap(safe)
+	if err != nil {
+		return nil, err
+	}
+	primitive, err := aead.New(dek)
+	if err != nil {
+		return nil, err
+	}
+	return &aeadSafe{id: safe.Id, primitive: primitive}, nil
+}
 
 // wrappingKeyId returns the identifier of the instance key that wrapped w,
 // read from the Tink output prefix of the ciphertext.
@@ -38,4 +99,13 @@ func wrappingKeyId(w happydns.WrappedKeyset) (uint32, error) {
 	}
 
 	return ciphertextKeyId(enc.GetEncryptedKeyset())
+}
+
+// instanceKey returns the instance keyset of m, or nil when none is
+// configured: rotating it and reporting its keys are about it alone.
+func (m *Manager) instanceKey() *InstanceKey {
+	if s, ok := m.stores[KindInstance].(*instanceStore); ok {
+		return s.key
+	}
+	return nil
 }

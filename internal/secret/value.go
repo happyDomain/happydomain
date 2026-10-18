@@ -25,8 +25,6 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/tink-crypto/tink-go/v2/tink"
-
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -86,7 +84,7 @@ func (m *Manager) InspectValue(ctx context.Context, sc SecretContext, value stri
 	if err != nil {
 		return err
 	}
-	return m.inspectOne(ctx, sc, &s, map[string]tink.AEAD{}, c)
+	return m.inspectOne(ctx, sc, &s, unlockedSafes{}, c)
 }
 
 // ResealValue returns value, as stored, the way the current policy stores new

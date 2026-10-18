@@ -25,8 +25,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/tink-crypto/tink-go/v2/tink"
-
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -81,16 +79,16 @@ func (m *Manager) Inspect(ctx context.Context, sc SecretContext, obj any, c *Cou
 		return err
 	}
 
-	primitives := map[string]tink.AEAD{}
+	unlocked := unlockedSafes{}
 
 	return Walk(cp, func(path string, s *happydns.Secret) error {
 		fsc := sc
 		fsc.Field = path
-		return m.inspectOne(ctx, fsc, s, primitives, c)
+		return m.inspectOne(ctx, fsc, s, unlocked, c)
 	})
 }
 
-func (m *Manager) inspectOne(ctx context.Context, sc SecretContext, s *happydns.Secret, primitives map[string]tink.AEAD, c *Counts) error {
+func (m *Manager) inspectOne(ctx context.Context, sc SecretContext, s *happydns.Secret, unlocked unlockedSafes, c *Counts) error {
 	if c.Sealed == nil {
 		c.Sealed = map[string]int{}
 	}
@@ -109,7 +107,8 @@ func (m *Manager) inspectOne(ctx context.Context, sc SecretContext, s *happydns.
 		return fmt.Errorf("unexpected secret state in a stored object")
 	}
 
-	if err := m.open(ctx, sc, s, primitives); err != nil {
+	kind, err := m.open(ctx, sc, s, unlocked)
+	if err != nil {
 		// Cut short, it tells nothing of whether the secret opens.
 		if ctxErr := ctx.Err(); ctxErr != nil {
 			return ctxErr
@@ -118,9 +117,7 @@ func (m *Manager) inspectOne(ctx context.Context, sc SecretContext, s *happydns.
 		return nil
 	}
 
-	// Only instance safes open for now: count it under its kind once
-	// others do.
-	c.Sealed[KindInstance]++
+	c.Sealed[kind]++
 	return nil
 }
 

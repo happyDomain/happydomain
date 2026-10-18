@@ -49,7 +49,7 @@ func (m *Manager) keyUsage() (usage map[uint32]int, unreadable int, err error) {
 	}
 
 	usage = map[uint32]int{}
-	err = eachSafe(m.safes.store, func(safe *happydns.Safe) {
+	err = eachSafe(m.safes, func(safe *happydns.Safe) {
 		for _, w := range safe.Keyring {
 			if w.KEK != KEKInstance {
 				continue
@@ -73,12 +73,12 @@ func (m *Manager) keyUsage() (usage map[uint32]int, unreadable int, err error) {
 // again to resume.
 func (m *Manager) Rewrap(ctx context.Context) (ResealReport, error) {
 	report := ResealReport{ObjectType: SafeObjectType}
-	if m == nil || m.safes == nil || m.safes.key == nil {
+	if m == nil || m.safes == nil || m.instanceKey() == nil {
 		return report, errors.New("no instance keyset configured")
 	}
 
 	var ids []happydns.Identifier
-	err := eachSafe(m.safes.store, func(safe *happydns.Safe) {
+	err := eachSafe(m.safes, func(safe *happydns.Safe) {
 		ids = append(ids, safe.Id)
 	}, func(key string, err error) {
 		report.Processed++
@@ -108,9 +108,9 @@ func (m *Manager) Rewrap(ctx context.Context) (ResealReport, error) {
 
 // rewrapSafe rewraps the safe id, as stored now, if it needs it.
 func (m *Manager) rewrapSafe(id happydns.Identifier) (bool, error) {
-	key := m.safes.key
+	key := m.instanceKey()
 
-	safe, err := m.safes.store.GetSafe(id)
+	safe, err := m.safes.GetSafe(id)
 	if errors.Is(err, happydns.ErrSafeNotFound) {
 		// Deleted since it was listed.
 		return false, nil
@@ -147,7 +147,7 @@ func (m *Manager) rewrapSafe(id happydns.Identifier) (bool, error) {
 	}
 	safe.Keyring = keyring
 
-	err = m.safes.store.UpdateSafe(safe)
+	err = m.safes.UpdateSafe(safe)
 	if errors.Is(err, happydns.ErrSafeNotFound) {
 		return false, nil
 	}
@@ -212,8 +212,8 @@ func (m *Manager) KeyStatus() ([]KeyStatus, error) {
 	}
 
 	var keys []KeyStatus
-	if m.safes.key != nil {
-		for _, k := range DescribeKeyset(m.safes.key.handle) {
+	if key := m.instanceKey(); key != nil {
+		for _, k := range DescribeKeyset(key.handle) {
 			keys = append(keys, KeyStatus{KeyInfo: k, Safes: usage[k.Id]})
 			delete(usage, k.Id)
 		}

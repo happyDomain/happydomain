@@ -49,7 +49,7 @@ func (m *Manager) DropSafes(ctx context.Context, checks CheckStorage) (int, erro
 
 	var ids []happydns.Identifier
 	damaged := 0
-	err := eachSafe(m.safes.store, func(safe *happydns.Safe) {
+	err := eachSafe(m.safes, func(safe *happydns.Safe) {
 		// Only the instance keyset is let go of: a safe of another kind
 		// holds secrets its owner chose to keep there.
 		if safe.Kind == KindInstance {
@@ -65,7 +65,7 @@ func (m *Manager) DropSafes(ctx context.Context, checks CheckStorage) (int, erro
 
 	dropped := 0
 	for _, id := range ids {
-		if err := m.safes.store.DeleteSafe(id); err != nil && !errors.Is(err, happydns.ErrSafeNotFound) {
+		if err := m.safes.DeleteSafe(id); err != nil && !errors.Is(err, happydns.ErrSafeNotFound) {
 			return dropped, fmt.Errorf("unable to delete safe %s: %w", id.String(), err)
 		}
 		dropped++

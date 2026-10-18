@@ -73,7 +73,9 @@ var ErrStoreUnavailable = errors.New("secret store not configured")
 // builtinStores holds the factory of each kind of safe happyDomain knows. A
 // kind is persisted in each safe: it cannot change once safes of that kind
 // exist. It is never empty nor plaintext, which names no store.
-var builtinStores = map[string]StoreFactory{}
+var builtinStores = map[string]StoreFactory{
+	KindInstance: newInstanceStore,
+}
 
 // RegisteredStores returns the kinds of safe happyDomain knows, sorted.
 func RegisteredStores() []string {
