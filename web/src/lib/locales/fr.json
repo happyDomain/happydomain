@@ -598,6 +598,13 @@
         "kind": "Type",
         "name": "Nom",
         "choose": "Coffre contenant les identifiants de cet objet",
-        "policy": "Par défaut de l'instance"
+        "policy": "Par défaut de l'instance",
+        "locked": "Verrouillé",
+        "unlocked": "Déverrouillé",
+        "unlock": "Déverrouiller",
+        "lock": "Verrouiller",
+        "unlock-title": "Déverrouiller {{name}}",
+        "unlock-description": "Ce coffre ne s'ouvre qu'avec ce que vous fournissez. Il reste déverrouillé jusqu'à votre déconnexion.",
+        "still-locked": "Le coffre est resté verrouillé : l'action n'a pas été faite."
     }
 }

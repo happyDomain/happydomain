@@ -31,6 +31,7 @@
     import Header from "$lib/components/Header.svelte";
     import NavigationProgress from "$lib/components/NavigationProgress.svelte";
     import ReportProblem from "$lib/components/modals/ReportProblem.svelte";
+    import UnlockKeystore from "$lib/components/modals/UnlockKeystore.svelte";
     import Toaster from "$lib/components/Toaster.svelte";
     import VoxPeople from "$lib/components/VoxPeople.svelte";
     import { appConfig } from "$lib/stores/config";
@@ -71,6 +72,12 @@
                     message: $t("errors.session.content"),
                     timeout: 10000,
                 });
+            } else if (e.reason.name == "KeystoreLockedError") {
+                // The user chose not to unlock it: no bug to report.
+                toasts.addErrorToast({
+                    message: $t("keystores.still-locked"),
+                    timeout: 10000,
+                });
             } else {
                 // Nothing caught this one: whatever it is, we didn't plan for
                 // it, so let the user hand it over to us.
@@ -105,6 +112,7 @@
 
 <Toaster />
 <ReportProblem bind:this={reportModal} />
+<UnlockKeystore />
 {#if !$appConfig.hide_feedback && MODE == "production"}
     <VoxPeople />
 {/if}

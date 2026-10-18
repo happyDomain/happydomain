@@ -24,7 +24,9 @@ import {
     getKeystores,
     getKeystoresKinds,
     postKeystores,
+    postKeystoresByRefLock,
     postKeystoresByRefMigrate,
+    postKeystoresByRefUnlock,
     putKeystoresDefault,
 } from "$lib/api-base/sdk.gen";
 import type {
@@ -69,4 +71,18 @@ export async function migrateKeystore(ref: string, to: string): Promise<Array<Se
 /** Choose the keystore new objects go to; an empty ref goes back to the policy. */
 export async function setDefaultKeystore(ref: string): Promise<boolean> {
     return unwrapEmptyResponse(await putKeystoresDefault({ body: { ref } }));
+}
+
+/** Opens a keystore for the rest of the session, with what its unlock form asks. */
+export async function unlockKeystore(
+    ref: string,
+    material: Record<string, unknown>,
+): Promise<boolean> {
+    return unwrapEmptyResponse(
+        await postKeystoresByRefUnlock({ path: { ref }, body: { material } }),
+    );
+}
+
+export async function lockKeystore(ref: string): Promise<boolean> {
+    return unwrapEmptyResponse(await postKeystoresByRefLock({ path: { ref } }));
 }

@@ -21,6 +21,7 @@
 
 import { base } from "$app/paths";
 import type { CreateClientConfig } from "./api-base/client.gen";
+import type { HappydnsKeystoreLock } from "./api-base/types.gen";
 
 export class NotAuthorizedError extends Error {
     constructor(message: string) {
@@ -50,6 +51,17 @@ export class ProviderNoDomainListingSupport extends Error {
     }
 }
 
+/** A keystore the user did not unlock when asked: the request failed. */
+export class KeystoreLockedError extends Error {
+    constructor(
+        message: string,
+        readonly locked: HappydnsKeystoreLock,
+    ) {
+        super(message);
+        this.name = "KeystoreLockedError";
+    }
+}
+
 let _isRefreshingSession = false;
 
 export function setRefreshingSession(val: boolean) {
@@ -60,7 +72,31 @@ export async function customFetch(
     input: RequestInfo | URL,
     init?: RequestInit,
 ): Promise<Response> {
+    // The body of a Request is read once: cloned before fetch, so a retry can send it.
+    const replay = input instanceof Request ? input.clone() : input;
     const response = await fetch(input, init);
+
+    // Handle 423 Locked: a keystore to unlock. Ask the user, then try again.
+    if (response.status === 423) {
+        let locked: HappydnsKeystoreLock | undefined;
+        let errmsg = "This keystore is locked.";
+        try {
+            const json = await response.clone().json();
+            locked = json.locked;
+            if (typeof json.errmsg === "string") errmsg = json.errmsg;
+        } catch {
+            // ignore JSON parsing errors
+        }
+        if (locked?.ref) {
+            // Imported lazily: its imports lead back to client.gen, as those of
+            // the session store below.
+            const { requestUnlock } = await import("$lib/stores/unlock");
+            if (!(await requestUnlock(locked))) {
+                throw new KeystoreLockedError(errmsg, locked);
+            }
+            return customFetch(replay, init);
+        }
+    }
 
     // Handle 429 Too Many Requests — rate-limited without captcha provider
     if (response.status === 429) {

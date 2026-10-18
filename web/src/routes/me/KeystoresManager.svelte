@@ -40,6 +40,7 @@
         createKeystore,
         deleteKeystore,
         listKeystoreKinds,
+        lockKeystore,
         migrateKeystore,
         setDefaultKeystore,
         type Keystore,
@@ -49,6 +50,7 @@
     import type { Field } from "$lib/model/custom_form.svelte";
     import { keystores, refreshKeystores } from "$lib/stores/keystores";
     import { toasts } from "$lib/stores/toasts";
+    import { requestUnlock } from "$lib/stores/unlock";
     import { t } from "$lib/translations";
 
     let keystores_req = $state(refreshKeystores());
@@ -79,6 +81,16 @@
 
     function makeDefault(ks: Keystore) {
         act(ks.ref!, () => setDefaultKeystore(ks.ref!));
+    }
+
+    function unlock(ks: Keystore) {
+        act(ks.ref!, () =>
+            requestUnlock({ ref: ks.ref, kind: ks.kind, name: ks.name, form: ks.unlockForm }),
+        );
+    }
+
+    function lock(ks: Keystore) {
+        act(ks.ref!, () => lockKeystore(ks.ref!));
     }
 
     function del(ks: Keystore) {
@@ -180,6 +192,12 @@
                                 {$t("keystores.needs-owner")}
                             </Badge>
                         {/if}
+                        {#if ks.interactive}
+                            <Badge color={ks.locked ? "dark" : "success"}>
+                                <i class={ks.locked ? "bi bi-lock" : "bi bi-unlock"}></i>
+                                {$t(ks.locked ? "keystores.locked" : "keystores.unlocked")}
+                            </Badge>
+                        {/if}
                         {#if !ks.available}
                             <Badge color="danger">{$t("keystores.unavailable")}</Badge>
                         {/if}
@@ -194,6 +212,18 @@
                     </div>
                 </div>
                 <div class="d-flex flex-wrap gap-1 align-items-start">
+                    {#if ks.interactive && ks.available}
+                        <Button
+                            color="secondary"
+                            outline
+                            size="sm"
+                            disabled={busy.has(ks.ref!)}
+                            on:click={() => (ks.locked ? unlock(ks) : lock(ks))}
+                        >
+                            <i class={ks.locked ? "bi bi-unlock" : "bi bi-lock"}></i>
+                            {$t(ks.locked ? "keystores.unlock" : "keystores.lock")}
+                        </Button>
+                    {/if}
                     {#if !ks.default && ks.available}
                         <Button
                             color="primary"

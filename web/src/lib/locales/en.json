@@ -944,6 +944,13 @@
         "kind": "Kind",
         "name": "Name",
         "choose": "Keystore holding the credentials of this object",
-        "policy": "Instance default"
+        "policy": "Instance default",
+        "locked": "Locked",
+        "unlocked": "Unlocked",
+        "unlock": "Unlock",
+        "lock": "Lock",
+        "unlock-title": "Unlock {{name}}",
+        "unlock-description": "This keystore opens only with what you give. It stays unlocked until you log out.",
+        "still-locked": "The keystore stayed locked: the action was not done."
     }
 }
