@@ -124,6 +124,31 @@ itself (owner of the options of the admin scope), on the secrets page or
 under `/api/secrets/owners/{owner}/keystores`. A reseal leaves the credentials
 in a personal keystore where their owner put them.
 
+## Keystores only their owner opens
+
+Some kinds of keystore open only with what their owner gives, such as a
+passphrase: they are interactive. Such a keystore is unlocked for the session
+creating it, with what its owner just gave. Otherwise it is locked until its
+owner unlocks it, from the settings or when an action needs it: a dialog then
+asks for what opens it, and the action goes on. It stays unlocked, in the
+memory of the happyDomain process only, until its owner logs out or their
+session ends; a restart locks every keystore again.
+
+A locked keystore is answered with a `423 Locked` naming it, with the form of
+what unlocks it (`POST /api/keystores/{ref}/unlock`). It never opens in the
+background, nor through a copy of its key kept by another store: the
+passphrase would otherwise be of no use. The administrator can migrate or
+delete such a keystore, never open it; the status counts what it holds as
+locked.
+
+A kind may be bound to the login password: its keystores unlock when their
+owner logs in with their password, and follow it when they change it from
+their settings. It is not offered to accounts logging in through an external
+provider. A password reset, through a recovery link or by the administrator,
+does not rebind them: they still open with the previous password, which their
+owner gives when asked. Each one so unlocked follows the new password at the
+next password change from the settings.
+
 ## Startup checks
 
 happyDomain refuses to start rather than fail credential by credential when:
@@ -330,6 +355,11 @@ A kind of keystore is a `secret.Store`, in a file of its own under
 - `Unattended`: its keystores open without their owner, as objects used in
   the background need. A store that does not implement it is taken as
   needing its owner;
+- `Interactive`: its keystores open only with what their owner gives,
+  following its `UnlockForm`, kept open for their session;
+- `PasswordBound`: an `Interactive` store whose keystores are created, and
+  unlocked at login, with the login password of their owner, and bound again
+  when it changes;
 - `StartupChecker`, `Rewrapper`, `KeyReporter`, `KEK`: see their
   documentation in `internal/secret/store.go`.
 
