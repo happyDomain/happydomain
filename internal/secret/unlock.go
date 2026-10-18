@@ -229,8 +229,18 @@ func (m *Manager) UnlockAtLogin(ctx context.Context, owner happydns.Identifier, 
 	}
 }
 
+// unlockedRebinder is a PasswordBound store that can wrap again a safe from
+// its open key rather than from the old password: PasswordChanged falls back
+// to it when the old password does not open the safe, after a reset, but the
+// session changing the password holds it unlocked.
+type unlockedRebinder interface {
+	RebindUnlocked(ctx context.Context, safe *happydns.Safe, u UnlockedSafe, new string) error
+}
+
 // PasswordChanged binds the keystores of owner bound to old, their login
 // password, to new. Their key does not change: what is unlocked stays so.
+// One bound to another password, as after a reset, follows too when it is
+// unlocked for the scope of ctx, the session changing the password.
 func (m *Manager) PasswordChanged(ctx context.Context, owner happydns.Identifier, old, new string) error {
 	if m == nil {
 		return errNoManager
@@ -239,9 +249,17 @@ func (m *Manager) PasswordChanged(ctx context.Context, owner happydns.Identifier
 	if err != nil {
 		return err
 	}
+	scope := UnlockScopeFromContext(ctx)
 	var errs []error
 	for _, safe := range safes {
-		if err := m.stores[safe.Kind].(PasswordBound).Rebind(ctx, safe, old, new); err != nil {
+		store := m.stores[safe.Kind].(PasswordBound)
+		err := store.Rebind(ctx, safe, old, new)
+		if r, ok := store.(unlockedRebinder); ok && errors.Is(err, ErrWrongUnlockMaterial) {
+			if u, open := m.unlocked.get(scope, safe); open {
+				err = r.RebindUnlocked(ctx, safe, u, new)
+			}
+		}
+		if err != nil {
 			errs = append(errs, fmt.Errorf("safe %s: %w", safe.Id.String(), err))
 			continue
 		}

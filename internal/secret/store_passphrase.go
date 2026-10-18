@@ -175,7 +175,18 @@ func (k phraseKeys) open(safe *happydns.Safe, phrase string) (UnlockedSafe, erro
 	if err != nil {
 		return nil, err
 	}
-	return newAEADSafe(safe.Id, dek)
+	u, err := newAEADSafe(safe.Id, dek)
+	if err != nil {
+		return nil, err
+	}
+	return &phraseUnlocked{UnlockedSafe: u, dek: dek}, nil
+}
+
+// phraseUnlocked is a safe opened with its phrase, keeping its key, so that
+// it can be wrapped again under another phrase while it is open.
+type phraseUnlocked struct {
+	UnlockedSafe
+	dek *keyset.Handle
 }
 
 // readFields reads the fields of a JSON object following a form.
@@ -252,4 +263,75 @@ func (s *phraseStore) Create(_ context.Context, safe *happydns.Safe, params json
 
 func (s *phraseStore) UnlockWith(_ context.Context, safe *happydns.Safe, material json.RawMessage) (UnlockedSafe, error) {
 	return s.keys.unlockWith(safe, material)
+}
+
+// KindLoginPassword is a personal keystore whose key is wrapped by the login
+// password of its owner: unlocked at login, and bound again when the
+// password changes.
+const KindLoginPassword = "login-password"
+
+// loginStore keeps the personal keystores bound to the login password of
+// their owner. After a password reset, one stays locked: it opens with the
+// password it is bound to.
+type loginStore struct{ keys phraseKeys }
+
+func newLoginPasswordStore(Config) (Store, error) { return newLoginStore(), nil }
+
+func newLoginStore() *loginStore {
+	return &loginStore{phraseKeys{kind: KindLoginPassword, field: PasswordParam}}
+}
+
+func (s *loginStore) Unlock(context.Context, *happydns.Safe) (UnlockedSafe, error) {
+	return nil, errNeedsOwner
+}
+
+func (s *loginStore) UnlockForm() []happydns.Field { return passwordForm() }
+
+func (s *loginStore) UnlockWith(_ context.Context, safe *happydns.Safe, material json.RawMessage) (UnlockedSafe, error) {
+	return s.keys.unlockWith(safe, material)
+}
+
+func (s *loginStore) Bind(_ context.Context, safe *happydns.Safe, password string) error {
+	return s.keys.bind(safe, password)
+}
+
+func (s *loginStore) UnlockWithPassword(_ context.Context, safe *happydns.Safe, password string) (UnlockedSafe, error) {
+	return s.keys.open(safe, password)
+}
+
+// RebindUnlocked wraps under new the key of safe, taken from u, opened by this
+// store, without the password safe is bound to: after a reset, the session
+// that unlocked it can still make it follow the new password.
+func (s *loginStore) RebindUnlocked(_ context.Context, safe *happydns.Safe, u UnlockedSafe, new string) error {
+	if new == "" {
+		return errors.New("the new password is required")
+	}
+	pu, ok := u.(*phraseUnlocked)
+	if !ok {
+		return fmt.Errorf("safe %s was not opened by this store", safe.Id.String())
+	}
+	w, err := s.keys.wrap(safe, pu.dek, new)
+	if err != nil {
+		return err
+	}
+	safe.Keyring = []happydns.WrappedKeyset{w}
+	return nil
+}
+
+// Rebind wraps again the key of safe under new, keeping the key: what is
+// sealed stays readable.
+func (s *loginStore) Rebind(_ context.Context, safe *happydns.Safe, old, new string) error {
+	if new == "" {
+		return errors.New("the new password is required")
+	}
+	dek, err := s.keys.unwrap(safe, old)
+	if err != nil {
+		return err
+	}
+	w, err := s.keys.wrap(safe, dek, new)
+	if err != nil {
+		return err
+	}
+	safe.Keyring = []happydns.WrappedKeyset{w}
+	return nil
 }

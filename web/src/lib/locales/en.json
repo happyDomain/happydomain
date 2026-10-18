@@ -944,7 +944,8 @@
         "kind": "Kind",
         "kinds": {
             "instance": "Encrypted with the key of the instance",
-            "passphrase": "Locked by a passphrase"
+            "passphrase": "Locked by a passphrase",
+            "login-password": "Bound to the login password"
         },
         "name": "Name",
         "choose": "Keystore holding the credentials of this object",

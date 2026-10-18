@@ -598,7 +598,8 @@
         "kind": "Type",
         "kinds": {
             "instance": "Chiffré avec la clé de l'instance",
-            "passphrase": "Verrouillé par une phrase de passe"
+            "passphrase": "Verrouillé par une phrase de passe",
+            "login-password": "Lié au mot de passe de connexion"
         },
         "name": "Nom",
         "choose": "Coffre contenant les identifiants de cet objet",
