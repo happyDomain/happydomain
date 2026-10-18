@@ -121,8 +121,7 @@ func (k *InstanceKey) VerifyCheck(store CheckStorage) error {
 		return fmt.Errorf("unable to read the instance keyset check record: %w", err)
 	}
 
-	pt, err := k.aead.Decrypt(record, []byte(checkAssociatedData))
-	if err != nil || !bytes.Equal(pt, []byte(checkPlaintext)) {
+	if !k.opensCheck(record) {
 		return ErrWrongInstanceKey
 	}
 
@@ -135,6 +134,25 @@ func (k *InstanceKey) VerifyCheck(store CheckStorage) error {
 		return k.putCheck(store)
 	}
 	return nil
+}
+
+// OpensCheckRecord tells whether this keyset opens the check record stored in
+// store, without changing it. Without a check record, it is false.
+func (k *InstanceKey) OpensCheckRecord(store CheckStorage) (bool, error) {
+	record, err := store.GetSecretCheck()
+	if errors.Is(err, happydns.ErrNotFound) {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("unable to read the instance keyset check record: %w", err)
+	}
+	return k.opensCheck(record), nil
+}
+
+// opensCheck tells whether record is the check record sealed by this keyset.
+func (k *InstanceKey) opensCheck(record []byte) bool {
+	pt, err := k.aead.Decrypt(record, []byte(checkAssociatedData))
+	return err == nil && bytes.Equal(pt, []byte(checkPlaintext))
 }
 
 // putCheck seals the check record under the primary key and stores it.

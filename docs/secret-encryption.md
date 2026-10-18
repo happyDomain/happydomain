@@ -71,6 +71,8 @@ than a database in clear.
 Back it up again after each rotation: once the users' keys are re-encrypted
 under the new key, a copy of the keyset taken before no longer opens them.
 
+If the keyset is lost anyway, see [If the keyset is lost](#if-the-keyset-is-lost).
+
 ## Enabling encryption
 
 ```
@@ -201,6 +203,58 @@ rewrap: the users' keys it holds are protected by them.
 
 Backups taken before still hold encrypted credentials and the users' keys:
 keep a copy of the keyset as long as you may restore one of them.
+
+## If the keyset is lost
+
+Only a copy of the keyset brings the credentials back: look for one first,
+including a keyset file kept from before a rotation, which still opens what
+was not rewrapped since. Neither the database nor the administrative backup
+holds the keyset.
+
+Without a copy, the credentials it protected are lost for good, and
+happyDomain refuses to start, with or without a new keyset (see [Startup
+checks](#startup-checks)). To start again, have happyDomain forget the lost
+keyset:
+
+1. Stop happyDomain, and back up the database.
+
+2. Run, with the configuration happyDomain runs with (its configuration file,
+   environment and flags):
+
+   ```
+   happydomain abandon-secret-keyset
+   ```
+
+   It tells how many users' keys it deletes, along with the check record of
+   the keyset, and asks to type `abandon` to confirm. It refuses when the
+   configured keyset still opens the check record: that keyset is not lost.
+   A configured keyset file that is missing, damaged or another keyset is
+   taken as lost.
+
+   With Docker, run it in a container of the same image, on the same volumes
+   and configuration, while the service is stopped:
+
+   ```
+   docker compose run --rm -i happydomain abandon-secret-keyset
+   ```
+
+3. Start happyDomain again, either:
+
+   - with `secret-policy=plaintext` and no keyset: credentials entered again
+     are stored in clear;
+   - or with a new keyset (see [Generating the keyset](#generating-the-keyset))
+     and `secret-policy=instance`: credentials entered again are encrypted
+     under it. Back it up this time.
+
+4. The credentials sealed under the lost keyset stay in the database, counted
+   as `unreadable` by `/api/secrets/status`. Their providers, notification
+   channels and checker options no longer work until their owners enter them
+   again; saving them with the `••••••••` placeholder is refused. Tell your
+   users which ones to fill again, or delete the objects concerned.
+
+Administrative backups taken before still hold the deleted users' keys,
+useless without the lost keyset. Restoring one on this instance reports them
+as not opening, and does not restore them.
 
 ## Backups and deleted accounts
 

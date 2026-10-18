@@ -62,6 +62,9 @@ func main() {
 	if len(os.Args) > 1 && os.Args[1] == "secret-keyset" {
 		os.Exit(runSecretKeyset(os.Args[2:], os.Stdout, os.Stderr))
 	}
+	if len(os.Args) > 1 && os.Args[1] == "abandon-secret-keyset" {
+		os.Exit(runAbandonSecretKeyset(os.Args[2:]))
+	}
 
 	controller.HDVersion = happydns.VersionResponse{
 		Version:    Version,
