@@ -83,3 +83,41 @@ func TestDefaultStores(t *testing.T) {
 		}
 	}
 }
+
+// A test adding a store wants it enabled, whatever stores cfg lists.
+func TestWithStoresEnablesWhatItAdds(t *testing.T) {
+	cfg := Config{Stores: []string{KindInstance}}.WithStores(map[string]StoreFactory{"test-nop": nopFactory})
+	if !slices.Equal(cfg.Stores, []string{KindInstance, "test-nop"}) {
+		t.Errorf("Stores = %v, want the instance store and the one added", cfg.Stores)
+	}
+	if again := cfg.WithStores(map[string]StoreFactory{"test-nop": nopFactory}); !slices.Equal(again.Stores, cfg.Stores) {
+		t.Errorf("adding a store twice listed it twice: %v", again.Stores)
+	}
+	if _, ok := cfg.storeFactories()["test-nop"]; !ok {
+		t.Error("the store added is not known")
+	}
+
+	if all := (Config{}).WithStores(map[string]StoreFactory{"test-nop": nopFactory}); all.Stores != nil {
+		t.Errorf("Stores = %v, want nil, which already enables everything", all.Stores)
+	}
+}
+
+// Configs derived from one base do not enable each other's stores.
+func TestWithStoresLeavesTheBaseAlone(t *testing.T) {
+	stores := make([]string, 1, 4)
+	stores[0] = KindInstance
+	base := Config{Stores: stores}
+
+	a := base.WithStores(map[string]StoreFactory{"test-a": nopFactory})
+	b := base.WithStores(map[string]StoreFactory{"test-b": nopFactory})
+
+	if !slices.Equal(base.Stores, []string{KindInstance}) {
+		t.Errorf("base Stores = %v, want it unchanged", base.Stores)
+	}
+	if !slices.Equal(a.Stores, []string{KindInstance, "test-a"}) {
+		t.Errorf("Stores = %v, want the instance store and test-a only", a.Stores)
+	}
+	if !slices.Equal(b.Stores, []string{KindInstance, "test-b"}) {
+		t.Errorf("Stores = %v, want the instance store and test-b only", b.Stores)
+	}
+}

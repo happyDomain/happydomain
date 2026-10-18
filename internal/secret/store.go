@@ -247,10 +247,21 @@ func (cfg Config) storeFactories() map[string]StoreFactory {
 }
 
 // WithStores returns cfg knowing, besides its stores, those of factories, by
-// kind. For tests outside this package: no other Manager knows of them.
+// kind, and enabling them when cfg lists the stores enabled. For tests
+// outside this package: no other Manager knows of them.
 func (cfg Config) WithStores(factories map[string]StoreFactory) Config {
 	all := maps.Clone(cfg.storeFactories())
 	maps.Copy(all, factories)
 	cfg.factories = all
+
+	if cfg.Stores != nil {
+		// Appending must not reach the backing array of the caller.
+		cfg.Stores = slices.Clone(cfg.Stores)
+		for _, kind := range slices.Sorted(maps.Keys(factories)) {
+			if !slices.Contains(cfg.Stores, kind) {
+				cfg.Stores = append(cfg.Stores, kind)
+			}
+		}
+	}
 	return cfg
 }

@@ -83,7 +83,9 @@ func keystoreUsecase(t *testing.T, more ...func(secret.Config) secret.Config) (*
 	}
 	h, _ := secret.GenerateInstanceKeyset()
 	key, _ := secret.NewInstanceKey(h)
-	cfg := secrettest.WithPersonalStore(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db, Defaults: db})
+	// Nil Stores would enable every builtin kind, which Kinds would offer
+	// besides the test ones: enable the instance store, WithStores adds the rest.
+	cfg := secrettest.WithPersonalStore(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db, Defaults: db, Stores: []string{secret.KindInstance}})
 	for _, with := range more {
 		cfg = with(cfg)
 	}
