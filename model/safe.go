@@ -36,6 +36,10 @@ type Safe struct {
 	// Kind tells what protects the safe: "instance" for now.
 	Kind string `json:"kind"`
 
+	// Name tells apart the safes an owner created, several of a kind
+	// maybe. Empty for a safe the instance created for them.
+	Name string `json:"name,omitempty"`
+
 	// Keyring holds the key of the safe, a Tink keyset, once per key
 	// encryption key able to unwrap it.
 	Keyring []WrappedKeyset `json:"keyring"`

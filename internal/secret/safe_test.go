@@ -37,8 +37,8 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-// memSafeStorage keeps safes in memory, enforcing one safe of a kind per
-// owner as the real storage does.
+// memSafeStorage keeps safes in memory, refusing an identifier taken as
+// the real storage does.
 type memSafeStorage struct {
 	mu    sync.Mutex
 	safes map[string]happydns.Safe
@@ -78,25 +78,38 @@ func (m *memSafeStorage) GetSafe(id happydns.Identifier) (*happydns.Safe, error)
 	return &s, nil
 }
 
-func (m *memSafeStorage) GetSafeByOwner(owner happydns.Identifier, kind string) (*happydns.Safe, error) {
+func (m *memSafeStorage) ListOwnerSafes(owner happydns.Identifier) ([]*happydns.Safe, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	var safes []*happydns.Safe
 	for _, s := range m.safes {
-		if s.Owner.Equals(owner) && s.Kind == kind {
+		if s.Owner.Equals(owner) {
 			c := s
-			return &c, nil
+			safes = append(safes, &c)
 		}
 	}
-	return nil, happydns.ErrSafeNotFound
+	return safes, nil
+}
+
+func (m *memSafeStorage) GetSafeByOwner(owner happydns.Identifier, kind string) (*happydns.Safe, error) {
+	safes, _ := m.ListOwnerSafes(owner)
+	var found *happydns.Safe
+	for _, s := range safes {
+		if s.Kind == kind && s.Name == "" && (found == nil || s.CreatedAt.Before(found.CreatedAt)) {
+			found = s
+		}
+	}
+	if found == nil {
+		return nil, happydns.ErrSafeNotFound
+	}
+	return found, nil
 }
 
 func (m *memSafeStorage) CreateSafe(safe *happydns.Safe) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	for _, s := range m.safes {
-		if s.Owner.Equals(safe.Owner) && s.Kind == safe.Kind {
-			return fmt.Errorf("owner already has a %s safe", safe.Kind)
-		}
+	if _, ok := m.safes[safe.Id.String()]; ok {
+		return fmt.Errorf("safe %s already exists", safe.Id.String())
 	}
 	m.safes[safe.Id.String()] = *safe
 	m.creates++

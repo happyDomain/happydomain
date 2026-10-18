@@ -644,6 +644,11 @@ func (s *instrumentedStorage) ListExecutionsByUser(userId happydns.Identifier, l
 	return s.inner.ListExecutionsByUser(userId, limit, filter)
 }
 
+func (s *instrumentedStorage) ListOwnerSafes(owner happydns.Identifier) (ret []*happydns.Safe, err error) {
+	defer observe("list", "safe")(&err)
+	return s.inner.ListOwnerSafes(owner)
+}
+
 func (s *instrumentedStorage) ListPreferencesByUser(userId happydns.Identifier) (ret []*happydns.NotificationPreference, err error) {
 	defer observe("list", "notification_preference")(&err)
 	return s.inner.ListPreferencesByUser(userId)

@@ -34,12 +34,17 @@ type SafeStorage interface {
 	// happydns.ErrSafeNotFound.
 	GetSafe(id happydns.Identifier) (*happydns.Safe, error)
 
-	// GetSafeByOwner returns the safe of the given kind owned by owner, or
-	// happydns.ErrSafeNotFound.
+	// ListOwnerSafes returns every safe owner has, of every kind.
+	ListOwnerSafes(owner happydns.Identifier) ([]*happydns.Safe, error)
+
+	// GetSafeByOwner returns the oldest safe of the given kind the
+	// instance created for owner, one without a name, or
+	// happydns.ErrSafeNotFound. Those owner created are left out, even of
+	// a kind the instance creates too.
 	GetSafeByOwner(owner happydns.Identifier, kind string) (*happydns.Safe, error)
 
-	// CreateSafe stores a new safe, failing when its owner already has one
-	// of its kind.
+	// CreateSafe stores a new safe, failing when its identifier is taken.
+	// An owner may have several safes of a kind.
 	CreateSafe(safe *happydns.Safe) error
 
 	// UpdateSafe replaces a stored safe.

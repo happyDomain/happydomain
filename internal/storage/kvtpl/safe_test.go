@@ -100,11 +100,6 @@ func TestSafeOwnerIndex(t *testing.T) {
 		t.Errorf("GetSafeByOwner(alice, other) = %v, want ErrSafeNotFound", err)
 	}
 
-	// One safe of a kind per owner.
-	if err := s.CreateSafe(newSafe(alice, "instance")); err == nil {
-		t.Error("a second instance safe for the same owner was created")
-	}
-
 	iter, err := s.ListAllSafes()
 	if err != nil {
 		t.Fatal(err)
@@ -116,6 +111,67 @@ func TestSafeOwnerIndex(t *testing.T) {
 	}
 	if n != 2 {
 		t.Errorf("ListAllSafes = %d safes, want 2 (index entries must not be listed)", n)
+	}
+}
+
+func TestSafeSeveralOfAKind(t *testing.T) {
+	s := newStorage(t)
+	alice, _ := happydns.NewRandomIdentifier()
+	bob, _ := happydns.NewRandomIdentifier()
+
+	first := newSafe(alice, "personal")
+	first.Name = "first"
+	second := newSafe(alice, "personal")
+	second.Name = "second"
+	second.CreatedAt = first.CreatedAt.Add(time.Hour)
+	other := newSafe(alice, "instance")
+	bobs := newSafe(bob, "personal")
+	// Created out of order: the oldest is found whatever the order.
+	for _, safe := range []*happydns.Safe{second, other, first, bobs} {
+		if err := s.CreateSafe(safe); err != nil {
+			t.Fatalf("CreateSafe(%s): %v", safe.Name, err)
+		}
+	}
+
+	got, err := s.ListOwnerSafes(alice)
+	if err != nil {
+		t.Fatalf("ListOwnerSafes: %v", err)
+	}
+	if len(got) != 3 {
+		t.Fatalf("ListOwnerSafes(alice) = %d safes, want 3", len(got))
+	}
+	for _, safe := range got {
+		if !safe.Owner.Equals(alice) {
+			t.Errorf("ListOwnerSafes(alice) lists a safe of %s", safe.Owner.String())
+		}
+	}
+
+	if safe, err := s.GetSafe(second.Id); err != nil || safe.Name != "second" {
+		t.Errorf("GetSafe(second) = %+v, %v; want its name kept", safe, err)
+	}
+
+	// The safes an owner created are no safe of the instance, older or not.
+	if safe, err := s.GetSafeByOwner(alice, "personal"); !errors.Is(err, happydns.ErrSafeNotFound) {
+		t.Errorf("GetSafeByOwner(alice, personal) = %+v, %v; want ErrSafeNotFound", safe, err)
+	}
+	unnamed := newSafe(alice, "personal")
+	unnamed.CreatedAt = second.CreatedAt.Add(time.Hour)
+	if err := s.CreateSafe(unnamed); err != nil {
+		t.Fatal(err)
+	}
+	if safe, err := s.GetSafeByOwner(alice, "personal"); err != nil || !safe.Id.Equals(unnamed.Id) {
+		t.Errorf("GetSafeByOwner(alice, personal) = %+v, %v; want the one without a name", safe, err)
+	}
+
+	if err := s.DeleteSafe(first.Id); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := s.ListOwnerSafes(alice); len(got) != 3 {
+		t.Errorf("ListOwnerSafes(alice) after a delete = %d safes, want 3", len(got))
+	}
+
+	if got, err := s.ListOwnerSafes(happydns.Identifier{0x42}); err != nil || len(got) != 0 {
+		t.Errorf("ListOwnerSafes(nobody) = %v, %v; want none", got, err)
 	}
 }
 
