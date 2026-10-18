@@ -947,7 +947,8 @@
             "passphrase": "Locked by a passphrase",
             "login-password": "Bound to the login password",
             "file": "References to files on the server",
-            "program": "References answered by a program on the server"
+            "program": "References answered by a program on the server",
+            "vault": "References to the Vault of the instance"
         },
         "name": "Name",
         "choose": "Keystore holding the credentials of this object",
