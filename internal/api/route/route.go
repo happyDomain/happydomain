@@ -33,6 +33,7 @@ import (
 	"git.happydns.org/happyDomain/internal/api/middleware"
 	"git.happydns.org/happyDomain/internal/netguard"
 	notifPkg "git.happydns.org/happyDomain/internal/notifier"
+	"git.happydns.org/happyDomain/internal/usecase"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	notifUC "git.happydns.org/happyDomain/internal/usecase/notification"
 	happydns "git.happydns.org/happyDomain/model"
@@ -74,6 +75,8 @@ type Dependencies struct {
 	PlannedProvider     checkerUC.PlannedJobProvider
 	BudgetChecker       checkerUC.BudgetChecker
 	CountManualTriggers bool
+
+	Keystores *usecase.KeystoreUsecase
 
 	NotificationDispatcher *notifUC.Dispatcher
 	NotificationRegistry   *notifPkg.Registry
@@ -157,6 +160,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 		apiAuthRoutes.Use(middleware.SessionMiddleware(dep.Authentication))
 	}
 	apiAuthRoutes.Use(middleware.AuthRequired())
+	apiAuthRoutes.Use(middleware.KeystoreChoice())
 
 	// Initialize checker controller if checker engine is available.
 	var cc *controller.CheckerController
@@ -208,4 +212,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 	DeclareRecordRoutes(apiAuthRoutes)
 	DeclareUsersRoutes(apiAuthRoutes, dep.User, dep.Backup, lc)
 	DeclareSessionRoutes(apiAuthRoutes, dep.Session)
+	if dep.Keystores != nil {
+		DeclareKeystoreRoutes(apiAuthRoutes, dep.Keystores)
+	}
 }

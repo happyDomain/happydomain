@@ -58,6 +58,10 @@ func internalError(c *gin.Context, err error) {
 // where no stored value stands is the client's to fix, anything else is
 // internal.
 func sealError(c *gin.Context, err error) {
+	if keystoreChosen(err) {
+		middleware.ErrorResponse(c, http.StatusBadRequest, err)
+		return
+	}
 	if errors.Is(err, secret.ErrRedactedSecret) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, happydns.ErrorResponse{
 			Message: "a secret of this channel was sent as the placeholder, with no stored value to stand for: enter it again",
@@ -142,6 +146,7 @@ func (nc *NotificationController) ListChannels(c *gin.Context) {
 // @Accept		json
 // @Produce	json
 // @Param		body	body		happydns.NotificationChannel	true	"Channel configuration"
+// @Param		keystore	query	string	false	"Keystore the secrets of the object go to, moving those stored elsewhere: see /keystores"
 // @Success	201		{object}	happydns.NotificationChannel
 // @Router		/notifications/channels [post]
 func (nc *NotificationController) CreateChannel(c *gin.Context) {
@@ -173,7 +178,7 @@ func (nc *NotificationController) CreateChannel(c *gin.Context) {
 		return
 	}
 
-	if err := nc.registry.SealChannelConfig(c.Request.Context(), &ch, ""); err != nil {
+	if err := nc.registry.SealChannelConfig(c.Request.Context(), &ch, secret.KeystoreFromContext(c.Request.Context())); err != nil {
 		sealError(c, err)
 		return
 	}
@@ -214,6 +219,7 @@ func (nc *NotificationController) GetChannel(c *gin.Context) {
 //	@Produce	json
 //	@Param		channelId	path		string							true	"Channel ID"
 //	@Param		body		body		happydns.NotificationChannel	true	"Channel configuration"
+//	@Param		keystore	query	string	false	"Keystore the secrets of the object go to, moving those stored elsewhere: see /keystores"
 //	@Success	200			{object}	happydns.NotificationChannel
 //	@Failure	400			{object}	happydns.ErrorResponse	"Type of the channel changed"
 //	@Router		/notifications/channels/{channelId} [put]
@@ -268,7 +274,7 @@ func (nc *NotificationController) UpdateChannel(c *gin.Context) {
 
 	// Where the stored config is, whose secrets the update may all replace.
 	current, _ := nc.registry.ChannelSafes(existing)
-	if err := nc.registry.SealChannelConfig(c.Request.Context(), ch, "", current...); err != nil {
+	if err := nc.registry.SealChannelConfig(c.Request.Context(), ch, secret.KeystoreFromContext(c.Request.Context()), current...); err != nil {
 		sealError(c, err)
 		return
 	}

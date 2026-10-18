@@ -117,6 +117,7 @@ func (pc *ProviderController) GetProvider(c *gin.Context) {
 //	@Produce		json
 //	@Param			body	body	happydns.ProviderMinimal	true	"Provider to add"
 //	@Security		securitydefinitions.basic
+//	@Param			keystore	query	string	false	"Keystore the secrets of the object go to, moving those stored elsewhere: see /keystores"
 //	@Success		200	{object}	happydns.Provider
 //	@Failure		400	{object}	happydns.ErrorResponse	"Error in received data"
 //	@Failure		401	{object}	happydns.ErrorResponse	"Authentication failure"
@@ -156,6 +157,7 @@ func (pc *ProviderController) AddProvider(c *gin.Context) {
 //	@Param			providerId	path	string				true	"Provider identifier"
 //	@Param			body		body	happydns.ProviderMinimal	true	"The new object overriding the current provider"
 //	@Security		securitydefinitions.basic
+//	@Param			keystore	query	string	false	"Keystore the secrets of the object go to, moving those stored elsewhere: see /keystores"
 //	@Success		200	{object}	happydns.Provider
 //	@Failure		400	{object}	happydns.ErrorResponse	"Invalid input"
 //	@Failure		400	{object}	happydns.ErrorResponse	"Identifier changed"

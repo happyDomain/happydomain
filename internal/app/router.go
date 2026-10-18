@@ -190,6 +190,7 @@ func (app *App) setupRouter() {
 			BudgetChecker:       app.usecases.checkerUserGater,
 			CountManualTriggers: app.cfg.CheckerCountManualTriggers,
 
+			Keystores:              app.usecases.keystores,
 			NotificationDispatcher: app.usecases.notificationDispatcher,
 			NotificationRegistry:   app.usecases.notificationRegistry,
 			NotificationChannels:   app.store,

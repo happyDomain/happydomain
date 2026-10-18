@@ -92,6 +92,7 @@ func (cc *CheckerController) GetCheckerOptions(c *gin.Context) {
 //	@Param		zoneid		path	string	true	"Zone identifier"
 //	@Param		subdomain	path	string	true	"Subdomain"
 //	@Param		serviceid	path	string	true	"Service identifier"
+//	@Param		keystore	query	string	false	"Keystore the secrets of the object go to, moving those stored elsewhere: see /keystores"
 //	@Success	200	{object}	checker.CheckerOptions
 //	@Router		/checkers/{checkerId}/options [post]
 //	@Router		/domains/{domain}/checkers/{checkerId}/options [post]
@@ -132,6 +133,7 @@ func (cc *CheckerController) AddCheckerOptions(c *gin.Context) {
 //	@Param		zoneid		path	string	true	"Zone identifier"
 //	@Param		subdomain	path	string	true	"Subdomain"
 //	@Param		serviceid	path	string	true	"Service identifier"
+//	@Param		keystore	query	string	false	"Keystore the secrets of the object go to, moving those stored elsewhere: see /keystores"
 //	@Success	200	{object}	checker.CheckerOptions
 //	@Router		/checkers/{checkerId}/options [put]
 //	@Router		/domains/{domain}/checkers/{checkerId}/options [put]
@@ -199,6 +201,7 @@ func (cc *CheckerController) GetCheckerOption(c *gin.Context) {
 //	@Param		zoneid		path	string	true	"Zone identifier"
 //	@Param		subdomain	path	string	true	"Subdomain"
 //	@Param		serviceid	path	string	true	"Service identifier"
+//	@Param		keystore	query	string	false	"Keystore the secrets of the object go to, moving those stored elsewhere: see /keystores"
 //	@Success	200	{object}	any
 //	@Router		/checkers/{checkerId}/options/{optname} [put]
 //	@Router		/domains/{domain}/checkers/{checkerId}/options/{optname} [put]

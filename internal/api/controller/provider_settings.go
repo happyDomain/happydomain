@@ -53,6 +53,7 @@ func NewProviderSettingsController(pSettingsServices happydns.ProviderSettingsUs
 //	@Produce		json
 //	@Param			providerType	path	string					true	"The provider's type"
 //	@Param			body			body	happydns.ProviderSettingsState	true	"The current state of the Provider's settings, possibly empty (but not null)"
+//	@Param			keystore		query	string	false	"Keystore the secrets of the object go to, moving those stored elsewhere: see /keystores"
 //	@Security		securitydefinitions.basic
 //	@Success		200	{object}	happydns.Provider	"The Provider has been created with the given settings"
 //	@Success		202	{object}	happydns.ProviderSettingsResponse	"The settings need more refinement"
