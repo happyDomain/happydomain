@@ -373,6 +373,10 @@ func (s *RestrictedService) RetrieveZone(ctx context.Context, provider *happydns
 	return s.inner.RetrieveZone(ctx, provider, name)
 }
 
+func (s *RestrictedService) ShowReferences(ctx context.Context, provider *happydns.Provider) error {
+	return s.inner.ShowReferences(ctx, provider)
+}
+
 func (s *RestrictedService) TestDomainExistence(ctx context.Context, provider *happydns.Provider, name string) error {
 	return s.inner.TestDomainExistence(ctx, provider, name)
 }

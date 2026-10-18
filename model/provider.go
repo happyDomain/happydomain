@@ -151,6 +151,10 @@ type ProviderUsecase interface {
 	ListUserProviders(context.Context, *User) ([]*ProviderMeta, error)
 	ListZoneCorrections(context.Context, *Provider, *Domain, []Record) ([]*Correction, int, error)
 	RetrieveZone(context.Context, *Provider, string) ([]Record, error)
+	// ShowReferences replaces, in p, each credential a keystore of
+	// references keeps by that reference, which is not secret. p is changed
+	// in place: only call it on a provider about to be answered, never stored.
+	ShowReferences(context.Context, *Provider) error
 	TestDomainExistence(context.Context, *Provider, string) error
 	UpdateProvider(context.Context, Identifier, *User, func(*Provider)) error
 	UpdateProviderFromMessage(context.Context, Identifier, *User, *ProviderMessage) (*Provider, error)

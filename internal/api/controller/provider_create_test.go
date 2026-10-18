@@ -40,6 +40,8 @@ type creatingProviders struct {
 	got *happydns.ProviderMessage
 }
 
+func (p *creatingProviders) ShowReferences(context.Context, *happydns.Provider) error { return nil }
+
 func (p *creatingProviders) CreateProvider(_ context.Context, user *happydns.User, msg *happydns.ProviderMessage) (*happydns.Provider, error) {
 	p.got = msg
 	created := &happydns.Provider{ProviderMeta: msg.ProviderMeta}

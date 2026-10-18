@@ -29,17 +29,21 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api/middleware"
-	"git.happydns.org/happyDomain/internal/forms"
 	"git.happydns.org/happyDomain/model"
 )
 
 type ProviderSettingsController struct {
 	pSettingsServices happydns.ProviderSettingsUsecase
+
+	// providers answers the provider the wizard wrote as the provider routes
+	// do: references shown, credentials withheld.
+	providers *ProviderController
 }
 
-func NewProviderSettingsController(pSettingsServices happydns.ProviderSettingsUsecase) *ProviderSettingsController {
+func NewProviderSettingsController(pSettingsServices happydns.ProviderSettingsUsecase, providerService happydns.ProviderUsecase) *ProviderSettingsController {
 	return &ProviderSettingsController{
 		pSettingsServices: pSettingsServices,
+		providers:         NewProviderController(providerService),
 	}
 }
 
@@ -90,8 +94,7 @@ func (psc *ProviderSettingsController) NextProviderSettingsState(c *gin.Context)
 	if provider != nil {
 		// The wizard is done and the provider is the one just written to the
 		// store, so this body carries stored credentials.
-		forms.RedactSecrets(provider.Provider)
-		c.JSON(http.StatusOK, provider)
+		psc.providers.writeProvider(c, http.StatusOK, provider)
 	} else {
 		// form.Values is not redacted on purpose: NextProviderSettingsState
 		// builds it from the state the client just posted, never from the

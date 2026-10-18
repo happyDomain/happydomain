@@ -23,6 +23,7 @@ package controller
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -52,7 +53,17 @@ func NewProviderController(providerService happydns.ProviderUsecase) *ProviderCo
 // that still needs the stored values. That is also why the middleware must not
 // redact: ListZones, RetrieveZone and every apply path read the provider from
 // the same context key and do need them.
+//
+// The references a keystore keeps in place of credentials are shown: they are
+// not secret, and the client sends them back as they are to keep them.
 func (pc *ProviderController) writeProvider(c *gin.Context, status int, p *happydns.Provider) {
+	// nil where a test builds the controller without a usecase.
+	if pc.providerService != nil {
+		if err := pc.providerService.ShowReferences(c.Request.Context(), p); err != nil {
+			// Withheld below with the credentials: nothing leaks.
+			log.Printf("unable to show the references of provider %s: %s", p.Id.String(), err)
+		}
+	}
 	forms.RedactSecrets(p.Provider)
 
 	c.JSON(status, p)
