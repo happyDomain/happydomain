@@ -39,7 +39,7 @@ func NewSecretController(secrets *usecase.SecretsUsecase) *SecretController {
 //
 //	@Summary	Secrets status
 //	@Schemes
-//	@Description	Counts, for each type of object, the secrets stored in clear, sealed by kind of safe, those that cannot be opened, and the objects that could not be looked at; and, for each key of the instance keyset, the number of safes it wraps. A key wrapping no safe any more can be removed from the keyset.
+//	@Description	Counts, for each type of object, the secrets stored in clear, sealed by kind of safe, those that cannot be opened, and the objects that could not be looked at; and, for each key of each store, the number of safes it wraps. A key wrapping no safe any more can be removed from its store.
 //	@Tags		admin
 //	@Produce	json
 //	@Security	securitydefinitions.basic
@@ -51,16 +51,16 @@ func (sc *SecretController) Status(c *gin.Context) {
 	apiResponse(c, status, err)
 }
 
-// Rewrap wraps the key of every safe under the primary instance key.
+// Rewrap wraps the key of every safe under the current key of each store.
 //
 //	@Summary	Rewrap safes
 //	@Schemes
-//	@Description	Wraps the key of every safe under the primary key of the instance keyset, after a rotation. Sealed values are left untouched. A safe that fails is reported and left as it was. Idempotent: run it again after an interruption.
+//	@Description	Wraps the key of every safe under the current key of each store, such as the primary key of the instance keyset after a rotation. Sealed values are left untouched. A safe that fails is reported and left as it was. Idempotent: run it again after an interruption.
 //	@Tags		admin
 //	@Produce	json
 //	@Security	securitydefinitions.basic
 //	@Success	200	{object}	secret.ResealReport
-//	@Failure	400	{object}	happydns.ErrorResponse	"No instance keyset configured"
+//	@Failure	400	{object}	happydns.ErrorResponse	"No store configured rewraps its keys"
 //	@Router		/secrets/rewrap [post]
 func (sc *SecretController) Rewrap(c *gin.Context) {
 	report, err := sc.secrets.Rewrap(c.Request.Context())

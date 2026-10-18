@@ -85,8 +85,8 @@ func TestSecretsUsecase(t *testing.T) {
 	if pc.Clear != 2 || pc.Sealed[secret.KindInstance] != 1 || pc.Unreadable != 0 {
 		t.Errorf("provider counts = %+v, want 2 clear and 1 sealed", pc)
 	}
-	if len(status.InstanceKeys) != 1 || status.InstanceKeys[0].Safes != 1 || !status.InstanceKeys[0].Primary {
-		t.Errorf("instance keys = %+v, want the primary wrapping one safe", status.InstanceKeys)
+	if len(status.Keys) != 1 || status.Keys[0].KEK != secret.KindInstance || status.Keys[0].Safes != 1 || !status.Keys[0].Primary {
+		t.Errorf("keys = %+v, want the instance primary wrapping one safe", status.Keys)
 	}
 
 	reports, err := uc.Reseal(ctx)
@@ -362,13 +362,13 @@ func TestSecretsUsecaseRewrapGoesPastADamagedSafe(t *testing.T) {
 		t.Fatalf("Status: %v", err)
 	}
 	unreadable := 0
-	for _, k := range status.InstanceKeys {
+	for _, k := range status.Keys {
 		if k.Status == "UNREADABLE" {
-			unreadable = k.Safes
+			unreadable += k.Safes
 		}
 	}
 	if unreadable != 1 {
-		t.Errorf("instance keys = %+v, want the damaged safe counted UNREADABLE", status.InstanceKeys)
+		t.Errorf("keys = %+v, want the damaged safe counted UNREADABLE", status.Keys)
 	}
 
 	report, err := uc.Rewrap(ctx)

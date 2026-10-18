@@ -73,6 +73,29 @@ type StartupChecker interface {
 	CheckStartup(ctx context.Context) error
 }
 
+// Rewrapper is a Store whose key changes, as the instance keyset rotates: it
+// wraps again the keyring entries it made under an older key.
+type Rewrapper interface {
+	Store
+
+	// Rewrap wraps w again, an entry of safe made by this store, under its
+	// current key, and reports whether w changed.
+	Rewrap(ctx context.Context, safe *happydns.Safe, w *happydns.WrappedKeyset) (bool, error)
+}
+
+// KeyReporter is a Store that lists its keys, and tells which of them made
+// each of its keyring entries: a key no entry needs any more can be removed.
+type KeyReporter interface {
+	Store
+
+	// Keys lists the keys of the store, without their material.
+	Keys() []KeyInfo
+
+	// WrappingKey returns the identifier of the key that made w, an entry
+	// of this store.
+	WrappingKey(w happydns.WrappedKeyset) (uint32, error)
+}
+
 // StoreFactory returns the store of a kind for cfg, or ErrStoreUnavailable
 // when cfg lacks what it needs, wrapped with how to configure it.
 type StoreFactory func(cfg Config) (Store, error)

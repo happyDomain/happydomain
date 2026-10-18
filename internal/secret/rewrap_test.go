@@ -24,6 +24,7 @@ package secret
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -74,10 +75,7 @@ func TestRewrapMovesSafesToPrimary(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	usage, err := rm.KeyUsage()
-	if err != nil {
-		t.Fatal(err)
-	}
+	usage := instanceUsage(t, rm)
 	if usage[oldKey.PrimaryKeyId()] != 3 || usage[newKey.PrimaryKeyId()] != 0 {
 		t.Errorf("usage before rewrap = %v, want 3 safes on the old key", usage)
 	}
@@ -87,7 +85,7 @@ func TestRewrapMovesSafesToPrimary(t *testing.T) {
 		t.Fatalf("Rewrap = %+v, %v; want 3 rewrapped", report, err)
 	}
 
-	usage, _ = rm.KeyUsage()
+	usage = instanceUsage(t, rm)
 	if usage[oldKey.PrimaryKeyId()] != 0 || usage[newKey.PrimaryKeyId()] != 3 {
 		t.Errorf("usage after rewrap = %v, want 3 safes on the new primary", usage)
 	}
@@ -278,7 +276,7 @@ func TestRewrapCollapsesInstanceEntries(t *testing.T) {
 	if n != 1 {
 		t.Errorf("keyring holds %d instance entries after rewrap, want 1", n)
 	}
-	if usage, _ := rm.KeyUsage(); usage[oldKey.PrimaryKeyId()] != 0 {
+	if usage := instanceUsage(t, rm); usage[oldKey.PrimaryKeyId()] != 0 {
 		t.Errorf("usage = %v, the old key still wraps the safe", usage)
 	}
 
@@ -321,4 +319,132 @@ func TestRewrapAndKeyStatusReportDamagedRecords(t *testing.T) {
 	if primary != 1 || unreadable != 1 {
 		t.Errorf("keys = %+v, want the safe on the primary and the damaged record UNREADABLE", keys)
 	}
+}
+
+// instanceUsage counts, by key of the instance keyset, the safes it wraps.
+func instanceUsage(t *testing.T, m *Manager) map[uint32]int {
+	t.Helper()
+	keys, err := m.KeyStatus()
+	if err != nil {
+		t.Fatal(err)
+	}
+	usage := map[uint32]int{}
+	for _, k := range keys {
+		if k.KEK == KindInstance {
+			usage[k.Id] += k.Safes
+		}
+	}
+	return usage
+}
+
+// reportingSafe stores a safe of the reporting store, its entry made by key.
+func reportingSafe(t *testing.T, store *memSafeStorage, owner byte, key string) happydns.Identifier {
+	t.Helper()
+	safe := happydns.Safe{
+		Id:      happydns.Identifier{0xa0, owner},
+		Owner:   happydns.Identifier{owner},
+		Kind:    reportingKind,
+		Keyring: []happydns.WrappedKeyset{{KEK: reportingKind, Blob: []byte(key)}},
+	}
+	if err := store.CreateSafe(&safe); err != nil {
+		t.Fatal(err)
+	}
+	return safe.Id
+}
+
+// Each entry of a keyring is rewrapped by the store that made it, whatever
+// the kind of the safe holding it: an instance entry kept in the safe of
+// another store moves to the primary instance key too.
+func TestRewrapGoesThroughTheStoreOfEachEntry(t *testing.T) {
+	h, _ := GenerateInstanceKeyset()
+	oldKey, _ := NewInstanceKey(h)
+	store := newMemSafeStorage()
+	old := newTestManager(t, Config{Policy: PolicyInstance, InstanceKey: oldKey, Safes: store})
+	sealOne(t, old, objectContext(), "v")
+	instanceSafe, _ := store.GetSafeByOwner(objectContext().Owner, KindInstance)
+
+	stale := reportingSafe(t, store, 0x02, "1")
+	reportingSafe(t, store, 0x03, "2")
+
+	// A copy of the instance key of instanceSafe, kept in a reporting safe.
+	withCopy, _ := store.GetSafe(stale)
+	copied, err := oldKey.Wrap(withCopy, mustUnwrap(t, oldKey, instanceSafe))
+	if err != nil {
+		t.Fatal(err)
+	}
+	withCopy.Keyring = append(withCopy.Keyring, copied)
+	if err := store.UpdateSafe(withCopy); err != nil {
+		t.Fatal(err)
+	}
+
+	rotated, _ := RotateInstanceKeyset(h)
+	newKey, _ := NewInstanceKey(rotated)
+	m := newTestManager(t, Config{Policy: PolicyInstance, InstanceKey: newKey, Safes: store})
+
+	report, err := m.Rewrap(context.Background())
+	if err != nil || report.Processed != 3 || report.Changed != 2 || report.Failed != 0 {
+		t.Fatalf("Rewrap = %+v, %v; want the instance safe and the stale reporting one rewrapped", report, err)
+	}
+
+	got, _ := store.GetSafe(stale)
+	if len(got.Keyring) != 2 || string(got.Keyring[0].Blob) != "2" {
+		t.Errorf("keyring = %+v, want the reporting entry made by key 2, and the instance copy kept", got.Keyring)
+	}
+	if usage := instanceUsage(t, m); usage[oldKey.PrimaryKeyId()] != 0 || usage[newKey.PrimaryKeyId()] != 2 {
+		t.Errorf("instance usage = %v, want both instance entries on the new primary", usage)
+	}
+}
+
+// The keys of every store are reported with the entries each made, named by
+// their store; the entries of a store not configured here are MISSING.
+func TestKeyStatusReportsEveryStore(t *testing.T) {
+	m, _, store := instanceManagers(t)
+	sealOne(t, m, objectContext(), "v")
+	reportingSafe(t, store, 0x02, "1")
+	reportingSafe(t, store, 0x03, "1")
+
+	keys, err := newTestManager(t, Config{Policy: PolicyPlaintext, InstanceKey: m.stores[KindInstance].(*instanceStore).key, Safes: store}).KeyStatus()
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows := map[string]int{}
+	for _, k := range keys {
+		rows[fmt.Sprintf("%s/%d/%s", k.KEK, k.Id, k.Status)] = k.Safes
+	}
+	if rows["test-reporting/1/ENABLED"] != 2 || rows["test-reporting/2/ENABLED"] != 0 {
+		t.Errorf("keys = %+v, want the two reporting keys, two safes on the first", keys)
+	}
+	instance := 0
+	for _, k := range keys {
+		if k.KEK == KindInstance && k.Primary {
+			instance = k.Safes
+		}
+	}
+	if instance != 1 {
+		t.Errorf("keys = %+v, want the instance primary wrapping one safe", keys)
+	}
+
+	nokey := newTestManager(t, Config{Policy: PolicyPlaintext, Safes: store, Stores: []string{string(PolicyPlaintext), KindInstance}})
+	keys, err = nokey.KeyStatus()
+	if err != nil {
+		t.Fatal(err)
+	}
+	missing := map[string]int{}
+	for _, k := range keys {
+		if k.Status == "MISSING" {
+			missing[k.KEK] = k.Safes
+		}
+	}
+	if missing[KindInstance] != 1 || missing[reportingKind] != 2 {
+		t.Errorf("keys = %+v, want the entries of both stores, not configured, MISSING", keys)
+	}
+}
+
+func mustUnwrap(t *testing.T, key *InstanceKey, safe *happydns.Safe) *keyset.Handle {
+	t.Helper()
+	dek, err := key.Unwrap(safe)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return dek
 }

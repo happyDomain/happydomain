@@ -27,6 +27,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"maps"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -40,6 +41,30 @@ const fakeKind = "test-fake"
 
 // noProvisionKind is a store that does not create safes.
 const noProvisionKind = "test-no-provision"
+
+// reportingKind is a store whose keys rotate: its entries hold, as blob, the
+// key that made them, and its current key is 2.
+const reportingKind = "test-reporting"
+
+type reportingStore struct{ nopStore }
+
+func (reportingStore) Keys() []KeyInfo {
+	return []KeyInfo{{Id: 1, Status: "ENABLED"}, {Id: 2, Primary: true, Status: "ENABLED"}}
+}
+
+func (reportingStore) WrappingKey(w happydns.WrappedKeyset) (uint32, error) {
+	id, err := strconv.ParseUint(string(w.Blob), 10, 32)
+	return uint32(id), err
+}
+
+func (s reportingStore) Rewrap(_ context.Context, _ *happydns.Safe, w *happydns.WrappedKeyset) (bool, error) {
+	id, err := s.WrappingKey(*w)
+	if err != nil || id == 2 {
+		return false, err
+	}
+	w.Blob = []byte("2")
+	return true, nil
+}
 
 // failingStartKind is a store whose startup check fails.
 const failingStartKind = "test-failing-start"
@@ -91,6 +116,7 @@ func withFakeStores(cfg Config) Config {
 		cfg.factories[fakeKind] = func(Config) (Store, error) { return fakeStore{}, nil }
 		cfg.factories[noProvisionKind] = nopFactory
 		cfg.factories[failingStartKind] = func(Config) (Store, error) { return failingStartStore{}, nil }
+		cfg.factories[reportingKind] = func(Config) (Store, error) { return reportingStore{}, nil }
 	}
 	return cfg
 }

@@ -126,8 +126,8 @@ options, the credentials:
   channel of a type this version no longer knows. They may hold encrypted
   credentials.
 
-It also lists, under `instanceKeys`, the keys of the keyset and how many users'
-keys each one protects.
+It also lists, under `keys`, the keys of the keyset, with `kek` set to
+`instance`, and how many users' keys each one protects.
 
 Which checker options are secret comes from the checkers themselves. For a
 checker this version does not load, the options stored encrypted are still

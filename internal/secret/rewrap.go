@@ -34,47 +34,20 @@ import (
 // SafeObjectType names safes in the reports.
 const SafeObjectType = "safe"
 
-// KeyUsage counts the safes wrapped by each key of the instance keyset, by
-// key identifier. A key no safe uses any more can be removed from the keyset.
-func (m *Manager) KeyUsage() (map[uint32]int, error) {
-	usage, _, err := m.keyUsage()
-	return usage, err
-}
-
-// keyUsage is KeyUsage, also counting the safes whose wrapping key cannot be
-// told: a damaged record must not hide the usage of every other key.
-func (m *Manager) keyUsage() (usage map[uint32]int, unreadable int, err error) {
-	if m == nil || m.safes == nil {
-		return nil, 0, errNoManager
-	}
-
-	usage = map[uint32]int{}
-	err = eachSafe(m.safes, func(safe *happydns.Safe) {
-		for _, w := range safe.Keyring {
-			if w.KEK != KindInstance {
-				continue
-			}
-			id, err := wrappingKeyId(w)
-			if err != nil {
-				unreadable++
-				continue
-			}
-			usage[id]++
-		}
-	}, func(string, error) {
-		unreadable++
-	})
-	return usage, unreadable, err
-}
-
-// Rewrap wraps again, under the primary instance key, the key of every safe
-// wrapped by another one. The sealed values are not touched. A safe that
+// Rewrap wraps again, under the current key of its store, every keyring entry
+// made under an older one. The sealed values are not touched. A safe that
 // fails is reported and left as it was, and the others are rewrapped; run it
 // again to resume.
 func (m *Manager) Rewrap(ctx context.Context) (ResealReport, error) {
 	report := ResealReport{ObjectType: SafeObjectType}
-	if m == nil || m.safes == nil || m.instanceKey() == nil {
-		return report, errors.New("no instance keyset configured")
+	if m == nil || m.safes == nil {
+		return report, errNoManager
+	}
+	if !slices.ContainsFunc(slices.Collect(maps.Values(m.stores)), func(s Store) bool {
+		_, ok := s.(Rewrapper)
+		return ok
+	}) {
+		return report, errors.New("no secret store configured here rewraps its keys")
 	}
 
 	var ids []happydns.Identifier
@@ -92,7 +65,7 @@ func (m *Manager) Rewrap(ctx context.Context) (ResealReport, error) {
 	for _, id := range ids {
 		report.Processed++
 
-		changed, err := m.rewrapSafe(id)
+		changed, err := m.rewrapSafe(ctx, id)
 		if err != nil {
 			report.Failed++
 			report.Errors = append(report.Errors, fmt.Sprintf("safe %s: %s", id.String(), err.Error()))
@@ -106,10 +79,8 @@ func (m *Manager) Rewrap(ctx context.Context) (ResealReport, error) {
 	return report, nil
 }
 
-// rewrapSafe rewraps the safe id, as stored now, if it needs it.
-func (m *Manager) rewrapSafe(id happydns.Identifier) (bool, error) {
-	key := m.instanceKey()
-
+// rewrapSafe rewraps the entries of the safe id, as stored now, that need it.
+func (m *Manager) rewrapSafe(ctx context.Context, id happydns.Identifier) (bool, error) {
 	safe, err := m.safes.GetSafe(id)
 	if errors.Is(err, happydns.ErrSafeNotFound) {
 		// Deleted since it was listed.
@@ -119,31 +90,34 @@ func (m *Manager) rewrapSafe(id happydns.Identifier) (bool, error) {
 		return false, err
 	}
 
-	needed, err := key.needsRewrap(safe)
-	if err != nil || !needed {
-		return false, err
-	}
-
-	dek, err := key.Unwrap(safe)
-	if err != nil {
-		return false, err
-	}
-	w, err := key.Wrap(safe, dek)
-	if err != nil {
-		return false, err
-	}
-
-	// The new wrapping takes the place of the first instance entry; any
-	// other one goes, they all wrapped the same key.
+	changed := false
+	kept := map[string]bool{}
 	keyring := make([]happydns.WrappedKeyset, 0, len(safe.Keyring))
-	placed := false
-	for _, e := range safe.Keyring {
-		if e.KEK != KindInstance {
-			keyring = append(keyring, e)
-		} else if !placed {
+	for _, w := range safe.Keyring {
+		r, ok := m.stores[w.KEK].(Rewrapper)
+		if !ok {
 			keyring = append(keyring, w)
-			placed = true
+			continue
 		}
+
+		// The entries of one store all wrap the same key: only the first
+		// stays, so that a stale one does not leave an older key able to
+		// open the safe.
+		if kept[w.KEK] {
+			changed = true
+			continue
+		}
+		kept[w.KEK] = true
+
+		rewrapped, err := r.Rewrap(ctx, safe, &w)
+		if err != nil {
+			return false, err
+		}
+		changed = changed || rewrapped
+		keyring = append(keyring, w)
+	}
+	if !changed {
+		return false, nil
 	}
 	safe.Keyring = keyring
 
@@ -152,24 +126,6 @@ func (m *Manager) rewrapSafe(id happydns.Identifier) (bool, error) {
 		return false, nil
 	}
 	return err == nil, err
-}
-
-// needsRewrap tells whether an instance entry of safe is wrapped by another
-// key than the primary one.
-func (k *InstanceKey) needsRewrap(safe *happydns.Safe) (bool, error) {
-	for _, w := range safe.Keyring {
-		if w.KEK != KindInstance {
-			continue
-		}
-		id, err := wrappingKeyId(w)
-		if err != nil {
-			return false, err
-		}
-		if id != k.PrimaryKeyId() {
-			return true, nil
-		}
-	}
-	return false, nil
 }
 
 // KeyInfo describes a key of a keyset, without its material.
@@ -188,41 +144,75 @@ func (k KeyInfo) String() string {
 	return fmt.Sprintf("%d%s %s %s", k.Id, primary, k.Status, k.Type)
 }
 
-// KeyStatus describes a key of the instance keyset and how many safes it
-// wraps.
+// KeyStatus describes a key of a store and how many safes it wraps.
 type KeyStatus struct {
+	// KEK names the store the key belongs to, as keyring entries do.
+	KEK string `json:"kek"`
+
 	KeyInfo
 
 	// Safes counts the safes whose key it wraps.
 	Safes int `json:"safes"`
 }
 
-// KeyStatus lists the keys of the instance keyset with the number of safes
-// each wraps. A key wrapping safes but missing from the keyset is listed
-// with the status MISSING: those safes do not open. Safes whose wrapping key
-// cannot be told, damaged ones, are counted under the status UNREADABLE.
+// KeyStatus lists the keys of every store that reports them, with the number
+// of safes each wraps. The entries made by a key no longer in its store, or by
+// a store not configured here, are listed with the status MISSING: they do not
+// open. Those whose wrapping key cannot be told, and the safe records that do
+// not decode, are counted under the status UNREADABLE, the latter without a
+// store.
 func (m *Manager) KeyStatus() ([]KeyStatus, error) {
 	if m == nil || m.safes == nil {
 		return nil, errNoManager
 	}
 
-	usage, unreadable, err := m.keyUsage()
+	usage := map[string]map[uint32]int{}
+	unreported := map[string]int{}
+	unreadable := map[string]int{}
+	err := eachSafe(m.safes, func(safe *happydns.Safe) {
+		for _, w := range safe.Keyring {
+			r, ok := m.stores[w.KEK].(KeyReporter)
+			if !ok {
+				unreported[w.KEK]++
+				continue
+			}
+			id, err := r.WrappingKey(w)
+			if err != nil {
+				unreadable[w.KEK]++
+				continue
+			}
+			if usage[w.KEK] == nil {
+				usage[w.KEK] = map[uint32]int{}
+			}
+			usage[w.KEK][id]++
+		}
+	}, func(string, error) {
+		unreadable[""]++
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	var keys []KeyStatus
-	if key := m.instanceKey(); key != nil {
-		for _, k := range DescribeKeyset(key.handle) {
-			keys = append(keys, KeyStatus{KeyInfo: k, Safes: usage[k.Id]})
-			delete(usage, k.Id)
+	for _, kek := range slices.Sorted(maps.Keys(m.stores)) {
+		r, ok := m.stores[kek].(KeyReporter)
+		if !ok {
+			continue
+		}
+		used := usage[kek]
+		for _, k := range r.Keys() {
+			keys = append(keys, KeyStatus{KEK: kek, KeyInfo: k, Safes: used[k.Id]})
+			delete(used, k.Id)
+		}
+		for _, id := range slices.Sorted(maps.Keys(used)) {
+			keys = append(keys, KeyStatus{KEK: kek, KeyInfo: KeyInfo{Id: id, Status: "MISSING"}, Safes: used[id]})
 		}
 	}
-	for _, id := range slices.Sorted(maps.Keys(usage)) {
-		keys = append(keys, KeyStatus{KeyInfo: KeyInfo{Id: id, Status: "MISSING"}, Safes: usage[id]})
+	for _, kek := range slices.Sorted(maps.Keys(unreported)) {
+		keys = append(keys, KeyStatus{KEK: kek, KeyInfo: KeyInfo{Status: "MISSING"}, Safes: unreported[kek]})
 	}
-	if unreadable > 0 {
-		keys = append(keys, KeyStatus{KeyInfo: KeyInfo{Status: "UNREADABLE"}, Safes: unreadable})
+	for _, kek := range slices.Sorted(maps.Keys(unreadable)) {
+		keys = append(keys, KeyStatus{KEK: kek, KeyInfo: KeyInfo{Status: "UNREADABLE"}, Safes: unreadable[kek]})
 	}
 	return keys, nil
 }

@@ -170,16 +170,19 @@ func (k *InstanceKey) Wrap(safe *happydns.Safe, dek *keyset.Handle) (happydns.Wr
 // Unwrap decrypts the key of safe from its instance keyring entry.
 func (k *InstanceKey) Unwrap(safe *happydns.Safe) (*keyset.Handle, error) {
 	for _, w := range safe.Keyring {
-		if w.KEK != KindInstance {
-			continue
+		if w.KEK == KindInstance {
+			return k.unwrapEntry(safe, w)
 		}
-
-		h, err := keyset.ReadWithAssociatedData(keyset.NewBinaryReader(bytes.NewReader(w.Blob)), k.aead, wrapAssociatedData(safe))
-		if err != nil {
-			return nil, fmt.Errorf("unable to unwrap the key of safe %s: %w", safe.Id.String(), err)
-		}
-		return h, nil
 	}
 
 	return nil, fmt.Errorf("safe %s has no key wrapped by the instance keyset", safe.Id.String())
+}
+
+// unwrapEntry decrypts the key of safe from w, one of its instance entries.
+func (k *InstanceKey) unwrapEntry(safe *happydns.Safe, w happydns.WrappedKeyset) (*keyset.Handle, error) {
+	h, err := keyset.ReadWithAssociatedData(keyset.NewBinaryReader(bytes.NewReader(w.Blob)), k.aead, wrapAssociatedData(safe))
+	if err != nil {
+		return nil, fmt.Errorf("unable to unwrap the key of safe %s: %w", safe.Id.String(), err)
+	}
+	return h, nil
 }

@@ -61,7 +61,8 @@
 
     onMount(fetchStatus);
 
-    const keys = $derived(status?.instanceKeys ?? []);
+    // The keys of the instance keyset, among those of every store.
+    const keys = $derived((status?.keys ?? []).filter((k) => k.kek === "instance"));
     // MISSING and UNREADABLE rows count safes no key opens, they are not keys.
     const hasKeyset = $derived(keys.some((k) => k.status !== "MISSING" && k.status !== "UNREADABLE"));
 

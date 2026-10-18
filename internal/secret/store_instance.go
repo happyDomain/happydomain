@@ -100,6 +100,39 @@ func (s *instanceStore) Unlock(_ context.Context, safe *happydns.Safe) (Unlocked
 	return &aeadSafe{id: safe.Id, primitive: primitive}, nil
 }
 
+// Rewrap wraps w again under the primary instance key, when another one made
+// it.
+func (s *instanceStore) Rewrap(_ context.Context, safe *happydns.Safe, w *happydns.WrappedKeyset) (bool, error) {
+	id, err := wrappingKeyId(*w)
+	if err != nil {
+		return false, err
+	}
+	if id == s.key.PrimaryKeyId() {
+		return false, nil
+	}
+
+	dek, err := s.key.unwrapEntry(safe, *w)
+	if err != nil {
+		return false, err
+	}
+	nw, err := s.key.Wrap(safe, dek)
+	if err != nil {
+		return false, err
+	}
+	*w = nw
+	return true, nil
+}
+
+// Keys lists the keys of the instance keyset.
+func (s *instanceStore) Keys() []KeyInfo {
+	return DescribeKeyset(s.key.handle)
+}
+
+// WrappingKey returns the identifier of the instance key that made w.
+func (s *instanceStore) WrappingKey(w happydns.WrappedKeyset) (uint32, error) {
+	return wrappingKeyId(w)
+}
+
 // wrappingKeyId returns the identifier of the instance key that wrapped w,
 // read from the Tink output prefix of the ciphertext.
 func wrappingKeyId(w happydns.WrappedKeyset) (uint32, error) {
@@ -109,13 +142,4 @@ func wrappingKeyId(w happydns.WrappedKeyset) (uint32, error) {
 	}
 
 	return ciphertextKeyId(enc.GetEncryptedKeyset())
-}
-
-// instanceKey returns the instance keyset of m, or nil when none is
-// configured: rotating it and reporting its keys are about it alone.
-func (m *Manager) instanceKey() *InstanceKey {
-	if s, ok := m.stores[KindInstance].(*instanceStore); ok {
-		return s.key
-	}
-	return nil
 }
