@@ -24,11 +24,12 @@ package main
 import (
 	"fmt"
 	"io"
+	"strconv"
 
 	"git.happydns.org/happyDomain/internal/secret"
 )
 
-const secretKeysetUsage = `Usage: happydomain secret-keyset <command> <file>
+const secretKeysetUsage = `Usage: happydomain secret-keyset <command> <file> [key-id]
 
 Manage the instance keyset protecting stored credentials (-secret-keyset-file).
 
@@ -36,12 +37,15 @@ Commands:
   generate <file>  create a new keyset; refuses to overwrite an existing file
   rotate <file>    add a new primary key; previous keys keep opening what they sealed
   info <file>      list the keys, never their material
+  delete-key <file> <key-id>
+                   remove a key that is no longer needed (see the Secrets page
+                   of the admin interface); what it sealed no longer opens
 `
 
 // runSecretKeyset implements the `happydomain secret-keyset` subcommand and
 // returns its exit code.
 func runSecretKeyset(args []string, stdout, stderr io.Writer) int {
-	if len(args) != 2 {
+	if len(args) < 2 || len(args) > 3 || (len(args) == 3) != (args[0] == "delete-key") {
 		fmt.Fprint(stderr, secretKeysetUsage)
 		return 2
 	}
@@ -73,6 +77,25 @@ func runSecretKeyset(args []string, stdout, stderr io.Writer) int {
 			return 1
 		}
 		fmt.Fprintln(stderr, "New primary key added. Back the keyset up again, restart happyDomain, then rewrap the safes from the admin interface.")
+
+	case "delete-key":
+		id, err := strconv.ParseUint(args[2], 10, 32)
+		if err != nil {
+			fmt.Fprintf(stderr, "Invalid key id %q: see `happydomain secret-keyset info`.\n", args[2])
+			return 2
+		}
+		h, err := secret.ReadKeysetFile(path)
+		if err == nil {
+			h, err = secret.DeleteInstanceKey(h, uint32(id))
+		}
+		if err == nil {
+			err = secret.ReplaceKeysetFile(path, h)
+		}
+		if err != nil {
+			fmt.Fprintln(stderr, "Unable to delete the key:", err)
+			return 1
+		}
+		fmt.Fprintln(stderr, "Key deleted. Keep a copy of the keyset from before, as long as you may restore an older backup, then restart happyDomain.")
 
 	case "info":
 		h, err := secret.ReadKeysetFile(path)

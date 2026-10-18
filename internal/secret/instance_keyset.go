@@ -53,6 +53,31 @@ func RotateInstanceKeyset(h *keyset.Handle) (*keyset.Handle, error) {
 	return m.Handle()
 }
 
+// DeleteInstanceKey returns h without the key id. The primary key cannot be
+// deleted: rotate first. What the deleted key sealed no longer opens, so the
+// caller must have checked that nothing depends on it.
+func DeleteInstanceKey(h *keyset.Handle, id uint32) (*keyset.Handle, error) {
+	if h.KeysetInfo().GetPrimaryKeyId() == id {
+		return nil, fmt.Errorf("key %d is the primary key: rotate the keyset first", id)
+	}
+
+	found := false
+	for _, k := range h.KeysetInfo().GetKeyInfo() {
+		if k.GetKeyId() == id {
+			found = true
+		}
+	}
+	if !found {
+		return nil, fmt.Errorf("no key %d in the keyset", id)
+	}
+
+	m := keyset.NewManagerFromHandle(h)
+	if err := m.Delete(id); err != nil {
+		return nil, err
+	}
+	return m.Handle()
+}
+
 // ReadKeysetFile reads a cleartext JSON keyset, as written by tinkey.
 func ReadKeysetFile(path string) (*keyset.Handle, error) {
 	f, err := os.Open(path)

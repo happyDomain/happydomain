@@ -544,3 +544,36 @@ func TestVerifyCheckResealsUnderPrimary(t *testing.T) {
 		t.Errorf("VerifyCheck once the old key is removed: %v", err)
 	}
 }
+
+func TestDeleteInstanceKey(t *testing.T) {
+	h, _ := GenerateInstanceKeyset()
+	oldPrimary := h.KeysetInfo().PrimaryKeyId
+	rotated, err := RotateInstanceKeyset(h)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := DeleteInstanceKey(rotated, oldPrimary)
+	if err != nil {
+		t.Fatalf("DeleteInstanceKey: %v", err)
+	}
+	info := DescribeKeyset(got)
+	if len(info) != 1 || info[0].Id == oldPrimary || !info[0].Primary {
+		t.Errorf("unexpected keys after deletion: %v", info)
+	}
+	if len(DescribeKeyset(rotated)) != 2 {
+		t.Error("the original handle was modified")
+	}
+}
+
+func TestDeleteInstanceKeyRefusals(t *testing.T) {
+	h, _ := GenerateInstanceKeyset()
+	rotated, _ := RotateInstanceKeyset(h)
+
+	if _, err := DeleteInstanceKey(rotated, rotated.KeysetInfo().PrimaryKeyId); err == nil {
+		t.Error("the primary key was deleted")
+	}
+	if _, err := DeleteInstanceKey(rotated, 12345); err == nil {
+		t.Error("an unknown key was deleted")
+	}
+}

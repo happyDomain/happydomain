@@ -24,6 +24,7 @@ package main
 import (
 	"bytes"
 	"encoding/base64"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -159,4 +160,41 @@ func (m *memCheck) PutSecretCheck(b []byte) error {
 func (m *memCheck) DeleteSecretCheck() error {
 	m.record = nil
 	return nil
+}
+
+func TestSecretKeysetDeleteKey(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "keyset.json")
+	if code, _, stderr := runKeyset(t, "generate", path); code != 0 {
+		t.Fatal(stderr)
+	}
+	h, _ := secret.ReadKeysetFile(path)
+	oldPrimary := fmt.Sprint(secret.DescribeKeyset(h)[0].Id)
+	if code, _, stderr := runKeyset(t, "rotate", path); code != 0 {
+		t.Fatal(stderr)
+	}
+
+	if code, _, _ := runKeyset(t, "delete-key", path, "abc"); code != 2 {
+		t.Errorf("a malformed key id exited %d, want 2", code)
+	}
+	if code, _, _ := runKeyset(t, "delete-key", path, "12345"); code == 0 {
+		t.Error("an unknown key was deleted")
+	}
+
+	h, _ = secret.ReadKeysetFile(path)
+	for _, k := range secret.DescribeKeyset(h) {
+		if k.Primary {
+			if code, _, _ := runKeyset(t, "delete-key", path, fmt.Sprint(k.Id)); code == 0 {
+				t.Error("the primary key was deleted")
+			}
+		}
+	}
+
+	if code, _, stderr := runKeyset(t, "delete-key", path, oldPrimary); code != 0 {
+		t.Fatalf("delete-key exited %d: %s", code, stderr)
+	}
+	h, _ = secret.ReadKeysetFile(path)
+	keys := secret.DescribeKeyset(h)
+	if len(keys) != 1 || fmt.Sprint(keys[0].Id) == oldPrimary {
+		t.Errorf("unexpected keys after delete-key: %v", keys)
+	}
 }

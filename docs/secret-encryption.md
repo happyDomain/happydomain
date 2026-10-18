@@ -164,10 +164,12 @@ again resumes the work.
    happydomain secret-keyset info /etc/happydomain/secret-keyset.json
    ```
 
-   It can then be removed with `tinkey delete-key`, once a copy of the keyset
-   file is kept. A key still in use shows up as `MISSING` once removed, and
-   what it protects no longer opens: put back the copy. Users' keys too damaged
-   to tell which key protects them are counted under `UNREADABLE`.
+   It can then be removed with
+   `happydomain secret-keyset delete-key /etc/happydomain/secret-keyset.json <key-id>`,
+   once a copy of the keyset file is kept. A key still in use shows up as
+   `MISSING` once removed, and what it protects no longer opens: put back the
+   copy. Users' keys too damaged to tell which key protects them are counted
+   under `UNREADABLE`.
 
 Keep the removed keys as long as you may restore a backup taken before the
 rewrap: the users' keys it holds are protected by them.
