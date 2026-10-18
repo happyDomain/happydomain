@@ -575,5 +575,29 @@
         "title": "Conformité des enregistrements",
         "checking": "Vérification…",
         "learn-more": "En savoir plus"
+    },
+    "keystores": {
+        "title": "Coffres des identifiants",
+        "description": "Choisissez où sont scellés les identifiants que vous confiez à happyDomain, comme les clés d'API des hébergeurs.",
+        "instance": "Coffre de l'instance ({{kind}})",
+        "scope-instance": "Géré par l'instance",
+        "scope-personal": "Personnel",
+        "default": "Par défaut",
+        "set-default": "Utiliser par défaut",
+        "needs-owner": "S'ouvre avec vous",
+        "needs-owner-help": "Ce coffre ne s'ouvre pas sans vous : les notifications et les vérifications planifiées, qui tournent en arrière-plan, ne peuvent pas l'utiliser.",
+        "unavailable": "Indisponible sur cette instance",
+        "unused": "Ne contient aucun identifiant.",
+        "used-by": "{{n:eq; 1:Contient les identifiants de :; default:Contient les identifiants de {{n}} objets :}}",
+        "migrate": "Migrer",
+        "migrate-to": "Déplacer les identifiants vers…",
+        "migrated": "{{changed}} objets déplacés.",
+        "migrated-partly": "{{changed}} objets déplacés, {{failed}} n'ont pas pu l'être :",
+        "delete-used": "Migrez ses identifiants vers un autre coffre avant de le supprimer",
+        "create": "Créer un coffre",
+        "kind": "Type",
+        "name": "Nom",
+        "choose": "Coffre contenant les identifiants de cet objet",
+        "policy": "Par défaut de l'instance"
     }
 }

@@ -28,6 +28,10 @@
 
     import CustomForm from "$lib/components/forms/CustomForm.svelte";
     import ResourceInput from "$lib/components/inputs/basic.svelte";
+    import {
+        KeystoreChoice,
+        provideKeystoreChoice,
+    } from "$lib/components/inputs/keystoreChoice.svelte";
     import { ProviderForm } from "$lib/model/provider_form.svelte";
     import { providersSpecs } from "$lib/stores/providers";
     import { t } from "$lib/translations";
@@ -53,6 +57,15 @@
 
     run(() => {
         if (!form || form.ptype != ptype) newForm(ptype);
+    });
+
+    // Shared by the secret fields, sent along with the credentials.
+    const keystore = provideKeystoreChoice(new KeystoreChoice("provider", undefined, false));
+    $effect(() => {
+        keystore.objectId = form?.value?._id;
+    });
+    $effect(() => {
+        if (form) form.keystore = keystore.value;
     });
 </script>
 

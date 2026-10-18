@@ -72,9 +72,11 @@ export async function getChannel(id: string): Promise<NotificationChannel> {
 
 export async function createChannel(
     channel: NotificationChannelInput,
+    keystore: string = "",
 ): Promise<NotificationChannel> {
     return unwrapSdkResponse(
         await postNotificationsChannels({
+            query: keystore ? { keystore } : undefined,
             body: channel as HappydnsNotificationChannelWritable,
         }),
     ) as NotificationChannel;
@@ -83,10 +85,12 @@ export async function createChannel(
 export async function updateChannel(
     id: string,
     channel: NotificationChannelInput,
+    keystore: string = "",
 ): Promise<NotificationChannel> {
     return unwrapSdkResponse(
         await putNotificationsChannelsByChannelId({
             path: { channelId: id },
+            query: keystore ? { keystore } : undefined,
             body: channel as HappydnsNotificationChannelWritable,
         }),
     ) as NotificationChannel;

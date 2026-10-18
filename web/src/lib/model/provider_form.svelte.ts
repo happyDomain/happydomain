@@ -33,6 +33,8 @@ export class ProviderForm {
     value: ProviderSettingsState = $state({ state: 0 });
     nextInProgress: boolean = $state(false);
     previousInProgress: boolean = $state(false);
+    // The keystore chosen for the credentials, empty for none.
+    keystore: string = $state("");
     on_previous: null | (() => void);
     on_done: (prv: Provider) => void;
 
@@ -77,7 +79,13 @@ export class ProviderForm {
             return undefined;
         } else {
             try {
-                const res = await getProviderSettings(this.ptype, toState, this.value);
+                const res = await getProviderSettings(
+                    this.ptype,
+                    toState,
+                    this.value,
+                    undefined,
+                    this.keystore,
+                );
                 this.state = toState;
                 if (res.values) {
                     this.value.Provider = { ...this.value.Provider, ...res.values };

@@ -101,9 +101,14 @@ export async function getCheckOptions(checkerId: string): Promise<HappydnsChecke
 export async function updateCheckOptions(
     checkerId: string,
     options: HappydnsCheckerOptions,
+    keystore: string = "",
 ): Promise<HappydnsCheckerOptions> {
     return unwrapSdkResponse(
-        await putCheckersByCheckerIdOptions({ path: { checkerId }, body: options as CheckerCheckerOptions }),
+        await putCheckersByCheckerIdOptions({
+            path: { checkerId },
+            query: keystore ? { keystore } : undefined,
+            body: options as CheckerCheckerOptions,
+        }),
     ) as HappydnsCheckerOptions;
 }
 
@@ -330,14 +335,17 @@ export async function updateScopedCheckOptions(
     scope: CheckerScope,
     checkerId: string,
     options: HappydnsCheckerOptions,
+    keystore: string = "",
 ): Promise<HappydnsCheckerOptions> {
+    const query = keystore ? { keystore } : undefined;
     if (isAdminScope(scope)) {
-        return updateCheckOptions(checkerId, options);
+        return updateCheckOptions(checkerId, options, keystore);
     }
     if (isServiceScope(scope)) {
         return unwrapSdkResponse(
             await putDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidCheckersByCheckerIdOptions({
                 path: { domain: scope.domainId, zoneid: scope.zoneId, subdomain: scope.subdomain, serviceid: scope.serviceId, checkerId },
+                query,
                 body: options,
             }),
         ) as HappydnsCheckerOptions;
@@ -345,9 +353,22 @@ export async function updateScopedCheckOptions(
     return unwrapSdkResponse(
         await putDomainsByDomainCheckersByCheckerIdOptions({
             path: { domain: scope.domainId!, checkerId },
+            query,
             body: options,
         }),
     ) as HappydnsCheckerOptions;
+}
+
+/**
+ * Identifier of the options of one scope among the objects holding secrets,
+ * as the server names them, to find the keystore they are sealed in.
+ */
+export function checkerOptionsObjectId(
+    checkerId: string,
+    userId: string | undefined,
+    scope: CheckerScope,
+): string {
+    return [checkerId, userId ?? "", scope.domainId ?? "", scope.serviceId ?? ""].join("|");
 }
 
 export async function getScopedCheckPlans(

@@ -30,6 +30,7 @@ export async function getProviderSettings(
     state: number,
     settings: FormState,
     recallid: number | undefined = undefined,
+    keystore: string = "",
 ): Promise<ProviderSettingsResponse> {
     if (!state) state = 0;
     if (!settings) settings = { state };
@@ -39,6 +40,7 @@ export async function getProviderSettings(
     const data = unwrapSdkResponse(
         await postProvidersSpecsByProviderTypeSettings({
             path: { providerType: psid },
+            query: keystore ? { keystore } : undefined,
             body: settings,
         }),
     );

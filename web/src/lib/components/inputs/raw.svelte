@@ -36,6 +36,8 @@
     import { REDACTED_SECRET, REDACTED_SECRET_B64, type Field } from "$lib/model/custom_form.svelte";
     import { t } from "$lib/translations";
 
+    import KeystoreSelect from "./KeystoreSelect.svelte";
+
     const dispatch = createEventDispatcher();
 
     interface Props {
@@ -321,6 +323,10 @@
             >
                 <Icon name="arrow-counterclockwise" />
             </Button>
+        {/if}
+
+        {#if edit && !readonly}
+            <KeystoreSelect index={index + "-" + specs.id} />
         {/if}
     {/if}
 </InputGroup>

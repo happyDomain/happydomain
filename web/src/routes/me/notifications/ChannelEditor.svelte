@@ -36,6 +36,10 @@
 
     import RawInput from "$lib/components/inputs/raw.svelte";
     import { Field } from "$lib/model/custom_form.svelte";
+    import {
+        KeystoreChoice,
+        provideKeystoreChoice,
+    } from "$lib/components/inputs/keystoreChoice.svelte";
     import { createChannel, updateChannel, type NotificationChannel } from "$lib/api/notifications";
     import { toasts } from "$lib/stores/toasts";
     import { t } from "$lib/translations";
@@ -64,6 +68,12 @@
     let rawJsonError: string | null = $state(null);
     let saving: boolean = $state(false);
 
+    // A channel is used in the background: only keystores opening without
+    // its owner are offered.
+    const keystore = provideKeystoreChoice(
+        new KeystoreChoice("notification-channel", undefined, true),
+    );
+
     // Reset only on open transition; other props read via untrack so type loading doesn't retrigger.
     $effect(() => {
         if (!open) return;
@@ -84,6 +94,8 @@
             }
             rawJson = JSON.stringify(config, null, 2);
             rawJsonError = null;
+            keystore.objectId = c?.id;
+            keystore.value = "";
         });
     });
 
@@ -150,19 +162,26 @@
         saving = true;
         try {
             if (channel?.id) {
-                await updateChannel(channel.id, {
-                    type,
-                    name,
-                    enabled,
-                    config: payloadConfig,
-                });
+                await updateChannel(
+                    channel.id,
+                    {
+                        type,
+                        name,
+                        enabled,
+                        config: payloadConfig,
+                    },
+                    keystore.value,
+                );
             } else {
-                await createChannel({
-                    type,
-                    name,
-                    enabled,
-                    config: payloadConfig,
-                });
+                await createChannel(
+                    {
+                        type,
+                        name,
+                        enabled,
+                        config: payloadConfig,
+                    },
+                    keystore.value,
+                );
             }
             toasts.addToast({
                 title: $t(

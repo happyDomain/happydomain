@@ -34,6 +34,7 @@
     import ChangePasswordForm from "./ChangePasswordForm.svelte";
     import DeleteAccountCard from "./DeleteAccountCard.svelte";
     import ExportDataButton from "./ExportDataButton.svelte";
+    import KeystoresManager from "./KeystoresManager.svelte";
     import SessionsManager from "./SessionsManager.svelte";
     import UserSettingsForm from "./UserSettingsForm.svelte";
 
@@ -71,6 +72,16 @@
         <a class="btn btn-outline-primary" href={resolve("/me/notifications")}>
             {$t("settings.notifications.manage")}
         </a>
+
+        <h2 id="keystores" class="display-7 fw-bold mt-5">
+            <i class="bi bi-safe"></i>
+            {$t("keystores.title")}
+        </h2>
+        <p class="lead">
+            {$t("keystores.description")}
+        </p>
+
+        <KeystoresManager />
 
         {#if $userSession.email !== "_no_auth"}
             <h2 id="security" class="display-7 fw-bold mt-5">

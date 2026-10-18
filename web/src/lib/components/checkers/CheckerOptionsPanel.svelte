@@ -40,6 +40,10 @@
     import { toasts } from "$lib/stores/toasts";
     import { withInheritedPlaceholders } from "$lib/utils/checkers";
     import ResourceInput from "$lib/components/inputs/Resource.svelte";
+    import {
+        KeystoreChoice,
+        provideKeystoreChoice,
+    } from "$lib/components/inputs/keystoreChoice.svelte";
     import CheckerOptionsGroups from "./CheckerOptionsGroups.svelte";
 
     interface EditableGroup {
@@ -60,7 +64,10 @@
         optionValues: Record<string, unknown>;
         inheritedValues: Record<string, unknown>;
         saving: boolean;
-        onsave: () => Promise<void>;
+        // keystore is the one chosen for the secret options, empty for none.
+        onsave: (keystore: string) => Promise<void>;
+        // Names the options among the objects holding secrets.
+        keystoreObjectId?: string;
         orphanedOpts?: string[];
         onclean?: () => void;
     }
@@ -73,6 +80,7 @@
         inheritedValues,
         saving,
         onsave,
+        keystoreObjectId,
         orphanedOpts = [],
         onclean,
     }: Props = $props();
@@ -101,9 +109,17 @@
             autoFillOpts.length > 0,
     );
 
+    // Options are used by scheduled runs, without their owner: only keystores
+    // opening without them are offered.
+    const keystore = provideKeystoreChoice(new KeystoreChoice("checker-options", undefined, true));
+    $effect(() => {
+        keystore.objectId = keystoreObjectId;
+    });
+
     async function handleSave() {
         try {
-            await onsave();
+            await onsave(keystore.value);
+            keystore.value = "";
             toasts.addToast({
                 message: $t("checkers.messages.options-updated"),
                 type: "success",

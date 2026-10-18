@@ -34,7 +34,9 @@
         HappydnsCheckPlanWritable,
         HappydnsCheckerOptionsPositional,
     } from "$lib/api-base/types.gen";
-    import type { CheckerScope } from "$lib/api/checkers";
+    import { checkerOptionsObjectId, type CheckerScope } from "$lib/api/checkers";
+    import { refreshKeystores } from "$lib/stores/keystores";
+    import { userSession } from "$lib/stores/usersession";
     import {
         getScopedCheckOptions,
         updateScopedCheckOptions,
@@ -126,10 +128,11 @@
         );
     });
 
-    async function saveOptions() {
+    async function saveOptions(keystore: string) {
         savingOptions = true;
         try {
-            await updateScopedCheckOptions(scope, checkerId, optionValues);
+            await updateScopedCheckOptions(scope, checkerId, optionValues, keystore);
+            refreshKeystores().catch(() => {});
             checkOptionsPromise = getScopedCheckOptions(scope, checkerId);
         } finally {
             savingOptions = false;
@@ -235,7 +238,7 @@
                             bind:optionValues
                             {inheritedValues}
                             saving={savingOptions}
-                            onsave={saveOptions}
+                            onsave={() => saveOptions("")}
                             onsaveplan={showSchedule ? () => scheduleCard!.save() : undefined}
                             bind:plan
                             precheckFailures={(status as any).precheckFailures}
@@ -253,6 +256,7 @@
                         {inheritedValues}
                         saving={savingOptions}
                         onsave={saveOptions}
+                        keystoreObjectId={checkerOptionsObjectId(checkerId, $userSession.id, scope)}
                         {orphanedOpts}
                         onclean={() => cleanOrphanedOptions(allEditableOpts)}
                     />

@@ -921,5 +921,29 @@
         "title": "Records compliance",
         "checking": "Checking…",
         "learn-more": "Learn more"
+    },
+    "keystores": {
+        "title": "Credential keystores",
+        "description": "Choose where the credentials you give happyDomain, such as provider API keys, are sealed.",
+        "instance": "Instance keystore ({{kind}})",
+        "scope-instance": "Managed by the instance",
+        "scope-personal": "Personal",
+        "default": "Default",
+        "set-default": "Use by default",
+        "needs-owner": "Needs you to open",
+        "needs-owner-help": "This keystore does not open without you: notifications and scheduled checks, which run in the background, cannot use it.",
+        "unavailable": "Unavailable on this instance",
+        "unused": "Holds no credential.",
+        "used-by": "{{n:eq; 1:Holds the credentials of:; default:Holds the credentials of {{n}} objects:}}",
+        "migrate": "Migrate",
+        "migrate-to": "Move the credentials to...",
+        "migrated": "{{changed}} objects moved.",
+        "migrated-partly": "{{changed}} objects moved, {{failed}} could not move:",
+        "delete-used": "Migrate its credentials to another keystore before deleting it",
+        "create": "Create a keystore",
+        "kind": "Kind",
+        "name": "Name",
+        "choose": "Keystore holding the credentials of this object",
+        "policy": "Instance default"
     }
 }
