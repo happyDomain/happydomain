@@ -36,6 +36,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"git.happydns.org/happyDomain/internal/usecase"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	notifUC "git.happydns.org/happyDomain/internal/usecase/notification"
 	"git.happydns.org/happyDomain/internal/usecase/orchestrator"
@@ -75,6 +76,7 @@ type Usecases struct {
 
 	checkerEngine    happydns.CheckerEngine
 	checkerOptionsUC *checkerUC.CheckerOptionsUsecase
+	keystores        *usecase.KeystoreUsecase
 	checkerPlanUC    *checkerUC.CheckPlanUsecase
 	checkerStatusUC  *checkerUC.CheckStatusUsecase
 	checkerScheduler *checkerUC.Scheduler

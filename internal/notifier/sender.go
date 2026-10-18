@@ -71,8 +71,10 @@ type ChannelSender interface {
 	MergeForUpdate(existing, incoming json.RawMessage) (json.RawMessage, error)
 	// Refuse a config sent by a client that holds a sealed value.
 	CheckIncomingConfig(raw json.RawMessage) error
-	// Seal the secrets of a config before it is stored.
-	SealConfig(ctx context.Context, secrets *secret.Manager, sc secret.SecretContext, raw json.RawMessage) (json.RawMessage, error)
+	// Seal the secrets of a config before it is stored, into dst.
+	SealConfig(ctx context.Context, secrets *secret.Manager, sc secret.SecretContext, raw json.RawMessage, dst secret.Destination) (json.RawMessage, error)
+	// List the safes the secrets of a stored config are sealed in.
+	ConfigSafes(raw json.RawMessage) ([]happydns.Identifier, error)
 	// Decode a stored config with its secrets opened, for sending only.
 	OpenConfig(ctx context.Context, secrets *secret.Manager, sc secret.SecretContext, raw json.RawMessage) (ChannelConfig, error)
 	// Add how the secrets of a stored config are stored to counts.
@@ -248,17 +250,27 @@ func (a *typedAdapter[C]) CheckIncomingConfig(raw json.RawMessage) error {
 	return secret.CheckIncoming(&c)
 }
 
-func (a *typedAdapter[C]) SealConfig(ctx context.Context, secrets *secret.Manager, sc secret.SecretContext, raw json.RawMessage) (json.RawMessage, error) {
+func (a *typedAdapter[C]) SealConfig(ctx context.Context, secrets *secret.Manager, sc secret.SecretContext, raw json.RawMessage, dst secret.Destination) (json.RawMessage, error) {
 	var c C
 	if len(raw) > 0 {
 		if err := json.Unmarshal(raw, &c); err != nil {
 			return nil, fmt.Errorf("decoding %s config: %w", a.inner.Type(), err)
 		}
 	}
-	if err := secrets.SealObject(ctx, sc, &c); err != nil {
+	if err := secrets.SealObjectInto(ctx, sc, &c, dst); err != nil {
 		return nil, err
 	}
 	return json.Marshal(&c)
+}
+
+func (a *typedAdapter[C]) ConfigSafes(raw json.RawMessage) ([]happydns.Identifier, error) {
+	var c C
+	if len(raw) > 0 {
+		if err := json.Unmarshal(raw, &c); err != nil {
+			return nil, fmt.Errorf("decoding %s config: %w", a.inner.Type(), err)
+		}
+	}
+	return secret.SafesOf(&c)
 }
 
 func (a *typedAdapter[C]) InspectConfig(ctx context.Context, secrets *secret.Manager, sc secret.SecretContext, raw json.RawMessage, counts *secret.Counts) error {
@@ -340,18 +352,33 @@ func (r *Registry) CheckIncomingChannel(ch *happydns.NotificationChannel) error 
 }
 
 // SealChannelConfig seals the secrets of the config of ch, in place, before
-// it is stored. ch needs its identifier and owner.
-func (r *Registry) SealChannelConfig(ctx context.Context, ch *happydns.NotificationChannel) error {
+// it is stored: into keystore, moving there what is sealed elsewhere, or,
+// empty, where secret.Destination tells. Only a keystore opening without the
+// owner fits a channel. ch needs its identifier and owner.
+//
+// current lists the safes the stored version of ch used, whose secrets an
+// update may all replace.
+func (r *Registry) SealChannelConfig(ctx context.Context, ch *happydns.NotificationChannel, keystore string, current ...happydns.Identifier) error {
 	s, ok := r.Get(ch.Type)
 	if !ok {
 		return fmt.Errorf("%w: %q", ErrUnknownChannelType, ch.Type)
 	}
-	sealed, err := s.SealConfig(ctx, r.secrets, ChannelSecretContext(ch), ch.Config)
+	dst := secret.Destination{Keystore: keystore, Unattended: true, Current: current}
+	sealed, err := s.SealConfig(ctx, r.secrets, ChannelSecretContext(ch), ch.Config, dst)
 	if err != nil {
 		return err
 	}
 	ch.Config = sealed
 	return nil
+}
+
+// ChannelSafes lists the safes the secrets of ch are sealed in.
+func (r *Registry) ChannelSafes(ch *happydns.NotificationChannel) ([]happydns.Identifier, error) {
+	s, ok := r.Get(ch.Type)
+	if !ok {
+		return nil, fmt.Errorf("%w: %q", ErrUnknownChannelType, ch.Type)
+	}
+	return s.ConfigSafes(ch.Config)
 }
 
 // InspectChannelConfig adds how the secrets of ch are stored to counts.

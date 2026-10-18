@@ -25,6 +25,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"sync"
 
 	notifPkg "git.happydns.org/happyDomain/internal/notifier"
@@ -147,4 +148,68 @@ func (cs *ChannelSecrets) resealChannel(ctx context.Context, id happydns.Identif
 	}
 
 	return true, cs.store.UpdateChannel(ch)
+}
+
+// OwnerObjects lists the channels of owner holding sealed secrets, with the
+// safes each uses.
+func (cs *ChannelSecrets) OwnerObjects(ctx context.Context, owner happydns.Identifier) ([]secret.ObjectSafes, error) {
+	channels, err := cs.store.ListChannelsByUser(owner)
+	if err != nil {
+		return nil, err
+	}
+
+	var objects []secret.ObjectSafes
+	for _, ch := range channels {
+		ids, err := cs.registry.ChannelSafes(ch)
+		if err != nil || len(ids) == 0 {
+			continue
+		}
+		objects = append(objects, secret.ObjectSafes{ObjectType: notifPkg.SecretObjectType, ObjectId: ch.Id.String(), Label: ch.Name, Safes: ids})
+	}
+	return objects, nil
+}
+
+// MoveOwnerSecrets moves into the keystore to the secrets of the channels of
+// owner sealed in the safe from. A channel that fails, as when to does not
+// open without its owner, is reported and skipped.
+func (cs *ChannelSecrets) MoveOwnerSecrets(ctx context.Context, owner, from happydns.Identifier, to string) (secret.ResealReport, error) {
+	report := secret.ResealReport{ObjectType: notifPkg.SecretObjectType}
+
+	objects, err := cs.OwnerObjects(ctx, owner)
+	if err != nil {
+		return report, err
+	}
+	for _, o := range objects {
+		if !slices.ContainsFunc(o.Safes, from.Equals) {
+			continue
+		}
+		report.Processed++
+		id, err := happydns.NewIdentifierFromString(o.ObjectId)
+		if err == nil {
+			err = cs.moveChannel(ctx, id, owner, to)
+		}
+		if err != nil {
+			report.Failed++
+			report.Errors = append(report.Errors, fmt.Sprintf("channel %s: %s", o.ObjectId, err.Error()))
+			continue
+		}
+		report.Changed++
+	}
+	return report, nil
+}
+
+func (cs *ChannelSecrets) moveChannel(ctx context.Context, id, owner happydns.Identifier, to string) error {
+	defer LockChannel(id)()
+
+	ch, err := cs.store.GetChannel(id)
+	if err != nil {
+		return err
+	}
+	if !ch.UserId.Equals(owner) {
+		return errors.New("channel of another owner")
+	}
+	if err := cs.registry.SealChannelConfig(ctx, ch, to); err != nil {
+		return err
+	}
+	return cs.store.UpdateChannel(ch)
 }

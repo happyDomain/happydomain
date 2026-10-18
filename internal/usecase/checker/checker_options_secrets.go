@@ -23,8 +23,10 @@ package checker
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
+	"slices"
 	"sync"
 
 	checkerPkg "git.happydns.org/happyDomain/internal/dnschecker"
@@ -104,6 +106,18 @@ func secretKeys(checkerName string, opts happydns.CheckerOptions) map[string]boo
 	return keys
 }
 
+// optionsSafes lists the safes the secret options of opts are sealed in.
+func optionsSafes(checkerName string, opts happydns.CheckerOptions) []happydns.Identifier {
+	var ids []happydns.Identifier
+	for k := range secretKeys(checkerName, opts) {
+		s, _ := opts[k].(string)
+		if id, ok := secret.SafeOfValue(s); ok && !slices.ContainsFunc(ids, id.Equals) {
+			ids = append(ids, id)
+		}
+	}
+	return ids
+}
+
 // fieldMetaOf returns the field metadata of the checker, or nil for a checker
 // this build does not load.
 func fieldMetaOf(checkerName string) *checkerFieldMeta {
@@ -180,8 +194,19 @@ func checkIncomingOption(key string, value any, isSecret bool) error {
 }
 
 // sealOptions seals, in place, the secret options of one scope before they
-// are stored. Values already sealed, read from storage, are kept.
-func (u *CheckerOptionsUsecase) sealOptions(ctx context.Context, checkerName string, userId, domainId, serviceId *happydns.Identifier, opts happydns.CheckerOptions) error {
+// are stored, where dst tells, the scope being one object: into the keystore
+// it chooses, moving there the values sealed elsewhere. Values
+// already sealed, read from storage, are otherwise kept. Options are used by
+// scheduled runs: only a keystore opening without the owner fits.
+func (u *CheckerOptionsUsecase) sealOptions(ctx context.Context, checkerName string, userId, domainId, serviceId *happydns.Identifier, opts happydns.CheckerOptions, dst secret.Destination) error {
+	dst.Unattended = true
+	dst.Current = optionsSafes(checkerName, opts)
+	if u.store != nil {
+		// Where the stored options are, which opts may all replace.
+		if stored, err := u.getScopedOptions(checkerName, userId, domainId, serviceId); err == nil {
+			dst.Current = append(dst.Current, optionsSafes(checkerName, stored)...)
+		}
+	}
 	for k := range secretKeys(checkerName, opts) {
 		v, present := opts[k]
 		if !present || isEmptyValue(v) {
@@ -195,7 +220,10 @@ func (u *CheckerOptionsUsecase) sealOptions(ctx context.Context, checkerName str
 			return fmt.Errorf("option %q: %w", k, secret.ErrRedactedSecret)
 		}
 
-		sealed, err := u.secrets.SealValue(ctx, OptionsSecretContext(checkerName, userId, domainId, serviceId, k), s)
+		sealed, err := u.secrets.SealValueInto(ctx, OptionsSecretContext(checkerName, userId, domainId, serviceId, k), s, dst)
+		if errors.Is(err, secret.ErrUnknownKeystore) || errors.Is(err, secret.ErrKeystoreNotUnattended) {
+			return happydns.ValidationError{Msg: err.Error()}
+		}
 		if err != nil {
 			return fmt.Errorf("unable to seal option %q: %w", k, err)
 		}
@@ -218,7 +246,7 @@ func RestoreOptions(ctx context.Context, secrets *secret.Manager, checkerName st
 	}
 
 	uc := &CheckerOptionsUsecase{secrets: secrets}
-	if err := uc.sealOptions(ctx, checkerName, userId, domainId, serviceId, out); err != nil {
+	if err := uc.sealOptions(ctx, checkerName, userId, domainId, serviceId, out, secret.Destination{}.UnderPolicy()); err != nil {
 		return nil, err
 	}
 	return out, nil
@@ -411,4 +439,89 @@ func (cs *CheckerOptionsSecrets) resealScope(ctx context.Context, checkerName st
 	}
 
 	return true, cs.store.UpdateCheckerConfiguration(checkerName, userId, domainId, serviceId, opts)
+}
+
+// ownerScopes returns the scopes of options owner has holding sealed
+// secrets: those of the admin scope for the instance itself.
+func (cs *CheckerOptionsSecrets) ownerScopes(owner happydns.Identifier) ([]*happydns.CheckerOptionsPositional, error) {
+	iter, err := cs.store.ListAllCheckerConfigurations()
+	if err != nil {
+		return nil, err
+	}
+	defer iter.Close()
+
+	var scopes []*happydns.CheckerOptionsPositional
+	for iter.NextWithError() {
+		if iter.Err() != nil {
+			continue
+		}
+		p := iter.Item()
+		scopeOwner := secret.InstanceOwner()
+		if p.UserId != nil {
+			scopeOwner = *p.UserId
+		}
+		if scopeOwner.Equals(owner) && len(optionsSafes(p.CheckName, p.Options)) > 0 {
+			scopes = append(scopes, p)
+		}
+	}
+	return scopes, iter.Err()
+}
+
+// OwnerObjects lists the scopes of options of owner holding sealed secrets,
+// with the safes each uses.
+func (cs *CheckerOptionsSecrets) OwnerObjects(ctx context.Context, owner happydns.Identifier) ([]secret.ObjectSafes, error) {
+	scopes, err := cs.ownerScopes(owner)
+	if err != nil {
+		return nil, err
+	}
+
+	objects := make([]secret.ObjectSafes, 0, len(scopes))
+	for _, p := range scopes {
+		objects = append(objects, secret.ObjectSafes{
+			ObjectType: OptionsSecretObjectType,
+			ObjectId:   optionsObjectId(p.CheckName, p.UserId, p.DomainId, p.ServiceId),
+			Label:      p.CheckName,
+			Safes:      optionsSafes(p.CheckName, p.Options),
+		})
+	}
+	return objects, nil
+}
+
+// MoveOwnerSecrets moves into the keystore to the secret options of owner
+// sealed in the safe from. A scope that fails, as when to does not open
+// without its owner, is reported and skipped.
+func (cs *CheckerOptionsSecrets) MoveOwnerSecrets(ctx context.Context, owner, from happydns.Identifier, to string) (secret.ResealReport, error) {
+	report := secret.ResealReport{ObjectType: OptionsSecretObjectType}
+
+	scopes, err := cs.ownerScopes(owner)
+	if err != nil {
+		return report, err
+	}
+	for _, p := range scopes {
+		if !slices.ContainsFunc(optionsSafes(p.CheckName, p.Options), from.Equals) {
+			continue
+		}
+		report.Processed++
+		if err := cs.moveScope(ctx, p.CheckName, p.UserId, p.DomainId, p.ServiceId, to); err != nil {
+			report.Failed++
+			report.Errors = append(report.Errors, fmt.Sprintf("options %s: %s", optionsObjectId(p.CheckName, p.UserId, p.DomainId, p.ServiceId), err.Error()))
+			continue
+		}
+		report.Changed++
+	}
+	return report, nil
+}
+
+func (cs *CheckerOptionsSecrets) moveScope(ctx context.Context, checkerName string, userId, domainId, serviceId *happydns.Identifier, to string) error {
+	defer lockOptions(checkerName, userId, domainId, serviceId)()
+
+	uc := &CheckerOptionsUsecase{store: cs.store, secrets: cs.secrets}
+	opts, err := uc.getScopedOptions(checkerName, userId, domainId, serviceId)
+	if err != nil {
+		return err
+	}
+	if err := uc.sealOptions(ctx, checkerName, userId, domainId, serviceId, opts, secret.Destination{Keystore: to}); err != nil {
+		return err
+	}
+	return cs.store.UpdateCheckerConfiguration(checkerName, userId, domainId, serviceId, opts)
 }

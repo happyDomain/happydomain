@@ -73,7 +73,7 @@ func TestSendPathsOpenTheWebhookSecret(t *testing.T) {
 		Type:   notifPkg.ChannelTypeWebhook,
 		Config: json.RawMessage(`{"url":"` + srv.URL + `","secret":"s3cr3t"}`),
 	}
-	if err := registry.SealChannelConfig(context.Background(), ch); err != nil {
+	if err := registry.SealChannelConfig(context.Background(), ch, ""); err != nil {
 		t.Fatal(err)
 	}
 	if strings.Contains(string(ch.Config), "s3cr3t") {

@@ -546,3 +546,41 @@ func TestSecretOptionsHonourContext(t *testing.T) {
 		t.Errorf("GetCheckerOptionsForUse: got %v, want context.Canceled", err)
 	}
 }
+
+// Options are used by scheduled runs: they never go to a keystore that needs
+// their owner, chosen by the request or default.
+func TestSecretOptionsKeystoreIsUnattended(t *testing.T) {
+	ctx := context.Background()
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	safes := secrettest.NewSafes()
+	m, err := secret.NewManager(secrettest.WithPersonalStore(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: safes, Defaults: secrettest.NewDefaults()}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	store := newOptionsStore()
+	uc := checkerUC.NewCheckerOptionsUsecase(store, nil).WithSecrets(m)
+	user := idPtr()
+
+	personal, err := m.CreateKeystore(ctx, *user, secrettest.PersonalKind, "Mine", secrettest.PersonalParams())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := m.SetDefaultKeystore(ctx, *user, personal.Ref); err != nil {
+		t.Fatal(err)
+	}
+
+	err = uc.SetCheckerOptions(secret.WithKeystore(ctx, personal.Ref), secretChecker, user, nil, nil, happydns.CheckerOptions{"user_token": "t"})
+	var verr happydns.ValidationError
+	if !errors.As(err, &verr) {
+		t.Errorf("SetCheckerOptions(personal keystore) = %v, want a ValidationError", err)
+	}
+
+	if err := uc.SetCheckerOptions(ctx, secretChecker, user, nil, nil, happydns.CheckerOptions{"user_token": "t"}); err != nil {
+		t.Fatal(err)
+	}
+	id, ok := secret.SafeOfValue(storedString(t, store, user, "user_token"))
+	if !ok || id.Equals(personal.SafeId) {
+		t.Errorf("an option went to the default keystore, which needs its owner")
+	}
+}

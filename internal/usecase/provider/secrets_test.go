@@ -32,6 +32,7 @@ import (
 
 	providerReg "git.happydns.org/happyDomain/internal/providerregistry"
 	"git.happydns.org/happyDomain/internal/secret"
+	"git.happydns.org/happyDomain/internal/secret/secrettest"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	kv "git.happydns.org/happyDomain/internal/storage/kvtpl"
@@ -808,5 +809,141 @@ func Test_Secret_ResealSkipsProvidersDeletedSinceListed(t *testing.T) {
 	}
 	if _, err := db.GetProvider(ids[0]); !errors.Is(err, happydns.ErrProviderNotFound) {
 		t.Errorf("the deleted provider came back: %v", err)
+	}
+}
+
+// The keystore a request chooses holds the credentials of the provider it
+// writes, those already stored included; an unknown one is refused.
+func Test_Secret_KeystoreChosenByRequest(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	m, err := secret.NewManager(secrettest.WithPersonalStore(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db, Defaults: db}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	svc := provider.NewService(db, &mockValidator{}, nil, m)
+	user := createTestUser(t, db, "keystore@example.com")
+
+	p, err := svc.CreateProvider(ctx, user, secretMessage(t, "SecretTestProvider", `{"host":"h","apikey":"my-key"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	instanceSafe, err := db.GetSafeByOwner(user.Id, secret.KindInstance)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	personal, err := m.CreateKeystore(ctx, user.Id, secrettest.PersonalKind, "Mine", secrettest.PersonalParams())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = svc.UpdateProviderFromMessage(secret.WithKeystore(ctx, "nope"), p.Id, user, secretMessage(t, "SecretTestProvider", `{"host":"h","apikey":"`+happydns.RedactedSecret+`"}`))
+	var verr happydns.ValidationError
+	if !errors.As(err, &verr) {
+		t.Errorf("UpdateProviderFromMessage(unknown keystore) = %v, want a ValidationError", err)
+	}
+
+	if _, err := svc.UpdateProviderFromMessage(secret.WithKeystore(ctx, personal.Ref), p.Id, user, secretMessage(t, "SecretTestProvider", `{"host":"h","apikey":"`+happydns.RedactedSecret+`"}`)); err != nil {
+		t.Fatal(err)
+	}
+	body := storedBody(t, db, p.Id)
+	if !strings.Contains(body, `"apikey":"hds:1:`+personal.Ref+`:`) || strings.Contains(body, instanceSafe.Id.String()) {
+		t.Errorf("stored body = %s, want the key moved to %s", body, personal.Ref)
+	}
+
+	stored, err := svc.GetUserProvider(ctx, user, p.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	instantiatedWith = nil
+	if _, err := svc.RetrieveZone(ctx, stored, "example.com"); err != nil || instantiatedWith == nil || *instantiatedWith != "my-key" {
+		t.Errorf("RetrieveZone = %v, instantiated with %v; want the clear key", err, instantiatedWith)
+	}
+}
+
+// Moving the secrets of an owner out of a keystore rewrites each of their
+// providers there, and leaves those of other owners alone.
+func Test_Secret_MoveOwnerSecrets(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	m, err := secret.NewManager(secrettest.WithPersonalStore(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db, Defaults: db}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	svc := provider.NewService(db, &mockValidator{}, nil, m)
+	user := createTestUser(t, db, "mover@example.com")
+	other := createTestUser(t, db, "stayer@example.com")
+
+	p, err := svc.CreateProvider(ctx, user, secretMessage(t, "SecretTestProvider", `{"host":"h","apikey":"my-key"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	o, err := svc.CreateProvider(ctx, other, secretMessage(t, "SecretTestProvider", `{"host":"h","apikey":"their-key"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	otherBody := storedBody(t, db, o.Id)
+
+	objects, err := svc.OwnerObjects(ctx, user.Id)
+	if err != nil || len(objects) != 1 || objects[0].ObjectId != p.Id.String() || len(objects[0].Safes) != 1 {
+		t.Fatalf("OwnerObjects = %+v, %v; want the provider and its safe", objects, err)
+	}
+	instanceSafe := objects[0].Safes[0]
+
+	personal, err := m.CreateKeystore(ctx, user.Id, secrettest.PersonalKind, "Mine", secrettest.PersonalParams())
+	if err != nil {
+		t.Fatal(err)
+	}
+	report, err := svc.MoveOwnerSecrets(ctx, user.Id, instanceSafe, personal.Ref)
+	if err != nil || report.Processed != 1 || report.Changed != 1 || report.Failed != 0 {
+		t.Fatalf("MoveOwnerSecrets = %+v, %v", report, err)
+	}
+	if body := storedBody(t, db, p.Id); !strings.Contains(body, `"apikey":"hds:1:`+personal.Ref+`:`) {
+		t.Errorf("stored body = %s, want the key moved", body)
+	}
+	if storedBody(t, db, o.Id) != otherBody {
+		t.Error("the provider of another owner changed")
+	}
+
+	stored, err := svc.GetUserProvider(ctx, user, p.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	instantiatedWith = nil
+	if _, err := svc.RetrieveZone(ctx, stored, "example.com"); err != nil || instantiatedWith == nil || *instantiatedWith != "my-key" {
+		t.Errorf("RetrieveZone = %v, instantiated with %v; want the clear key", err, instantiatedWith)
+	}
+}
+
+// Replacing every credential of a provider keeps it in its keystore: the
+// stored version tells where it is.
+func Test_Secret_ReplacedCredentialsStayInTheirKeystore(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	m, err := secret.NewManager(secrettest.WithPersonalStore(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db, Defaults: db}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	svc := provider.NewService(db, &mockValidator{}, nil, m)
+	user := createTestUser(t, db, "replace@example.com")
+
+	personal, err := m.CreateKeystore(ctx, user.Id, secrettest.PersonalKind, "Mine", secrettest.PersonalParams())
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, err := svc.CreateProvider(secret.WithKeystore(ctx, personal.Ref), user, secretMessage(t, "SecretTestProvider", `{"host":"h","apikey":"first"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := svc.UpdateProviderFromMessage(ctx, p.Id, user, secretMessage(t, "SecretTestProvider", `{"host":"h","apikey":"second"}`)); err != nil {
+		t.Fatal(err)
+	}
+	if body := storedBody(t, db, p.Id); !strings.Contains(body, `"apikey":"hds:1:`+personal.Ref+`:`) {
+		t.Errorf("stored body = %s, want the new key in %s", body, personal.Ref)
 	}
 }

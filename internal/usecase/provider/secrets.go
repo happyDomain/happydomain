@@ -25,6 +25,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"sync"
 
 	"git.happydns.org/happyDomain/internal/netguard"
@@ -82,9 +83,16 @@ func (i instantiator) instantiate(ctx context.Context, p *happydns.Provider) (ha
 	return instance, nil
 }
 
-// seal seals the secrets of p before it is stored.
-func (i instantiator) seal(ctx context.Context, p *happydns.Provider) error {
-	if err := i.secrets.SealObject(ctx, SecretContext(p), p.Provider); err != nil {
+// seal seals the secrets of p before it is stored, into keystore: moving
+// there those sealed elsewhere, or, empty, where secret.Destination tells.
+// current lists the safes the stored version used, whose secrets an update
+// may all replace.
+func (i instantiator) seal(ctx context.Context, p *happydns.Provider, keystore string, current []happydns.Identifier) error {
+	err := i.secrets.SealObjectInto(ctx, SecretContext(p), p.Provider, secret.Destination{Keystore: keystore, Current: current})
+	if errors.Is(err, secret.ErrUnknownKeystore) {
+		return happydns.ValidationError{Msg: err.Error()}
+	}
+	if err != nil {
 		return happydns.InternalError{
 			Err:         fmt.Errorf("unable to seal provider credentials: %w", err),
 			UserMessage: "Sorry, we are currently unable to store your provider credentials. Please try again later.",
@@ -216,4 +224,81 @@ func (s *Service) resealProvider(ctx context.Context, id happydns.Identifier) (b
 	}
 
 	return true, s.store.UpdateProvider(p)
+}
+
+// OwnerObjects lists the providers of owner holding sealed secrets, with the
+// safes each uses.
+func (s *Service) OwnerObjects(ctx context.Context, owner happydns.Identifier) ([]secret.ObjectSafes, error) {
+	msgs, err := s.store.ListProviders(&happydns.User{Id: owner})
+	if err != nil {
+		return nil, err
+	}
+
+	var objects []secret.ObjectSafes
+	for _, meta := range msgs {
+		msg, err := s.store.GetProvider(meta.Id)
+		if err != nil {
+			continue
+		}
+		p, err := ParseProvider(msg)
+		if err != nil {
+			continue
+		}
+		ids, err := secret.SafesOf(p.Provider)
+		if err != nil || len(ids) == 0 {
+			continue
+		}
+		objects = append(objects, secret.ObjectSafes{ObjectType: SecretObjectType, ObjectId: p.Id.String(), Label: p.Comment, Safes: ids})
+	}
+	return objects, nil
+}
+
+// MoveOwnerSecrets moves into the keystore to the secrets of the providers of
+// owner sealed in the safe from. A provider that fails is reported and
+// skipped.
+func (s *Service) MoveOwnerSecrets(ctx context.Context, owner, from happydns.Identifier, to string) (secret.ResealReport, error) {
+	report := secret.ResealReport{ObjectType: SecretObjectType}
+
+	objects, err := s.OwnerObjects(ctx, owner)
+	if err != nil {
+		return report, err
+	}
+	for _, o := range objects {
+		if !slices.ContainsFunc(o.Safes, from.Equals) {
+			continue
+		}
+		report.Processed++
+		id, err := happydns.NewIdentifierFromString(o.ObjectId)
+		if err == nil {
+			err = s.moveProvider(ctx, id, owner, to)
+		}
+		if err != nil {
+			report.Failed++
+			report.Errors = append(report.Errors, fmt.Sprintf("provider %s: %s", o.ObjectId, err.Error()))
+			continue
+		}
+		report.Changed++
+	}
+	return report, nil
+}
+
+func (s *Service) moveProvider(ctx context.Context, id, owner happydns.Identifier, to string) error {
+	defer lockProvider(id)()
+
+	msg, err := s.store.GetProvider(id)
+	if err != nil {
+		return err
+	}
+	p, err := ParseProvider(msg)
+	if err != nil {
+		return err
+	}
+	if !p.Owner.Equals(owner) {
+		return errors.New("provider of another owner")
+	}
+
+	if err := s.secrets.SealObjectInto(ctx, SecretContext(p), p.Provider, secret.Destination{Keystore: to}); err != nil {
+		return err
+	}
+	return s.store.UpdateProvider(p)
 }

@@ -30,6 +30,7 @@ import (
 	"git.happydns.org/happyDomain/internal/netguard"
 	notifPkg "git.happydns.org/happyDomain/internal/notifier"
 	"git.happydns.org/happyDomain/internal/secret"
+	"git.happydns.org/happyDomain/internal/secret/secrettest"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	kv "git.happydns.org/happyDomain/internal/storage/kvtpl"
 	notifUC "git.happydns.org/happyDomain/internal/usecase/notification"
@@ -164,5 +165,59 @@ func TestChannelSecretsGoPastUndecodableChannels(t *testing.T) {
 	}
 	if stored, _ := db.GetChannel(legacy.Id); strings.Contains(string(stored.Config), "legacy-secret") {
 		t.Errorf("stored = %s, want the secret sealed", stored.Config)
+	}
+}
+
+// A channel is used in the background: moving it to a keystore that needs its
+// owner is refused, and reported; one that opens without them takes it.
+func TestChannelSecretsMoveOwnerSecrets(t *testing.T) {
+	ctx := context.Background()
+	db, err := inmemory.Instantiate()
+	if err != nil {
+		t.Fatal(err)
+	}
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	m, err := secret.NewManager(secrettest.WithPersonalStore(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db, Defaults: db}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	guard, _ := netguard.New("outbound", "-outbound-allowed-target", nil)
+	registry := notifPkg.NewRegistry(m)
+	registry.Register(notifPkg.Adapt(notifPkg.NewWebhookSender("https://happydomain.example", guard), guard))
+
+	owner := happydns.Identifier{0x01}
+	ch := &happydns.NotificationChannel{
+		Id:     happydns.Identifier{0x0c},
+		UserId: owner,
+		Name:   "Hook",
+		Type:   notifPkg.ChannelTypeWebhook,
+		Config: json.RawMessage(`{"url":"https://example.com/hook","secret":"s3cr3t"}`),
+	}
+	if err := registry.SealChannelConfig(ctx, ch, ""); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.CreateChannel(ch); err != nil {
+		t.Fatal(err)
+	}
+
+	holder := notifUC.NewChannelSecrets(db, registry)
+	objects, err := holder.OwnerObjects(ctx, owner)
+	if err != nil || len(objects) != 1 || objects[0].Label != "Hook" {
+		t.Fatalf("OwnerObjects = %+v, %v", objects, err)
+	}
+	from := objects[0].Safes[0]
+
+	personal, err := m.CreateKeystore(ctx, owner, secrettest.PersonalKind, "Mine", secrettest.PersonalParams())
+	if err != nil {
+		t.Fatal(err)
+	}
+	report, err := holder.MoveOwnerSecrets(ctx, owner, from, personal.Ref)
+	if err != nil || report.Processed != 1 || report.Failed != 1 || len(report.Errors) != 1 {
+		t.Fatalf("MoveOwnerSecrets(personal) = %+v, %v; want the channel reported", report, err)
+	}
+	stored, _ := db.GetChannel(ch.Id)
+	if ids, _ := registry.ChannelSafes(stored); len(ids) != 1 || !ids[0].Equals(from) {
+		t.Errorf("the channel moved: %v", ids)
 	}
 }

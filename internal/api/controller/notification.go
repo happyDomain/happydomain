@@ -173,7 +173,7 @@ func (nc *NotificationController) CreateChannel(c *gin.Context) {
 		return
 	}
 
-	if err := nc.registry.SealChannelConfig(c.Request.Context(), &ch); err != nil {
+	if err := nc.registry.SealChannelConfig(c.Request.Context(), &ch, ""); err != nil {
 		sealError(c, err)
 		return
 	}
@@ -266,7 +266,9 @@ func (nc *NotificationController) UpdateChannel(c *gin.Context) {
 		return
 	}
 
-	if err := nc.registry.SealChannelConfig(c.Request.Context(), ch); err != nil {
+	// Where the stored config is, whose secrets the update may all replace.
+	current, _ := nc.registry.ChannelSafes(existing)
+	if err := nc.registry.SealChannelConfig(c.Request.Context(), ch, "", current...); err != nil {
 		sealError(c, err)
 		return
 	}

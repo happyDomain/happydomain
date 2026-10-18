@@ -311,7 +311,7 @@ func (u *CheckerOptionsUsecase) SetCheckerOptions(
 
 	scope := scopeFromIdentifiers(userId, domainId, serviceId)
 	filtered, _ := u.filterOptionsForScope(checkerName, scope, nonEmpty)
-	if err := u.sealOptions(ctx, checkerName, userId, domainId, serviceId, filtered); err != nil {
+	if err := u.sealOptions(ctx, checkerName, userId, domainId, serviceId, filtered, secret.Destination{Keystore: secret.KeystoreFromContext(ctx)}); err != nil {
 		return err
 	}
 	return u.store.UpdateCheckerConfiguration(checkerName, userId, domainId, serviceId, filtered)
@@ -393,7 +393,7 @@ func (u *CheckerOptionsUsecase) AddCheckerOptions(
 	if err != nil {
 		return nil, err
 	}
-	if err := u.sealOptions(ctx, checkerName, userId, domainId, serviceId, merged); err != nil {
+	if err := u.sealOptions(ctx, checkerName, userId, domainId, serviceId, merged, secret.Destination{Keystore: secret.KeystoreFromContext(ctx)}); err != nil {
 		return nil, err
 	}
 	if err := u.store.UpdateCheckerConfiguration(checkerName, userId, domainId, serviceId, merged); err != nil {
@@ -627,7 +627,7 @@ func (u *CheckerOptionsUsecase) SetCheckerOption(
 	} else {
 		existing[optName] = value
 	}
-	if err := u.sealOptions(ctx, checkerName, userId, domainId, serviceId, existing); err != nil {
+	if err := u.sealOptions(ctx, checkerName, userId, domainId, serviceId, existing, secret.Destination{Keystore: secret.KeystoreFromContext(ctx)}); err != nil {
 		return err
 	}
 	return u.store.UpdateCheckerConfiguration(checkerName, userId, domainId, serviceId, existing)

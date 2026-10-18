@@ -293,6 +293,14 @@ func (h holderStub) ResealSecrets(context.Context) (secret.ResealReport, error) 
 	return secret.ResealReport{ObjectType: "a"}, h.err
 }
 
+func (h holderStub) OwnerObjects(context.Context, happydns.Identifier) ([]secret.ObjectSafes, error) {
+	return nil, h.err
+}
+
+func (h holderStub) MoveOwnerSecrets(context.Context, happydns.Identifier, happydns.Identifier, string) (secret.ResealReport, error) {
+	return secret.ResealReport{ObjectType: "a"}, h.err
+}
+
 // A type of object failing stops the walk, names that type, and keeps the
 // reports of the types already resealed.
 func TestSecretsUsecaseHolderFailure(t *testing.T) {

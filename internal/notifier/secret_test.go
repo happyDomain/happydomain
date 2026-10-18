@@ -174,7 +174,7 @@ func TestWebhookSealUnderInstancePolicy(t *testing.T) {
 	r, _ := instanceRegistry(t, false)
 	ch := webhookChannel(`{"url":"https://example.com/hook","secret":"s3cr3t"}`)
 
-	if err := r.SealChannelConfig(context.Background(), ch); err != nil {
+	if err := r.SealChannelConfig(context.Background(), ch, ""); err != nil {
 		t.Fatalf("SealChannelConfig: %v", err)
 	}
 	if strings.Contains(string(ch.Config), "s3cr3t") || !strings.Contains(string(ch.Config), `"secret":"hds:1:`) {
@@ -197,7 +197,7 @@ func TestWebhookSealUnderInstancePolicy(t *testing.T) {
 		t.Fatal(err)
 	}
 	updated := webhookChannel(string(merged))
-	if err := r.SealChannelConfig(context.Background(), updated); err != nil {
+	if err := r.SealChannelConfig(context.Background(), updated, ""); err != nil {
 		t.Fatal(err)
 	}
 	if got := decodeMap(t, updated.Config)["secret"]; got != sealed {
@@ -210,7 +210,7 @@ func TestWebhookSealUnderInstancePolicy(t *testing.T) {
 		t.Fatal(err)
 	}
 	updated = webhookChannel(string(merged))
-	if err := r.SealChannelConfig(context.Background(), updated); err != nil {
+	if err := r.SealChannelConfig(context.Background(), updated, ""); err != nil {
 		t.Fatal(err)
 	}
 	if strings.Contains(string(updated.Config), "rotated") || decodeMap(t, updated.Config)["secret"] == sealed {
@@ -238,7 +238,7 @@ func TestWebhookSendsWithOpenedSecret(t *testing.T) {
 
 	for name, prepare := range map[string]func(*happydns.NotificationChannel){
 		"sealed": func(ch *happydns.NotificationChannel) {
-			if err := r.SealChannelConfig(context.Background(), ch); err != nil {
+			if err := r.SealChannelConfig(context.Background(), ch, ""); err != nil {
 				t.Fatal(err)
 			}
 		},
@@ -283,7 +283,7 @@ func TestWebhookSendsWithOpenedSecret(t *testing.T) {
 func TestOpenChannelConfigRefusesAnotherChannel(t *testing.T) {
 	r, _ := instanceRegistry(t, false)
 	ch := webhookChannel(`{"url":"https://example.com/hook","secret":"s3cr3t"}`)
-	if err := r.SealChannelConfig(context.Background(), ch); err != nil {
+	if err := r.SealChannelConfig(context.Background(), ch, ""); err != nil {
 		t.Fatal(err)
 	}
 
@@ -325,7 +325,7 @@ func TestWebhookSendRefusesUnopenedSecret(t *testing.T) {
 		"header": `{"url":"` + srv.URL + `","headers":{"Authorization":"Bearer t0k3n"}}`,
 	} {
 		ch := webhookChannel(config)
-		if err := r.SealChannelConfig(context.Background(), ch); err != nil {
+		if err := r.SealChannelConfig(context.Background(), ch, ""); err != nil {
 			t.Fatal(err)
 		}
 
@@ -349,7 +349,7 @@ func TestSealChannelWithoutSecret(t *testing.T) {
 		"email": `{}`,
 	} {
 		ch := &happydns.NotificationChannel{Id: happydns.Identifier{0x0c}, UserId: happydns.Identifier{0x01}, Type: typ, Config: json.RawMessage(config)}
-		if err := r.SealChannelConfig(context.Background(), ch); err != nil {
+		if err := r.SealChannelConfig(context.Background(), ch, ""); err != nil {
 			t.Errorf("%s: SealChannelConfig: %v", typ, err)
 			continue
 		}
@@ -409,7 +409,7 @@ func TestWebhookSealsHeaders(t *testing.T) {
 	r, _ := instanceRegistry(t, false)
 	ch := webhookChannel(`{"url":"https://example.com/hook","headers":{"Authorization":"Bearer t0k3n"}}`)
 
-	if err := r.SealChannelConfig(context.Background(), ch); err != nil {
+	if err := r.SealChannelConfig(context.Background(), ch, ""); err != nil {
 		t.Fatalf("SealChannelConfig: %v", err)
 	}
 	if strings.Contains(string(ch.Config), "t0k3n") || !strings.Contains(string(ch.Config), `"Authorization":"hds:1:`) {
@@ -459,7 +459,7 @@ func TestUnifiedPushSealsAndRedactsTheEndpoint(t *testing.T) {
 	r := unifiedPushRegistry(t)
 	ch := unifiedPushChannel(`{"endpoint":"https://push.example.com/abc"}`)
 
-	if err := r.SealChannelConfig(context.Background(), ch); err != nil {
+	if err := r.SealChannelConfig(context.Background(), ch, ""); err != nil {
 		t.Fatalf("SealChannelConfig: %v", err)
 	}
 	if strings.Contains(string(ch.Config), "push.example.com") {
@@ -537,7 +537,7 @@ func TestUnifiedPushSendsToTheOpenedEndpoint(t *testing.T) {
 	defer srv.Close()
 
 	ch := unifiedPushChannel(`{"endpoint":"` + srv.URL + `/push"}`)
-	if err := r.SealChannelConfig(context.Background(), ch); err != nil {
+	if err := r.SealChannelConfig(context.Background(), ch, ""); err != nil {
 		t.Fatal(err)
 	}
 
@@ -564,7 +564,7 @@ func TestUnifiedPushAcceptChecksTheStoredEndpoint(t *testing.T) {
 		"https://10.0.0.1/push":   false,
 	} {
 		ch := unifiedPushChannel(`{"endpoint":"` + endpoint + `"}`)
-		if err := r.SealChannelConfig(context.Background(), ch); err != nil {
+		if err := r.SealChannelConfig(context.Background(), ch, ""); err != nil {
 			t.Fatal(err)
 		}
 		_, err := r.AcceptChannelConfig(context.Background(), ch)

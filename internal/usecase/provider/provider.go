@@ -100,7 +100,7 @@ func (s *Service) CreateProvider(ctx context.Context, user *happydns.User, msg *
 		return nil, happydns.ValidationError{Msg: fmt.Sprintf("invalid provider: %s", err.Error())}
 	}
 
-	if err := s.seal(ctx, provider); err != nil {
+	if err := s.seal(ctx, provider, secret.KeystoreFromContext(ctx), nil); err != nil {
 		return nil, err
 	}
 
@@ -181,6 +181,12 @@ func (s *Service) update(ctx context.Context, providerID happydns.Identifier, us
 		return nil, err
 	}
 
+	// Where its secrets are, before the update replaces them, maybe all.
+	current, err := secret.SafesOf(provider.Provider)
+	if err != nil {
+		return nil, err
+	}
+
 	updateFn(provider)
 
 	if !provider.Id.Equals(providerID) {
@@ -197,7 +203,7 @@ func (s *Service) update(ctx context.Context, providerID happydns.Identifier, us
 		return nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to validate provider attributes: %s", err.Error())}
 	}
 
-	if err := s.seal(ctx, provider); err != nil {
+	if err := s.seal(ctx, provider, secret.KeystoreFromContext(ctx), current); err != nil {
 		return nil, err
 	}
 

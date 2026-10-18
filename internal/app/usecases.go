@@ -189,6 +189,7 @@ func (app *App) initUsecases() {
 	registry.Register(notifPkg.Adapt(notifPkg.NewWebhookSender(baseURL, app.guards.Outbound), app.guards.Outbound))
 	registry.Register(notifPkg.Adapt(notifPkg.NewUnifiedPushSender(baseURL, app.guards.Outbound), app.guards.Outbound))
 	app.usecases.notificationRegistry = registry
+	app.usecases.keystores = usecase.NewKeystoreUsecase(app.secrets, app.secretHolders())
 	app.usecases.backup = backupUC.NewUsecase(app.store, app.secrets, backupUC.WithChannelRedactor(registry))
 	resolver := notifUC.NewResolver(app.store, app.store)
 	pool := notifUC.NewPool(registry, app.store)
@@ -226,5 +227,14 @@ func (app *App) initFaviconService() {
 		log.Printf("Favicon sources: none (no icon will be fetched)")
 	} else {
 		log.Printf("Favicon sources: %s", strings.Join(faviconService.Sources(), ", "))
+	}
+}
+
+// secretHolders returns the types of object holding secrets, by type.
+func (app *App) secretHolders() map[string]usecase.SecretHolder {
+	return map[string]usecase.SecretHolder{
+		providerUC.SecretObjectType:       providerUC.NewService(app.store, nil, app.guards.Outbound, app.secrets),
+		notifPkg.SecretObjectType:         notifUC.NewChannelSecrets(app.store, app.usecases.notificationRegistry),
+		checkerUC.OptionsSecretObjectType: checkerUC.NewCheckerOptionsSecrets(app.store, app.secrets),
 	}
 }

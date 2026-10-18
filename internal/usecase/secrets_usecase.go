@@ -27,6 +27,7 @@ import (
 	"sort"
 
 	"git.happydns.org/happyDomain/internal/secret"
+	"git.happydns.org/happyDomain/model"
 )
 
 // SecretHolder is a type of object holding secrets.
@@ -37,6 +38,14 @@ type SecretHolder interface {
 	// ResealSecrets stores the secrets of every object the way the current
 	// policy stores new ones.
 	ResealSecrets(ctx context.Context) (secret.ResealReport, error)
+
+	// OwnerObjects lists the objects of owner holding sealed secrets, with
+	// the safes each uses.
+	OwnerObjects(ctx context.Context, owner happydns.Identifier) ([]secret.ObjectSafes, error)
+
+	// MoveOwnerSecrets moves into the keystore to the secrets of the
+	// objects of owner sealed in the safe from.
+	MoveOwnerSecrets(ctx context.Context, owner, from happydns.Identifier, to string) (secret.ResealReport, error)
 }
 
 // SecretsStatus tells how the secrets of the instance are stored.

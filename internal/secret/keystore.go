@@ -111,6 +111,17 @@ type KindInfo struct {
 	Form []happydns.Field `json:"form"`
 }
 
+// ObjectSafes tells which safes the secrets of one object are sealed in.
+type ObjectSafes struct {
+	ObjectType string `json:"objectType"`
+	ObjectId   string `json:"objectId"`
+
+	// Label names the object to its owner, such as the name of a provider.
+	Label string `json:"label,omitempty"`
+
+	Safes []happydns.Identifier `json:"-"`
+}
+
 // isPersonal tells whether safe is a keystore its owner created: the safes
 // the instance creates have no name.
 func isPersonal(safe *happydns.Safe) bool {
@@ -402,6 +413,16 @@ func (m *Manager) SetDefaultKeystore(ctx context.Context, owner happydns.Identif
 		return err
 	}
 	return m.defaults.PutDefaultKeystore(owner, ref)
+}
+
+// CheckKeystore returns an error when ref names no keystore of owner that
+// secrets can be sealed in.
+func (m *Manager) CheckKeystore(_ context.Context, owner happydns.Identifier, ref string) error {
+	if m == nil {
+		return errNoManager
+	}
+	_, err := m.target(owner, ref, false)
+	return err
 }
 
 // newSealer returns the sealer of the keystore dst resolves to for owner.
