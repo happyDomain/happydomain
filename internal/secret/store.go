@@ -221,7 +221,8 @@ var ErrStoreUnavailable = errors.New("secret store not configured")
 // kind is persisted in each safe: it cannot change once safes of that kind
 // exist. It is never empty nor plaintext, which names no store.
 var builtinStores = map[string]StoreFactory{
-	KindInstance: newInstanceStore,
+	KindInstance:   newInstanceStore,
+	KindPassphrase: newPassphraseStore,
 }
 
 // KnownStores returns the kinds of safe happyDomain knows, sorted.

@@ -32,7 +32,8 @@ func DeclareKeystoreRoutes(router *gin.RouterGroup, keystores *usecase.KeystoreU
 	kc := controller.NewKeystoreController(keystores)
 
 	router.GET("/keystores", kc.ListKeystores)
-	// Limited, as creating a keystore bound to the login password checks it.
+	// Limited, as creating some kinds checks the login password or derives
+	// a key, slow by design.
 	router.POST("/keystores", perClientRateLimiter(10), kc.CreateKeystore)
 	router.GET("/keystores/kinds", kc.ListKeystoreKinds)
 	router.PUT("/keystores/default", kc.SetDefaultKeystore)

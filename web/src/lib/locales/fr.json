@@ -597,7 +597,8 @@
         "create": "Créer un coffre",
         "kind": "Type",
         "kinds": {
-            "instance": "Chiffré avec la clé de l'instance"
+            "instance": "Chiffré avec la clé de l'instance",
+            "passphrase": "Verrouillé par une phrase de passe"
         },
         "name": "Nom",
         "choose": "Coffre contenant les identifiants de cet objet",

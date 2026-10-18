@@ -95,8 +95,9 @@ A keystore is where the credentials of a user are sealed. Each user has:
 - the keystores of the instance, such as `instance`: happyDomain creates
   them on first use, and only the administrator deletes them;
 - the personal keystores they create themselves, under a name, from a kind
-  the instance offers (none in this version: see
-  [Adding a kind of keystore](#adding-a-kind-of-keystore)).
+  the instance offers: `passphrase` (locked by a passphrase) is enabled by
+  default, and needs no configuration. See also
+  [Adding a kind of keystore](#adding-a-kind-of-keystore).
 
 The settings of a user list their keystores, with what each holds. There they
 choose a default keystore, migrate what one holds into another, and delete a
@@ -148,6 +149,17 @@ provider. A password reset, through a recovery link or by the administrator,
 does not rebind them: they still open with the previous password, which their
 owner gives when asked. Each one so unlocked follows the new password at the
 next password change from the settings.
+
+happyDomain offers such a kind, enabled by default (see `-secret-store`):
+`passphrase`. Its owner chooses a passphrase when creating it, at least 8
+characters long, and gives it again to unlock it. Nobody can recover it, the
+administrator included: forgotten, the credentials the keystore holds are
+lost, and have to be entered again elsewhere.
+
+It wraps the key of the keystore under a key derived from the passphrase with
+Argon2id (t=3, m=64 MiB, p=4, the second recommendation of RFC 9106), with a
+salt of its own. Each unlock costs 64 MiB of memory for a moment: the unlock
+endpoint is rate limited.
 
 ## Keystores keeping references
 

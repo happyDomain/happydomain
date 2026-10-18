@@ -943,7 +943,8 @@
         "create": "Create a keystore",
         "kind": "Kind",
         "kinds": {
-            "instance": "Encrypted with the key of the instance"
+            "instance": "Encrypted with the key of the instance",
+            "passphrase": "Locked by a passphrase"
         },
         "name": "Name",
         "choose": "Keystore holding the credentials of this object",
