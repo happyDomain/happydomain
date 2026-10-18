@@ -111,7 +111,7 @@ func TestTypedAdapterCheckConfigFailsClosedWithoutGuard(t *testing.T) {
 // another would hand it the stored secrets, whether or not the new type is
 // known.
 func TestMergeChannelForUpdateRefusesTypeChange(t *testing.T) {
-	r := NewRegistry()
+	r := newTestRegistry(t)
 	r.Register(Adapt(NewWebhookSender("https://happydomain.example", publicOnlyGuard(t)), publicOnlyGuard(t)))
 	r.Register(Adapt(NewEmailSender(nil, "https://happydomain.example"), nil))
 	existing := &happydns.NotificationChannel{

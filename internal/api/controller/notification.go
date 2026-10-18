@@ -22,6 +22,7 @@
 package controller
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"log"
@@ -34,6 +35,7 @@ import (
 
 	"git.happydns.org/happyDomain/internal/api/middleware"
 	notifPkg "git.happydns.org/happyDomain/internal/notifier"
+	"git.happydns.org/happyDomain/internal/secret"
 	notifUC "git.happydns.org/happyDomain/internal/usecase/notification"
 	"git.happydns.org/happyDomain/model"
 )
@@ -50,6 +52,19 @@ func internalError(c *gin.Context, err error) {
 	c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{
 		Message: "internal server error",
 	})
+}
+
+// sealError answers a failure to seal a channel config: a placeholder left
+// where no stored value stands is the client's to fix, anything else is
+// internal.
+func sealError(c *gin.Context, err error) {
+	if errors.Is(err, secret.ErrRedactedSecret) {
+		c.AbortWithStatusJSON(http.StatusBadRequest, happydns.ErrorResponse{
+			Message: "a secret of this channel was sent as the placeholder, with no stored value to stand for: enter it again",
+		})
+		return
+	}
+	internalError(c, err)
 }
 
 type NotificationController struct {
@@ -134,8 +149,18 @@ func (nc *NotificationController) CreateChannel(c *gin.Context) {
 	}
 	ch.Id = id
 
+	if err := nc.registry.CheckIncomingChannel(&ch); err != nil {
+		middleware.ErrorResponse(c, http.StatusBadRequest, err)
+		return
+	}
+
 	if _, err := nc.registry.AcceptChannelConfig(c.Request.Context(), &ch); err != nil {
 		middleware.ErrorResponse(c, http.StatusBadRequest, err)
+		return
+	}
+
+	if err := nc.registry.SealChannelConfig(c.Request.Context(), &ch); err != nil {
+		sealError(c, err)
 		return
 	}
 
@@ -179,7 +204,19 @@ func (nc *NotificationController) GetChannel(c *gin.Context) {
 //	@Failure	400			{object}	happydns.ErrorResponse	"Type of the channel changed"
 //	@Router		/notifications/channels/{channelId} [put]
 func (nc *NotificationController) UpdateChannel(c *gin.Context) {
-	existing := middleware.MyNotificationChannel(c)
+	// Held from the read to the write, so a reseal running meanwhile is not
+	// undone by the values read before it.
+	defer notifUC.LockChannel(middleware.MyNotificationChannel(c).Id)()
+
+	existing, err := nc.channelStore.GetChannel(middleware.MyNotificationChannel(c).Id)
+	if errors.Is(err, happydns.ErrNotificationChannelNotFound) {
+		middleware.ErrorResponse(c, http.StatusNotFound, err)
+		return
+	}
+	if err != nil {
+		internalError(c, err)
+		return
+	}
 
 	// Bind onto a clone so json.Unmarshal only overwrites present fields; identity fields are forced back below.
 	// A clone, not a copy: decoding reuses the slices it finds, and the merge below reads existing.
@@ -192,6 +229,15 @@ func (nc *NotificationController) UpdateChannel(c *gin.Context) {
 	ch.Id = existing.Id
 	ch.UserId = existing.UserId
 
+	// A config left out of the body is the stored one, sealed values
+	// included; only one the client sent is checked.
+	if !bytes.Equal(ch.Config, existing.Config) {
+		if err := nc.registry.CheckIncomingChannel(ch); err != nil {
+			middleware.ErrorResponse(c, http.StatusBadRequest, err)
+			return
+		}
+	}
+
 	// Carry forward stored secrets so a GET → PUT round-trip does not wipe them.
 	// A change of type is refused there: each type reads its own config.
 	merged, err := nc.registry.MergeChannelForUpdate(existing, ch)
@@ -203,6 +249,11 @@ func (nc *NotificationController) UpdateChannel(c *gin.Context) {
 
 	if _, err := nc.registry.AcceptChannelConfig(c.Request.Context(), ch); err != nil {
 		middleware.ErrorResponse(c, http.StatusBadRequest, err)
+		return
+	}
+
+	if err := nc.registry.SealChannelConfig(c.Request.Context(), ch); err != nil {
+		sealError(c, err)
 		return
 	}
 
@@ -242,7 +293,10 @@ func (nc *NotificationController) DeleteChannel(c *gin.Context) {
 		return
 	}
 
-	if err := nc.channelStore.DeleteChannel(ch.Id); err != nil {
+	unlock := notifUC.LockChannel(ch.Id)
+	err = nc.channelStore.DeleteChannel(ch.Id)
+	unlock()
+	if err != nil {
 		internalError(c, err)
 		return
 	}
@@ -270,7 +324,7 @@ func (nc *NotificationController) TestChannel(c *gin.Context) {
 	user := middleware.MyUser(c)
 	ch := middleware.MyNotificationChannel(c)
 
-	if err := nc.dispatcher.SendTestNotification(ch, user); err != nil {
+	if err := nc.dispatcher.SendTestNotification(c.Request.Context(), ch, user); err != nil {
 		internalError(c, err)
 		return
 	}

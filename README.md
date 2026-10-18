@@ -266,8 +266,9 @@ them under a keyset held by the server, see
 Note that this is unrelated to the passwords used for registration and
 authentication: those are hashed in the database, never stored in clear.
 Encryption only applies to secrets that happyDomain has to send back to third
-parties, such as providers' API keys and passwords. Such secrets cannot be
-hashed, because happyDomain needs to read them back in clear to use them.
+parties, such as providers' API keys and passwords or webhook secrets. Such
+secrets cannot be hashed, because happyDomain needs to read them back in clear
+to use them.
 
 #### Need OVH API?
 

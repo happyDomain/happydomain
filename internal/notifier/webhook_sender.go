@@ -67,7 +67,7 @@ type WebhookConfig struct {
 	URL     string            `json:"url"`
 	Headers map[string]string `json:"headers,omitempty"`
 	// HMAC-SHA256 signing key.
-	Secret string `json:"secret,omitempty"`
+	Secret happydns.Secret `json:"secret,omitzero"`
 	// Set only by RedactConfig — never stored or accepted on input.
 	HasSecret bool `json:"hasSecret,omitempty"`
 }
@@ -104,14 +104,14 @@ func (s *WebhookSender) Destinations(c WebhookConfig) []Destination {
 }
 
 func (s *WebhookSender) RedactConfig(cfg WebhookConfig) WebhookConfig {
-	cfg.HasSecret = cfg.Secret != ""
-	cfg.Secret = ""
+	cfg.HasSecret = !cfg.Secret.IsEmpty()
+	cfg.Secret = happydns.Secret{}
 	return cfg
 }
 
 // Preserve stored secret on empty submit; client never receives it back, so absence means "no change".
 func (s *WebhookSender) MergeForUpdate(existing, incoming WebhookConfig) WebhookConfig {
-	if incoming.Secret == "" {
+	if incoming.Secret.IsEmpty() || incoming.Secret.IsRedacted() {
 		incoming.Secret = existing.Secret
 	}
 	incoming.HasSecret = false
@@ -119,6 +119,12 @@ func (s *WebhookSender) MergeForUpdate(existing, incoming WebhookConfig) Webhook
 }
 
 func (s *WebhookSender) Send(ctx context.Context, c WebhookConfig, payload *NotificationPayload) error {
+	if !c.Secret.IsEmpty() && c.Secret.Reveal() == "" {
+		// Sealed and not opened: sending unsigned would look like a
+		// configuration change to the receiver.
+		return errors.New("webhook signing secret not opened")
+	}
+
 	return postJSON(ctx, s.client, c.URL, buildHTTPPayload(payload, s.dashboardURL), func(req *http.Request, body []byte) {
 		req.Header.Set("User-Agent", "happyDomain-Notification/1.0")
 		for k, v := range c.Headers {
@@ -128,8 +134,8 @@ func (s *WebhookSender) Send(ctx context.Context, c WebhookConfig, payload *Noti
 			}
 			req.Header.Set(k, v)
 		}
-		if c.Secret != "" {
-			mac := hmac.New(sha256.New, []byte(c.Secret))
+		if key := c.Secret.Reveal(); key != "" {
+			mac := hmac.New(sha256.New, []byte(key))
 			mac.Write(body)
 			req.Header.Set("X-Happydomain-Signature", "sha256="+hex.EncodeToString(mac.Sum(nil)))
 		}

@@ -22,6 +22,7 @@
 package notification
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"log"
@@ -230,8 +231,8 @@ func (d *Dispatcher) markNotified(state *happydns.NotificationState, newStatus h
 	}
 }
 
-func (d *Dispatcher) SendTestNotification(ch *happydns.NotificationChannel, user *happydns.User) error {
-	return d.tester.Send(ch, user)
+func (d *Dispatcher) SendTestNotification(ctx context.Context, ch *happydns.NotificationChannel, user *happydns.User) error {
+	return d.tester.Send(ctx, ch, user)
 }
 
 func (d *Dispatcher) AcknowledgeIssue(userId happydns.Identifier, checkerID string, target happydns.CheckTarget, acknowledgedBy string, annotation string) error {

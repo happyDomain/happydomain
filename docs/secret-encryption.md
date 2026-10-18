@@ -1,8 +1,9 @@
 # Encrypting stored credentials
 
-happyDomain stores the credentials of the DNS providers of its users: their
-API keys, passwords, TSIG keys. By default they are stored in clear in the
-database, as they always were.
+happyDomain stores credentials on behalf of its users: the API keys,
+passwords and TSIG keys of their DNS providers, and the signing secret of
+their webhooks. By default they are stored in clear in the database, as they
+always were.
 
 The `instance` policy encrypts them under a keyset held by the server, outside
 the database. A leaked database dump or backup, or a database hosted apart from
@@ -13,8 +14,8 @@ a compromised happyDomain server, which holds the keyset.
 
 This first version covers the common path. Before enabling it, know that:
 
-- only the credentials of providers are encrypted. The secrets of
-  notification channels and the checker options stay in clear;
+- the headers of webhooks, the endpoints of UnifiedPush channels and the
+  checker options stay in clear;
 - the migrations below (`reseal`, `rewrap`, `drop-safes`) expect a single
   happyDomain process on the database. With several, a reseal may overwrite an
   update made at the same time by another process;
@@ -75,14 +76,14 @@ secret-policy=instance
 or `HAPPYDOMAIN_SECRET_KEYSET_FILE` and `HAPPYDOMAIN_SECRET_POLICY`.
 
 From then on, every credential saved is encrypted. Those already stored are
-encrypted the next time their provider is saved; to do it at once, see
-[Migrating existing credentials](#migrating-existing-credentials).
+encrypted the next time their provider or channel is saved; to do it at once,
+see [Migrating existing credentials](#migrating-existing-credentials).
 
 Nothing changes for users.
 
 ## Startup checks
 
-happyDomain refuses to start rather than fail provider by provider when:
+happyDomain refuses to start rather than fail credential by credential when:
 
 - the `instance` policy is chosen without a keyset;
 - the keyset does not open the check record stored in the database the first
@@ -100,22 +101,24 @@ curl --unix-socket happydomain.sock http://localhost/api/secrets/status
 curl --unix-socket happydomain.sock -X POST http://localhost/api/secrets/reseal
 ```
 
-`/api/secrets/status` counts the credentials of providers:
+`/api/secrets/status` counts, for providers and notification channels, the
+credentials:
 
 - `clear`: stored in clear;
 - `sealed`: encrypted, and decrypting;
 - `unreadable`: encrypted, but no longer decrypting;
-- `undecodable`: providers that could not be looked at, such as a provider of a
-  type this version no longer knows. They may hold encrypted credentials.
+- `undecodable`: objects that could not be looked at, such as a provider or a
+  channel of a type this version no longer knows. They may hold encrypted
+  credentials.
 
 It also lists, under `instanceKeys`, the keys of the keyset and how many users'
 keys each one protects.
 
 `/api/secrets/reseal` stores every credential the way the current policy stores
-new ones. It reports how many providers it looked at, changed and failed,
-naming the failures under `errors`. A provider that fails is left as it was,
-and the others are resealed. It can be interrupted, and running it again
-resumes the work.
+new ones. It reports, for each type of object, how many it looked at, changed
+and failed, naming the failures under `errors`. An object that fails is left
+as it was, and the others are resealed. It can be interrupted, and running it
+again resumes the work.
 
 ## Rotating the keyset
 
@@ -178,9 +181,9 @@ rewrap: the users' keys it holds are protected by them.
    ```
 
    It refuses while a credential is still counted as `sealed` or `unreadable`,
-   and while a provider is counted as `undecodable`: those would be lost for
+   and while an object is counted as `undecodable`: those would be lost for
    good. Reseal again, have the unreadable credentials entered again, or
-   delete the providers concerned, then run it again.
+   delete the objects concerned, then run it again.
 
 4. Remove `secret-keyset-file` from the configuration, and restart.
 
@@ -197,8 +200,9 @@ restored, and the restore reports it. The data export a user downloads never
 contains credentials.
 
 Deleting a user, or a user deleting their account, deletes their keys: their
-credentials no longer decrypt from the database. Administrative backups taken
-before still hold those keys, and decrypt them with the keyset for as long as
-both are kept. A key left behind, for instance when the database was briefly
-unavailable, is deleted by the next `tidy`.
+credentials no longer decrypt from the database. Their notification channels
+are removed by `tidy`. Administrative backups taken before still hold those
+keys, and decrypt them with the keyset for as long as both are kept. A key
+left behind, for instance when the database was briefly unavailable, is
+deleted by the next `tidy`.
 

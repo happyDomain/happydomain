@@ -37,16 +37,16 @@ func NewTester(registry *notifPkg.Registry) *Tester {
 	return &Tester{registry: registry}
 }
 
-func (t *Tester) Send(ch *happydns.NotificationChannel, user *happydns.User) error {
+func (t *Tester) Send(ctx context.Context, ch *happydns.NotificationChannel, user *happydns.User) error {
 	sender, ok := t.registry.Get(ch.Type)
 	if !ok {
 		return notifPkg.ErrUnknownChannelType
 	}
-	cfg, err := sender.DecodeConfig(ch.Config)
+	ctx, cancel := context.WithTimeout(ctx, sendTimeout)
+	defer cancel()
+	cfg, err := t.registry.OpenChannelConfig(ctx, ch)
 	if err != nil {
 		return err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), sendTimeout)
-	defer cancel()
 	return sender.SendTest(ctx, cfg, user)
 }

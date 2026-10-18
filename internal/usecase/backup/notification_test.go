@@ -105,8 +105,8 @@ func TestBackupRestoreNotifications(t *testing.T) {
 	}
 }
 
-func exportRegistry() *notifier.Registry {
-	r := notifier.NewRegistry()
+func exportRegistry(t *testing.T) *notifier.Registry {
+	r := notifier.NewRegistry(plaintextSecrets(t))
 	r.Register(notifier.Adapt(notifier.NewWebhookSender("https://dash.example.com", nil), nil))
 	return r
 }
@@ -124,7 +124,7 @@ func TestBackupUserRedactsChannelSecrets(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ret := backup.NewUsecase(db, plaintextSecrets(t), backup.WithChannelRedactor(exportRegistry())).BackupUser(user)
+	ret := backup.NewUsecase(db, plaintextSecrets(t), backup.WithChannelRedactor(exportRegistry(t))).BackupUser(user)
 	if len(ret.Errors) > 0 {
 		t.Fatalf("export errors: %v", ret.Errors)
 	}
@@ -157,7 +157,7 @@ func TestBackupUserWithholdsUnknownChannelConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ret := backup.NewUsecase(db, plaintextSecrets(t), backup.WithChannelRedactor(exportRegistry())).BackupUser(user)
+	ret := backup.NewUsecase(db, plaintextSecrets(t), backup.WithChannelRedactor(exportRegistry(t))).BackupUser(user)
 	if len(ret.NotificationChannels) != 1 {
 		t.Fatalf("export holds %d channels, want 1", len(ret.NotificationChannels))
 	}
