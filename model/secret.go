@@ -46,6 +46,7 @@ const (
 	secretSealed
 	secretOpened
 	secretRedacted
+	secretReference
 )
 
 // Secret holds a credential entrusted to happyDomain: a provider API key, a
@@ -53,8 +54,9 @@ const (
 //
 // It is either empty, clear (typed by a user, or a legacy plaintext value read
 // from storage), sealed (as read from storage), opened (sealed, with its clear
-// value alongside) or redacted (the placeholder the API sends instead of the
-// value). See docs/secret-encryption.md.
+// value alongside), redacted (the placeholder the API sends instead of the
+// value) or a reference (what a keystore keeping no secret holds, shown to its
+// owner). See docs/secret-encryption.md.
 //
 // Its guarantees are the reason it exists rather than a string:
 //   - it refuses to be encoded to JSON while clear, see ErrUnsealedSecret;
@@ -72,7 +74,8 @@ type secretValue struct {
 	state secretState
 
 	// token is what is stored: the sealed value, or the raw value under the
-	// plaintext policy. Set when sealed, opened or redacted.
+	// plaintext policy. Set when sealed, opened or redacted; the reference
+	// shown when a reference.
 	token string
 
 	// clear is the value in clear. Set when clear or opened. No promise of
@@ -116,8 +119,12 @@ func (s Secret) IsOpened() bool { return s.state() == secretOpened }
 // value, see RedactedSecret.
 func (s Secret) IsRedacted() bool { return s.state() == secretRedacted }
 
-// Reveal returns the value in clear, or an empty string when it is not known:
-// empty, sealed and not opened, or redacted.
+// IsReference reports whether this is a reference shown to its owner, see
+// SetReference.
+func (s Secret) IsReference() bool { return s.state() == secretReference }
+
+// Reveal returns the value in clear, or an empty string when it is not known
+// (empty, sealed and not opened, or redacted) or is a reference.
 //
 // Only call it where happyDomain uses the credential on behalf of the user,
 // when instantiating a provider for example.
@@ -131,8 +138,10 @@ func (s Secret) Reveal() string {
 // Redact turns a non-empty Secret into the placeholder the API sends instead
 // of its value. An empty one stays empty: claiming a value is stored for a
 // field never filled would make it look set.
+//
+// A reference is left as it is: it is not secret, its owner reads it back.
 func (s *Secret) Redact() {
-	if s.state() == secretEmpty {
+	if s.state() == secretEmpty || s.state() == secretReference {
 		return
 	}
 	*s = Secret{&secretValue{state: secretRedacted, token: RedactedSecret}}
@@ -175,8 +184,21 @@ func (s *Secret) SetOpened(token string, value []byte) {
 	*s = Secret{&secretValue{state: secretOpened, token: token, clear: append([]byte(nil), value...)}}
 }
 
-// MarshalJSON encodes the stored form of the Secret. It fails with
-// ErrUnsealedSecret for a clear one.
+// SetReference makes the Secret show ref, the reference a keystore keeping no
+// secret holds in its place, to the owner reading it over the API. It is no
+// credential: Reveal, Token and ClearForSealing return nothing. It encodes to
+// ref, which a client sends back as a clear value, to seal again.
+//
+// Only for a response, on a copy no one stores: read back, it is clear.
+//
+// Reserved for internal/secret.
+func (s *Secret) SetReference(ref string) {
+	*s = Secret{&secretValue{state: secretReference, token: ref}}
+}
+
+// MarshalJSON encodes the stored form of the Secret, or what the API shows in
+// its place: the placeholder or a reference. It fails with ErrUnsealedSecret
+// for a clear one.
 func (s Secret) MarshalJSON() ([]byte, error) {
 	switch s.state() {
 	case secretEmpty:
@@ -187,7 +209,7 @@ func (s Secret) MarshalJSON() ([]byte, error) {
 			return nil, fmt.Errorf("%w: malformed sealed token", ErrUnsealedSecret)
 		}
 		return json.Marshal(s.v.token)
-	case secretOpened, secretRedacted:
+	case secretOpened, secretRedacted, secretReference:
 		return json.Marshal(s.v.token)
 	default:
 		return nil, ErrUnsealedSecret

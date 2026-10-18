@@ -479,3 +479,71 @@ func TestSecretOmitZero(t *testing.T) {
 		t.Errorf("json.Marshal(empty, omitzero) = %s, %v; want {}", b, err)
 	}
 }
+
+func TestSecretSetReference(t *testing.T) {
+	s := unmarshalSecret(t, `"`+sealedToken+`"`)
+	s.SetReference("ovh/app_secret")
+
+	if !s.IsReference() {
+		t.Fatal("SetReference: IsReference() = false, want true")
+	}
+	if s.IsSealed() || s.IsOpened() || s.IsClear() || s.IsRedacted() || s.IsEmpty() {
+		t.Error("a shown reference is in no other state")
+	}
+	// It is not a credential: nothing reads it as one.
+	if s.Reveal() != "" {
+		t.Errorf("Reveal() = %q, want empty", s.Reveal())
+	}
+	if s.Token() != "" {
+		t.Errorf("Token() = %q, want empty", s.Token())
+	}
+	if _, ok := s.ClearForSealing(); ok {
+		t.Error("ClearForSealing() ok = true, want false")
+	}
+
+	// Not secret, it stays shown through the redaction of the API.
+	s.Redact()
+	if !s.IsReference() {
+		t.Fatal("Redact(): the reference was redacted")
+	}
+
+	b, err := json.Marshal(s)
+	if err != nil || string(b) != `"ovh/app_secret"` {
+		t.Fatalf("json.Marshal = %s, %v; want the reference", b, err)
+	}
+
+	// Sent back by the client, it is a clear value to seal again.
+	back := unmarshalSecret(t, string(b))
+	if !back.IsClear() || back.Reveal() != "ovh/app_secret" {
+		t.Errorf("read back: IsClear() = %v, Reveal() = %q; want the clear reference", back.IsClear(), back.Reveal())
+	}
+}
+
+// A credential known in clear does not survive its replacement by a reference.
+func TestSecretSetReferenceDropsClearValue(t *testing.T) {
+	var opened happydns.Secret
+	opened.SetOpened(sealedToken, []byte(clearValue))
+	for name, s := range map[string]happydns.Secret{
+		"clear":  happydns.NewSecret(clearValue),
+		"opened": opened,
+	} {
+		s.SetReference("ovh/app_secret")
+		if s.Reveal() != "" || s.Token() != "" {
+			t.Errorf("%s.SetReference: Reveal() = %q, Token() = %q; want both empty", name, s.Reveal(), s.Token())
+		}
+		if _, ok := s.ClearForSealing(); ok {
+			t.Errorf("%s.SetReference: ClearForSealing() ok = true, want false", name)
+		}
+		if b, err := json.Marshal(s); err != nil || strings.Contains(string(b), clearValue) {
+			t.Errorf("%s.SetReference: json.Marshal = %s, %v; want the reference only", name, b, err)
+		}
+	}
+}
+
+func TestSecretSetReferenceNeverFormatted(t *testing.T) {
+	var s happydns.Secret
+	s.SetReference("ovh/app_secret")
+	if out := fmt.Sprintf("%v %s %#v", s, s, s); strings.Contains(out, "ovh/app_secret") {
+		t.Errorf("fmt printed the reference: %s", out)
+	}
+}
