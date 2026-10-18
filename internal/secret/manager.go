@@ -31,6 +31,7 @@ import (
 	"strings"
 	"sync"
 
+	"git.happydns.org/happyDomain/internal/netguard"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -120,6 +121,10 @@ type Config struct {
 	// Defaults keeps the keystore each owner chose for new secrets.
 	// Without it, owners cannot choose one.
 	Defaults DefaultStorage
+
+	// Outbound decides which destinations a store reaching a server its
+	// owner names may be pointed at. Nil allows public addresses only.
+	Outbound *netguard.Guard
 
 	// Stores lists the kinds of safe the administrator enabled: the others
 	// are left out. "plaintext" is not a kind of safe but is listed too:

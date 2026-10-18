@@ -204,10 +204,16 @@ func TestReferenceKeystoreDescribed(t *testing.T) {
 		}
 	}
 
+	found := false
 	for _, k := range f.m.CreatableKinds() {
-		if want := k.Kind == referenceKind; k.References != want || (want && k.ReferenceHint == "") {
+		_, want := f.m.stores[k.Kind].(Referencing)
+		if k.References != want || (want && k.ReferenceHint == "") {
 			t.Errorf("kind %s = %+v", k.Kind, k)
 		}
+		found = found || k.Kind == referenceKind
+	}
+	if !found {
+		t.Errorf("CreatableKinds does not list %s", referenceKind)
 	}
 }
 

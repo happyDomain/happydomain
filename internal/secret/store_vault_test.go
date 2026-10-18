@@ -26,6 +26,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"errors"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -45,17 +46,19 @@ type testVault struct {
 
 	mu       sync.Mutex
 	tokens   map[string]bool
+	info     map[string]map[string]any
 	data     map[string]map[string]any
 	versions map[string]map[string]map[string]any
 	logins   int
 	renews   int
+	attempts int
 	lease    int
 	last     string
 }
 
 func newTestVault(t *testing.T) *testVault {
 	t.Helper()
-	v := &testVault{tokens: map[string]bool{"user-token": true}, data: map[string]map[string]any{}, versions: map[string]map[string]map[string]any{}, lease: 3600}
+	v := &testVault{tokens: map[string]bool{"user-token": true}, info: map[string]map[string]any{}, data: map[string]map[string]any{}, versions: map[string]map[string]map[string]any{}, lease: 3600}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /v1/secret/data/", func(w http.ResponseWriter, r *http.Request) {
 		v.mu.Lock()
@@ -99,8 +102,13 @@ func newTestVault(t *testing.T) *testVault {
 		v.mu.Lock()
 		defer v.mu.Unlock()
 		token := r.Header.Get("X-Vault-Token")
+		v.attempts++
 		if !v.tokens[token] {
 			http.Error(w, `{"errors":["permission denied"]}`, http.StatusForbidden)
+			return
+		}
+		if renewable, ok := v.info[token]["renewable"]; ok && renewable == false {
+			http.Error(w, `{"errors":["lease is not renewable"]}`, http.StatusBadRequest)
 			return
 		}
 		v.renews++
@@ -109,11 +117,14 @@ func newTestVault(t *testing.T) *testVault {
 	mux.HandleFunc("GET /v1/auth/token/lookup-self", func(w http.ResponseWriter, r *http.Request) {
 		v.mu.Lock()
 		defer v.mu.Unlock()
-		if !v.tokens[r.Header.Get("X-Vault-Token")] {
+		token := r.Header.Get("X-Vault-Token")
+		if !v.tokens[token] {
 			http.Error(w, `{"errors":["permission denied"]}`, http.StatusForbidden)
 			return
 		}
-		w.Write([]byte(`{"data":{}}`))
+		info := map[string]any{"ttl": v.lease, "renewable": true, "num_uses": 0, "type": "service"}
+		maps.Copy(info, v.info[token])
+		json.NewEncoder(w).Encode(map[string]any{"data": info})
 	})
 	v.Server = httptest.NewServer(mux)
 	t.Cleanup(v.Close)
@@ -135,6 +146,29 @@ func (v *testVault) revokeAll() {
 			delete(v.tokens, token)
 		}
 	}
+}
+
+// addToken makes Vault know token, telling info of it in place of what it
+// tells by default: a renewable service token.
+func (v *testVault) addToken(token string, info map[string]any) {
+	v.mu.Lock()
+	defer v.mu.Unlock()
+	v.tokens[token] = true
+	v.info[token] = info
+}
+
+// revoke revokes token.
+func (v *testVault) revoke(token string) {
+	v.mu.Lock()
+	defer v.mu.Unlock()
+	delete(v.tokens, token)
+}
+
+// renewAttempts counts the renewals asked for, granted or not.
+func (v *testVault) renewAttempts() int {
+	v.mu.Lock()
+	defer v.mu.Unlock()
+	return v.attempts
 }
 
 func (v *testVault) counts() (logins, renews int) {

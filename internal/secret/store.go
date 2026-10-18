@@ -242,6 +242,7 @@ var builtinStores = map[string]StoreFactory{
 	KindFile:          newFileStore,
 	KindProgram:       newProgramStore,
 	KindVault:         newVaultStore,
+	KindVaultUser:     newVaultUserStore,
 }
 
 // KnownStores returns the kinds of safe happyDomain knows, sorted.

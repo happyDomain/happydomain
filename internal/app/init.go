@@ -120,6 +120,7 @@ func (app *App) initSecrets() {
 		Safes:       app.store,
 		Checks:      app.store,
 		Defaults:    app.store,
+		Outbound:    app.guards.Outbound,
 		Stores:      app.cfg.SecretStores,
 	})
 	if err != nil {
