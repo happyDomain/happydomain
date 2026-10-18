@@ -209,6 +209,21 @@ type KeyReporter interface {
 	WrappingKey(w happydns.WrappedKeyset) (uint32, error)
 }
 
+// KeyBorrower is a Store whose keyring entries are sealed by the keys of
+// another, its lender, such as a token sealed under the instance keyset: the
+// key status counts them under the keys of the lender, which they keep from
+// being removed. It wraps them again itself, as a Rewrapper.
+type KeyBorrower interface {
+	Store
+
+	// Lender names the store whose keys seal the entries of this one.
+	Lender() string
+
+	// WrappingKey returns the identifier of the key of the lender that
+	// sealed w, an entry of this store.
+	WrappingKey(w happydns.WrappedKeyset) (uint32, error)
+}
+
 // StoreFactory returns the store of a kind for cfg, or ErrStoreUnavailable
 // when cfg lacks what it needs, wrapped with how to configure it.
 type StoreFactory func(cfg Config) (Store, error)

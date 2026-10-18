@@ -156,12 +156,13 @@ type KeyStatus struct {
 }
 
 // KeyStatus lists the keys of every store that reports them, with the number
-// of safes each wraps. The entries made by a key no longer in its store, or by
-// a store not configured here, are listed with the status MISSING: they do not
-// open. Those of a store configured here that reports no keys, as one whose
-// key its owner holds, are left out. Those whose wrapping key cannot be told,
-// and the safe records that do not decode, are counted under the status
-// UNREADABLE, the latter without a store.
+// of safes each wraps, those of a KeyBorrower counted under its lender. The
+// entries made by a key no longer in its store, by a store not configured
+// here, or by a KeyBorrower whose lender is not configured or reports no keys,
+// are listed with the status MISSING: they do not open. Those of a store configured here that reports no
+// keys, as one whose key its owner holds, are left out. Those whose wrapping
+// key cannot be told, and the safe records that do not decode, are counted
+// under the status UNREADABLE, the latter without a store.
 func (m *Manager) KeyStatus() ([]KeyStatus, error) {
 	if m == nil || m.safes == nil {
 		return nil, errNoManager
@@ -172,25 +173,35 @@ func (m *Manager) KeyStatus() ([]KeyStatus, error) {
 	unreadable := map[string]int{}
 	err := eachSafe(m.safes, func(safe *happydns.Safe) {
 		for _, w := range safe.Keyring {
+			kek := w.KEK
 			store, configured := m.stores[w.KEK]
-			r, ok := store.(KeyReporter)
-			if !ok {
+			var wrappingKey func(happydns.WrappedKeyset) (uint32, error)
+			if b, ok := store.(KeyBorrower); ok {
+				// Without its lender here, the key of a borrowed entry
+				// cannot be told: it is reported missing, as the store's.
+				if _, ok := m.stores[b.Lender()].(KeyReporter); ok {
+					kek, wrappingKey = b.Lender(), b.WrappingKey
+				}
+			} else if r, ok := store.(KeyReporter); ok {
+				wrappingKey = r.WrappingKey
+			} else if configured {
 				// A store reporting no keys, as one whose key its owner
 				// holds, has none to miss.
-				if !configured {
-					unreported[w.KEK]++
-				}
 				continue
 			}
-			id, err := r.WrappingKey(w)
+			if wrappingKey == nil {
+				unreported[w.KEK]++
+				continue
+			}
+			id, err := wrappingKey(w)
 			if err != nil {
 				unreadable[w.KEK]++
 				continue
 			}
-			if usage[w.KEK] == nil {
-				usage[w.KEK] = map[uint32]int{}
+			if usage[kek] == nil {
+				usage[kek] = map[uint32]int{}
 			}
-			usage[w.KEK][id]++
+			usage[kek][id]++
 		}
 	}, func(string, error) {
 		unreadable[""]++
