@@ -149,6 +149,30 @@ does not rebind them: they still open with the previous password, which their
 owner gives when asked. Each one so unlocked follows the new password at the
 next password change from the settings.
 
+## Keystores keeping references
+
+Some kinds of keystore keep no credential: in place of each, their owner
+enters a reference to it, such as its key in a file of theirs, which
+happyDomain resolves only when it uses the credential. The reference is not
+secret: the owner of a provider reads it back as they entered it, and sends it
+back as is. A secret field whose keystore keeps references takes a reference,
+shown in clear, with a hint of what to enter as its placeholder.
+
+Credentials stored elsewhere never move into such a keystore, where they would
+be taken for references: migrating into one is refused, and choosing one for an
+object holding stored credentials asks for a reference in each field. Out of
+it, the credentials themselves go: migrating to another keystore resolves the
+references and seals what they stand for. A reference sent back while choosing
+a keystore keeping credentials is refused rather than sealed as the credential.
+
+Checking a provider resolves its references, as using it does. The status of
+the administrator (`/api/secrets/status`) reads the references and never
+resolves them, since resolving one may run what its owner set up.
+
+Notification channels and checker options may be kept in such a keystore, when
+it opens without its owner, but their references are withheld when read, as
+credentials are.
+
 ## Startup checks
 
 happyDomain refuses to start rather than fail credential by credential when:
@@ -360,6 +384,13 @@ A kind of keystore is a `secret.Store`, in a file of its own under
 - `PasswordBound`: an `Interactive` store whose keystores are created, and
   unlocked at login, with the login password of their owner, and bound again
   when it changes;
+- `Referencing`: its keystores keep references rather than credentials.
+  `ReferenceHint` tells the owner what to enter. The `Seal` of its unlocked
+  keystores receives the reference entered: it checks it, and returns the
+  payload kept, which `Reference` reads back without resolving it. `Open`
+  resolves the payload to the credential, with the `SecretContext` naming the
+  object and field should the store need them. See
+  [Keystores keeping references](#keystores-keeping-references);
 - `StartupChecker`, `Rewrapper`, `KeyReporter`, `KEK`: see their
   documentation in `internal/secret/store.go`.
 
