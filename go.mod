@@ -28,7 +28,7 @@ require (
 	git.happydns.org/checker-ptr v0.2.0
 	git.happydns.org/checker-resolver-propagation v0.2.0
 	git.happydns.org/checker-reverse-zone v0.2.0
-	git.happydns.org/checker-sdk-go v1.11.0
+	git.happydns.org/checker-sdk-go v1.11.1
 	git.happydns.org/checker-sip v0.2.0
 	git.happydns.org/checker-smtp v0.1.0
 	git.happydns.org/checker-srv v0.2.0

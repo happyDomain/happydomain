@@ -23,7 +23,6 @@ package providerregistry
 
 import (
 	"fmt"
-	"log"
 	"reflect"
 	"slices"
 
@@ -38,7 +37,6 @@ func RegisterProvider(creator happydns.ProviderCreatorFunc, infos happydns.Provi
 	provider := creator()
 	baseType := reflect.Indirect(reflect.ValueOf(provider)).Type()
 	name := baseType.Name()
-	log.Println("Registering new provider:", name)
 
 	providerRegistry[name] = happydns.ProviderCreator{
 		Creator: creator,

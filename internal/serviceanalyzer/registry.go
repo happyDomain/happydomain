@@ -23,7 +23,6 @@ package serviceanalyzer
 
 import (
 	"fmt"
-	"log"
 	"reflect"
 	"sort"
 	"strings"
@@ -64,7 +63,6 @@ func RegisterService(creator happydns.ServiceCreator, analyzer ServiceAnalyzer, 
 
 	baseType := reflect.Indirect(reflect.ValueOf(creator())).Type()
 	name := baseType.String()
-	log.Println("Registering new service:", name)
 
 	// Override given parameters by true one
 	infos.Type = name
@@ -89,8 +87,6 @@ func RegisterService(creator happydns.ServiceCreator, analyzer ServiceAnalyzer, 
 func RegisterSubServices(t reflect.Type) {
 	if t.Kind() == reflect.Struct && strings.HasPrefix(t.PkgPath(), pathToSvcsModule) {
 		if _, ok := subServices[t.String()]; !ok {
-			log.Println("Registering new subservice:", t.String())
-
 			subServices[t.String()] = func() any {
 				return reflect.New(t).Interface()
 			}
@@ -105,8 +101,6 @@ func RegisterSubServices(t reflect.Type) {
 		if _, ok := subServices[t.String()]; ok {
 			return
 		}
-
-		log.Println("Registering new subservice:", t.String())
 
 		subServices[t.String()] = func() any {
 			return reflect.New(t).Interface()

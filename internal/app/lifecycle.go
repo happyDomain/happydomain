@@ -26,6 +26,10 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"git.happydns.org/happyDomain/internal/checker"
+	"git.happydns.org/happyDomain/internal/providerregistry"
+	"git.happydns.org/happyDomain/internal/serviceanalyzer"
 )
 
 func (app *App) Start() {
@@ -67,6 +71,12 @@ func (app *App) Start() {
 	if app.usecases.notificationDispatcher != nil {
 		app.usecases.notificationDispatcher.Start()
 	}
+
+	log.Printf("Loaded %d providers, %d services, %d checkers",
+		len(providerregistry.GetProviders()),
+		len(*serviceanalyzer.ListServices()),
+		len(checker.GetCheckers()),
+	)
 
 	log.Printf("Public interface listening on %s\n", app.cfg.Bind)
 	if err := app.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
