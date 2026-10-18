@@ -74,7 +74,7 @@ export const CHANNEL_CONFIG_SCHEMAS: Record<string, ChannelConfigSchema> = {
         fields: [
             {
                 key: "endpoint",
-                kind: "url",
+                kind: "secret",
                 required: true,
                 i18nLabel: "settings.notifications.channels.fields.unifiedPushEndpoint",
                 i18nHelp: "settings.notifications.channels.fields.unifiedPushEndpointHelp",

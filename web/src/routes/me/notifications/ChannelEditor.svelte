@@ -34,6 +34,8 @@
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
+    import RawInput from "$lib/components/inputs/raw.svelte";
+    import { Field } from "$lib/model/custom_form.svelte";
     import { createChannel, updateChannel, type NotificationChannel } from "$lib/api/notifications";
     import { toasts } from "$lib/stores/toasts";
     import { t } from "$lib/translations";
@@ -61,7 +63,6 @@
     let rawJson: string = $state("{}");
     let rawJsonError: string | null = $state(null);
     let saving: boolean = $state(false);
-    let revealedSecrets: Record<string, boolean> = $state({});
 
     // Reset only on open transition; other props read via untrack so type loading doesn't retrigger.
     $effect(() => {
@@ -83,7 +84,6 @@
             }
             rawJson = JSON.stringify(config, null, 2);
             rawJsonError = null;
-            revealedSecrets = {};
         });
     });
 
@@ -96,6 +96,15 @@
     }
 
     let schema = $derived(getChannelConfigSchema(type));
+
+    function secretSpecs(field: ChannelConfigField): Field {
+        const specs = new Field();
+        specs.id = field.key;
+        specs.type = "string";
+        specs.secret = true;
+        specs.required = field.required ?? false;
+        return specs;
+    }
 
     function setHeaderKey(field: ChannelConfigField, oldKey: string, newKey: string) {
         const cur = (config[field.key] as Record<string, string>) ?? {};
@@ -232,7 +241,12 @@
             {#if schema}
                 {#each schema.fields as field (field.key)}
                     <div class="mb-3">
-                        <label for={`field-${field.key}`} class="form-label">
+                        <label
+                            for={field.kind === "secret"
+                                ? `spec-channel-${field.key}`
+                                : `field-${field.key}`}
+                            class="form-label"
+                        >
                             {$t(field.i18nLabel)}
                             {#if field.required}<span class="text-danger">*</span>{/if}
                         </label>
@@ -251,33 +265,12 @@
                                 required={field.required}
                             />
                         {:else if field.kind === "secret"}
-                            <div class="input-group">
-                                <Input
-                                    id={`field-${field.key}`}
-                                    type={revealedSecrets[field.key] ? "text" : "password"}
-                                    value={(config[field.key] as string) ?? ""}
-                                    on:input={(e) => {
-                                        config = {
-                                            ...config,
-                                            [field.key]: (e.target as HTMLInputElement).value,
-                                        };
-                                    }}
-                                />
-                                <Button
-                                    type="button"
-                                    color="secondary"
-                                    outline
-                                    on:click={() =>
-                                        (revealedSecrets = {
-                                            ...revealedSecrets,
-                                            [field.key]: !revealedSecrets[field.key],
-                                        })}
-                                >
-                                    <i
-                                        class={`bi bi-eye${revealedSecrets[field.key] ? "-slash" : ""}`}
-                                    ></i>
-                                </Button>
-                            </div>
+                            <RawInput
+                                index="channel"
+                                edit
+                                specs={secretSpecs(field)}
+                                bind:value={config[field.key]}
+                            />
                         {:else if field.kind === "headers"}
                             {@const headers = (config[field.key] as Record<string, string>) ?? {}}
                             {#each Object.entries(headers) as [k, v] (k)}
