@@ -30,6 +30,8 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api/middleware"
+	"git.happydns.org/happyDomain/internal/secret"
+	"git.happydns.org/happyDomain/internal/usecase"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -37,6 +39,16 @@ type LoginController struct {
 	authService    happydns.AuthenticationUsecase
 	captcha        happydns.CaptchaVerifier
 	failureTracker happydns.FailureTracker
+
+	// keystores is nil when no secret manager runs.
+	keystores *usecase.KeystoreUsecase
+}
+
+// WithKeystores has logins unlock the keystores bound to the login password,
+// and logouts close those unlocked during the session.
+func (lc *LoginController) WithKeystores(keystores *usecase.KeystoreUsecase) *LoginController {
+	lc.keystores = keystores
+	return lc
 }
 
 func NewLoginController(authService happydns.AuthenticationUsecase, captchaVerifier happydns.CaptchaVerifier, failureTracker happydns.FailureTracker) *LoginController {
@@ -148,6 +160,14 @@ func (lc *LoginController) Login(c *gin.Context) {
 
 	middleware.SessionLoginOK(c, user)
 
+	// After SessionLoginOK, which rotates the session ID: the keystores are
+	// kept under the new one.
+	if lc.keystores != nil {
+		if scope := middleware.SessionScope(c); scope != "" {
+			lc.keystores.UnlockAtLogin(secret.WithUnlockScope(c.Request.Context(), scope), user.Id, request.Password)
+		}
+	}
+
 	c.JSON(http.StatusOK, user)
 }
 
@@ -164,6 +184,12 @@ func (lc *LoginController) Login(c *gin.Context) {
 //	@Failure		500	{object}	happydns.ErrorResponse
 //	@Router			/auth/logout [post]
 func (lc *LoginController) Logout(c *gin.Context) {
+	if lc.keystores != nil {
+		if scope := middleware.SessionScope(c); scope != "" {
+			lc.keystores.LockSession(scope)
+		}
+	}
+
 	session := sessions.Default(c)
 
 	session.Clear()

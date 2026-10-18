@@ -22,9 +22,11 @@
 package middleware
 
 import (
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/secret"
+	"git.happydns.org/happyDomain/model"
 )
 
 // KeystoreChoice carries the keystore a request chooses, through its
@@ -34,6 +36,28 @@ func KeystoreChoice() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if ref := c.Query("keystore"); ref != "" {
 			c.Request = c.Request.WithContext(secret.WithKeystore(c.Request.Context(), ref))
+		}
+		c.Next()
+	}
+}
+
+// SessionScope returns the scope the keystores unlocked during the session
+// of c are kept under: its public identifier, the one sessions are stored
+// under, so that tidying closes those of sessions gone.
+func SessionScope(c *gin.Context) string {
+	id := sessions.Default(c).ID()
+	if id == "" {
+		return ""
+	}
+	return happydns.SessionIDFromToken(id)
+}
+
+// UnlockScope carries the session of the request to the use cases opening
+// secrets: the keystores unlocked during it open, see secret.WithUnlockScope.
+func UnlockScope() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if scope := SessionScope(c); scope != "" {
+			c.Request = c.Request.WithContext(secret.WithUnlockScope(c.Request.Context(), scope))
 		}
 		c.Next()
 	}

@@ -139,6 +139,9 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 		dep.CaptchaVerifier,
 		dep.FailureTracker,
 	)
+	if dep.Keystores != nil {
+		lc.WithKeystores(dep.Keystores)
+	}
 	auc := DeclareAuthUserRoutes(apiRoutes, dep.AuthUser, lc)
 
 	DeclareDomainInfoRoutes(apiRoutes.Group("/domaininfo/:domain", perClientRateLimiter(10)), dep.DomainInfo)
@@ -161,6 +164,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 	}
 	apiAuthRoutes.Use(middleware.AuthRequired())
 	apiAuthRoutes.Use(middleware.KeystoreChoice())
+	apiAuthRoutes.Use(middleware.UnlockScope())
 
 	// Initialize checker controller if checker engine is available.
 	var cc *controller.CheckerController

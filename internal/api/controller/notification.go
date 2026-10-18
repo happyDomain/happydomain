@@ -55,10 +55,10 @@ func internalError(c *gin.Context, err error) {
 }
 
 // sealError answers a failure to seal a channel config: a placeholder left
-// where no stored value stands is the client's to fix, anything else is
-// internal.
+// where no stored value stands, or a keystore chosen or still locked, is the
+// client's to fix, anything else is internal.
 func sealError(c *gin.Context, err error) {
-	if keystoreChosen(err) {
+	if keystoreChosen(err) || errors.Is(err, happydns.ErrKeystoreLocked) {
 		middleware.ErrorResponse(c, http.StatusBadRequest, err)
 		return
 	}

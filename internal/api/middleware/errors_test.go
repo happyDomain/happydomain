@@ -84,3 +84,25 @@ func TestErrorResponse(t *testing.T) {
 		})
 	}
 }
+
+// A keystore to unlock is answered with a 423 naming it, however a use case
+// wrapped the error, so that the client asks its owner.
+func TestErrorResponseKeystoreLocked(t *testing.T) {
+	locked := happydns.KeystoreLockedError{KeystoreLock: happydns.KeystoreLock{
+		Ref:  "abc",
+		Kind: "passphrase",
+		Form: []happydns.Field{{Id: "passphrase", Secret: true}},
+	}}
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	ErrorResponse(c, http.StatusInternalServerError, fmt.Errorf("unable to open provider credentials: %w", locked))
+
+	if w.Code != http.StatusLocked {
+		t.Fatalf("status = %d, want 423", w.Code)
+	}
+	var resp happydns.ErrorResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil || resp.Locked == nil || resp.Locked.Ref != "abc" || len(resp.Locked.Form) != 1 {
+		t.Errorf("body = %s, want the keystore to unlock", w.Body.String())
+	}
+}

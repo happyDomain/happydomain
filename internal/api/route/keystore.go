@@ -32,9 +32,13 @@ func DeclareKeystoreRoutes(router *gin.RouterGroup, keystores *usecase.KeystoreU
 	kc := controller.NewKeystoreController(keystores)
 
 	router.GET("/keystores", kc.ListKeystores)
-	router.POST("/keystores", kc.CreateKeystore)
+	// Limited, as creating a keystore bound to the login password checks it.
+	router.POST("/keystores", perClientRateLimiter(10), kc.CreateKeystore)
 	router.GET("/keystores/kinds", kc.ListKeystoreKinds)
 	router.PUT("/keystores/default", kc.SetDefaultKeystore)
 	router.DELETE("/keystores/:ref", kc.DeleteKeystore)
 	router.POST("/keystores/:ref/migrate", kc.MigrateKeystore)
+	// Limited, so that what unlocks a keystore is not guessed.
+	router.POST("/keystores/:ref/unlock", perClientRateLimiter(10), kc.UnlockKeystore)
+	router.POST("/keystores/:ref/lock", kc.LockKeystore)
 }

@@ -212,3 +212,57 @@ func (kc *KeystoreController) SetDefaultKeystore(c *gin.Context) {
 func keystoreChosen(err error) bool {
 	return errors.Is(err, secret.ErrUnknownKeystore) || errors.Is(err, secret.ErrKeystoreNotUnattended)
 }
+
+// KeystoreUnlocking holds what unlocks a keystore.
+type KeystoreUnlocking struct {
+	// Material follows the unlock form of the keystore.
+	Material json.RawMessage `json:"material" swaggertype:"object" binding:"required"`
+}
+
+// UnlockKeystore opens a keystore for the session of the request.
+//
+//	@Summary		Unlock a keystore
+//	@Description	Open a keystore that only opens with what its owner gives, following its unlock form, for the rest of the current session.
+//	@Tags			keystores
+//	@Accept			json
+//	@Security		securitydefinitions.basic
+//	@Param			ref		path	string				true	"Keystore reference"
+//	@Param			body	body	KeystoreUnlocking	true	"What unlocks it"
+//	@Success		204
+//	@Failure		400	{object}	happydns.ErrorResponse	"Keystore not needing unlocking"
+//	@Failure		401	{object}	happydns.ErrorResponse	"Authentication failure"
+//	@Failure		403	{object}	happydns.ErrorResponse	"Wrong unlock material"
+//	@Failure		404	{object}	happydns.ErrorResponse	"Keystore not found"
+//	@Router			/keystores/{ref}/unlock [post]
+func (kc *KeystoreController) UnlockKeystore(c *gin.Context) {
+	var req KeystoreUnlocking
+	if err := c.ShouldBindJSON(&req); err != nil {
+		middleware.ErrorResponse(c, http.StatusBadRequest, err)
+		return
+	}
+	if err := kc.keystores.Unlock(c.Request.Context(), middleware.MyUser(c).Id, c.Param("ref"), req.Material); err != nil {
+		middleware.ErrorResponse(c, http.StatusBadRequest, err)
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
+
+// LockKeystore closes a keystore for the session of the request.
+//
+//	@Summary		Lock a keystore
+//	@Description	Close a keystore unlocked during the current session.
+//	@Tags			keystores
+//	@Security		securitydefinitions.basic
+//	@Param			ref	path	string	true	"Keystore reference"
+//	@Success		204
+//	@Failure		400	{object}	happydns.ErrorResponse	"Keystore not needing unlocking"
+//	@Failure		401	{object}	happydns.ErrorResponse	"Authentication failure"
+//	@Failure		404	{object}	happydns.ErrorResponse	"Keystore not found"
+//	@Router			/keystores/{ref}/lock [post]
+func (kc *KeystoreController) LockKeystore(c *gin.Context) {
+	if err := kc.keystores.Lock(c.Request.Context(), middleware.MyUser(c).Id, c.Param("ref")); err != nil {
+		middleware.ErrorResponse(c, http.StatusBadRequest, err)
+		return
+	}
+	c.Status(http.StatusNoContent)
+}

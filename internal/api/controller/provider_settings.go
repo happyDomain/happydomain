@@ -60,6 +60,7 @@ func NewProviderSettingsController(pSettingsServices happydns.ProviderSettingsUs
 //	@Failure		400	{object}	happydns.ErrorResponse				"Invalid input"
 //	@Failure		401	{object}	happydns.ErrorResponse				"Authentication failure"
 //	@Failure		404	{object}	happydns.ErrorResponse				"Provider not found"
+//	@Failure	423	{object}	happydns.ErrorResponse	"Keystore to unlock, named in locked"
 //	@Router			/providers/_specs/{providerType}/settings [post]
 func (psc *ProviderSettingsController) NextProviderSettingsState(c *gin.Context) {
 	user := middleware.MyUser(c)

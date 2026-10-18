@@ -216,6 +216,7 @@ func (zc *ZoneController) DiffZonesSummary(c *gin.Context) {
 //	@Failure		401			{object}	happydns.ErrorResponse		"Authentication failure"
 //	@Failure		404			{object}	happydns.ErrorResponse		"Domain or Zone not found"
 //	@Failure		500			{object}	happydns.ErrorResponse
+//	@Failure	423	{object}	happydns.ErrorResponse	"Keystore to unlock, named in locked"
 //	@Router			/domains/{domainId}/zone/{zoneId}/apply_changes [post]
 func (zc *ZoneController) ApplyZoneCorrections(c *gin.Context) {
 	user := c.MustGet("LoggedUser").(*happydns.User)

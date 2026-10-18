@@ -38,7 +38,13 @@ import (
 func ErrorResponse(c *gin.Context, defaultStatus int, err error) {
 	var ie happydns.InternalError
 	var e happydns.HTTPError
-	if errors.As(err, &ie) {
+	var le happydns.KeystoreLockedError
+	if errors.As(err, &le) {
+		// First: a use case may wrap it in an InternalError or HTTPError,
+		// which would hide the keystore its owner has to unlock.
+		c.AbortWithStatusJSON(le.HTTPStatus(), le.ToErrorResponse())
+		return
+	} else if errors.As(err, &ie) {
 		// The whole chain, for the logs only.
 		log.Println(err.Error())
 

@@ -76,7 +76,7 @@ func (ac *AuthUserController) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	err = ac.auService.ChangePassword(user, lf.Password)
+	err = ac.auService.ChangeKnownPassword(c.Request.Context(), user, lf.Current, lf.Password)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusForbidden, happydns.ErrorResponse{Message: err.Error()})
 		return

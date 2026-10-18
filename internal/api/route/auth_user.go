@@ -34,6 +34,8 @@ func DeclareAuthUserRoutes(router *gin.RouterGroup, authUserUC happydns.AuthUser
 
 	apiUserAuthRoutes := router.Group("/users/:uid")
 	apiUserAuthRoutes.Use(middleware.AuthUserHandler(authUserUC))
+	// A keystore unlocked during the session follows a new password.
+	apiUserAuthRoutes.Use(middleware.UnlockScope())
 	apiUserAuthRoutes.GET("/is_auth_user", ac.IsAuthUser)
 	apiUserAuthRoutes.POST("/delete", ac.DeleteAuthUser)
 	apiUserAuthRoutes.POST("/new_password", ac.ChangePassword)

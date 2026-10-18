@@ -246,6 +246,7 @@ func (dc *DomainController) DelDomain(c *gin.Context) {
 //	@Success		200			{object}	happydns.ZoneMeta	"The new zone metadata"
 //	@Failure		401			{object}	happydns.ErrorResponse		"Authentication failure"
 //	@Failure		404			{object}	happydns.ErrorResponse		"Domain not found"
+//	@Failure	423	{object}	happydns.ErrorResponse	"Keystore to unlock, named in locked"
 //	@Router			/domains/{domainId}/retrieve_zone [post]
 func (dc *DomainController) RetrieveZone(c *gin.Context) {
 	user := middleware.MyUser(c)

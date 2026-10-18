@@ -22,18 +22,24 @@
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/securecookie"
 
+	"git.happydns.org/happyDomain/internal/api/middleware"
 	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/internal/secret/secrettest"
+	"git.happydns.org/happyDomain/internal/session"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	"git.happydns.org/happyDomain/internal/usecase"
+	sessionUC "git.happydns.org/happyDomain/internal/usecase/session"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -126,5 +132,175 @@ func TestKeystoreRoutes(t *testing.T) {
 	other := keystoreRouter(t, &happydns.User{Id: happydns.Identifier{0x02}})
 	if w := do(other, http.MethodDelete, "/keystores/"+created.Ref, ""); w.Code != http.StatusNotFound {
 		t.Errorf("DELETE by another user = %d %s", w.Code, w.Body.String())
+	}
+}
+
+func TestKeystoreUnlockRoutes(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	db, err := inmemory.Instantiate()
+	if err != nil {
+		t.Fatal(err)
+	}
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	m, err := secret.NewManager(secrettest.WithInteractiveStores(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db, Defaults: db}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	kc := NewKeystoreController(usecase.NewKeystoreUsecase(m, nil))
+	user := &happydns.User{Id: happydns.Identifier{0x01}}
+
+	r := gin.New()
+	g := r.Group("", func(c *gin.Context) {
+		c.Set("LoggedUser", user)
+		c.Request = c.Request.WithContext(secret.WithUnlockScope(c.Request.Context(), "session"))
+	})
+	g.GET("/keystores", kc.ListKeystores)
+	g.POST("/keystores", kc.CreateKeystore)
+	g.POST("/keystores/:ref/unlock", kc.UnlockKeystore)
+	g.POST("/keystores/:ref/lock", kc.LockKeystore)
+
+	w := do(r, http.MethodPost, "/keystores", `{"kind":"`+secrettest.PassphraseKind+`","name":"Mine","params":{"passphrase":"p"}}`)
+	var created secret.Keystore
+	if err := json.Unmarshal(w.Body.Bytes(), &created); w.Code != http.StatusCreated || err != nil {
+		t.Fatalf("POST = %d %s", w.Code, w.Body.String())
+	}
+
+	if w := do(r, http.MethodPost, "/keystores/"+created.Ref+"/unlock", `{"material":{"passphrase":"wrong"}}`); w.Code != http.StatusForbidden {
+		t.Errorf("unlock(wrong) = %d %s", w.Code, w.Body.String())
+	}
+	if w := do(r, http.MethodPost, "/keystores/"+created.Ref+"/unlock", `{"material":{"passphrase":"p"}}`); w.Code != http.StatusNoContent {
+		t.Errorf("unlock = %d %s", w.Code, w.Body.String())
+	}
+	if w := do(r, http.MethodGet, "/keystores", ""); !strings.Contains(w.Body.String(), `"locked":false`) {
+		t.Errorf("GET after unlock = %s", w.Body.String())
+	}
+
+	// Another user, in their own session, can neither unlock nor lock it.
+	og := r.Group("/as-other", func(c *gin.Context) {
+		c.Set("LoggedUser", &happydns.User{Id: happydns.Identifier{0x02}})
+		c.Request = c.Request.WithContext(secret.WithUnlockScope(c.Request.Context(), "other"))
+	})
+	og.POST("/keystores/:ref/unlock", kc.UnlockKeystore)
+	og.POST("/keystores/:ref/lock", kc.LockKeystore)
+	if w := do(r, http.MethodPost, "/as-other/keystores/"+created.Ref+"/unlock", `{"material":{"passphrase":"p"}}`); w.Code != http.StatusNotFound {
+		t.Errorf("unlock by another user = %d %s", w.Code, w.Body.String())
+	}
+	if w := do(r, http.MethodPost, "/as-other/keystores/"+created.Ref+"/lock", ""); w.Code != http.StatusNotFound {
+		t.Errorf("lock by another user = %d %s", w.Code, w.Body.String())
+	}
+
+	if w := do(r, http.MethodPost, "/keystores/nope/unlock", `{"material":{}}`); w.Code != http.StatusNotFound {
+		t.Errorf("unlock unknown = %d %s", w.Code, w.Body.String())
+	}
+	if w := do(r, http.MethodPost, "/keystores/"+secret.KindInstance+"/unlock", `{"material":{}}`); w.Code != http.StatusBadRequest {
+		t.Errorf("unlock a keystore not needing it = %d %s", w.Code, w.Body.String())
+	}
+	if w := do(r, http.MethodPost, "/keystores/"+created.Ref+"/unlock", `{}`); w.Code != http.StatusBadRequest {
+		t.Errorf("unlock without material = %d %s", w.Code, w.Body.String())
+	}
+	if w := do(r, http.MethodPost, "/keystores/"+created.Ref+"/lock", ""); w.Code != http.StatusNoContent {
+		t.Errorf("lock = %d %s", w.Code, w.Body.String())
+	}
+	w = do(r, http.MethodGet, "/keystores", "")
+	var list []usecase.KeystoreUsage
+	json.Unmarshal(w.Body.Bytes(), &list)
+	for _, ks := range list {
+		if ks.Ref == created.Ref && (!ks.Locked || !ks.Interactive || len(ks.UnlockForm) != 1) {
+			t.Errorf("after lock: %+v", ks)
+		}
+	}
+}
+
+// A keystore still locked while sealing a channel is the client's to unlock,
+// not internal.
+func TestSealErrorKeystoreLocked(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	sealError(c, happydns.KeystoreLockedError{KeystoreLock: happydns.KeystoreLock{Ref: "abc"}})
+	if w.Code != http.StatusLocked {
+		t.Errorf("locked keystore = %d, want 423", w.Code)
+	}
+
+	w = httptest.NewRecorder()
+	c, _ = gin.CreateTestContext(w)
+	sealError(c, happydns.ErrKeystoreLocked)
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("bare ErrKeystoreLocked = %d, want 400", w.Code)
+	}
+}
+
+// A logout closes the keystores unlocked during the session.
+func TestLogoutLocksSessionKeystores(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	db, err := inmemory.Instantiate()
+	if err != nil {
+		t.Fatal(err)
+	}
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	m, err := secret.NewManager(secrettest.WithInteractiveStores(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db, Defaults: db}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	keystores := usecase.NewKeystoreUsecase(m, nil)
+	kc := NewKeystoreController(keystores)
+	lc := NewLoginController(nil, nil, nil).WithKeystores(keystores)
+
+	user := &happydns.User{Id: happydns.Identifier{0x01}, Email: "user@example.com"}
+	sess, err := sessionUC.NewService(db).CreateUserSession(user, "script")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	r := gin.New()
+	r.Use(sessions.Sessions(session.COOKIE_NAME, session.NewSessionStore(&happydns.Options{}, db, securecookie.GenerateRandomKey(32))))
+	r.Use(middleware.UnlockScope(), func(c *gin.Context) { c.Set("LoggedUser", user) })
+	r.POST("/keystores", kc.CreateKeystore)
+	r.POST("/keystores/:ref/unlock", kc.UnlockKeystore)
+	r.POST("/auth/logout", lc.Logout)
+
+	call := func(method, path, body string) *httptest.ResponseRecorder {
+		w := httptest.NewRecorder()
+		req := httptest.NewRequest(method, path, strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+sess.Token)
+		r.ServeHTTP(w, req)
+		return w
+	}
+
+	w := call(http.MethodPost, "/keystores", `{"kind":"`+secrettest.PassphraseKind+`","name":"Mine","params":{"passphrase":"p"}}`)
+	var created secret.Keystore
+	if err := json.Unmarshal(w.Body.Bytes(), &created); w.Code != http.StatusCreated || err != nil {
+		t.Fatalf("POST = %d %s", w.Code, w.Body.String())
+	}
+	if w := call(http.MethodPost, "/keystores/"+created.Ref+"/unlock", `{"material":{"passphrase":"p"}}`); w.Code != http.StatusNoContent {
+		t.Fatalf("unlock = %d %s", w.Code, w.Body.String())
+	}
+
+	scoped := secret.WithUnlockScope(context.Background(), sess.Id)
+	locked := func() bool {
+		list, err := keystores.List(scoped, user.Id)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, ks := range list {
+			if ks.Ref == created.Ref {
+				return ks.Locked
+			}
+		}
+		t.Fatalf("keystore %s not listed", created.Ref)
+		return false
+	}
+	if locked() {
+		t.Fatal("the keystore is not unlocked under the session")
+	}
+	if w := call(http.MethodPost, "/auth/logout", ""); w.Code != http.StatusNoContent {
+		t.Fatalf("logout = %d %s", w.Code, w.Body.String())
+	}
+	if !locked() {
+		t.Error("a keystore stays unlocked after logout")
 	}
 }

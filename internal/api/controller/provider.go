@@ -122,6 +122,7 @@ func (pc *ProviderController) GetProvider(c *gin.Context) {
 //	@Failure		400	{object}	happydns.ErrorResponse	"Error in received data"
 //	@Failure		401	{object}	happydns.ErrorResponse	"Authentication failure"
 //	@Failure		500	{object}	happydns.ErrorResponse	"Unable to retrieve current user's providers"
+//	@Failure	423	{object}	happydns.ErrorResponse	"Keystore to unlock, named in locked"
 //	@Router			/providers [post]
 func (pc *ProviderController) AddProvider(c *gin.Context) {
 	user := middleware.MyUser(c)
@@ -164,6 +165,7 @@ func (pc *ProviderController) AddProvider(c *gin.Context) {
 //	@Failure		401	{object}	happydns.ErrorResponse	"Authentication failure"
 //	@Failure		404	{object}	happydns.ErrorResponse	"Provider not found"
 //	@Failure		500	{object}	happydns.ErrorResponse	"Database writing error"
+//	@Failure	423	{object}	happydns.ErrorResponse	"Keystore to unlock, named in locked"
 //	@Router			/providers/{providerId} [put]
 func (pc *ProviderController) UpdateProvider(c *gin.Context) {
 	old := c.MustGet("provider").(*happydns.Provider)
@@ -266,6 +268,7 @@ func (pc *ProviderController) GetDomainsHostedByProvider(c *gin.Context) {
 //	@Failure		400	{object}	happydns.ErrorResponse	"Provider error"
 //	@Failure		401	{object}	happydns.ErrorResponse	"Authentication failure"
 //	@Failure		404	{object}	happydns.ErrorResponse	"Provider not found"
+//	@Failure	423	{object}	happydns.ErrorResponse	"Keystore to unlock, named in locked"
 //	@Router			/providers/{providerId}/domains/{fqdn} [post]
 func (pc *ProviderController) CreateDomainOnProvider(c *gin.Context) {
 	provider := c.MustGet("provider").(*happydns.Provider)
