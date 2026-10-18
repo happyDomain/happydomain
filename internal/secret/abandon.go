@@ -56,7 +56,7 @@ func CountInstanceSafes(store SafeStorage) (int, error) {
 //
 // A safe record that does not decode is left as it is: it does not prevent
 // happyDomain from starting.
-func AbandonInstanceKeyset(store Storage, key *InstanceKey) (int, error) {
+func AbandonInstanceKeyset(store KeysetStorage, key *InstanceKey) (int, error) {
 	if key != nil {
 		opens, err := key.OpensCheckRecord(store)
 		if err != nil {

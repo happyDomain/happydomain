@@ -229,6 +229,11 @@ func (s *instrumentedStorage) DeleteCheckerConfiguration(checkerName string, use
 	return s.inner.DeleteCheckerConfiguration(checkerName, userId, domainId, serviceId)
 }
 
+func (s *instrumentedStorage) DeleteDefaultKeystore(owner happydns.Identifier) (err error) {
+	defer observe("delete", "safe_default")(&err)
+	return s.inner.DeleteDefaultKeystore(owner)
+}
+
 func (s *instrumentedStorage) DeleteDiscoveryEntriesByProducer(producerID string, target happydns.CheckTarget) (err error) {
 	defer observe("delete", "discovery_entry")(&err)
 	return s.inner.DeleteDiscoveryEntriesByProducer(producerID, target)
@@ -357,6 +362,11 @@ func (s *instrumentedStorage) GetCheckPlan(planID happydns.Identifier) (ret *hap
 func (s *instrumentedStorage) GetCheckerConfiguration(checkerName string, userId *happydns.Identifier, domainId *happydns.Identifier, serviceId *happydns.Identifier) (ret []*happydns.CheckerOptionsPositional, err error) {
 	defer observe("get", "check_config")(&err)
 	return s.inner.GetCheckerConfiguration(checkerName, userId, domainId, serviceId)
+}
+
+func (s *instrumentedStorage) GetDefaultKeystore(owner happydns.Identifier) (ret string, err error) {
+	defer observe("get", "safe_default")(&err)
+	return s.inner.GetDefaultKeystore(owner)
 }
 
 func (s *instrumentedStorage) GetDomain(domainid happydns.Identifier) (ret *happydns.Domain, err error) {
@@ -589,6 +599,11 @@ func (s *instrumentedStorage) ListCheckerConfiguration(checkerName string) (ret 
 	return s.inner.ListCheckerConfiguration(checkerName)
 }
 
+func (s *instrumentedStorage) ListDefaultKeystores() (ret map[string]string, err error) {
+	defer observe("list", "safe_default")(&err)
+	return s.inner.ListDefaultKeystores()
+}
+
 func (s *instrumentedStorage) ListDiscoveryEntriesByProducer(producerID string, target happydns.CheckTarget) (ret []*happydns.StoredDiscoveryEntry, err error) {
 	defer observe("list", "discovery_entry")(&err)
 	return s.inner.ListDiscoveryEntriesByProducer(producerID, target)
@@ -684,6 +699,11 @@ func (s *instrumentedStorage) PurgeCheckerHistory() (ret int, err error) {
 func (s *instrumentedStorage) PutCachedObservation(target happydns.CheckTarget, key happydns.ObservationKey, entry *happydns.ObservationCacheEntry) (err error) {
 	defer observe("put", "observation_cache")(&err)
 	return s.inner.PutCachedObservation(target, key, entry)
+}
+
+func (s *instrumentedStorage) PutDefaultKeystore(owner happydns.Identifier, ref string) (err error) {
+	defer observe("put", "safe_default")(&err)
+	return s.inner.PutDefaultKeystore(owner, ref)
 }
 
 func (s *instrumentedStorage) PutDiscoveryObservationRef(ref *happydns.DiscoveryObservationRef) (err error) {

@@ -67,7 +67,7 @@ func sealedStore(t *testing.T, path string) *abandonStore {
 	return store
 }
 
-func runAbandon(t *testing.T, store secret.Storage, keyPath, stdin string) (int, string) {
+func runAbandon(t *testing.T, store secret.KeysetStorage, keyPath, stdin string) (int, string) {
 	t.Helper()
 	var out bytes.Buffer
 	code := abandonSecretKeyset(store, keyPath, strings.NewReader(stdin), &out)

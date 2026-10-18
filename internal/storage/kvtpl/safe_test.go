@@ -175,6 +175,49 @@ func TestSafeSeveralOfAKind(t *testing.T) {
 	}
 }
 
+func TestDefaultKeystore(t *testing.T) {
+	s := newStorage(t)
+	alice, _ := happydns.NewRandomIdentifier()
+	bob, _ := happydns.NewRandomIdentifier()
+
+	if _, err := s.GetDefaultKeystore(alice); !errors.Is(err, happydns.ErrNotFound) {
+		t.Errorf("GetDefaultKeystore before any = %v, want ErrNotFound", err)
+	}
+
+	if err := s.PutDefaultKeystore(alice, "instance"); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.PutDefaultKeystore(alice, "abc"); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.PutDefaultKeystore(bob, "instance"); err != nil {
+		t.Fatal(err)
+	}
+	if ref, err := s.GetDefaultKeystore(alice); err != nil || ref != "abc" {
+		t.Errorf("GetDefaultKeystore(alice) = %q, %v; want the last one set", ref, err)
+	}
+
+	if err := s.DeleteDefaultKeystore(alice); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.GetDefaultKeystore(alice); !errors.Is(err, happydns.ErrNotFound) {
+		t.Errorf("GetDefaultKeystore after delete = %v, want ErrNotFound", err)
+	}
+	if ref, err := s.GetDefaultKeystore(bob); err != nil || ref != "instance" {
+		t.Errorf("GetDefaultKeystore(bob) = %q, %v; want it untouched", ref, err)
+	}
+
+	// The defaults are not safes.
+	iter, err := s.ListAllSafes()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer iter.Close()
+	if iter.Next() {
+		t.Error("ListAllSafes lists a default keystore record")
+	}
+}
+
 func TestSafeStorageRefusals(t *testing.T) {
 	s := newStorage(t)
 	owner, _ := happydns.NewRandomIdentifier()
@@ -214,5 +257,42 @@ func TestSafeStorageRefusals(t *testing.T) {
 	}
 	if err := s.DeleteSafe(unknown.Id); !errors.Is(err, happydns.ErrSafeNotFound) {
 		t.Errorf("DeleteSafe(unknown) = %v, want ErrSafeNotFound", err)
+	}
+}
+
+func TestListDefaultKeystores(t *testing.T) {
+	s := newStorage(t)
+	alice, _ := happydns.NewRandomIdentifier()
+	bob, _ := happydns.NewRandomIdentifier()
+
+	if got, err := s.ListDefaultKeystores(); err != nil || len(got) != 0 {
+		t.Fatalf("ListDefaultKeystores before any = %v, %v; want none", got, err)
+	}
+
+	if err := s.PutDefaultKeystore(alice, "abc"); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.PutDefaultKeystore(bob, "instance"); err != nil {
+		t.Fatal(err)
+	}
+
+	// A safe and its index are not defaults.
+	if err := s.CreateSafe(&happydns.Safe{Id: happydns.Identifier{1}, Owner: alice, Kind: "instance"}); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := s.ListDefaultKeystores()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 2 || got[alice.String()] != "abc" || got[bob.String()] != "instance" {
+		t.Errorf("ListDefaultKeystores = %v, want alice and bob only", got)
+	}
+
+	if err := s.DeleteDefaultKeystore(alice); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := s.ListDefaultKeystores(); len(got) != 1 || got[bob.String()] != "instance" {
+		t.Errorf("ListDefaultKeystores after delete = %v, want bob only", got)
 	}
 }

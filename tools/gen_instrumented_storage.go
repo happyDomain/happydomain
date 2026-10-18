@@ -61,6 +61,7 @@ var entityMap = map[string]string{
 	"ProviderStorage":          "provider",
 	"CheckStorage":             "secret_check",
 	"SafeStorage":              "safe",
+	"DefaultStorage":           "safe_default",
 	"SessionStorage":           "session",
 	"UserStorage":              "user",
 	"ZoneStorage":              "zone",

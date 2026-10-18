@@ -67,9 +67,32 @@ type CheckStorage interface {
 	DeleteSecretCheck() error
 }
 
+// DefaultStorage keeps the keystore each owner chose for new secrets.
+type DefaultStorage interface {
+	// GetDefaultKeystore returns the reference of the keystore owner
+	// chose, or happydns.ErrNotFound.
+	GetDefaultKeystore(owner happydns.Identifier) (string, error)
+
+	// PutDefaultKeystore records ref as the keystore owner chose.
+	PutDefaultKeystore(owner happydns.Identifier, ref string) error
+
+	// DeleteDefaultKeystore forgets the choice of owner.
+	DeleteDefaultKeystore(owner happydns.Identifier) error
+
+	// ListDefaultKeystores returns every choice, by identifier of owner.
+	ListDefaultKeystores() (map[string]string, error)
+}
+
+// KeysetStorage is what the instance keyset is checked against.
+type KeysetStorage interface {
+	CheckStorage
+	SafeStorage
+}
+
 // Storage is what secret management keeps in the database.
 type Storage interface {
 	CheckStorage
+	DefaultStorage
 	SafeStorage
 }
 

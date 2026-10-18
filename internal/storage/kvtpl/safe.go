@@ -25,6 +25,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 
 	"git.happydns.org/happyDomain/model"
 )
@@ -33,6 +34,8 @@ const (
 	safePrimaryPrefix = "safe-"
 	// Not "safe-owner|": it would be listed with the safes themselves.
 	safeOwnerPrefix = "safe.owner|"
+
+	safeDefaultPrefix = "safe.default|"
 )
 
 func safePrimaryKey(id happydns.Identifier) string {
@@ -43,6 +46,11 @@ func safePrimaryKey(id happydns.Identifier) string {
 // kind; its value is the identifier of the safe.
 func safeOwnerKey(owner happydns.Identifier, id happydns.Identifier) string {
 	return fmt.Sprintf("%s%s|%s", safeOwnerPrefix, owner.String(), id.String())
+}
+
+// safeDefaultKey holds the keystore an owner chose for new secrets.
+func safeDefaultKey(owner happydns.Identifier) string {
+	return safeDefaultPrefix + owner.String()
 }
 
 func (s *KVStorage) ListAllSafes() (happydns.Iterator[happydns.Safe], error) {
@@ -157,4 +165,36 @@ func (s *KVStorage) DeleteSafe(id happydns.Identifier) error {
 	batch.Delete(safeOwnerKey(safe.Owner, safe.Id))
 	batch.Delete(safePrimaryKey(id))
 	return batch.Commit()
+}
+
+func (s *KVStorage) GetDefaultKeystore(owner happydns.Identifier) (string, error) {
+	var ref string
+	if err := s.db.Get(safeDefaultKey(owner), &ref); err != nil {
+		return "", err
+	}
+	return ref, nil
+}
+
+func (s *KVStorage) PutDefaultKeystore(owner happydns.Identifier, ref string) error {
+	return s.db.Put(safeDefaultKey(owner), ref)
+}
+
+func (s *KVStorage) ListDefaultKeystores() (map[string]string, error) {
+	iter := s.db.Search(safeDefaultPrefix)
+	defer iter.Release()
+
+	refs := map[string]string{}
+	for iter.Next() {
+		var ref string
+		if err := s.db.DecodeData(iter.Value(), &ref); err != nil {
+			log.Printf("storage: malformed default keystore %q: %v", iter.Key(), err)
+			continue
+		}
+		refs[strings.TrimPrefix(iter.Key(), safeDefaultPrefix)] = ref
+	}
+	return refs, iter.Err()
+}
+
+func (s *KVStorage) DeleteDefaultKeystore(owner happydns.Identifier) error {
+	return s.db.Delete(safeDefaultKey(owner))
 }

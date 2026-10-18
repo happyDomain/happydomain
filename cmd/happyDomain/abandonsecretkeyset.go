@@ -64,7 +64,7 @@ func runAbandonSecretKeyset(args []string) int {
 
 // abandonSecretKeyset deletes the users' keys and the check record of a lost
 // instance keyset, once confirmed on stdin.
-func abandonSecretKeyset(store secret.Storage, keyPath string, stdin io.Reader, out io.Writer) int {
+func abandonSecretKeyset(store secret.KeysetStorage, keyPath string, stdin io.Reader, out io.Writer) int {
 	var key *secret.InstanceKey
 	if keyPath != "" {
 		k, err := secret.LoadInstanceKey(keyPath)
