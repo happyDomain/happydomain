@@ -518,6 +518,42 @@ func TestSafesOf(t *testing.T) {
 	}
 }
 
+func TestResealLeavesPersonalKeystoresAlone(t *testing.T) {
+	f := newKeystoreFixture(t, PolicyInstance)
+	sc := objectContext()
+	ctx := context.Background()
+	mine := f.create(t, sc.Owner, creatorKind, "Mine")
+
+	obj := &managedObject{ApiKey: happydns.NewSecret("a")}
+	if err := f.m.SealObjectInto(ctx, sc, obj, Destination{Keystore: mine.Ref}); err != nil {
+		t.Fatal(err)
+	}
+	token := obj.ApiKey.Token()
+
+	plaintext := newTestManager(t, Config{Policy: PolicyPlaintext, InstanceKey: testInstanceKey(t), Safes: f.safes, Defaults: f.defaults})
+	stored := &managedObject{ApiKey: sealedFromStorage(t, token)}
+	changed, err := plaintext.ResealObject(ctx, sc, stored)
+	if err != nil || changed {
+		t.Errorf("ResealObject(plaintext) of a personal keystore = %v, %v; want left alone", changed, err)
+	}
+	if stored.ApiKey.Token() != token {
+		t.Error("the object changed")
+	}
+
+	// Clear values go to the policy, not to the default of the owner.
+	if err := f.m.SetDefaultKeystore(ctx, sc.Owner, mine.Ref); err != nil {
+		t.Fatal(err)
+	}
+	legacy := &managedObject{ApiKey: happydns.NewSecret("a")}
+	changed, err = f.m.ResealObject(ctx, sc, legacy)
+	if err != nil || !changed {
+		t.Fatalf("ResealObject(clear) = %v, %v", changed, err)
+	}
+	if safeOf(t, legacy.ApiKey) == mine.Ref {
+		t.Error("a reseal followed the default of the owner rather than the policy")
+	}
+}
+
 func TestSealUnderPolicyIgnoresTheDefault(t *testing.T) {
 	f := newKeystoreFixture(t, PolicyInstance)
 	sc := objectContext()

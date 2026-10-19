@@ -124,11 +124,21 @@ func (m *Manager) inspectOne(ctx context.Context, sc SecretContext, s *happydns.
 // ResealObject stores the secrets of obj, as read from storage, the way the
 // current policy stores new ones: sealing clear values under the instance
 // policy, opening sealed ones to store them in clear under the plaintext
-// policy. It reports whether obj changed and has to be written back; it
-// fails, leaving obj untouched, when a secret does not open.
+// policy. An object in a personal keystore is left where its owner put it,
+// and clear values follow the policy, not the default of their owner. It
+// reports whether obj changed and has to be written back; it fails, leaving
+// obj untouched, when a secret does not open.
 func (m *Manager) ResealObject(ctx context.Context, sc SecretContext, obj any) (bool, error) {
 	if m == nil {
 		return false, errNoManager
+	}
+
+	current, err := SafesOf(obj)
+	if err != nil {
+		return false, err
+	}
+	if m.currentPersonal(current) != "" {
+		return false, nil
 	}
 
 	cp, err := clone(obj)
@@ -170,7 +180,7 @@ func (m *Manager) ResealObject(ctx context.Context, sc SecretContext, obj any) (
 		}
 	}
 
-	if err := m.SealObject(ctx, sc, cp); err != nil {
+	if err := m.SealObjectInto(ctx, sc, cp, Destination{policyOnly: true}); err != nil {
 		return false, err
 	}
 

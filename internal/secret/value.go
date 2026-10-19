@@ -116,12 +116,16 @@ func (m *Manager) ResealValue(ctx context.Context, sc SecretContext, value strin
 	case sealed && m.policy != PolicyPlaintext, !sealed && m.policy == PolicyPlaintext:
 		return value, false, nil
 	}
+	if id, ok := SafeOfValue(value); ok && m.currentPersonal([]happydns.Identifier{id}) != "" {
+		// Left where its owner put it.
+		return value, false, nil
+	}
 
 	clear, err := m.OpenValue(ctx, sc, value)
 	if err != nil {
 		return "", false, err
 	}
-	out, err := m.SealValue(ctx, sc, clear)
+	out, err := m.SealValueInto(ctx, sc, clear, Destination{policyOnly: true})
 	if err != nil {
 		return "", false, err
 	}

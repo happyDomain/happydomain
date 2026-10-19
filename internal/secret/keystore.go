@@ -478,6 +478,21 @@ func (m *Manager) current(owner happydns.Identifier, dst Destination) (*sealer, 
 	return nil, inInstance
 }
 
+// currentPersonal returns the personal keystore among the safes an object
+// uses, if any.
+func (m *Manager) currentPersonal(current []happydns.Identifier) string {
+	if m.safes == nil {
+		return ""
+	}
+	for _, id := range current {
+		safe, err := m.safes.GetSafe(id)
+		if err == nil && isPersonal(safe) {
+			return safe.Id.String()
+		}
+	}
+	return ""
+}
+
 // target returns the sealer of ref, a keystore of owner.
 func (m *Manager) target(owner happydns.Identifier, ref string, unattended bool) (*sealer, error) {
 	if p, ok := m.stores[ref].(Provisioner); ok {
