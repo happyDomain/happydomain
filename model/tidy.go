@@ -42,6 +42,7 @@ type TidyUpUseCase interface {
 	TidyNotificationPreferences(dropInvalid bool) error
 	TidyNotificationStates(dropInvalid bool) error
 	TidyNotificationRecords(dropInvalid bool) error
+	TidySafes(dropInvalid bool) error
 	TidySessions(dropInvalid bool) error
 	TidyUsers(dropInvalid bool) error
 	TidyZones(dropInvalid bool) error

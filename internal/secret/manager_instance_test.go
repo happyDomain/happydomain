@@ -302,3 +302,28 @@ func TestSealedTokenGolden(t *testing.T) {
 		t.Errorf("golden token opens to %q", obj.ApiKey.Reveal())
 	}
 }
+
+// A safe record that does not decode tells no owner: deleting the safes of a
+// user goes past it, and leaves the safes of the others.
+func TestDeleteOwnerSafesSkipsDamagedRecords(t *testing.T) {
+	m, _, store := instanceManagers(t)
+	for _, owner := range []happydns.Identifier{{0x01}, {0x02}} {
+		sc := objectContext()
+		sc.Owner = owner
+		sealOne(t, m, sc, "v")
+	}
+	store.damaged["safe-broken"] = errors.New("does not decode")
+
+	if err := m.DeleteOwnerSafes(happydns.Identifier{0x01}); err != nil {
+		t.Fatalf("DeleteOwnerSafes: %v", err)
+	}
+	if _, err := store.GetSafeByOwner(happydns.Identifier{0x01}, KindInstance); !errors.Is(err, happydns.ErrSafeNotFound) {
+		t.Errorf("the safe of the deleted owner is still there: %v", err)
+	}
+	if _, err := store.GetSafeByOwner(happydns.Identifier{0x02}, KindInstance); err != nil {
+		t.Errorf("the safe of another owner is gone: %v", err)
+	}
+	if len(store.damaged) != 1 {
+		t.Error("the damaged record was deleted")
+	}
+}

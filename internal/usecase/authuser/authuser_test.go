@@ -490,7 +490,7 @@ func TestCheckNewPassword(t *testing.T) {
 
 // A user deleting their account deletes the account itself, not only the
 // credentials used to log into it: SetOnDeleted is how the rest of the
-// account, its profile, goes too.
+// account (its profile, the keys of its secrets) goes too.
 func TestDeleteAuthUserDeletesTheAccount(t *testing.T) {
 	newService := func(t *testing.T) (*authuser.Service, *happydns.UserAuth, storage.Storage) {
 		service, store := setupTestService()

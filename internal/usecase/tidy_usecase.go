@@ -77,6 +77,7 @@ func (tu *tidyUpUsecase) TidyAll(dropInvalid bool) error {
 		tu.TidyNotificationPreferences,
 		tu.TidyNotificationStates,
 		tu.TidyNotificationRecords,
+		tu.TidySafes,
 		tu.TidyDomains,
 		tu.TidyZones,
 		tu.TidyDomainLogs,

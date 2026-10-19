@@ -26,6 +26,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -160,4 +161,33 @@ func (r *safeRegistry) aead(safe *happydns.Safe) (tink.AEAD, error) {
 		return nil, err
 	}
 	return aead.New(dek)
+}
+
+// DeleteOwnerSafes deletes every safe owned by owner: whatever was sealed in
+// them no longer opens, copies and backups included.
+func (m *Manager) DeleteOwnerSafes(owner happydns.Identifier) error {
+	if m == nil || m.safes == nil {
+		return errNoManager
+	}
+
+	// A record that does not decode tells no owner: it is left as it is,
+	// rather than keep every account from being deleted.
+	var ids []happydns.Identifier
+	err := eachSafe(m.safes.store, func(safe *happydns.Safe) {
+		if safe.Owner.Equals(owner) {
+			ids = append(ids, safe.Id)
+		}
+	}, func(key string, err error) {
+		log.Printf("secret: safe record %q does not decode, left as it is while deleting the safes of %s: %s", key, owner.String(), err)
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, id := range ids {
+		if err := m.safes.store.DeleteSafe(id); err != nil {
+			return fmt.Errorf("unable to delete safe %s: %w", id.String(), err)
+		}
+	}
+	return nil
 }

@@ -66,8 +66,8 @@ func NewAuthUserUsecases(
 }
 
 // SetOnDeleted installs a callback invoked when a user deletes their account,
-// to delete the account itself, its profile. It runs before the credentials
-// are removed, which its failure prevents.
+// to delete the account itself: its profile, and the keys of its secrets. It
+// runs before the credentials are removed, which its failure prevents.
 func (s *Service) SetOnDeleted(fn func(happydns.Identifier) error) {
 	s.onDeleted = fn
 }

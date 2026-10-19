@@ -39,7 +39,7 @@ func Test_DeleteAuthUserDeletesProfile(t *testing.T) {
 	db, _ := inmemory.Instantiate()
 	sessions := sessionUC.NewService(db)
 	authUsers := authuserUC.NewAuthUserUsecases(&happydns.Options{}, &noopMailer{}, db, sessions)
-	service := user.NewUserUsecases(db, nil, authUsers, &mockSessionCloser{})
+	service := user.NewUserUsecases(db, nil, authUsers, &mockSessionCloser{}, nil)
 	authUsers.SetOnDeleted(service.DeleteUserByID)
 
 	ua := &happydns.UserAuth{Email: "leaving@example.com"}

@@ -106,11 +106,12 @@ func (app *App) initUsecases() {
 		app.newsletter,
 		authUserService,
 		sessionService,
+		app.secrets,
 	)
 	app.usecases.user = userService
 	app.usecases.userAdmin = userService
-	// A user deleting their local account deletes the account itself, not
-	// only its credentials.
+	// A user deleting their local account deletes the account itself, and
+	// with it the keys of its secrets, not only its credentials.
 	authUserService.SetOnDeleted(userService.DeleteUserByID)
 	app.usecases.authentication = usecase.NewAuthenticationUsecase(app.cfg, app.store, app.usecases.user)
 	app.usecases.authUser = authUserService

@@ -22,6 +22,7 @@
 package user
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"time"
@@ -36,6 +37,12 @@ type Service struct {
 	authUser          happydns.AuthUserUsecase
 	closeUserSessions happydns.SessionCloserUsecase
 	onUserChanged     func(happydns.Identifier)
+	secrets           SafeShredder
+}
+
+// SafeShredder deletes the safes of a user, making their secrets unreadable.
+type SafeShredder interface {
+	DeleteOwnerSafes(owner happydns.Identifier) error
 }
 
 func NewUserUsecases(
@@ -43,13 +50,27 @@ func NewUserUsecases(
 	newsletter happydns.NewsletterSubscriptor,
 	authUser happydns.AuthUserUsecase,
 	closeUserSessions happydns.SessionCloserUsecase,
+	secrets SafeShredder,
 ) *Service {
 	return &Service{
 		store:             store,
 		newsletter:        newsletter,
 		authUser:          authUser,
 		closeUserSessions: closeUserSessions,
+		secrets:           secrets,
 	}
+}
+
+// shredSecrets deletes the safes of a deleted user. Their objects are left
+// to tidy, and hold nothing readable any more.
+func (s *Service) shredSecrets(userid happydns.Identifier) error {
+	if s.secrets == nil {
+		return nil
+	}
+	if err := s.secrets.DeleteOwnerSafes(userid); err != nil {
+		return fmt.Errorf("unable to delete the safes of user %s: %w", userid.String(), err)
+	}
+	return nil
 }
 
 // SetOnUserChanged installs a callback invoked after any successful user
@@ -152,7 +173,15 @@ func (s *Service) DeleteUser(userid happydns.Identifier) error {
 		}
 	}
 
-	return s.closeUserSessions.ByID(userid)
+	// The profile is gone: log the user out whatever happens to the safes,
+	// which tidy deletes otherwise.
+	if err := errors.Join(s.shredSecrets(userid), s.closeUserSessions.ByID(userid)); err != nil {
+		return happydns.InternalError{
+			Err:         err,
+			UserMessage: "Your profile was deleted, but some of its data could not be erased yet. It will be later.",
+		}
+	}
+	return nil
 }
 
 // GenerateUserAvatar generates an avatar image for the user.
@@ -198,5 +227,7 @@ func (s *Service) DeleteUserByID(userID happydns.Identifier) error {
 	if err := s.store.DeleteUser(userID); err != nil {
 		return err
 	}
-	return s.closeUserSessions.ByID(userID)
+	// The profile is gone: log the user out whatever happens to the safes,
+	// which tidy deletes otherwise.
+	return errors.Join(s.shredSecrets(userID), s.closeUserSessions.ByID(userID))
 }
