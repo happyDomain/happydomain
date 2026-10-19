@@ -125,7 +125,7 @@ func createTestProvider(t *testing.T, store storage.Storage, user *happydns.User
 
 func setupTestService(store storage.Storage) (*domain.Service, *mockDomainLogAppender) {
 	// Create the provider service
-	secrets, err := secret.NewManager(secret.PolicyPlaintext)
+	secrets, err := secret.NewManager(secret.Config{Policy: secret.PolicyPlaintext})
 	if err != nil {
 		panic(err)
 	}

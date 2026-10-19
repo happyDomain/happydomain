@@ -57,7 +57,7 @@ func TestProviderSettingsRefusesNullBody(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	secrets, err := secret.NewManager(secret.PolicyPlaintext)
+	secrets, err := secret.NewManager(secret.Config{Policy: secret.PolicyPlaintext})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,7 +89,7 @@ func TestProviderSettingsCreatesProviderWithSecret(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	secrets, err := secret.NewManager(secret.PolicyPlaintext)
+	secrets, err := secret.NewManager(secret.Config{Policy: secret.PolicyPlaintext})
 	if err != nil {
 		t.Fatal(err)
 	}

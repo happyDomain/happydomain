@@ -93,6 +93,11 @@ func (app *App) initStorageEngine() {
 }
 
 func (app *App) initSecrets() {
+	policy := secret.Policy(app.cfg.SecretPolicy)
+	if policy == "" {
+		policy = secret.PolicyPlaintext
+	}
+
 	var key *secret.InstanceKey
 	if path := app.cfg.SecretKeysetFile; path != "" {
 		if open, err := secret.KeysetFileTooOpen(path); err == nil && open {
@@ -107,12 +112,16 @@ func (app *App) initSecrets() {
 	}
 
 	// Refuse to start rather than fail provider by provider.
-	if err := secret.StartupCheck(secret.PolicyPlaintext, key, app.store); err != nil {
+	if err := secret.StartupCheck(policy, key, app.store); err != nil {
 		log.Fatalf("Refusing to start: %s", err)
 	}
 
 	var err error
-	app.secrets, err = secret.NewManager(secret.PolicyPlaintext)
+	app.secrets, err = secret.NewManager(secret.Config{
+		Policy:      policy,
+		InstanceKey: key,
+		Safes:       app.store,
+	})
 	if err != nil {
 		log.Fatalf("Unable to initialize secret management: %s", err)
 	}

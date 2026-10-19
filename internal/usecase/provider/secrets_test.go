@@ -24,6 +24,7 @@ package provider_test
 import (
 	"encoding/json"
 	"errors"
+	"strings"
 	"testing"
 
 	providerReg "git.happydns.org/happyDomain/internal/providerregistry"
@@ -80,7 +81,7 @@ func init() {
 
 func plaintextSecrets(t *testing.T) *secret.Manager {
 	t.Helper()
-	m, err := secret.NewManager(secret.PolicyPlaintext)
+	m, err := secret.NewManager(secret.Config{Policy: secret.PolicyPlaintext})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -403,5 +404,114 @@ func Test_Secret_StorageFailsClosed(t *testing.T) {
 	}
 	if list, _ := db.ListProviders(&happydns.User{Id: owner}); len(list) != 0 {
 		t.Errorf("%d providers indexed, want none", len(list))
+	}
+}
+
+func instanceSecrets(t *testing.T, db storage.Storage) *secret.Manager {
+	t.Helper()
+	h, err := secret.GenerateInstanceKeyset()
+	if err != nil {
+		t.Fatal(err)
+	}
+	key, err := secret.NewInstanceKey(h)
+	if err != nil {
+		t.Fatal(err)
+	}
+	m, err := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return m
+}
+
+func Test_Secret_InstancePolicyNeverStoresClear(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	svc := provider.NewService(db, &mockValidator{}, nil, instanceSecrets(t, db))
+	user := createTestUser(t, db, "instance@example.com")
+
+	p, err := svc.CreateProvider(ctx, user, secretMessage(t, "SecretTestProvider", `{"host":"h","apikey":"my-key"}`))
+	if err != nil {
+		t.Fatalf("CreateProvider: %v", err)
+	}
+
+	body := storedBody(t, db, p.Id)
+	if strings.Contains(body, "my-key") || !strings.Contains(body, `"apikey":"hds:1:`) {
+		t.Fatalf("stored body = %s, want the key sealed", body)
+	}
+
+	stored, err := svc.GetUserProvider(ctx, user, p.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	instantiatedWith = nil
+	if _, err := svc.RetrieveZone(ctx, stored, "example.com"); err != nil {
+		t.Fatalf("RetrieveZone: %v", err)
+	}
+	if instantiatedWith == nil || *instantiatedWith != "my-key" {
+		t.Errorf("instantiated with %v, want the clear key", instantiatedWith)
+	}
+}
+
+// A value stored in clear before the instance policy was turned on is sealed
+// the next time its provider is written.
+func Test_Secret_LegacyPlaintextSealedOnNextWrite(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	svc := provider.NewService(db, &mockValidator{}, nil, instanceSecrets(t, db))
+	user := createTestUser(t, db, "lazy@example.com")
+	legacy := storeRaw(t, db, user.Id, `{"host":"h","apikey":"legacy"}`)
+
+	body := `{"host":"renamed","apikey":"` + happydns.RedactedSecret + `"}`
+	if _, err := svc.UpdateProviderFromMessage(ctx, legacy.Id, user, secretMessage(t, "SecretTestProvider", body)); err != nil {
+		t.Fatalf("UpdateProviderFromMessage: %v", err)
+	}
+
+	got := storedBody(t, db, legacy.Id)
+	if strings.Contains(got, "legacy") || !strings.Contains(got, `"apikey":"hds:1:`) {
+		t.Fatalf("stored body = %s, want the legacy key sealed", got)
+	}
+
+	stored, _ := svc.GetUserProvider(ctx, user, legacy.Id)
+	instantiatedWith = nil
+	if _, err := svc.RetrieveZone(ctx, stored, "example.com"); err != nil {
+		t.Fatal(err)
+	}
+	if instantiatedWith == nil || *instantiatedWith != "legacy" {
+		t.Errorf("instantiated with %v, want the legacy key", instantiatedWith)
+	}
+}
+
+// An update gives back the provider as written: its callers answer with it
+// rather than read it again. Encoded, it holds what is stored, never the
+// credential in clear.
+func Test_Secret_UpdateReturnsTheStoredProvider(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	svc := provider.NewService(db, &mockValidator{}, nil, instanceSecrets(t, db))
+	user := createTestUser(t, db, "returned@example.com")
+
+	p, err := svc.CreateProvider(ctx, user, secretMessage(t, "SecretTestProvider", `{"host":"h","apikey":"old"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	msg := secretMessage(t, "SecretTestProvider", `{"host":"h2","apikey":"new-key"}`)
+	msg.Comment = "renamed"
+	updated, err := svc.UpdateProviderFromMessage(ctx, p.Id, user, msg)
+	if err != nil {
+		t.Fatalf("UpdateProviderFromMessage: %v", err)
+	}
+
+	if !updated.Id.Equals(p.Id) || !updated.Owner.Equals(user.Id) || updated.Comment != "renamed" {
+		t.Errorf("returned meta = %+v, want the updated provider", updated.ProviderMeta)
+	}
+
+	body, err := json.Marshal(updated.Provider)
+	if err != nil {
+		t.Fatalf("encoding the returned provider: %v", err)
+	}
+	if strings.Contains(string(body), "new-key") {
+		t.Errorf("returned provider encodes the key in clear: %s", body)
+	}
+	if stored := storedBody(t, db, p.Id); string(body) != stored {
+		t.Errorf("returned body = %s, want what is stored: %s", body, stored)
 	}
 }
