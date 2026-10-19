@@ -31,6 +31,13 @@ type ProviderBody interface {
 	InstantiateProvider() (ProviderActuator, error)
 }
 
+// ReadOnlyProvider is implemented by provider bodies that can be set to read
+// the zone without ever changing it, for instance to monitor a domain with
+// credentials that grant no write access.
+type ReadOnlyProvider interface {
+	IsReadOnly() bool
+}
+
 // ProviderInfos describes the purpose of a user usable provider.
 type ProviderInfos struct {
 	// Name is the name displayed.
@@ -100,6 +107,11 @@ type ProviderMeta struct {
 
 	// Comment is a string that helps user to distinguish the Provider.
 	Comment string `json:"_comment,omitempty"`
+
+	// ReadOnly tells whether the Provider never changes the zone. The server
+	// sets it from the settings each time the Provider is saved, for display
+	// only: checks ask the settings themselves, see Provider.IsReadOnly.
+	ReadOnly bool `json:"_readonly,omitempty" readonly:"true"`
 }
 
 // ProviderMessage combined ProviderMeta + Provider in a parsable way
@@ -129,6 +141,13 @@ type Provider struct {
 
 func (p *Provider) InstantiateProvider() (ProviderActuator, error) {
 	return p.Provider.InstantiateProvider()
+}
+
+// IsReadOnly tells whether the settings of the Provider forbid any change to
+// the zone.
+func (p *Provider) IsReadOnly() bool {
+	ro, ok := p.Provider.(ReadOnlyProvider)
+	return ok && ro.IsReadOnly()
 }
 
 func (p *Provider) ToMessage() (msg ProviderMessage, err error) {

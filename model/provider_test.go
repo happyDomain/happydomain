@@ -234,6 +234,37 @@ func TestProviderInstantiateProvider(t *testing.T) {
 	}
 }
 
+type mockReadOnlyProviderBody struct {
+	mockProviderBody
+	readOnly bool
+}
+
+func (m *mockReadOnlyProviderBody) IsReadOnly() bool {
+	return m.readOnly
+}
+
+func TestProviderIsReadOnly(t *testing.T) {
+	tests := []struct {
+		name string
+		body happydns.ProviderBody
+		want bool
+	}{
+		{"a body that cannot be read-only", &mockProviderBody{}, false},
+		{"a body set read-write", &mockReadOnlyProviderBody{}, false},
+		{"a body set read-only", &mockReadOnlyProviderBody{readOnly: true}, true},
+		{"no body", nil, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			provider := &happydns.Provider{Provider: tt.body}
+			if got := provider.IsReadOnly(); got != tt.want {
+				t.Errorf("IsReadOnly() = %t, want %t", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestProviderRoundTripToMessage(t *testing.T) {
 	providerId := happydns.Identifier{0xaa, 0xbb, 0xcc}
 	ownerId := happydns.Identifier{0xdd, 0xee, 0xff}
