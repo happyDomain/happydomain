@@ -139,60 +139,82 @@ func (m *Manager) SealObject(ctx context.Context, sc SecretContext, obj any) err
 	}
 
 	// All the secrets of an object go to the same safe.
-	var safe *happydns.Safe
-	var primitive tink.AEAD
+	x := &sealer{m: m, owner: sc.Owner}
 
 	return Walk(obj, func(path string, s *happydns.Secret) error {
-		switch {
-		case s.IsEmpty(), s.IsSealed(), s.IsOpened():
-			return nil
-		case s.IsRedacted():
-			return ErrRedactedSecret
+		fsc := sc
+		fsc.Field = path
+		return x.seal(ctx, fsc, s)
+	})
+}
+
+// SealSecret seals s, a single secret, like SealObject does for each field.
+// sc must name the field.
+func (m *Manager) SealSecret(ctx context.Context, sc SecretContext, s *happydns.Secret) error {
+	if m == nil {
+		return errNoManager
+	}
+	if err := sc.Validate(); err != nil {
+		return err
+	}
+	return (&sealer{m: m, owner: sc.Owner}).seal(ctx, sc, s)
+}
+
+// sealer seals the secrets of one owner, looking its safe up once.
+type sealer struct {
+	m         *Manager
+	owner     happydns.Identifier
+	safe      *happydns.Safe
+	primitive tink.AEAD
+}
+
+func (x *sealer) seal(ctx context.Context, sc SecretContext, s *happydns.Secret) error {
+	switch {
+	case s.IsEmpty(), s.IsSealed(), s.IsOpened():
+		return nil
+	case s.IsRedacted():
+		return ErrRedactedSecret
+	}
+
+	clear, ok := s.ClearForSealing()
+	if !ok {
+		return errors.New("secret in an unknown state")
+	}
+
+	switch x.m.policy {
+	case PolicyPlaintext:
+		if strings.HasPrefix(string(clear), reservedPrefix) {
+			// Stored as is, it would read back as sealed, now or once a
+			// format to come claims its prefix.
+			return fmt.Errorf("a value starting with %q cannot be stored in clear", reservedPrefix)
 		}
-
-		clear, ok := s.ClearForSealing()
-		if !ok {
-			return errors.New("secret in an unknown state")
+		if string(clear) == happydns.RedactedSecret {
+			// Stored as is, it would read back as redacted.
+			return errors.New("the redacted placeholder cannot be stored in clear")
 		}
+		s.SetOpened(string(clear), clear)
+		return nil
 
-		switch m.policy {
-		case PolicyPlaintext:
-			if strings.HasPrefix(string(clear), reservedPrefix) {
-				// Stored as is, it would read back as sealed, now or
-				// once a format to come claims its prefix.
-				return fmt.Errorf("a value starting with %q cannot be stored in clear", reservedPrefix)
-			}
-			if string(clear) == happydns.RedactedSecret {
-				// Stored as is, it would read back as redacted.
-				return errors.New("the redacted placeholder cannot be stored in clear")
-			}
-			s.SetOpened(string(clear), clear)
-			return nil
-
-		case PolicyInstance:
-			if safe == nil {
-				var err error
-				if safe, err = m.safes.instanceSafe(sc.Owner); err != nil {
-					return err
-				}
-				if primitive, err = m.safes.aead(safe); err != nil {
-					return err
-				}
-			}
-
-			fsc := sc
-			fsc.Field = path
-
-			ct, err := primitive.Encrypt(clear, AssociatedData(safe.Id, fsc))
-			if err != nil {
+	case PolicyInstance:
+		if x.safe == nil {
+			var err error
+			if x.safe, err = x.m.safes.instanceSafe(x.owner); err != nil {
 				return err
 			}
-			s.SetOpened(FormatSealed(safe.Id, ct), clear)
-			return nil
+			if x.primitive, err = x.m.safes.aead(x.safe); err != nil {
+				return err
+			}
 		}
 
-		return fmt.Errorf("unknown secret policy %q", m.policy)
-	})
+		ct, err := x.primitive.Encrypt(clear, AssociatedData(x.safe.Id, sc))
+		if err != nil {
+			return err
+		}
+		s.SetOpened(FormatSealed(x.safe.Id, ct), clear)
+		return nil
+	}
+
+	return fmt.Errorf("unknown secret policy %q", x.m.policy)
 }
 
 // OpenObject opens every sealed Secret of obj, a pointer to a struct. Clear
@@ -214,6 +236,18 @@ func (m *Manager) OpenObject(ctx context.Context, sc SecretContext, obj any) err
 		fsc.Field = path
 		return m.open(fsc, s, primitives)
 	})
+}
+
+// OpenSecret opens s, a single secret, like OpenObject does for each field.
+// sc must name the field.
+func (m *Manager) OpenSecret(ctx context.Context, sc SecretContext, s *happydns.Secret) error {
+	if m == nil {
+		return errNoManager
+	}
+	if err := sc.Validate(); err != nil {
+		return err
+	}
+	return m.open(sc, s, map[string]tink.AEAD{})
 }
 
 // OpenCopy returns a copy of obj, a pointer to a struct, with every secret

@@ -415,4 +415,17 @@ func TestNilManagerFailsClosed(t *testing.T) {
 	if !obj.ApiKey.IsClear() {
 		t.Error("a nil Manager changed the object")
 	}
+
+	sc := objectContext()
+	sc.Field = "k"
+	single := happydns.NewSecret("v")
+	if err := m.SealSecret(context.Background(), sc, &single); err == nil {
+		t.Error("SealSecret on a nil Manager succeeded")
+	}
+	if err := m.OpenSecret(context.Background(), sc, &single); err == nil {
+		t.Error("OpenSecret on a nil Manager succeeded")
+	}
+	if !single.IsClear() {
+		t.Error("a nil Manager changed a single secret")
+	}
 }

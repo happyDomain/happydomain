@@ -360,6 +360,62 @@ func TestMarshalIncomingLeavesMapsAlone(t *testing.T) {
 	}
 }
 
+func TestSealOpenSingleSecret(t *testing.T) {
+	m, _, _ := instanceManagers(t)
+	sc := objectContext()
+	sc.Field = "api_key"
+
+	s := happydns.NewSecret("single")
+	if err := m.SealSecret(context.Background(), sc, &s); err != nil {
+		t.Fatalf("SealSecret: %v", err)
+	}
+	if !IsSealed(s.Token()) {
+		t.Fatalf("token = %q, want it sealed", s.Token())
+	}
+
+	back := sealedFromStorage(t, s.Token())
+	if err := m.OpenSecret(context.Background(), sc, &back); err != nil || back.Reveal() != "single" {
+		t.Errorf("OpenSecret = %v, %q", err, back.Reveal())
+	}
+
+	// Bound to its field.
+	other := sc
+	other.Field = "other_key"
+	back = sealedFromStorage(t, s.Token())
+	if err := m.OpenSecret(context.Background(), other, &back); err == nil {
+		t.Error("a single secret opened under another field")
+	}
+
+	// The field is required.
+	noField := sc
+	noField.Field = ""
+	s = happydns.NewSecret("v")
+	if err := m.SealSecret(context.Background(), noField, &s); err == nil {
+		t.Error("SealSecret without a field succeeded")
+	}
+	s = happydns.NewSecret("v")
+	if err := m.SealSecret(context.Background(), sc, &s); err != nil {
+		t.Fatal(err)
+	}
+	back = sealedFromStorage(t, s.Token())
+	if err := m.OpenSecret(context.Background(), noField, &back); err == nil {
+		t.Error("OpenSecret without a field succeeded")
+	}
+}
+
+// Under the plaintext policy, a single value obeys the same rules as a field.
+func TestSealSecretPlaintextGuard(t *testing.T) {
+	_, m, _ := instanceManagers(t)
+	sc := objectContext()
+	sc.Field = "k"
+	for _, v := range []string{"hds:2:x", happydns.RedactedSecret} {
+		s := happydns.NewSecret(v)
+		if err := m.SealSecret(context.Background(), sc, &s); err == nil {
+			t.Errorf("SealSecret(%q) under the plaintext policy succeeded", v)
+		}
+	}
+}
+
 // A safe record that does not decode tells no owner: deleting the safes of a
 // user goes past it, and leaves the safes of the others.
 func TestDeleteOwnerSafesSkipsDamagedRecords(t *testing.T) {
