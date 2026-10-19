@@ -22,10 +22,14 @@
 package backup_test
 
 import (
+	"context"
 	"testing"
 
 	"git.happydns.org/happyDomain/internal/dnschecker"
+	"git.happydns.org/happyDomain/internal/secret"
+	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	"git.happydns.org/happyDomain/internal/usecase/backup"
+	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -84,5 +88,111 @@ func TestBackupUserWithholdsCheckerOptions(t *testing.T) {
 		if p.UserId != nil && p.Options["token"] != "s3cr3t" {
 			t.Errorf("stored token = %v after the export", p.Options["token"])
 		}
+	}
+}
+
+// Restoring, the placeholders an export carries stand for no value and are
+// dropped, secret options in clear are sealed under the current policy, and
+// sealed ones are kept as they are.
+func TestRestoreSealsCheckerOptions(t *testing.T) {
+	ctx := context.Background()
+	db, err := inmemory.Instantiate()
+	if err != nil {
+		t.Fatal(err)
+	}
+	owner := happydns.Identifier{0xaa}
+	domain := happydns.Identifier{0xbb}
+	if err := db.CreateOrUpdateUser(&happydns.User{Id: owner, Email: "owner@example.com"}); err != nil {
+		t.Fatal(err)
+	}
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	secrets, _ := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db})
+
+	const alreadySealed = "hds:1:AQ:c2VhbGVk"
+	in := &happydns.Backup{CheckerConfigurations: []*happydns.CheckerOptionsPositional{
+		{
+			CheckName: backupSecretChecker,
+			UserId:    &owner,
+			Options:   happydns.CheckerOptions{"token": "clear-token", "plain": happydns.RedactedSecret},
+		},
+		{
+			CheckName: backupSecretChecker,
+			UserId:    &owner,
+			DomainId:  &domain,
+			Options:   happydns.CheckerOptions{"token": alreadySealed},
+		},
+	}}
+	if err := backup.NewUsecase(db, secrets).Restore(context.Background(), in); err != nil {
+		t.Fatalf("Restore: %v", err)
+	}
+
+	pos, err := db.GetCheckerConfiguration(backupSecretChecker, &owner, &domain, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := 0
+	for _, p := range pos {
+		switch {
+		case p.UserId == nil:
+			continue
+		case p.DomainId == nil:
+			found++
+			tok, _ := p.Options["token"].(string)
+			if !secret.IsSealed(tok) {
+				t.Fatalf("restored token = %q, want it sealed", tok)
+			}
+			clear, err := secrets.OpenValue(ctx, checkerUC.OptionsSecretContext(backupSecretChecker, &owner, nil, nil, "token"), tok)
+			if err != nil || clear != "clear-token" {
+				t.Errorf("restored token opens to %q, %v; want %q", clear, err, "clear-token")
+			}
+			if _, ok := p.Options["plain"]; ok {
+				t.Errorf("restored plain = %v, want the placeholder dropped", p.Options["plain"])
+			}
+		default:
+			found++
+			if p.Options["token"] != alreadySealed {
+				t.Errorf("restored sealed token = %v, want it kept as is", p.Options["token"])
+			}
+		}
+	}
+	if found != 2 {
+		t.Errorf("found %d of the 2 restored scopes", found)
+	}
+}
+
+// A configuration whose secret option cannot be sealed is reported and left
+// out: the others are restored all the same.
+func TestRestoreReportsUnsealableCheckerOptions(t *testing.T) {
+	db, err := inmemory.Instantiate()
+	if err != nil {
+		t.Fatal(err)
+	}
+	owner := happydns.Identifier{0xaa}
+	domain := happydns.Identifier{0xbb}
+
+	in := &happydns.Backup{CheckerConfigurations: []*happydns.CheckerOptionsPositional{
+		{CheckName: backupSecretChecker, UserId: &owner, Options: happydns.CheckerOptions{"token": 42}},
+		{CheckName: backupSecretChecker, UserId: &owner, DomainId: &domain, Options: happydns.CheckerOptions{"plain": "kept"}},
+	}}
+	if err := backup.NewUsecase(db, plaintextSecrets(t)).Restore(context.Background(), in); err == nil {
+		t.Error("Restore of a non-string secret option succeeded, want an error")
+	}
+
+	pos, err := db.GetCheckerConfiguration(backupSecretChecker, &owner, &domain, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	restored := false
+	for _, p := range pos {
+		if p.UserId != nil && p.DomainId == nil {
+			t.Errorf("the unsealable configuration was stored: %v", p.Options)
+		}
+		if p.DomainId != nil && p.Options["plain"] == "kept" {
+			restored = true
+		}
+	}
+	if !restored {
+		t.Error("the valid configuration was not restored")
 	}
 }

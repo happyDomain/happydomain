@@ -528,6 +528,13 @@ func TestSecretOptionsHonourContext(t *testing.T) {
 	if storedString(t, store, user, "user_token") != "" {
 		t.Error("an option was stored despite the cancelled context")
 	}
+	plaintext, err := secret.NewManager(secret.Config{Policy: secret.PolicyPlaintext})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := checkerUC.RestoreOptions(cancelled, plaintext, secretChecker, user, nil, nil, happydns.CheckerOptions{"user_token": "t"}); !errors.Is(err, context.Canceled) {
+		t.Errorf("RestoreOptions: got %v, want context.Canceled", err)
+	}
 
 	if err := uc.SetCheckerOptions(context.Background(), secretChecker, user, nil, nil, happydns.CheckerOptions{"user_token": "t"}); err != nil {
 		t.Fatalf("SetCheckerOptions: %v", err)

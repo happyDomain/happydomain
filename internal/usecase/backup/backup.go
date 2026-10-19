@@ -547,7 +547,13 @@ func (u *Usecase) Restore(ctx context.Context, backup *happydns.Backup) error {
 		if cfg == nil {
 			continue
 		}
-		errs = errors.Join(errs, u.store.UpdateCheckerConfiguration(cfg.CheckName, cfg.UserId, cfg.DomainId, cfg.ServiceId, cfg.Options))
+		// After the safes: secret options in clear are sealed.
+		opts, err := checkerUC.RestoreOptions(ctx, u.secrets, cfg.CheckName, cfg.UserId, cfg.DomainId, cfg.ServiceId, cfg.Options)
+		if err != nil {
+			errs = errors.Join(errs, fmt.Errorf("options of %s: %w", cfg.CheckName, err))
+			continue
+		}
+		errs = errors.Join(errs, u.store.UpdateCheckerConfiguration(cfg.CheckName, cfg.UserId, cfg.DomainId, cfg.ServiceId, opts))
 	}
 
 	// Check plans.
