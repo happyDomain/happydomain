@@ -63,6 +63,10 @@ var (
 	// ErrUnknownSafe is returned when a sealed value names a safe that does
 	// not exist.
 	ErrUnknownSafe = errors.New("unknown safe")
+
+	// ErrInstanceOwner is returned when the safes of the instance itself
+	// would be deleted as those of a user, whose identifier equals it.
+	ErrInstanceOwner = errors.New("the safes of the instance itself are not deleted with a user")
 )
 
 // reservedPrefix starts every stored form happyDomain gives a meaning to,

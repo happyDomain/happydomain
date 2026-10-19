@@ -403,6 +403,48 @@ func TestSealOpenSingleSecret(t *testing.T) {
 	}
 }
 
+func TestInstanceOwnerSafe(t *testing.T) {
+	m, _, store := instanceManagers(t)
+	sc := SecretContext{Owner: InstanceOwner(), ObjectType: "checker-options", ObjectId: "x", Field: "k"}
+
+	s := happydns.NewSecret("operator key")
+	if err := m.SealSecret(context.Background(), sc, &s); err != nil {
+		t.Fatalf("SealSecret for the instance: %v", err)
+	}
+	if _, err := store.GetSafeByOwner(InstanceOwner(), KindInstance); err != nil {
+		t.Errorf("no instance-owned safe: %v", err)
+	}
+}
+
+// InstanceOwner is persisted in every safe and secret of the instance: a
+// caller changing the identifier it got must not change it for everyone.
+func TestInstanceOwnerIsACopy(t *testing.T) {
+	o := InstanceOwner()
+	o[0] = 'X'
+	if !IsInstanceOwner(InstanceOwner()) || string(InstanceOwner()) != "instance" {
+		t.Errorf("InstanceOwner() = %q after changing a copy", InstanceOwner())
+	}
+}
+
+// A user stored under the identifier of the instance itself, by an
+// administrator or a restore, must not take the safes of the instance with
+// them when deleted.
+func TestDeleteOwnerSafesSparesTheInstance(t *testing.T) {
+	m, _, store := instanceManagers(t)
+	sc := SecretContext{Owner: InstanceOwner(), ObjectType: "checker-options", ObjectId: "x", Field: "k"}
+	s := happydns.NewSecret("operator key")
+	if err := m.SealSecret(context.Background(), sc, &s); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := m.DeleteOwnerSafes(InstanceOwner()); !errors.Is(err, ErrInstanceOwner) {
+		t.Errorf("DeleteOwnerSafes(instance) = %v, want ErrInstanceOwner", err)
+	}
+	if _, err := store.GetSafeByOwner(InstanceOwner(), KindInstance); err != nil {
+		t.Errorf("the instance safe is gone: %v", err)
+	}
+}
+
 // Under the plaintext policy, a single value obeys the same rules as a field.
 func TestSealSecretPlaintextGuard(t *testing.T) {
 	_, m, _ := instanceManagers(t)

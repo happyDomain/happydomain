@@ -47,6 +47,27 @@ const (
 	wrapVersion = "hds:1:safe"
 )
 
+// instanceOwner owns the secrets of the instance itself. It is persisted, in
+// safes and in the associated data of what they seal: it cannot change.
+const instanceOwner = "instance"
+
+// InstanceOwner returns the owner of the secrets of the instance itself, such
+// as the checker options an administrator sets for every user. Each call
+// returns a new copy, which the caller may change.
+//
+// Generated user identifiers are 16 random bytes and do not collide with it,
+// but an administrator or a restore can store a user under any identifier:
+// code acting on the safes of a user checks IsInstanceOwner first.
+func InstanceOwner() happydns.Identifier {
+	return happydns.Identifier(instanceOwner)
+}
+
+// IsInstanceOwner tells whether owner is the instance itself rather than a
+// user.
+func IsInstanceOwner(owner happydns.Identifier) bool {
+	return string(owner) == instanceOwner
+}
+
 // wrapAssociatedData binds a wrapped keyset to its safe and owner, so that it
 // cannot be moved to another safe. Same length-prefixed layout as
 // AssociatedData.
@@ -182,6 +203,9 @@ func (m *Manager) CheckSafe(safe *happydns.Safe) error {
 func (m *Manager) DeleteOwnerSafes(owner happydns.Identifier) error {
 	if m == nil || m.safes == nil {
 		return errNoManager
+	}
+	if IsInstanceOwner(owner) {
+		return ErrInstanceOwner
 	}
 
 	// A record that does not decode tells no owner: it is left as it is,
