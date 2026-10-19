@@ -95,13 +95,16 @@ A keystore is where the credentials of a user are sealed. Each user has:
 - the keystores of the instance, such as `instance`: happyDomain creates
   them on first use, and only the administrator deletes them;
 - the personal keystores they create themselves, under a name, from a kind
-  the instance offers: `passphrase` (locked by a passphrase) and
-  `login-password` (bound to the login password) are enabled by default, and
-  need no configuration. `file` (references to files on the server) and
-  `program` (references answered by programs on the server) reach the server
-  itself: the administrator enables them on purpose with `-secret-store`, for
-  instance `-secret-store plaintext,instance,passphrase,login-password,file`. See
-  also [Adding a kind of keystore](#adding-a-kind-of-keystore).
+  the instance offers: `passphrase` (locked by a passphrase),
+  `login-password` (bound to the login password), `vault` (references to
+  the Vault of the instance) and `vault-user` (references to a Vault of the
+  user) are enabled by default, but offered only once configured (`vault`
+  needs `-secret-vault-addr`, `vault-user` the instance keyset). `file`
+  (references to files on the server) and `program` (references answered by
+  programs on the server) reach the server itself: the administrator enables
+  them on purpose with `-secret-store`, for instance
+  `-secret-store plaintext,instance,passphrase,login-password,vault,vault-user,file`.
+  See also [Adding a kind of keystore](#adding-a-kind-of-keystore).
 
 The settings of a user list their keystores, with what each holds. There they
 choose a default keystore, migrate what one holds into another, and delete a
@@ -205,7 +208,7 @@ there a directory of their own, named after their identifier (shown in the
 user list of the administration interface):
 
 ```
-secret-store=plaintext,instance,passphrase,login-password,file
+secret-store=plaintext,instance,passphrase,login-password,vault,vault-user,file
 secret-file-dir=/srv/happydomain/secrets
 ```
 
@@ -253,7 +256,7 @@ a directory of their own, named after their identifier, as for
 [file keystores](#file-keystores):
 
 ```
-secret-store=plaintext,instance,passphrase,login-password,program
+secret-store=plaintext,instance,passphrase,login-password,vault,vault-user,program
 secret-program-dir=/srv/happydomain/programs
 ```
 
@@ -291,6 +294,91 @@ agent, does not hold the credential back. Such keystores open without their
 owner, so notifications and scheduled checks use them too. The directory is
 checked at startup.
 
+### Vault keystores
+
+Two kinds resolve each reference to a secret of a KV v2 engine of HashiCorp
+Vault, or of OpenBao, which shares its API: the credentials stay in Vault,
+read whenever they are used, and rotated there. A reference names the path of
+the secret, then `#` and its key: `dns/ovh#app_secret`. The latest version is
+read, unless one is given: `dns/ovh?version=3#app_secret`. A path holds no
+`.` nor `..` segment. Saving a credential reads it once, to check the
+reference.
+
+Both open without their owner, so notifications and scheduled checks use them
+too.
+
+#### The Vault of the instance: `vault`
+
+happyDomain logs in to the Vault of the instance with an AppRole:
+
+```
+secret-vault-addr=https://vault.example:8200
+secret-vault-role-id=...
+secret-vault-secret-id-file=/etc/happydomain/vault-secret-id
+```
+
+`-secret-vault-mount` names the KV v2 engine (`secret` by default),
+`-secret-vault-approle-mount` the AppRole auth method (`approle`),
+`-secret-vault-namespace` a namespace, and `-secret-vault-ca-file` the
+certificate authorities trusted besides those of the system. happyDomain keeps
+the token, renews it before it expires, and logs in again once Vault no longer
+knows it.
+
+Each user reaches the secrets below their own path, named after their
+identifier, in `-secret-vault-prefix` (`happydomain` by default): the
+reference `dns/ovh#app_secret` of a user reads
+`secret/happydomain/<user identifier>/dns/ovh`. Grant the AppRole the read of
+that prefix only:
+
+```hcl
+path "secret/data/happydomain/*" {
+  capabilities = ["read"]
+}
+```
+
+Users write their secrets there with access of their own to Vault, for
+instance through a templated policy per identity. The AppRole reads the
+secrets of every user: happyDomain is what keeps each to their own path.
+
+Once `-secret-vault-addr` is set, the role ID and the file of the secret ID
+are required. At startup, an AppRole Vault refuses stops happyDomain; a Vault
+that cannot be reached does not, and the credentials it holds fail until it is
+back.
+
+#### A Vault of the user: `vault-user`
+
+A user creates such a keystore from the address of their Vault, a token of
+theirs, and optionally the mount of the KV v2 engine (`secret` by default) and
+a namespace. happyDomain asks Vault whether it knows the token first. The
+policies of the token tell what the keystore reaches: give it the read of the
+secrets happyDomain needs, and nothing more. A token with a limited number of
+uses is refused, as each reading consumes one, and so is one that expires and
+cannot be renewed.
+
+happyDomain renews the token when it uses it, once two thirds of its lease are
+gone. A token unused for longer than its lease still expires, and one with a
+maximum TTL ends there: make it periodic, without a maximum TTL, for instance
+through a token role allowing it (creating a periodic token directly needs
+`sudo` on `auth/token/create`):
+
+```sh
+vault token create -role=happydomain -policy=happydomain-read
+```
+
+where `happydomain-read` grants the read of the secrets happyDomain needs.
+
+Once Vault no longer knows the token, its owner replaces it from their
+keystores: the secrets it holds, references, open again with the new one.
+
+The address is checked as the endpoint of a provider is: only public
+addresses, unless `-outbound-allowed-target` allows others. The token is
+sealed under the instance keyset, bound to its keystore: a database leaked
+alone does not give it away, a compromised server does. This kind therefore
+needs the instance keyset, and the `instance` store enabled. The token is
+wrapped again by a [rewrap](#rotating-the-keyset), and the key status counts
+it under the instance key that seals it: do not delete such a key while a
+token needs it.
+
 ## Startup checks
 
 happyDomain refuses to start rather than fail credential by credential when:
@@ -301,13 +389,18 @@ happyDomain refuses to start rather than fail credential by credential when:
   encrypted with;
 - credentials are encrypted in the database but no keyset is configured;
 - safes of a kind are stored in the database, but that kind is left out of
-  `secret-store` (by default `plaintext` and every kind of safe): the
+  `secret-store` (by default all but `file` and `program`): the
   credentials they hold would no longer decrypt;
-- `secret-policy=plaintext` while `plaintext` is left out of `secret-store`.
+- `secret-policy=plaintext` while `plaintext` is left out of `secret-store`;
+- the Vault of the instance is configured partly, or refuses the AppRole
+  login (one that cannot be reached is only logged).
 
-To forbid credentials in clear, set `secret-store=instance` (leaving
-`plaintext` out) and `secret-policy=instance`. Credentials already in clear
-stay readable, and are encrypted as described below.
+To forbid credentials in clear, leave `plaintext` out of `secret-store`, which
+lists the other kinds to keep
+(`secret-store=instance,passphrase,login-password,vault,vault-user` for the
+kinds enabled by default, plus any other kind already in use), and set
+`secret-policy=instance`. Credentials already in clear stay readable, and are
+encrypted as described below.
 
 ## Migrating existing credentials
 
@@ -512,5 +605,5 @@ A kind of keystore is a `secret.Store`, in a file of its own under
 - `StartupChecker`, `Rewrapper`, `KeyReporter`, `KEK`: see their
   documentation in `internal/secret/store.go`.
 
-A store reaching outside happyDomain is only enabled on purpose: list it in
-`secret-store`.
+A store reaching the files or programs of the server is only enabled on
+purpose: list it in `secret-store`, as `file` and `program`.
