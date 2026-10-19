@@ -82,49 +82,46 @@ func (m *Manager) Inspect(ctx context.Context, sc SecretContext, obj any, c *Cou
 	}
 
 	primitives := map[string]tink.AEAD{}
-	// The kind of each safe met, by safe identifier: read once.
-	kinds := map[string]string{}
 
 	return Walk(cp, func(path string, s *happydns.Secret) error {
-		switch {
-		case s.IsEmpty():
-			return nil
-		case s.IsClear():
-			c.Clear++
-			return nil
-		case !s.IsSealed():
-			return fmt.Errorf("unexpected secret state in a stored object")
-		}
-
 		fsc := sc
 		fsc.Field = path
-
-		sv, err := ParseSealed(s.Token())
-		if err != nil {
-			c.Unreadable++
-			return nil
-		}
-		if err := m.open(ctx, fsc, s, primitives); err != nil {
-			// Cut short, it tells nothing of whether the secret opens.
-			if ctxErr := ctx.Err(); ctxErr != nil {
-				return ctxErr
-			}
-			c.Unreadable++
-			return nil
-		}
-
-		kind, ok := kinds[sv.SafeId.String()]
-		if !ok {
-			safe, err := m.safes.store.GetSafe(sv.SafeId)
-			if err != nil {
-				return err
-			}
-			kind = safe.Kind
-			kinds[sv.SafeId.String()] = kind
-		}
-		c.Sealed[kind]++
-		return nil
+		return m.inspectOne(ctx, fsc, s, primitives, c)
 	})
+}
+
+func (m *Manager) inspectOne(ctx context.Context, sc SecretContext, s *happydns.Secret, primitives map[string]tink.AEAD, c *Counts) error {
+	if c.Sealed == nil {
+		c.Sealed = map[string]int{}
+	}
+
+	switch {
+	case s.IsEmpty():
+		return nil
+	case s.IsClear():
+		c.Clear++
+		return nil
+	case s.IsRedacted():
+		// Stored by mistake, it stands for no value.
+		c.Unreadable++
+		return nil
+	case !s.IsSealed():
+		return fmt.Errorf("unexpected secret state in a stored object")
+	}
+
+	if err := m.open(ctx, sc, s, primitives); err != nil {
+		// Cut short, it tells nothing of whether the secret opens.
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return ctxErr
+		}
+		c.Unreadable++
+		return nil
+	}
+
+	// Only instance safes open for now: count it under its kind once
+	// others do.
+	c.Sealed[KindInstance]++
+	return nil
 }
 
 // ResealObject stores the secrets of obj, as read from storage, the way the

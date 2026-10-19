@@ -57,6 +57,10 @@ func TestSealHonoursCancelledContext(t *testing.T) {
 		t.Error("SealSecret changed the secret despite the cancelled context")
 	}
 
+	if _, err := m.SealValue(cancelledContext(), fsc, "my-api-key"); !errors.Is(err, context.Canceled) {
+		t.Errorf("SealValue: got %v, want context.Canceled", err)
+	}
+
 	if _, err := store.GetSafeByOwner(sc.Owner, KindInstance); !errors.Is(err, happydns.ErrSafeNotFound) {
 		t.Errorf("a safe was created despite the cancelled context: %v", err)
 	}
@@ -90,6 +94,10 @@ func TestOpenHonoursCancelledContext(t *testing.T) {
 	if err := m.OpenSecret(cancelledContext(), fsc, &s); !errors.Is(err, context.Canceled) {
 		t.Errorf("OpenSecret: got %v, want context.Canceled", err)
 	}
+
+	if _, err := m.OpenValue(cancelledContext(), fsc, token); !errors.Is(err, context.Canceled) {
+		t.Errorf("OpenValue: got %v, want context.Canceled", err)
+	}
 }
 
 // A cancelled request must not report credentials as unreadable, nor rewrite
@@ -97,6 +105,8 @@ func TestOpenHonoursCancelledContext(t *testing.T) {
 func TestAdminHonoursCancelledContext(t *testing.T) {
 	m, plaintext, _ := instanceManagers(t)
 	sc := objectContext()
+	fsc := sc
+	fsc.Field = "apikey"
 
 	obj := &managedObject{ApiKey: happydns.NewSecret("my-api-key")}
 	if err := m.SealObject(context.Background(), sc, obj); err != nil {
@@ -109,6 +119,9 @@ func TestAdminHonoursCancelledContext(t *testing.T) {
 	if err := m.Inspect(cancelledContext(), sc, stored, &counts); !errors.Is(err, context.Canceled) {
 		t.Errorf("Inspect: got %v, want context.Canceled", err)
 	}
+	if err := m.InspectValue(cancelledContext(), fsc, token, &counts); !errors.Is(err, context.Canceled) {
+		t.Errorf("InspectValue: got %v, want context.Canceled", err)
+	}
 	if counts.Unreadable != 0 {
 		t.Errorf("a cancelled inspection counted %d unreadable secrets", counts.Unreadable)
 	}
@@ -118,5 +131,9 @@ func TestAdminHonoursCancelledContext(t *testing.T) {
 	}
 	if stored.ApiKey.Token() != token {
 		t.Error("ResealObject changed the object despite the cancelled context")
+	}
+
+	if _, _, err := plaintext.ResealValue(cancelledContext(), fsc, token); !errors.Is(err, context.Canceled) {
+		t.Errorf("ResealValue: got %v, want context.Canceled", err)
 	}
 }

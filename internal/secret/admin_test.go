@@ -24,6 +24,7 @@ package secret
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"testing"
 
 	"git.happydns.org/happyDomain/model"
@@ -166,5 +167,79 @@ func TestResealObjectFailsOnUnreadable(t *testing.T) {
 	}
 	if !obj.ApiKey.IsSealed() {
 		t.Error("a failed reseal changed the object")
+	}
+}
+
+// A single value, stored in a map rather than in a struct, is sealed, opened,
+// counted and resealed like a field of an object.
+func TestValueHelpers(t *testing.T) {
+	instance, plaintext, _ := instanceManagers(t)
+	ctx := context.Background()
+	sc := objectContext()
+	sc.Field = "k"
+
+	token, err := instance.SealValue(ctx, sc, "v")
+	if err != nil || !IsSealed(token) {
+		t.Fatalf("SealValue = %q, %v", token, err)
+	}
+	if same, err := instance.SealValue(ctx, sc, token); err != nil || same != token {
+		t.Errorf("SealValue(sealed) = %q, %v; want it unchanged", same, err)
+	}
+
+	if v, err := instance.OpenValue(ctx, sc, token); err != nil || v != "v" {
+		t.Errorf("OpenValue = %q, %v", v, err)
+	}
+	if v, err := instance.OpenValue(ctx, sc, "legacy"); err != nil || v != "legacy" {
+		t.Errorf("OpenValue(clear) = %q, %v", v, err)
+	}
+
+	var c Counts
+	for _, v := range []string{token, "legacy", FormatSealed(happydns.Identifier{0x42}, []byte("x")), ""} {
+		if err := instance.InspectValue(ctx, sc, v, &c); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if c.Clear != 1 || c.Sealed[KindInstance] != 1 || c.Unreadable != 1 {
+		t.Errorf("counts = %+v", c)
+	}
+
+	if out, changed, err := instance.ResealValue(ctx, sc, "legacy"); err != nil || !changed || !IsSealed(out) {
+		t.Errorf("ResealValue(clear, instance) = %q, %v, %v", out, changed, err)
+	}
+	if out, changed, err := instance.ResealValue(ctx, sc, token); err != nil || changed || out != token {
+		t.Errorf("ResealValue(sealed, instance) = %q, %v, %v", out, changed, err)
+	}
+	if out, changed, err := plaintext.ResealValue(ctx, sc, token); err != nil || !changed || out != "v" {
+		t.Errorf("ResealValue(sealed, plaintext) = %q, %v, %v", out, changed, err)
+	}
+	if out, changed, err := plaintext.ResealValue(ctx, sc, "legacy"); err != nil || changed || out != "legacy" {
+		t.Errorf("ResealValue(clear, plaintext) = %q, %v, %v", out, changed, err)
+	}
+}
+
+// The placeholder the API sends in place of a secret is never a credential.
+// Stored by mistake, it is reported as unreadable, and neither sealed nor
+// resealed.
+func TestValueHelpersRefuseAStoredPlaceholder(t *testing.T) {
+	instance, plaintext, _ := instanceManagers(t)
+	ctx := context.Background()
+	sc := objectContext()
+	sc.Field = "k"
+
+	for name, m := range map[string]*Manager{"instance": instance, "plaintext": plaintext} {
+		if _, err := m.SealValue(ctx, sc, happydns.RedactedSecret); !errors.Is(err, ErrRedactedSecret) {
+			t.Errorf("SealValue(placeholder, %s) = %v, want ErrRedactedSecret", name, err)
+		}
+		if _, changed, err := m.ResealValue(ctx, sc, happydns.RedactedSecret); !errors.Is(err, ErrRedactedSecret) || changed {
+			t.Errorf("ResealValue(placeholder, %s) = %v, %v; want ErrRedactedSecret, unchanged", name, changed, err)
+		}
+	}
+
+	var c Counts
+	if err := instance.InspectValue(ctx, sc, happydns.RedactedSecret, &c); err != nil {
+		t.Fatalf("InspectValue(placeholder) = %v", err)
+	}
+	if c.Unreadable != 1 {
+		t.Errorf("counts = %+v, want the placeholder unreadable", c)
 	}
 }
