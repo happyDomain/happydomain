@@ -280,6 +280,27 @@ func (u *CheckerOptionsUsecase) SetCheckerOptions(
 			nonEmpty[k] = v
 		}
 	}
+
+	// The placeholder echoes a value the client was sent withheld: keep the
+	// one stored at this scope, or drop it so the placeholder is never stored.
+	var existing happydns.CheckerOptions
+	for k := range nonEmpty {
+		if nonEmpty[k] != happydns.RedactedSecret {
+			continue
+		}
+		if existing == nil {
+			var err error
+			if existing, err = u.getScopedOptions(checkerName, userId, domainId, serviceId); err != nil {
+				return err
+			}
+		}
+		if v, ok := existing[k]; ok {
+			nonEmpty[k] = v
+		} else {
+			delete(nonEmpty, k)
+		}
+	}
+
 	scope := scopeFromIdentifiers(userId, domainId, serviceId)
 	filtered, _ := u.filterOptionsForScope(checkerName, scope, nonEmpty)
 	return u.store.UpdateCheckerConfiguration(checkerName, userId, domainId, serviceId, filtered)
@@ -300,6 +321,17 @@ func (u *CheckerOptionsUsecase) MergeCheckerOptions(
 	if err != nil {
 		return nil, err
 	}
+
+	// The placeholder echoes a value the client was sent withheld: dropped, so
+	// the merge keeps the one stored at this scope.
+	kept := make(happydns.CheckerOptions, len(newOpts))
+	for k, v := range newOpts {
+		if v == happydns.RedactedSecret {
+			continue
+		}
+		kept[k] = v
+	}
+	newOpts = kept
 
 	scope := scopeFromIdentifiers(userId, domainId, serviceId)
 
@@ -526,6 +558,11 @@ func (u *CheckerOptionsUsecase) SetCheckerOption(
 	optName string,
 	value any,
 ) error {
+	if value == happydns.RedactedSecret {
+		// The client echoes the placeholder: keep what is stored.
+		return nil
+	}
+
 	if def := checkerPkg.FindChecker(checkerName); def != nil {
 		meta := computeFieldMeta(def)
 		// Auto-fill keys are system-provided at runtime; never persist them.
@@ -566,6 +603,8 @@ type checkerFieldMeta struct {
 	autoFillIds      map[string]string
 	noOverrideIds    map[string]bool
 	noOverrideScopes map[string]happydns.CheckScopeType
+	// secretIds lists the options whose documentation sets Secret.
+	secretIds map[string]bool
 	// fields indexes every declared option field by Id (first declaration wins,
 	// matching the scope precedence Admin→User→Domain→Service→Run, then rules).
 	fields map[string]happydns.CheckerOptionDocumentation
@@ -589,6 +628,7 @@ func buildFieldMeta(def *happydns.CheckerDefinition) checkerFieldMeta {
 		autoFillIds:      make(map[string]string),
 		noOverrideIds:    make(map[string]bool),
 		noOverrideScopes: make(map[string]happydns.CheckScopeType),
+		secretIds:        make(map[string]bool),
 		fields:           make(map[string]happydns.CheckerOptionDocumentation),
 	}
 
@@ -604,6 +644,9 @@ func buildFieldMeta(def *happydns.CheckerDefinition) checkerFieldMeta {
 			for _, f := range fields {
 				if f.AutoFill != "" {
 					meta.autoFillIds[f.Id] = f.AutoFill
+				}
+				if f.Secret {
+					meta.secretIds[f.Id] = true
 				}
 				if _, exists := meta.fields[f.Id]; !exists {
 					meta.fields[f.Id] = f
@@ -739,7 +782,8 @@ func (u *CheckerOptionsUsecase) BuildMergedCheckerOptionsWithAutoFill(
 	merged := make(happydns.CheckerOptions, len(storedOpts)+len(runOpts))
 	maps.Copy(merged, storedOpts)
 	for k, v := range runOpts {
-		if meta.noOverrideIds[k] {
+		// The placeholder stands for what is stored.
+		if meta.noOverrideIds[k] || v == happydns.RedactedSecret {
 			continue
 		}
 		merged[k] = v
