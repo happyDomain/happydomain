@@ -38,6 +38,11 @@ var (
 	// would be sealed, sent back as shown, into one keeping secrets.
 	ErrReferenceAsSecret = errors.New("this is the reference the previous keystore kept, not a secret: enter the secret itself")
 
+	// ErrExtractionForbidden is returned when a secret would leave a
+	// keystore of references to be sealed in happyDomain, which the
+	// administrator did not allow.
+	ErrExtractionForbidden = errors.New("secrets cannot be extracted from a keystore of references on this instance")
+
 	// ErrUnresolvedReference is returned when a keystore keeping
 	// references refuses the one entered, with its reason, which never
 	// repeats the reference.
@@ -48,13 +53,51 @@ var (
 // secret field, as a reference or in place of one: theirs to fix, its reason
 // is told them.
 func IsReferenceError(err error) bool {
-	return errors.Is(err, ErrUnresolvedReference) || errors.Is(err, ErrReferencesOnly) || errors.Is(err, ErrReferenceAsSecret)
+	return errors.Is(err, ErrUnresolvedReference) || errors.Is(err, ErrReferencesOnly) || errors.Is(err, ErrReferenceAsSecret) || errors.Is(err, ErrExtractionForbidden)
 }
 
 // referencing returns the store of kind when it keeps references.
 func (m *Manager) referencing(kind string) (Referencing, bool) {
 	r, ok := m.stores[kind].(Referencing)
 	return r, ok
+}
+
+// KeepsReferences tells whether ref, a keystore of owner, keeps references to
+// secrets kept elsewhere. A keystore of the instance not created yet holds
+// nothing, so it does not.
+func (m *Manager) KeepsReferences(_ context.Context, owner happydns.Identifier, ref string) (bool, error) {
+	if m == nil {
+		return false, errNoManager
+	}
+	safe, err := m.keystoreSafe(owner, ref)
+	if err != nil {
+		return false, err
+	}
+	if safe == nil {
+		return false, nil
+	}
+	_, ok := m.referencing(safe.Kind)
+	return ok, nil
+}
+
+// checkNotReference returns ErrExtractionForbidden when the safe id is the one
+// of a keystore keeping references.
+func (m *Manager) checkNotReference(id happydns.Identifier, sc SecretContext) error {
+	if m.safes == nil {
+		return nil
+	}
+	safe, err := m.safes.GetSafe(id)
+	if errors.Is(err, happydns.ErrSafeNotFound) {
+		// Nothing left to resolve: opening the secret fails on its own.
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if _, ok := m.referencing(safe.Kind); ok {
+		return fmt.Errorf("%w: %s", ErrExtractionForbidden, sc.Field)
+	}
+	return nil
 }
 
 // CheckMigrationTarget returns an error when the secrets of owner cannot be

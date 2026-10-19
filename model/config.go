@@ -60,6 +60,9 @@ type Options struct {
 	// DisableProviders should disallow all actions on provider (add/edit/delete) through public API.
 	DisableProviders bool
 
+	// EnableKeystoreExtraction allows migrating the secrets of a keystore of references into a keystore keeping them in happyDomain.
+	EnableKeystoreExtraction bool
+
 	// DisableRegistration forbids all new registration using the public form/API.
 	DisableRegistration bool
 

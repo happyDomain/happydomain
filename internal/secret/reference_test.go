@@ -175,7 +175,7 @@ func TestReferenceSealsValue(t *testing.T) {
 }
 
 func TestIsReferenceError(t *testing.T) {
-	for _, err := range []error{ErrUnresolvedReference, ErrReferencesOnly, ErrReferenceAsSecret} {
+	for _, err := range []error{ErrUnresolvedReference, ErrReferencesOnly, ErrReferenceAsSecret, ErrExtractionForbidden} {
 		if !IsReferenceError(fmt.Errorf("field: %w", err)) {
 			t.Errorf("IsReferenceError(%v) = false", err)
 		}
@@ -247,6 +247,23 @@ func TestReferenceKeystoreImportsNothing(t *testing.T) {
 	}
 }
 
+func TestKeepsReferences(t *testing.T) {
+	f := newKeystoreFixture(t, PolicyInstance)
+	sc := objectContext()
+	ctx := context.Background()
+	refs := f.createReference(t, sc.Owner, "My file", map[string]string{"ovh/key": "s3cr3t"})
+
+	if ok, err := f.m.KeepsReferences(ctx, sc.Owner, refs.Ref); err != nil || !ok {
+		t.Errorf("KeepsReferences(reference keystore) = %v, %v; want true", ok, err)
+	}
+	if ok, err := f.m.KeepsReferences(ctx, sc.Owner, KindInstance); err != nil || ok {
+		t.Errorf("KeepsReferences(instance) = %v, %v; want false", ok, err)
+	}
+	if _, err := f.m.KeepsReferences(ctx, sc.Owner, "nope"); !errors.Is(err, ErrUnknownKeystore) {
+		t.Errorf("KeepsReferences(unknown) = %v, want ErrUnknownKeystore", err)
+	}
+}
+
 func TestReferenceKeystoreMigratesOut(t *testing.T) {
 	f := newKeystoreFixture(t, PolicyInstance)
 	sc := objectContext()
@@ -258,7 +275,8 @@ func TestReferenceKeystoreMigratesOut(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Out of it, the secret itself goes: that is what leaving it means.
+	// Out of it, the secret itself goes, once the administrator allows it.
+	f.m.allowExtraction = true
 	stored := &managedObject{ApiKey: sealedFromStorage(t, obj.ApiKey.Token())}
 	if err := f.m.SealObjectInto(ctx, sc, stored, Destination{Keystore: KindInstance}); err != nil {
 		t.Fatalf("SealObjectInto(instance) = %v", err)
@@ -266,6 +284,40 @@ func TestReferenceKeystoreMigratesOut(t *testing.T) {
 	back := &managedObject{ApiKey: sealedFromStorage(t, stored.ApiKey.Token())}
 	if err := f.m.OpenObject(ctx, sc, back); err != nil || back.ApiKey.Reveal() != "s3cr3t" {
 		t.Errorf("moved out = %q, %v; want the secret", back.ApiKey.Reveal(), err)
+	}
+}
+
+func TestReferenceKeystoreRefusesExtraction(t *testing.T) {
+	f := newKeystoreFixture(t, PolicyInstance)
+	sc := objectContext()
+	ctx := context.Background()
+	refs := f.createReference(t, sc.Owner, "My file", map[string]string{"ovh/key": "s3cr3t"})
+
+	obj := &managedObject{ApiKey: happydns.NewSecret("ovh/key")}
+	if err := f.m.SealObjectInto(ctx, sc, obj, Destination{Keystore: refs.Ref}); err != nil {
+		t.Fatal(err)
+	}
+
+	// Without the administrator's consent, a reference is not resolved to
+	// seal its value in happyDomain.
+	stored := &managedObject{ApiKey: sealedFromStorage(t, obj.ApiKey.Token())}
+	err := f.m.SealObjectInto(ctx, sc, stored, Destination{Keystore: KindInstance})
+	if !errors.Is(err, ErrExtractionForbidden) {
+		t.Fatalf("SealObjectInto(instance) = %v, want ErrExtractionForbidden", err)
+	}
+	if !stored.ApiKey.IsSealed() || stored.ApiKey.Token() != obj.ApiKey.Token() {
+		t.Error("the refused object changed")
+	}
+
+	// A secret that is not a reference moves freely.
+	mine := f.create(t, sc.Owner, creatorKind, "Mine")
+	plain := &managedObject{ApiKey: happydns.NewSecret("value")}
+	if err := f.m.SealObjectInto(ctx, sc, plain, Destination{Keystore: mine.Ref}); err != nil {
+		t.Fatal(err)
+	}
+	again := &managedObject{ApiKey: sealedFromStorage(t, plain.ApiKey.Token())}
+	if err := f.m.SealObjectInto(ctx, sc, again, Destination{Keystore: KindInstance}); err != nil {
+		t.Errorf("SealObjectInto(out of a plain keystore) = %v", err)
 	}
 }
 

@@ -184,7 +184,10 @@ Credentials stored elsewhere never move into such a keystore, where they would
 be taken for references: migrating into one is refused, and choosing one for an
 object holding stored credentials asks for a reference in each field. Out of
 it, the credentials themselves go: migrating to another keystore resolves the
-references and seals what they stand for. A reference sent back while choosing
+references and seals what they stand for. As this brings into happyDomain what
+the references kept out of it, it is refused unless the administrator starts
+happyDomain with `-enable-keystore-extraction`, without which the web
+interface offers no migration out of such a keystore. A reference sent back while choosing
 a keystore keeping credentials is refused rather than sealed as the credential.
 
 Checking a provider resolves its references, as using it does. The status of

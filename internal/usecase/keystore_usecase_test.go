@@ -374,3 +374,60 @@ func TestKeystoreUsecaseNoMigrationIntoReferences(t *testing.T) {
 		t.Errorf("moved %v, want nothing", holder.moved)
 	}
 }
+
+func TestKeystoreUsecaseExtraction(t *testing.T) {
+	ctx := context.Background()
+	owner := happydns.Identifier{0x01}
+
+	for _, tc := range []struct {
+		name    string
+		enable  bool
+		wantErr bool
+	}{
+		{"refused by default", false, true},
+		{"allowed once enabled", true, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			uc, _, holder := keystoreUsecase(t, secrettest.WithReferenceStore)
+			if tc.enable {
+				uc = uc.WithExtraction()
+			}
+			refs, err := uc.Create(ctx, owner, secrettest.ReferenceKind, "My file", secrettest.ReferenceParams(map[string]string{"k": "v"}))
+			if err != nil {
+				t.Fatal(err)
+			}
+			holder.objects["one"] = refs.SafeId
+
+			_, err = uc.Migrate(ctx, owner, refs.Ref, secret.KindInstance)
+			if tc.wantErr {
+				if httpStatus(err) != http.StatusForbidden {
+					t.Errorf("Migrate(out of references) = %v, want a 403", err)
+				}
+				if len(holder.moved) != 0 {
+					t.Errorf("moved %v, want nothing", holder.moved)
+				}
+			} else if err != nil || len(holder.moved) != 1 {
+				t.Errorf("Migrate(out of references) = %v, moved %v; want one moved", err, holder.moved)
+			}
+		})
+	}
+}
+
+func TestKeystoreUsecaseExtractionIgnoresPlainKeystores(t *testing.T) {
+	uc, _, holder := keystoreUsecase(t)
+	owner := happydns.Identifier{0x01}
+	ctx := context.Background()
+
+	a, err := uc.Create(ctx, owner, secrettest.PersonalKind, "A", secrettest.PersonalParams())
+	if err != nil {
+		t.Fatal(err)
+	}
+	holder.objects["one"] = a.SafeId
+
+	if _, err := uc.Migrate(ctx, owner, a.Ref, secret.KindInstance); err != nil {
+		t.Errorf("Migrate(plain keystore) = %v, want it allowed", err)
+	}
+	if _, err := uc.Migrate(ctx, owner, "nope", a.Ref); httpStatus(err) != http.StatusNotFound {
+		t.Errorf("Migrate(from unknown) = %v, want a 404", err)
+	}
+}

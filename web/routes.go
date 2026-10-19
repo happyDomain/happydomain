@@ -135,6 +135,10 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, captchaVerifi
 		appConfig["disable_embedded_login"] = true
 	}
 
+	if cfg.EnableKeystoreExtraction {
+		appConfig["enable_keystore_extraction"] = true
+	}
+
 	if cfg.NoMail {
 		appConfig["no_mail"] = true
 	}

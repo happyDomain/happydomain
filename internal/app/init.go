@@ -122,6 +122,8 @@ func (app *App) initSecrets() {
 		Defaults:    app.store,
 		Outbound:    app.guards.Outbound,
 		Stores:      app.cfg.SecretStores,
+
+		AllowExtraction: app.cfg.EnableKeystoreExtraction,
 	})
 	if err != nil {
 		log.Fatalf("Refusing to start: %s", err)

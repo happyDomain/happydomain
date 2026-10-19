@@ -31,6 +31,7 @@ interface AppConfig {
     disable_embedded_login?: boolean;
     disable_providers?: boolean;
     disable_registration?: boolean;
+    enable_keystore_extraction?: boolean;
     hide_feedback?: boolean;
     msg_header?: {
         text: string;
@@ -46,6 +47,7 @@ const defaultConfig: AppConfig = {
     disable_embedded_login: false,
     disable_providers: false,
     disable_registration: false,
+    enable_keystore_extraction: false,
     hide_feedback: false,
     msg_header: undefined,
     no_mail: false,

@@ -48,6 +48,7 @@ type KeystoreUsecase struct {
 	manager   *secret.Manager
 	holders   map[string]SecretHolder
 	passwords LoginPasswords
+	extract   bool
 }
 
 // LoginPasswords tells whether owners log in with a password, and checks it:
@@ -64,6 +65,14 @@ func (u *KeystoreUsecase) WithLoginPasswords(passwords LoginPasswords) *Keystore
 	return u
 }
 
+// WithExtraction lets owners migrate the secrets of a keystore of references
+// into a keystore keeping them in happyDomain: they are refused by default,
+// as the references were meant to keep them out of it.
+func (u *KeystoreUsecase) WithExtraction() *KeystoreUsecase {
+	u.extract = true
+	return u
+}
+
 func NewKeystoreUsecase(manager *secret.Manager, holders map[string]SecretHolder) *KeystoreUsecase {
 	return &KeystoreUsecase{manager: manager, holders: holders}
 }
@@ -77,7 +86,7 @@ func keystoreError(err error) error {
 		return happydns.NotFoundError{Msg: err.Error()}
 	case errors.Is(err, secret.ErrInvalidKeystore), errors.Is(err, secret.ErrKeystoreNotUnattended), errors.Is(err, secret.ErrReferencesOnly):
 		return happydns.ValidationError{Msg: err.Error()}
-	case errors.Is(err, secret.ErrInstanceKeystore), errors.Is(err, secret.ErrWrongUnlockMaterial):
+	case errors.Is(err, secret.ErrInstanceKeystore), errors.Is(err, secret.ErrWrongUnlockMaterial), errors.Is(err, secret.ErrExtractionForbidden):
 		return happydns.ForbiddenError{Msg: err.Error()}
 	}
 	return err
@@ -251,6 +260,15 @@ func (u *KeystoreUsecase) Delete(ctx context.Context, owner happydns.Identifier,
 func (u *KeystoreUsecase) Migrate(ctx context.Context, owner happydns.Identifier, from, to string) ([]secret.ResealReport, error) {
 	if from == to {
 		return nil, happydns.ValidationError{Msg: "a keystore cannot be migrated into itself"}
+	}
+	if !u.extract {
+		keeps, err := u.manager.KeepsReferences(ctx, owner, from)
+		if err != nil {
+			return nil, keystoreError(err)
+		}
+		if keeps {
+			return nil, keystoreError(secret.ErrExtractionForbidden)
+		}
 	}
 	fromId, err := u.manager.KeystoreSafe(ctx, owner, from)
 	if errors.Is(err, happydns.ErrSafeNotFound) {

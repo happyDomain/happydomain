@@ -191,6 +191,9 @@ func (app *App) initUsecases() {
 	app.usecases.notificationRegistry = registry
 	app.usecases.keystores = usecase.NewKeystoreUsecase(app.secrets, app.secretHolders()).
 		WithLoginPasswords(authUserService)
+	if app.cfg.EnableKeystoreExtraction {
+		app.usecases.keystores.WithExtraction()
+	}
 	authUserService.SetOnPasswordChanged(app.usecases.keystores.PasswordChanged)
 	app.usecases.backup = backupUC.NewUsecase(app.store, app.secrets, backupUC.WithChannelRedactor(registry))
 	resolver := notifUC.NewResolver(app.store, app.store)

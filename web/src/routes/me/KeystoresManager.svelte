@@ -49,8 +49,8 @@
     } from "$lib/api/keystores";
     import ResourceInput from "$lib/components/inputs/basic.svelte";
     import type { Field } from "$lib/model/custom_form.svelte";
-    import { keystores, refreshKeystores } from "$lib/stores/keystores";
-    import { keystoreKindLabel } from "$lib/stores/keystores";
+    import { appConfig } from "$lib/stores/config";
+    import { keystoreKindLabel, keystores, refreshKeystores } from "$lib/stores/keystores";
     import { toasts } from "$lib/stores/toasts";
     import { requestUnlock } from "$lib/stores/unlock";
     import { t } from "$lib/translations";
@@ -315,7 +315,8 @@
                             {$t("keystores.set-default")}
                         </Button>
                     {/if}
-                    {#if objects.length > 0}
+                    <!-- A keystore of references keeps secrets out of happyDomain: leaving it is opt-in. -->
+                    {#if objects.length > 0 && (!ks.references || $appConfig.enable_keystore_extraction)}
                         <!-- A keystore of references would take the secrets for references. -->
                         {@const targets = ($keystores ?? []).filter(
                             (o) => o.ref !== ks.ref && o.available && !o.references,

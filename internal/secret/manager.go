@@ -81,6 +81,10 @@ const reservedPrefix = "hds:"
 type Manager struct {
 	policy Policy
 
+	// allowExtraction lets the secrets kept in a keystore of references
+	// be resolved and sealed in happyDomain, see Config.AllowExtraction.
+	allowExtraction bool
+
 	// safes is nil when no safe can be opened: no storage.
 	safes SafeStorage
 
@@ -131,6 +135,11 @@ type Config struct {
 	// left out, it forbids the plaintext policy. Nil enables everything.
 	Stores []string
 
+	// AllowExtraction lets the secrets of a keystore of references move
+	// out of it: they are resolved and sealed in happyDomain. Refused
+	// otherwise, for every object that is written.
+	AllowExtraction bool
+
 	// factories replaces builtinStores, for tests.
 	factories map[string]StoreFactory
 }
@@ -138,12 +147,13 @@ type Config struct {
 // NewManager returns a Manager for cfg.
 func NewManager(cfg Config) (*Manager, error) {
 	m := &Manager{
-		policy:      cfg.Policy,
-		safes:       cfg.Safes,
-		defaults:    cfg.Defaults,
-		unlocked:    newUnlockCache(),
-		stores:      map[string]Store{},
-		unavailable: map[string]error{},
+		policy:          cfg.Policy,
+		allowExtraction: cfg.AllowExtraction,
+		safes:           cfg.Safes,
+		defaults:        cfg.Defaults,
+		unlocked:        newUnlockCache(),
+		stores:          map[string]Store{},
+		unavailable:     map[string]error{},
 	}
 
 	factories := cfg.storeFactories()
@@ -479,6 +489,12 @@ func (x *sealer) moveHere(ctx context.Context, sc SecretContext, s *happydns.Sec
 	if x.keepsReferences() {
 		// The secret would be taken for a reference.
 		return fmt.Errorf("%w: %s", ErrReferencesOnly, sc.Field)
+	}
+
+	if !x.m.allowExtraction {
+		if err := x.m.checkNotReference(id, sc); err != nil {
+			return err
+		}
 	}
 
 	if s.IsSealed() {
