@@ -25,8 +25,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	ratelimit "github.com/JGLTechnologies/gin-rate-limit"
+	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/api/controller"
 	"git.happydns.org/happyDomain/internal/api/middleware"
@@ -96,4 +96,3 @@ func DeclareNotificationRoutes(
 
 	return nc
 }
-

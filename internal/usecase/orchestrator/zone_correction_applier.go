@@ -41,14 +41,14 @@ import (
 // in the domain history. The WIP zone at ZoneHistory[0] is never modified.
 type ZoneCorrectionApplierUsecase struct {
 	*ZoneCorrectionListerUsecase
-	appendDomainLog    domainlogUC.DomainLogAppender
-	domainUpdater      DomainUpdater
-	zoneCreator        *zoneUC.CreateZoneUsecase
-	zoneGetter         *zoneUC.GetZoneUsecase
-	zoneRetriever      ZoneRetriever
-	zoneUpdater        *zoneUC.UpdateZoneUsecase
-	schedulerNotifier  happydns.SchedulerDomainNotifier
-	clock              func() time.Time
+	appendDomainLog   domainlogUC.DomainLogAppender
+	domainUpdater     DomainUpdater
+	zoneCreator       *zoneUC.CreateZoneUsecase
+	zoneGetter        *zoneUC.GetZoneUsecase
+	zoneRetriever     ZoneRetriever
+	zoneUpdater       *zoneUC.UpdateZoneUsecase
+	schedulerNotifier happydns.SchedulerDomainNotifier
+	clock             func() time.Time
 }
 
 // NewZoneCorrectionApplierUsecase creates a ZoneCorrectionApplierUsecase with
