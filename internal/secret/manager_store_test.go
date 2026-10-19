@@ -141,6 +141,13 @@ func withFakeStores(cfg Config) Config {
 		cfg.factories[failingStartKind] = func(Config) (Store, error) { return failingStartStore{}, nil }
 		cfg.factories[reportingKind] = func(Config) (Store, error) { return reportingStore{}, nil }
 		cfg.factories[escrowKind] = func(Config) (Store, error) { return escrowStore{}, nil }
+		cfg.factories[creatorKind] = func(Config) (Store, error) { return creatorStore{kind: creatorKind}, nil }
+		cfg.factories[unattendedCreatorKind] = func(Config) (Store, error) {
+			return unattendedCreatorStore{creatorStore{kind: unattendedCreatorKind}}, nil
+		}
+		cfg.factories[provisioningCreatorKind] = func(Config) (Store, error) {
+			return provisioningCreatorStore{unattendedCreatorStore{creatorStore{kind: provisioningCreatorKind}}}, nil
+		}
 	}
 	return cfg
 }

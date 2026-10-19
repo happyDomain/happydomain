@@ -83,6 +83,9 @@ type Manager struct {
 	// safes is nil when no safe can be opened: no storage.
 	safes SafeStorage
 
+	// defaults is nil when owners cannot choose a default keystore.
+	defaults DefaultStorage
+
 	// stores holds the store of each kind of safe configured, by kind.
 	stores map[string]Store
 
@@ -110,6 +113,10 @@ type Config struct {
 	// the instance keyset. Required by them at startup.
 	Checks CheckStorage
 
+	// Defaults keeps the keystore each owner chose for new secrets.
+	// Without it, owners cannot choose one.
+	Defaults DefaultStorage
+
 	// Stores lists the kinds of safe the administrator enabled: the others
 	// are left out. "plaintext" is not a kind of safe but is listed too:
 	// left out, it forbids the plaintext policy. Nil enables everything.
@@ -124,6 +131,7 @@ func NewManager(cfg Config) (*Manager, error) {
 	m := &Manager{
 		policy:      cfg.Policy,
 		safes:       cfg.Safes,
+		defaults:    cfg.Defaults,
 		stores:      map[string]Store{},
 		unavailable: map[string]error{},
 	}

@@ -119,6 +119,7 @@ func (app *App) initSecrets() {
 		InstanceKey: key,
 		Safes:       app.store,
 		Checks:      app.store,
+		Defaults:    app.store,
 		Stores:      app.cfg.SecretStores,
 	})
 	if err != nil {

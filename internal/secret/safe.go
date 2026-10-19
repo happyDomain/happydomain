@@ -60,9 +60,9 @@ func IsInstanceOwner(owner happydns.Identifier) bool {
 func (m *Manager) ownerSafe(ctx context.Context, owner happydns.Identifier, kind string, store Provisioner) (*happydns.Safe, error) {
 	// One mutex per owner and kind, so that two requests of the same user
 	// do not both create their safe.
-	mu, _ := m.locks.LoadOrStore(kind+":"+owner.String(), &sync.Mutex{})
-	mu.(*sync.Mutex).Lock()
-	defer mu.(*sync.Mutex).Unlock()
+	mu := m.ownerLock(kind + ":" + owner.String())
+	mu.Lock()
+	defer mu.Unlock()
 
 	safe, err := m.safes.GetSafeByOwner(owner, kind)
 	if err == nil {
@@ -90,6 +90,12 @@ func (m *Manager) ownerSafe(ctx context.Context, owner happydns.Identifier, kind
 		return nil, fmt.Errorf("unable to create the safe of %s: %w", owner.String(), err)
 	}
 	return safe, nil
+}
+
+// ownerLock returns the mutex of key, an owner and what is locked of theirs.
+func (m *Manager) ownerLock(key string) *sync.Mutex {
+	mu, _ := m.locks.LoadOrStore(key, &sync.Mutex{})
+	return mu.(*sync.Mutex)
 }
 
 // unlock returns what seals and opens the secrets of safe: through the store

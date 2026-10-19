@@ -23,6 +23,7 @@ package secret
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"maps"
 	"slices"
@@ -62,6 +63,38 @@ type Provisioner interface {
 
 	// Provision fills the keyring of safe, new and not stored yet.
 	Provision(ctx context.Context, safe *happydns.Safe) error
+}
+
+// Creator is a Store whose safes their owner creates, giving what the store
+// needs, such as a passphrase: a personal keystore. Several safes of its kind
+// may belong to one owner, told apart by their name.
+type Creator interface {
+	Store
+
+	// CreateForm describes the parameters Create takes, for the owner to
+	// fill.
+	CreateForm() []happydns.Field
+
+	// Create fills the keyring of safe, new and not stored yet, from
+	// params, a JSON object following CreateForm.
+	Create(ctx context.Context, safe *happydns.Safe, params json.RawMessage) error
+}
+
+// Unattended is a Store whose safes open without their owner, as for a
+// notification or a scheduled check run in the background. A store that is
+// not an Unattended one is taken as needing its owner.
+type Unattended interface {
+	Store
+
+	// OpensUnattended reports whether the safes of the store open without
+	// their owner.
+	OpensUnattended() bool
+}
+
+// opensUnattended tells whether the safes of store open without their owner.
+func opensUnattended(store Store) bool {
+	u, ok := store.(Unattended)
+	return ok && u.OpensUnattended()
 }
 
 // KEK is a Store that wraps the key of a safe in a keyring entry named after
@@ -145,4 +178,13 @@ func (cfg Config) storeFactories() map[string]StoreFactory {
 		return cfg.factories
 	}
 	return builtinStores
+}
+
+// WithStores returns cfg knowing, besides its stores, those of factories, by
+// kind. For tests outside this package: no other Manager knows of them.
+func (cfg Config) WithStores(factories map[string]StoreFactory) Config {
+	all := maps.Clone(cfg.storeFactories())
+	maps.Copy(all, factories)
+	cfg.factories = all
+	return cfg
 }

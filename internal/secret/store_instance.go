@@ -60,6 +60,9 @@ func newInstanceStore(cfg Config) (Store, error) {
 	return &instanceStore{key: cfg.InstanceKey, checks: cfg.Checks}, nil
 }
 
+// OpensUnattended is true: the instance keyset is held by the server.
+func (s *instanceStore) OpensUnattended() bool { return true }
+
 // CheckStartup refuses a keyset that is not the one the database was used
 // with, see VerifyCheck.
 func (s *instanceStore) CheckStartup(context.Context) error {
