@@ -49,7 +49,7 @@ type WrappedKeyset struct {
 	KEK string `json:"kek"`
 
 	// Params holds what the key encryption key needs besides itself.
-	Params json.RawMessage `json:"params,omitempty"`
+	Params json.RawMessage `json:"params,omitempty" swaggertype:"object"`
 
 	// Blob is the encrypted keyset.
 	Blob []byte `json:"blob"`

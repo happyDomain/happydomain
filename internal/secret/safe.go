@@ -163,6 +163,20 @@ func (r *safeRegistry) aead(safe *happydns.Safe) (tink.AEAD, error) {
 	return aead.New(dek)
 }
 
+// CheckSafe returns an error when this instance cannot open safe, one coming
+// from elsewhere such as a backup: stored, it would only hold values that
+// never open here.
+func (m *Manager) CheckSafe(safe *happydns.Safe) error {
+	if m == nil {
+		return errNoManager
+	}
+	if m.safes == nil {
+		return fmt.Errorf("safe %s needs the instance keyset, which is not configured", safe.Id.String())
+	}
+	_, err := m.safes.aead(safe)
+	return err
+}
+
 // DeleteOwnerSafes deletes every safe owned by owner: whatever was sealed in
 // them no longer opens, copies and backups included.
 func (m *Manager) DeleteOwnerSafes(owner happydns.Identifier) error {
