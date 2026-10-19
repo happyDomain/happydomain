@@ -29,7 +29,8 @@ type Backup struct {
 	DomainsLogs              map[string][]*DomainLog
 	Errors                   []string
 	Providers                []*ProviderMessage
-	Safes                    []*Safe `json:",omitempty"`
+	Safes                    []*Safe           `json:",omitempty"`
+	DefaultKeystores         map[string]string `json:",omitempty"`
 	Sessions                 []*Session
 	Users                    []*User
 	UsersAuth                UserAuths

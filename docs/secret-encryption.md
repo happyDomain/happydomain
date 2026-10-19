@@ -270,8 +270,9 @@ The administrative backup contains the credentials as they are stored:
 encrypted under the `instance` policy, along with the users' keys, and in clear
 otherwise. It restores on the same instance, or on another one configured with
 the same keyset: a user's key that the configured keyset does not open is not
-restored, and the restore reports it. The data export a user downloads never
-contains credentials.
+restored, and the restore reports it. It also carries the keystore each user
+chose for their new secrets. The data export a user downloads never contains
+credentials, nor safes.
 
 Deleting a user, or a user deleting their account, deletes their keys: their
 credentials no longer decrypt from the database. Their notification channels

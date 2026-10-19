@@ -206,6 +206,13 @@ func (u *Usecase) Backup() happydns.Backup {
 		}
 	}
 
+	// The keystore each owner chose for new secrets.
+	if defaults, err := u.store.ListDefaultKeystores(); err != nil {
+		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve default keystores: %s", err.Error()))
+	} else if len(defaults) > 0 {
+		ret.DefaultKeystores = defaults
+	}
+
 	// Checker configurations (positional, one entry per (checker, user?, domain?, service?)).
 	if cfgIter, err := u.store.ListAllCheckerConfigurations(); err != nil {
 		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve CheckerConfigurations: %s", err.Error()))
@@ -470,6 +477,16 @@ func (u *Usecase) Restore(ctx context.Context, backup *happydns.Backup) error {
 		errs = errors.Join(errs, u.restoreSafe(ctx, safe))
 	}
 
+	// The keystore each owner chose, once their safes are back.
+	for owner, ref := range backup.DefaultKeystores {
+		id, err := happydns.NewIdentifierFromString(owner)
+		if err != nil {
+			errs = errors.Join(errs, fmt.Errorf("default keystore of %q: %w", owner, err))
+			continue
+		}
+		errs = errors.Join(errs, u.store.PutDefaultKeystore(id, ref))
+	}
+
 	// Providers
 	for _, provider := range backup.Providers {
 		p, err := providerUC.ParseProvider(provider)
@@ -480,7 +497,7 @@ func (u *Usecase) Restore(ctx context.Context, backup *happydns.Backup) error {
 
 		// Sealed values are restored as they are; clear ones, from a backup
 		// taken before sealing existed, are sealed under the current policy.
-		if err := u.secrets.SealObject(ctx, providerUC.SecretContext(p), p.Provider); err != nil {
+		if err := u.secrets.SealObjectInto(ctx, providerUC.SecretContext(p), p.Provider, secret.Destination{}.UnderPolicy()); err != nil {
 			errs = errors.Join(errs, fmt.Errorf("provider %s: %w", p.Id.String(), err))
 			continue
 		}

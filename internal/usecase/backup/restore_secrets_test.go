@@ -389,3 +389,61 @@ func startSecrets(policy secret.Policy, key *secret.InstanceKey, db secret.Stora
 	_, err := secret.Start(context.Background(), secret.Config{Policy: policy, InstanceKey: key, Safes: db, Checks: db})
 	return err
 }
+
+// The keystore an owner chose for new secrets travels with the backup, so
+// that a restored instance keeps sending them where the owner wanted.
+func TestBackupRestoreDefaultKeystores(t *testing.T) {
+	src, err := inmemory.Instantiate()
+	if err != nil {
+		t.Fatal(err)
+	}
+	alice := happydns.Identifier{0xaa}
+	bob := happydns.Identifier{0xbb}
+	if err := src.PutDefaultKeystore(alice, "instance"); err != nil {
+		t.Fatal(err)
+	}
+	if err := src.PutDefaultKeystore(bob, "0123abcd"); err != nil {
+		t.Fatal(err)
+	}
+
+	dump := backup.NewUsecase(src, plaintextSecrets(t)).Backup()
+	if len(dump.Errors) != 0 {
+		t.Fatalf("backup errors: %v", dump.Errors)
+	}
+
+	// Through JSON, as the admin API hands it out.
+	raw, err := json.Marshal(dump)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var restored happydns.Backup
+	if err := json.Unmarshal(raw, &restored); err != nil {
+		t.Fatal(err)
+	}
+
+	dst, err := inmemory.Instantiate()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := backup.NewUsecase(dst, plaintextSecrets(t)).Restore(context.Background(), &restored); err != nil {
+		t.Fatalf("Restore: %v", err)
+	}
+
+	for owner, want := range map[string]string{alice.String(): "instance", bob.String(): "0123abcd"} {
+		id, _ := happydns.NewIdentifierFromString(owner)
+		if got, err := dst.GetDefaultKeystore(id); err != nil || got != want {
+			t.Errorf("restored default keystore of %s = %q, %v; want %q", owner, got, err, want)
+		}
+	}
+
+	// The user export carries none: it leaves happyDomain.
+	if u := backup.NewUsecase(src, plaintextSecrets(t)).BackupUser(&happydns.User{Id: alice}); len(u.DefaultKeystores) != 0 {
+		t.Error("the user export carries default keystores")
+	}
+
+	// A record naming no valid owner is reported, not applied.
+	bad := happydns.Backup{DefaultKeystores: map[string]string{"not-an-id": "instance"}}
+	if err := backup.NewUsecase(dst, plaintextSecrets(t)).Restore(context.Background(), &bad); err == nil {
+		t.Error("Restore accepted a default keystore of an invalid owner")
+	}
+}
