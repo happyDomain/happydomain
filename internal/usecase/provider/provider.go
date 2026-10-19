@@ -92,7 +92,7 @@ func (s *Service) instantiate(ctx context.Context, p *happydns.Provider) (happyd
 func (s *Service) CreateProvider(ctx context.Context, user *happydns.User, msg *happydns.ProviderMessage) (*happydns.Provider, error) {
 	provider, err := ParseProvider(msg)
 	if err != nil {
-		return nil, fmt.Errorf("unable to parse provider: %w", err)
+		return nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to parse provider: %s", err.Error())}
 	}
 
 	// Nothing is stored yet, so a secret still holding happydns.RedactedSecret
@@ -102,7 +102,7 @@ func (s *Service) CreateProvider(ctx context.Context, user *happydns.User, msg *
 	forms.MergeSecrets(nil, provider.Provider)
 
 	if err := s.validator.Validate(ctx, provider); err != nil {
-		return nil, fmt.Errorf("invalid provider: %w", err)
+		return nil, happydns.ValidationError{Msg: fmt.Sprintf("invalid provider: %s", err.Error())}
 	}
 
 	provider.Owner = user.Id

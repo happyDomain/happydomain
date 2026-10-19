@@ -80,8 +80,12 @@ func (v *mockValidator) Validate(_ context.Context, p *happydns.Provider) error 
 }
 
 func newTestService(t *testing.T) (*provider.Service, storage.Storage) {
+	return newTestServiceWithValidator(t, &mockValidator{})
+}
+
+func newTestServiceWithValidator(t *testing.T, validator provider.ProviderValidator) (*provider.Service, storage.Storage) {
 	db, _ := inmemory.Instantiate()
-	return provider.NewService(db, &mockValidator{}, nil), db
+	return provider.NewService(db, validator, nil), db
 }
 
 func Test_CreateProvider(t *testing.T) {
