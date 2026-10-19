@@ -1003,3 +1003,151 @@ func Test_Secret_ReplacedCredentialsStayInTheirKeystore(t *testing.T) {
 		t.Errorf("stored body = %s, want the new key in %s", body, personal.Ref)
 	}
 }
+
+func Test_Secret_ReferenceKeystore(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	m, err := secret.NewManager(secrettest.WithReferenceStore(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db, Defaults: db}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The validator for real: it gets what the reference stands for.
+	svc := provider.NewService(db, nil, nil, m)
+	user := createTestUser(t, db, "references@example.com")
+
+	refs, err := m.CreateKeystore(ctx, user.Id, secrettest.ReferenceKind, "My file", secrettest.ReferenceParams(map[string]string{"ovh/key": "s3cr3t"}))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	instantiatedWith = nil
+	p, err := svc.CreateProvider(secret.WithKeystore(ctx, refs.Ref), user, secretMessage(t, "SecretTestProvider", `{"host":"h","apikey":"ovh/key"}`))
+	if err != nil {
+		t.Fatalf("CreateProvider = %v", err)
+	}
+	if instantiatedWith == nil || *instantiatedWith != "s3cr3t" {
+		t.Errorf("validated with %v, want the secret the reference stands for", instantiatedWith)
+	}
+	if body := storedBody(t, db, p.Id); !strings.Contains(body, `"apikey":"hds:1:`+refs.Ref+`:`) {
+		t.Fatalf("stored body = %s, want the reference in %s", body, refs.Ref)
+	}
+
+	// Its owner reads the reference back.
+	shown, err := svc.GetUserProvider(ctx, user, p.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.ShowReferences(ctx, shown); err != nil {
+		t.Fatal(err)
+	}
+	if b, _ := json.Marshal(shown.Provider); !strings.Contains(string(b), `"apikey":"ovh/key"`) {
+		t.Errorf("shown provider = %s, want the reference", b)
+	}
+
+	// Sent back as shown, it stays a reference.
+	instantiatedWith = nil
+	if _, err := svc.UpdateProviderFromMessage(ctx, p.Id, user, secretMessage(t, "SecretTestProvider", `{"host":"h2","apikey":"ovh/key"}`)); err != nil {
+		t.Fatalf("UpdateProviderFromMessage(as shown) = %v", err)
+	}
+	if instantiatedWith == nil || *instantiatedWith != "s3cr3t" {
+		t.Errorf("validated with %v, want the secret", instantiatedWith)
+	}
+	if body := storedBody(t, db, p.Id); !strings.Contains(body, `"apikey":"hds:1:`+refs.Ref+`:`) {
+		t.Errorf("stored body = %s, want the reference still in %s", body, refs.Ref)
+	}
+
+	// Moved elsewhere as shown, it would become the secret: refused.
+	_, err = svc.UpdateProviderFromMessage(secret.WithKeystore(ctx, secret.KindInstance), p.Id, user, secretMessage(t, "SecretTestProvider", `{"host":"h","apikey":"ovh/key"}`))
+	var verr happydns.ValidationError
+	if !errors.As(err, &verr) || !strings.Contains(err.Error(), secret.ErrReferenceAsSecret.Error()) {
+		t.Errorf("UpdateProviderFromMessage(to instance, as shown) = %v, want a ValidationError for ErrReferenceAsSecret", err)
+	}
+	if body := storedBody(t, db, p.Id); !strings.Contains(body, `"apikey":"hds:1:`+refs.Ref+`:`) {
+		t.Errorf("stored body = %s, want the reference left in %s", body, refs.Ref)
+	}
+
+	// A reference the keystore refuses is the owner's to fix: they are
+	// told why.
+	_, err = svc.CreateProvider(secret.WithKeystore(ctx, refs.Ref), user, secretMessage(t, "SecretTestProvider", `{"host":"h","apikey":"ovh/nope"}`))
+	if !errors.As(err, &verr) || !strings.Contains(err.Error(), "unknown reference") {
+		t.Errorf("CreateProvider(unknown reference) = %v, want a ValidationError with the reason of the keystore", err)
+	}
+}
+
+// Sealed before the validation: a provider it refuses is still not stored,
+// neither created nor updated.
+func Test_Secret_RefusedAfterSealingStoresNothing(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	m, err := secret.NewManager(secrettest.WithReferenceStore(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db, Defaults: db}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	accepting := provider.NewService(db, &mockValidator{}, nil, m)
+	refusing := provider.NewService(db, failingValidator{}, nil, m)
+	user := createTestUser(t, db, "refused@example.com")
+
+	refs, err := m.CreateKeystore(ctx, user.Id, secrettest.ReferenceKind, "My file", secrettest.ReferenceParams(map[string]string{"ovh/key": "s3cr3t", "ovh/other": "0th3r"}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	inRefs := secret.WithKeystore(ctx, refs.Ref)
+
+	_, err = refusing.CreateProvider(inRefs, user, secretMessage(t, "SecretTestProvider", `{"host":"h","apikey":"ovh/key"}`))
+	var verr happydns.ValidationError
+	if !errors.As(err, &verr) {
+		t.Fatalf("CreateProvider(refused) = %v, want a ValidationError", err)
+	}
+	if providers, err := refusing.ListUserProviders(ctx, user); err != nil || len(providers) != 0 {
+		t.Fatalf("ListUserProviders = %v, %v; want none stored", providers, err)
+	}
+
+	p, err := accepting.CreateProvider(inRefs, user, secretMessage(t, "SecretTestProvider", `{"host":"h","apikey":"ovh/key"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	before := storedBody(t, db, p.Id)
+
+	_, err = refusing.UpdateProviderFromMessage(inRefs, p.Id, user, secretMessage(t, "SecretTestProvider", `{"host":"h2","apikey":"ovh/other"}`))
+	if !errors.As(err, &verr) {
+		t.Errorf("UpdateProviderFromMessage(refused) = %v, want a ValidationError", err)
+	}
+	if after := storedBody(t, db, p.Id); after != before {
+		t.Errorf("stored body = %s, want it unchanged: %s", after, before)
+	}
+}
+
+// A secret moved into a keystore of references would be taken for a
+// reference: the owner is told to enter one, and nothing is stored.
+func Test_Secret_SecretRefusedByReferenceKeystore(t *testing.T) {
+	db, _ := inmemory.Instantiate()
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	m, err := secret.NewManager(secrettest.WithReferenceStore(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db, Defaults: db}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	svc := provider.NewService(db, &mockValidator{}, nil, m)
+	user := createTestUser(t, db, "references-only@example.com")
+
+	refs, err := m.CreateKeystore(ctx, user.Id, secrettest.ReferenceKind, "My file", secrettest.ReferenceParams(map[string]string{"ovh/key": "s3cr3t"}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, err := svc.CreateProvider(ctx, user, secretMessage(t, "SecretTestProvider", `{"host":"h","apikey":"my-key"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	before := storedBody(t, db, p.Id)
+
+	_, err = svc.UpdateProviderFromMessage(secret.WithKeystore(ctx, refs.Ref), p.Id, user, secretMessage(t, "SecretTestProvider", `{"host":"h","apikey":"`+happydns.RedactedSecret+`"}`))
+	var verr happydns.ValidationError
+	if !errors.As(err, &verr) || !strings.Contains(err.Error(), secret.ErrReferencesOnly.Error()) {
+		t.Errorf("UpdateProviderFromMessage(secret into references) = %v, want a ValidationError for ErrReferencesOnly", err)
+	}
+	if after := storedBody(t, db, p.Id); after != before {
+		t.Errorf("stored body = %s, want it unchanged: %s", after, before)
+	}
+}

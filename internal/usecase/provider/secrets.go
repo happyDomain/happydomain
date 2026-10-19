@@ -85,11 +85,12 @@ func (i instantiator) instantiate(ctx context.Context, p *happydns.Provider) (ha
 
 // seal seals the secrets of p before it is stored, into keystore: moving
 // there those sealed elsewhere, or, empty, where secret.Destination tells.
-// current lists the safes the stored version used, whose secrets an update
-// may all replace.
-func (i instantiator) seal(ctx context.Context, p *happydns.Provider, keystore string, current []happydns.Identifier) error {
-	err := i.secrets.SealObjectInto(ctx, SecretContext(p), p.Provider, secret.Destination{Keystore: keystore, Current: current})
-	if errors.Is(err, secret.ErrUnknownKeystore) {
+// stored, the stored version, tells the safes it used, whose secrets an
+// update may all replace, and the references it kept, which a client sends
+// back as shown.
+func (i instantiator) seal(ctx context.Context, p *happydns.Provider, keystore string, stored storedSecrets) error {
+	err := i.secrets.SealObjectInto(ctx, SecretContext(p), p.Provider, secret.Destination{Keystore: keystore, Current: stored.safes, References: stored.references})
+	if errors.Is(err, secret.ErrUnknownKeystore) || secret.IsReferenceError(err) {
 		return happydns.ValidationError{Msg: err.Error()}
 	}
 	if errors.Is(err, happydns.ErrKeystoreLocked) {
@@ -103,6 +104,35 @@ func (i instantiator) seal(ctx context.Context, p *happydns.Provider, keystore s
 		}
 	}
 	return nil
+}
+
+// storedSecrets tells where the secrets of the stored version of a provider
+// are, before an update replaces them.
+type storedSecrets struct {
+	safes      []happydns.Identifier
+	references map[string]string
+}
+
+// storedSecretsOf reads, from p as stored, the safes and references seal needs
+// once an update has replaced them.
+func (i instantiator) storedSecretsOf(ctx context.Context, p *happydns.Provider) (storedSecrets, error) {
+	safes, err := secret.SafesOf(p.Provider)
+	if err != nil {
+		return storedSecrets{}, err
+	}
+	references, err := i.secrets.ReferencesOf(ctx, SecretContext(p), p.Provider)
+	if err != nil {
+		return storedSecrets{}, err
+	}
+	return storedSecrets{safes: safes, references: references}, nil
+}
+
+// ShowReferences replaces each secret of p, as stored, that a keystore of
+// references keeps by that reference, which is not secret: see
+// secret.Manager.ShowReferences. Only on a provider answering its owner,
+// before the other secrets are withheld.
+func (s *Service) ShowReferences(ctx context.Context, p *happydns.Provider) error {
+	return s.secrets.ShowReferences(ctx, SecretContext(p), p.Provider)
 }
 
 // checkIncoming refuses a provider sent by a client holding a sealed value.

@@ -91,3 +91,28 @@ func Test_CreateProvider_ClientErrorsAreValidationErrors(t *testing.T) {
 		})
 	}
 }
+
+// lockedValidator meets a keystore its owner has not unlocked, as it opens
+// the secrets of the provider.
+type lockedValidator struct{}
+
+func (lockedValidator) Validate(_ context.Context, _ *happydns.Provider) error {
+	return happydns.KeystoreLockedError{KeystoreLock: happydns.KeystoreLock{Ref: "passphrase"}}
+}
+
+// A locked keystore is not a mistake of the user: the error has to reach the
+// API as it is, which answers 423 and asks to unlock it, as on update.
+func Test_CreateProvider_KeystoreLockedPassesThrough(t *testing.T) {
+	providerService, db := newTestServiceWithValidator(t, lockedValidator{})
+	user := createTestUser(t, db, "locked@example.com")
+
+	_, err := providerService.CreateProvider(ctx, user, createTestProviderMessage(t, "DDNSServer", "Locked"))
+	var locked happydns.KeystoreLockedError
+	if !errors.As(err, &locked) {
+		t.Fatalf("CreateProvider() = %T %v, want the KeystoreLockedError", err, err)
+	}
+	var validation happydns.ValidationError
+	if errors.As(err, &validation) {
+		t.Errorf("CreateProvider() = %v, want no ValidationError", err)
+	}
+}
