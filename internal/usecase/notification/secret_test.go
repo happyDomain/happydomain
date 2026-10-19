@@ -27,6 +27,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -80,6 +81,14 @@ func TestSendPathsOpenTheWebhookSecret(t *testing.T) {
 	}
 
 	user := &happydns.User{Id: ch.UserId, Email: "u@example.com"}
+
+	// The tester sends on behalf of the request: once it is cancelled, the
+	// secret is not even opened.
+	cancelled, cancel := context.WithCancel(context.Background())
+	cancel()
+	if err := NewTester(registry).Send(cancelled, ch, user); !errors.Is(err, context.Canceled) {
+		t.Errorf("Tester.Send with a cancelled context: got %v, want context.Canceled", err)
+	}
 
 	if err := NewTester(registry).Send(context.Background(), ch, user); err != nil {
 		t.Fatalf("Tester.Send: %v", err)

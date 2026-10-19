@@ -104,7 +104,11 @@ func (m *Manager) Inspect(ctx context.Context, sc SecretContext, obj any, c *Cou
 			c.Unreadable++
 			return nil
 		}
-		if err := m.open(fsc, s, primitives); err != nil {
+		if err := m.open(ctx, fsc, s, primitives); err != nil {
+			// Cut short, it tells nothing of whether the secret opens.
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return ctxErr
+			}
 			c.Unreadable++
 			return nil
 		}

@@ -358,3 +358,27 @@ func TestRestoreRefusesSafesOfAnotherKeyset(t *testing.T) {
 		})
 	}
 }
+
+// The context of the request reaches the secrets: a cancelled restore does not
+// store a credential it could not seal.
+func TestRestoreHonoursContext(t *testing.T) {
+	db, err := inmemory.Instantiate()
+	if err != nil {
+		t.Fatal(err)
+	}
+	uc := backup.NewUsecase(db, plaintextSecrets(t))
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	in := &happydns.Backup{
+		Providers: []*happydns.ProviderMessage{
+			secretProviderMessage(happydns.Identifier{0xaa}, 1, `{"host":"h","apikey":"legacy"}`),
+		},
+	}
+	if err := uc.Restore(ctx, in); !errors.Is(err, context.Canceled) {
+		t.Errorf("Restore: got %v, want context.Canceled", err)
+	}
+	if _, err := db.GetProvider(happydns.Identifier{1}); err == nil {
+		t.Error("a provider was restored despite the cancelled context")
+	}
+}

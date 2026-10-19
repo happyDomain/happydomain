@@ -176,6 +176,11 @@ func (x *sealer) seal(ctx context.Context, sc SecretContext, s *happydns.Secret)
 		return ErrRedactedSecret
 	}
 
+	// Before any work: a safe may be created, or a store reached.
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	clear, ok := s.ClearForSealing()
 	if !ok {
 		return errors.New("secret in an unknown state")
@@ -234,7 +239,7 @@ func (m *Manager) OpenObject(ctx context.Context, sc SecretContext, obj any) err
 	return Walk(obj, func(path string, s *happydns.Secret) error {
 		fsc := sc
 		fsc.Field = path
-		return m.open(fsc, s, primitives)
+		return m.open(ctx, fsc, s, primitives)
 	})
 }
 
@@ -247,7 +252,7 @@ func (m *Manager) OpenSecret(ctx context.Context, sc SecretContext, s *happydns.
 	if err := sc.Validate(); err != nil {
 		return err
 	}
-	return m.open(sc, s, map[string]tink.AEAD{})
+	return m.open(ctx, sc, s, map[string]tink.AEAD{})
 }
 
 // OpenCopy returns a copy of obj, a pointer to a struct, with every secret
@@ -268,12 +273,16 @@ func (m *Manager) OpenCopy(ctx context.Context, sc SecretContext, obj any) (any,
 	return cp, nil
 }
 
-func (m *Manager) open(sc SecretContext, s *happydns.Secret, primitives map[string]tink.AEAD) error {
+func (m *Manager) open(ctx context.Context, sc SecretContext, s *happydns.Secret, primitives map[string]tink.AEAD) error {
 	switch {
 	case s.IsEmpty(), s.IsClear(), s.IsOpened():
 		return nil
 	case s.IsRedacted():
 		return ErrRedactedSecret
+	}
+
+	if err := ctx.Err(); err != nil {
+		return err
 	}
 
 	token := s.Token()
