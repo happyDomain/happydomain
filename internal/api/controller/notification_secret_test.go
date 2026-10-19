@@ -23,7 +23,9 @@ package controller
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -243,5 +245,19 @@ func TestUnifiedPushEndpointIsSealed(t *testing.T) {
 	nc.UpdateChannel(c)
 	if w.Code != http.StatusInternalServerError || strings.Contains(w.Body.String(), "safe") {
 		t.Errorf("UpdateChannel = %d %s, want a 500 naming no safe", w.Code, w.Body.String())
+	}
+}
+
+// What the owner entered in a secret field, refused as a reference or in
+// place of one, is theirs to fix: answered 400 with the reason.
+func TestSealErrorTellsReferenceErrors(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	for _, sentinel := range []error{secret.ErrUnresolvedReference, secret.ErrReferencesOnly, secret.ErrReferenceAsSecret} {
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		sealError(c, fmt.Errorf("headers.X-Token: %w: no such file in the directory of the keystore", sentinel))
+		if w.Code != http.StatusBadRequest || !strings.Contains(w.Body.String(), sentinel.Error()) {
+			t.Errorf("sealError(%v) = %d %s, want 400 with the reason", sentinel, w.Code, w.Body.String())
+		}
 	}
 }

@@ -73,7 +73,9 @@ func (h *sealedHolder) MoveOwnerSecrets(_ context.Context, _ happydns.Identifier
 	return report, nil
 }
 
-func keystoreUsecase(t *testing.T) (*usecase.KeystoreUsecase, *secret.Manager, *sealedHolder) {
+// keystoreUsecase returns a KeystoreUsecase knowing the personal test store,
+// and the stores each of more enables in its Config.
+func keystoreUsecase(t *testing.T, more ...func(secret.Config) secret.Config) (*usecase.KeystoreUsecase, *secret.Manager, *sealedHolder) {
 	t.Helper()
 	db, err := inmemory.Instantiate()
 	if err != nil {
@@ -81,7 +83,11 @@ func keystoreUsecase(t *testing.T) (*usecase.KeystoreUsecase, *secret.Manager, *
 	}
 	h, _ := secret.GenerateInstanceKeyset()
 	key, _ := secret.NewInstanceKey(h)
-	m, err := secret.NewManager(secrettest.WithPersonalStore(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db, Defaults: db}))
+	cfg := secrettest.WithPersonalStore(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db, Defaults: db})
+	for _, with := range more {
+		cfg = with(cfg)
+	}
+	m, err := secret.NewManager(cfg)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -305,5 +311,29 @@ func TestKeystoreUsecasePasswordBound(t *testing.T) {
 		if k.Ref == ks.Ref && k.Locked {
 			t.Error("a password bound keystore does not open with the new password")
 		}
+	}
+}
+
+func TestKeystoreUsecaseNoMigrationIntoReferences(t *testing.T) {
+	uc, _, holder := keystoreUsecase(t, secrettest.WithReferenceStore)
+	owner := happydns.Identifier{0x01}
+	ctx := context.Background()
+
+	a, err := uc.Create(ctx, owner, secrettest.PersonalKind, "A", secrettest.PersonalParams())
+	if err != nil {
+		t.Fatal(err)
+	}
+	refs, err := uc.Create(ctx, owner, secrettest.ReferenceKind, "My file", secrettest.ReferenceParams(map[string]string{"k": "v"}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	holder.objects["one"] = a.SafeId
+
+	// Its secrets would be taken for references.
+	if _, err := uc.Migrate(ctx, owner, a.Ref, refs.Ref); httpStatus(err) != http.StatusBadRequest {
+		t.Errorf("Migrate(into references) = %v, want a 400", err)
+	}
+	if len(holder.moved) != 0 {
+		t.Errorf("moved %v, want nothing", holder.moved)
 	}
 }

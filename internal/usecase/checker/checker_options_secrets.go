@@ -224,6 +224,9 @@ func (u *CheckerOptionsUsecase) sealOptions(ctx context.Context, checkerName str
 		if errors.Is(err, secret.ErrUnknownKeystore) || errors.Is(err, secret.ErrKeystoreNotUnattended) {
 			return happydns.ValidationError{Msg: err.Error()}
 		}
+		if secret.IsReferenceError(err) {
+			return happydns.ValidationError{Msg: fmt.Sprintf("option %q: %s", k, err.Error())}
+		}
 		if err != nil {
 			return fmt.Errorf("unable to seal option %q: %w", k, err)
 		}

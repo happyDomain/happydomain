@@ -75,7 +75,7 @@ func keystoreError(err error) error {
 		return nil
 	case errors.Is(err, secret.ErrUnknownKeystore):
 		return happydns.NotFoundError{Msg: err.Error()}
-	case errors.Is(err, secret.ErrInvalidKeystore), errors.Is(err, secret.ErrKeystoreNotUnattended):
+	case errors.Is(err, secret.ErrInvalidKeystore), errors.Is(err, secret.ErrKeystoreNotUnattended), errors.Is(err, secret.ErrReferencesOnly):
 		return happydns.ValidationError{Msg: err.Error()}
 	case errors.Is(err, secret.ErrInstanceKeystore), errors.Is(err, secret.ErrWrongUnlockMaterial):
 		return happydns.ForbiddenError{Msg: err.Error()}
@@ -253,7 +253,7 @@ func (u *KeystoreUsecase) Migrate(ctx context.Context, owner happydns.Identifier
 	if err != nil {
 		return nil, keystoreError(err)
 	}
-	if err := u.manager.CheckKeystore(ctx, owner, to); err != nil {
+	if err := u.manager.CheckMigrationTarget(ctx, owner, to); err != nil {
 		return nil, keystoreError(err)
 	}
 

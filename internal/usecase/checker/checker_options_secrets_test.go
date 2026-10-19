@@ -584,3 +584,60 @@ func TestSecretOptionsKeystoreIsUnattended(t *testing.T) {
 		t.Errorf("an option went to the default keystore, which needs its owner")
 	}
 }
+
+// A reference its keystore refuses is the owner's to fix: they are told why.
+func TestSecretOptionsUnresolvedReference(t *testing.T) {
+	ctx := context.Background()
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	m, err := secret.NewManager(secrettest.WithReferenceStore(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: secrettest.NewSafes(), Defaults: secrettest.NewDefaults()}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	uc := checkerUC.NewCheckerOptionsUsecase(newOptionsStore(), nil).WithSecrets(m)
+	user := idPtr()
+
+	refs, err := m.CreateKeystore(ctx, *user, secrettest.ReferenceKind, "My file", secrettest.ReferenceParams(map[string]string{"token": "t"}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := uc.SetCheckerOptions(secret.WithKeystore(ctx, refs.Ref), secretChecker, user, nil, nil, happydns.CheckerOptions{"user_token": "token"}); err != nil {
+		t.Fatalf("SetCheckerOptions(known reference) = %v", err)
+	}
+	err = uc.SetCheckerOptions(secret.WithKeystore(ctx, refs.Ref), secretChecker, user, nil, nil, happydns.CheckerOptions{"user_token": "nope"})
+	var verr happydns.ValidationError
+	if !errors.As(err, &verr) || !strings.Contains(err.Error(), "unknown reference") || !strings.Contains(err.Error(), `"user_token"`) {
+		t.Errorf("SetCheckerOptions(unknown reference) = %v, want a ValidationError naming the option, with the reason of the keystore", err)
+	}
+}
+
+// Options in clear from a backup are sealed under the policy, not into the
+// default keystore of their owner, which may only keep references.
+func TestRestoreOptionsIgnoresTheDefault(t *testing.T) {
+	ctx := context.Background()
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	m, err := secret.NewManager(secrettest.WithReferenceStore(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: secrettest.NewSafes(), Defaults: secrettest.NewDefaults()}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	user := idPtr()
+
+	refs, err := m.CreateKeystore(ctx, *user, secrettest.ReferenceKind, "My file", secrettest.ReferenceParams(map[string]string{"token": "t"}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := m.SetDefaultKeystore(ctx, *user, refs.Ref); err != nil {
+		t.Fatal(err)
+	}
+
+	opts, err := checkerUC.RestoreOptions(ctx, m, secretChecker, user, nil, nil, happydns.CheckerOptions{"user_token": "s3cr3t"})
+	if err != nil {
+		t.Fatalf("RestoreOptions: %v", err)
+	}
+	v, _ := opts["user_token"].(string)
+	id, ok := secret.SafeOfValue(v)
+	if !ok || id.Equals(refs.SafeId) {
+		t.Errorf("RestoreOptions = %q, want it sealed under the policy", v)
+	}
+}
