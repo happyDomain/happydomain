@@ -97,7 +97,10 @@ A keystore is where the credentials of a user are sealed. Each user has:
 - the personal keystores they create themselves, under a name, from a kind
   the instance offers: `passphrase` (locked by a passphrase) and
   `login-password` (bound to the login password) are enabled by default, and
-  need no configuration. See also
+  need no configuration. `file` (references to files on the server) reaches
+  the server itself: the administrator enables it on purpose with
+  `-secret-store`, for instance
+  `-secret-store plaintext,instance,passphrase,login-password,file`. See also
   [Adding a kind of keystore](#adding-a-kind-of-keystore).
 
 The settings of a user list their keystores, with what each holds. There they
@@ -188,6 +191,46 @@ resolves them, since resolving one may run what its owner set up.
 Notification channels and checker options may be kept in such a keystore, when
 it opens without its owner, but their references are withheld when read, as
 credentials are.
+
+### File keystores
+
+The `file` kind resolves each reference to a file on the happyDomain server,
+holding one credential, as the secrets of a container or the credentials of a
+systemd unit do. The file is read whenever the credential is used: changing
+it changes the credential, without touching happyDomain. Its final newline is
+dropped; a file empty without it, or larger than 64 KiB, is refused.
+
+The administrator chooses a directory, and gives each user who keeps files
+there a directory of their own, named after their identifier (shown in the
+user list of the administration interface):
+
+```
+secret-store=plaintext,instance,passphrase,login-password,file
+secret-file-dir=/srv/happydomain/secrets
+```
+
+```
+/srv/happydomain/secrets/
+  <user identifier>/
+    ovh_app_secret
+    work/
+      cloudflare_token
+```
+
+A file keystore names a subdirectory of the directory of its owner, or the
+directory itself. A reference is the path of a file relative to it, such as
+`ovh_app_secret`, or `cloudflare_token` in a keystore of the `work`
+subdirectory. Nothing outside the directory of the owner is read, through a
+symbolic link neither: a user never reads the files of another, nor the
+instance keyset. happyDomain needs to read the files, and nothing more:
+neither write to them nor list them.
+
+Such keystores open without their owner, so notifications and scheduled checks
+use them too. The directory is checked at startup.
+
+This kind is meant for an instance whose users have an account on the server,
+and is not enabled by default: list `file` in `-secret-store` to enable it. On
+an instance shared with users who do not, leave it out.
 
 ## Startup checks
 

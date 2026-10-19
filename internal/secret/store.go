@@ -224,6 +224,7 @@ var builtinStores = map[string]StoreFactory{
 	KindInstance:      newInstanceStore,
 	KindPassphrase:    newPassphraseStore,
 	KindLoginPassword: newLoginPasswordStore,
+	KindFile:          newFileStore,
 }
 
 // KnownStores returns the kinds of safe happyDomain knows, sorted.
@@ -231,12 +232,22 @@ func KnownStores() []string {
 	return slices.Sorted(maps.Keys(builtinStores))
 }
 
+// optInStores lists the kinds of safe left out by default: they reach the
+// files or programs of the server, and are only ever enabled on purpose.
+var optInStores = []string{KindFile}
+
 // DefaultStores returns the stores enabled when the administrator lists none:
-// plaintext, as happyDomain always did, and every kind of safe. A kind not
-// configured is enabled all the same: it is offered to nobody, see
-// ErrStoreUnavailable.
+// plaintext, as happyDomain always did, and every kind of safe but those of
+// optInStores. A kind not configured is enabled all the same: it is offered
+// to nobody, see ErrStoreUnavailable.
 func DefaultStores() []string {
-	return append([]string{string(PolicyPlaintext)}, KnownStores()...)
+	stores := []string{string(PolicyPlaintext)}
+	for _, kind := range KnownStores() {
+		if !slices.Contains(optInStores, kind) {
+			stores = append(stores, kind)
+		}
+	}
+	return stores
 }
 
 // storeFactories returns the factories cfg builds its stores from: the

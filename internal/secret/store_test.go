@@ -77,9 +77,18 @@ func TestDefaultStores(t *testing.T) {
 	if !slices.Contains(got, string(PolicyPlaintext)) {
 		t.Errorf("DefaultStores() = %v, want it to hold %q", got, PolicyPlaintext)
 	}
+
+	// Those reaching the files or programs of the server are enabled on
+	// purpose only.
+	optIn := []string{KindFile}
 	for _, kind := range KnownStores() {
-		if !slices.Contains(got, kind) {
+		if !slices.Contains(optIn, kind) && !slices.Contains(got, kind) {
 			t.Errorf("DefaultStores() = %v, want it to hold the store %q", got, kind)
+		}
+	}
+	for _, kind := range optIn {
+		if slices.Contains(got, kind) {
+			t.Errorf("DefaultStores() = %v, must not hold %q: it needs a configuration, and reaches the server", got, kind)
 		}
 	}
 }
