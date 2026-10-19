@@ -269,6 +269,7 @@
                                 index="channel"
                                 edit
                                 specs={secretSpecs(field)}
+                                revealed={field.revealed}
                                 bind:value={config[field.key]}
                             />
                         {:else if field.kind === "headers"}

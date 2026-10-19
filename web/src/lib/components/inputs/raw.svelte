@@ -43,6 +43,8 @@
         index: string;
         specs?: Field;
         readonly?: boolean;
+        // Show the secret in clear until the user hides it.
+        revealed?: boolean;
         value: any;
         [key: string]: unknown;
     }
@@ -52,6 +54,7 @@
         index,
         specs = { id: "", type: "" },
         readonly = false,
+        revealed = false,
         value = $bindable(),
         ...rest
     }: Props = $props();
@@ -61,7 +64,8 @@
         specs.type === "time.Duration" || specs.type === "common.Duration" ? "s" : null,
     );
 
-    let secretVisible = $state(false);
+    // svelte-ignore state_referenced_locally
+    let secretVisible = $state(revealed);
 
     // The server withheld this value: what we hold is the placeholder standing
     // in for a stored credential, and submitting it back unchanged is what

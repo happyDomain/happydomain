@@ -27,6 +27,8 @@ export interface ChannelConfigField {
     key: string;
     kind: FieldKind;
     required?: boolean;
+    // For secrets: show the value in clear by default.
+    revealed?: boolean;
     i18nLabel: string;
     i18nHelp?: string;
 }
@@ -76,6 +78,7 @@ export const CHANNEL_CONFIG_SCHEMAS: Record<string, ChannelConfigSchema> = {
                 key: "endpoint",
                 kind: "secret",
                 required: true,
+                revealed: true,
                 i18nLabel: "settings.notifications.channels.fields.unifiedPushEndpoint",
                 i18nHelp: "settings.notifications.channels.fields.unifiedPushEndpointHelp",
             },
