@@ -946,7 +946,8 @@
             "instance": "Encrypted with the key of the instance",
             "passphrase": "Locked by a passphrase",
             "login-password": "Bound to the login password",
-            "file": "References to files on the server"
+            "file": "References to files on the server",
+            "program": "References answered by a program on the server"
         },
         "name": "Name",
         "choose": "Keystore holding the credentials of this object",

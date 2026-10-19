@@ -97,11 +97,11 @@ A keystore is where the credentials of a user are sealed. Each user has:
 - the personal keystores they create themselves, under a name, from a kind
   the instance offers: `passphrase` (locked by a passphrase) and
   `login-password` (bound to the login password) are enabled by default, and
-  need no configuration. `file` (references to files on the server) reaches
-  the server itself: the administrator enables it on purpose with
-  `-secret-store`, for instance
-  `-secret-store plaintext,instance,passphrase,login-password,file`. See also
-  [Adding a kind of keystore](#adding-a-kind-of-keystore).
+  need no configuration. `file` (references to files on the server) and
+  `program` (references answered by programs on the server) reach the server
+  itself: the administrator enables them on purpose with `-secret-store`, for
+  instance `-secret-store plaintext,instance,passphrase,login-password,file`. See
+  also [Adding a kind of keystore](#adding-a-kind-of-keystore).
 
 The settings of a user list their keystores, with what each holds. There they
 choose a default keystore, migrate what one holds into another, and delete a
@@ -231,6 +231,65 @@ use them too. The directory is checked at startup.
 This kind is meant for an instance whose users have an account on the server,
 and is not enabled by default: list `file` in `-secret-store` to enable it. On
 an instance shared with users who do not, leave it out.
+
+### Program keystores
+
+The `program` kind resolves each reference by running a program of its
+owner, on the happyDomain server: a wrapper around `pass`, a password manager
+command line, a script reading a hardware token... The program is run with the
+reference as its only argument, without a shell, and what it writes on its
+standard output, without its final newline, is the credential. It runs
+whenever the credential is used, and once more when it is saved, to check
+that it answers.
+
+**The program runs with the rights of the happyDomain process**, which reads
+the instance keyset and the database: whoever writes the program of a user
+holds these rights, and reads the credentials of every user. Enable this kind
+only on an instance whose users are trusted as its administrator, such as an
+instance of one person.
+
+The administrator chooses a directory, and gives each user who runs programs
+a directory of their own, named after their identifier, as for
+[file keystores](#file-keystores):
+
+```
+secret-store=plaintext,instance,passphrase,login-password,program
+secret-program-dir=/srv/happydomain/programs
+```
+
+```
+/srv/happydomain/programs/
+  <user identifier>/
+    pass-get
+```
+
+A program keystore names an executable file of the directory of its owner,
+such as `pass-get`; a symbolic link is followed only while it stays in that
+directory. A reference is the argument the program answers the credential
+for, such as `dns/ovh/app_secret` for this `pass-get`:
+
+```sh
+#!/bin/sh
+export HOME=/home/alice
+exec pass show "$1"
+```
+
+The program runs in the directory of its owner, with none of the environment
+of happyDomain: only `PATH` (`/usr/local/bin:/usr/bin:/bin`), and where the
+credential belongs, in `HAPPYDOMAIN_USER` (the identifier of the user),
+`HAPPYDOMAIN_OBJECT_TYPE` (`provider`...), `HAPPYDOMAIN_OBJECT_ID` and
+`HAPPYDOMAIN_FIELD`. A program needing more, such as `HOME` for `pass`, sets
+it itself. Its standard error is discarded, and not shown: it could repeat
+the credential.
+
+A program exiting with a non-zero status, answering nothing, more than 64 KiB,
+or still running after 10 seconds, fails the action that needed the
+credential. The program runs in a process group of its own: stopped at the
+timeout, the processes it started in that group are stopped with it. Once it
+has answered and exited successfully, a process it left running, such as an
+agent, does not hold the credential back. Such keystores open without their
+owner, so notifications and scheduled checks use them too. The directory is
+checked at startup.
 
 ## Startup checks
 

@@ -225,6 +225,7 @@ var builtinStores = map[string]StoreFactory{
 	KindPassphrase:    newPassphraseStore,
 	KindLoginPassword: newLoginPasswordStore,
 	KindFile:          newFileStore,
+	KindProgram:       newProgramStore,
 }
 
 // KnownStores returns the kinds of safe happyDomain knows, sorted.
@@ -234,7 +235,7 @@ func KnownStores() []string {
 
 // optInStores lists the kinds of safe left out by default: they reach the
 // files or programs of the server, and are only ever enabled on purpose.
-var optInStores = []string{KindFile}
+var optInStores = []string{KindFile, KindProgram}
 
 // DefaultStores returns the stores enabled when the administrator lists none:
 // plaintext, as happyDomain always did, and every kind of safe but those of
