@@ -151,6 +151,55 @@ func (s *vaultUserStore) CreateForm() []happydns.Field {
 	}
 }
 
+// UpdateForm asks for a new token only: the secrets are referenced in the
+// Vault the keystore was created for.
+func (s *vaultUserStore) UpdateForm() []happydns.Field {
+	return []happydns.Field{{
+		Id:          vaultTokenParam,
+		Type:        "string",
+		Label:       "New token",
+		Description: "It replaces the token of the keystore, as when Vault no longer knows it.",
+		Secret:      true,
+		Required:    true,
+	}}
+}
+
+// Update replaces the token of safe with the one params holds, once the
+// Vault of the keystore knows it. No error repeats the token.
+func (s *vaultUserStore) Update(ctx context.Context, safe *happydns.Safe, params json.RawMessage) error {
+	_, token, err := parseTokenParams(params)
+	if err != nil {
+		return err
+	}
+	i := slices.IndexFunc(safe.Keyring, func(w happydns.WrappedKeyset) bool { return w.KEK == KindVaultUser })
+	if i < 0 {
+		return fmt.Errorf("safe %s has no token", safe.Id.String())
+	}
+	_, loc, err := s.entry(safe)
+	if err != nil {
+		return err
+	}
+	c, err := s.client(loc)
+	if err != nil {
+		return err
+	}
+	sealed, err := s.sealToken(ctx, c, safe, token)
+	if err != nil {
+		return err
+	}
+
+	keyring := slices.Clone(safe.Keyring)
+	keyring[i].Blob = sealed
+	safe.Keyring = keyring
+
+	// The renewal schedule was the old token's: forget it so the new one is
+	// renewed on its first use.
+	s.mu.Lock()
+	delete(s.renewAt, safe.Id.String())
+	s.mu.Unlock()
+	return nil
+}
+
 // tokenAssociatedData binds a sealed token to its safe and owner.
 // Each part is length-prefixed: identifiers vary in length, and two safes
 // must never share associated data.

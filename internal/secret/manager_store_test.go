@@ -153,6 +153,7 @@ func withFakeStores(cfg Config) Config {
 		cfg.factories[reportingKind] = func(Config) (Store, error) { return reportingStore{}, nil }
 		cfg.factories[escrowKind] = func(Config) (Store, error) { return escrowStore{}, nil }
 		cfg.factories[creatorKind] = func(Config) (Store, error) { return creatorStore{kind: creatorKind}, nil }
+		cfg.factories[updaterKind] = func(Config) (Store, error) { return updaterStore{creatorStore{kind: updaterKind}}, nil }
 		cfg.factories[passphraseKind] = func(Config) (Store, error) {
 			return passphraseStore{kind: passphraseKind, field: "passphrase"}, nil
 		}

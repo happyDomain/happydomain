@@ -106,6 +106,10 @@ type Keystore struct {
 	References    bool   `json:"references"`
 	ReferenceHint string `json:"referenceHint,omitempty"`
 
+	// UpdateForm lists what the owner gives to update the keystore, such
+	// as a new credential: empty for a keystore that cannot be updated.
+	UpdateForm []happydns.Field `json:"updateForm,omitempty"`
+
 	// SafeId is the safe behind the keystore, empty for a keystore of the
 	// instance not created yet.
 	SafeId happydns.Identifier `json:"safeId,omitempty" swaggertype:"string"`
@@ -168,6 +172,8 @@ func (m *Manager) describe(safe *happydns.Safe) Keystore {
 	if !isPersonal(safe) {
 		ks.Ref = safe.Kind
 		ks.Scope = ScopeInstance
+	} else if u, ok := store.(Updater); ok {
+		ks.UpdateForm = u.UpdateForm()
 	}
 	m.describeReferences(&ks)
 	return ks
@@ -357,6 +363,48 @@ func (m *Manager) CreateKeystore(ctx context.Context, owner happydns.Identifier,
 
 	ks := m.describe(safe)
 	m.describeLock(scope, &ks, safe)
+	return ks, nil
+}
+
+// UpdateKeystore updates ref, a personal keystore of owner, from params, the
+// parameters its store needs, as to replace a credential: the secrets it
+// holds are left as they are.
+func (m *Manager) UpdateKeystore(ctx context.Context, owner happydns.Identifier, ref string, params json.RawMessage) (Keystore, error) {
+	if m == nil || m.safes == nil {
+		return Keystore{}, errNoManager
+	}
+
+	mu := m.ownerLock("keystores:" + owner.String())
+	mu.Lock()
+	defer mu.Unlock()
+
+	safe, err := m.keystoreSafe(owner, ref)
+	if err != nil {
+		return Keystore{}, err
+	}
+	if safe == nil || !isPersonal(safe) {
+		return Keystore{}, ErrInstanceKeystore
+	}
+	store, ok := m.stores[safe.Kind].(Updater)
+	if !ok {
+		return Keystore{}, fmt.Errorf("%w: keystores of kind %q are not updated", ErrInvalidKeystore, safe.Kind)
+	}
+	if len(params) == 0 {
+		params = json.RawMessage("{}")
+	}
+
+	// Update a copy: the safe the storage handed out stays as it is if
+	// the update is not stored.
+	updated := *safe
+	if err := store.Update(ctx, &updated, params); err != nil {
+		return Keystore{}, fmt.Errorf("%w: %w", ErrInvalidKeystore, err)
+	}
+	if err := m.safes.UpdateSafe(&updated); err != nil {
+		return Keystore{}, err
+	}
+
+	ks := m.describe(&updated)
+	m.describeLock(UnlockScopeFromContext(ctx), &ks, &updated)
 	return ks, nil
 }
 

@@ -430,6 +430,7 @@ func TestVaultUserKindIsBuiltin(t *testing.T) {
 	store := Store(newTestVaultUserStore(t, testInstanceKey(t)))
 	for name, ok := range map[string]bool{
 		"Creator":        is[Creator](store),
+		"Updater":        is[Updater](store),
 		"Referencing":    is[Referencing](store),
 		"Rewrapper":      is[Rewrapper](store),
 		"KeyBorrower":    is[KeyBorrower](store),
@@ -514,5 +515,87 @@ func TestVaultUserKeystoreThroughManager(t *testing.T) {
 	back := &managedObject{ApiKey: sealedFromStorage(t, obj.ApiKey.Token())}
 	if err := m.OpenObject(ctx, sc, back); err != nil || back.ApiKey.Reveal() != "s3cr3t" {
 		t.Errorf("OpenObject = %q, %v", back.ApiKey.Reveal(), err)
+	}
+}
+
+// Its owner replaces the token of a keystore, as when Vault no longer knows
+// it: the secrets it holds, references, open again with the new one.
+func TestVaultUserKeystoreUpdate(t *testing.T) {
+	ctx := context.Background()
+	v := newTestVault(t)
+	v.put("dns/ovh", map[string]any{"app_secret": "s3cr3t"})
+	safes := newMemSafeStorage()
+	m, err := NewManager(Config{Policy: PolicyInstance, InstanceKey: testInstanceKey(t), Safes: safes, Defaults: newMemDefaults(), Outbound: loopbackGuard(t), Stores: []string{KindInstance, KindVaultUser}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	sc := objectContext()
+	ks, err := m.CreateKeystore(ctx, sc.Owner, KindVaultUser, "My Vault", json.RawMessage(`{"address":"`+v.URL+`","token":"user-token","mount":"secret","namespace":"team"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(ks.UpdateForm) != 1 || ks.UpdateForm[0].Id != vaultTokenParam || !ks.UpdateForm[0].Secret {
+		t.Errorf("UpdateForm = %+v, want the token alone", ks.UpdateForm)
+	}
+	obj := &managedObject{ApiKey: happydns.NewSecret("dns/ovh#app_secret")}
+	if err := m.SealObjectInto(ctx, sc, obj, Destination{Keystore: ks.Ref}); err != nil {
+		t.Fatal(err)
+	}
+	open := func() error {
+		back := &managedObject{ApiKey: sealedFromStorage(t, obj.ApiKey.Token())}
+		if err := m.OpenObject(ctx, sc, back); err != nil {
+			return err
+		}
+		if back.ApiKey.Reveal() != "s3cr3t" {
+			return errors.New("opened to " + back.ApiKey.Reveal())
+		}
+		return nil
+	}
+
+	v.revoke("user-token")
+	if err := open(); err == nil {
+		t.Fatal("a revoked token still reads")
+	}
+	before, _ := safes.GetSafe(ks.SafeId)
+	for name, params := range map[string]json.RawMessage{
+		"no token":  json.RawMessage(`{}`),
+		"no body":   nil,
+		"bad token": vaultUserParams("", "wrong-user-token"),
+		"malformed": json.RawMessage(`nope`),
+	} {
+		if _, err := m.UpdateKeystore(ctx, sc.Owner, ks.Ref, params); !errors.Is(err, ErrInvalidKeystore) {
+			t.Errorf("UpdateKeystore(%s) = %v, want ErrInvalidKeystore", name, err)
+		} else if strings.Contains(err.Error(), "user-token") {
+			t.Errorf("UpdateKeystore(%s): the error repeats the token: %v", name, err)
+		}
+	}
+	if after, _ := safes.GetSafe(ks.SafeId); !bytes.Equal(after.Keyring[0].Blob, before.Keyring[0].Blob) {
+		t.Error("a refused update changed the token")
+	}
+
+	v.addToken("new-user-token", nil)
+	attempts := v.renewAttempts()
+	// Only the token changes: an address given along is not taken.
+	updated, err := m.UpdateKeystore(ctx, sc.Owner, ks.Ref, vaultUserParams("http://elsewhere.example", "new-user-token"))
+	if err != nil {
+		t.Fatalf("UpdateKeystore = %v", err)
+	}
+	if updated.Ref != ks.Ref || updated.Name != "My Vault" {
+		t.Errorf("UpdateKeystore = %+v", updated)
+	}
+	stored, _ := safes.GetSafe(ks.SafeId)
+	if bytes.Contains(stored.Keyring[0].Blob, []byte("new-user-token")) {
+		t.Error("the new token is stored in clear")
+	}
+	if !bytes.Equal(stored.Keyring[0].Params, before.Keyring[0].Params) {
+		t.Errorf("the location changed: %s, was %s", stored.Keyring[0].Params, before.Keyring[0].Params)
+	}
+	if err := open(); err != nil {
+		t.Errorf("open with the new token: %v", err)
+	}
+	// The first use of the new token renews it, without waiting for the
+	// schedule of the old one.
+	if got := v.renewAttempts(); got != attempts+1 {
+		t.Errorf("%d renewals asked since the update, want 1", got-attempts)
 	}
 }

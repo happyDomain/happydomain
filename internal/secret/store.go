@@ -80,6 +80,22 @@ type Creator interface {
 	Create(ctx context.Context, safe *happydns.Safe, params json.RawMessage) error
 }
 
+// Updater is a Creator whose owner may replace a credential the store keeps,
+// such as a token, while the secrets of the safe stay as they are. A store
+// whose update would change the key, such as a passphrase one, must not be
+// an Updater: what its safe holds would no longer open.
+type Updater interface {
+	Creator
+
+	// UpdateForm describes the parameters Update takes, for the owner to
+	// fill.
+	UpdateForm() []happydns.Field
+
+	// Update changes the keyring of safe, as stored, from params, a JSON
+	// object following UpdateForm. It leaves safe as it was on error.
+	Update(ctx context.Context, safe *happydns.Safe, params json.RawMessage) error
+}
+
 // Interactive is a Store whose safes only open with what their owner gives,
 // such as a passphrase. Once unlocked, a safe stays open for the session of
 // the request that unlocked it, see Manager.UnlockKeystore; it never opens in

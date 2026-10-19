@@ -25,6 +25,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"slices"
 	"sync"
 	"testing"
 
@@ -63,6 +64,29 @@ func (s creatorStore) Create(_ context.Context, safe *happydns.Safe, params json
 		return errors.New("a passphrase is required")
 	}
 	safe.Keyring = []happydns.WrappedKeyset{{KEK: s.kind}}
+	return nil
+}
+
+// updaterKind is a store whose safes their owner updates, replacing the blob
+// of their keyring entry.
+const updaterKind = "test-updater"
+
+type updaterStore struct{ creatorStore }
+
+func (updaterStore) UpdateForm() []happydns.Field {
+	return []happydns.Field{{Id: "blob", Type: "string", Required: true}}
+}
+
+func (s updaterStore) Update(_ context.Context, safe *happydns.Safe, params json.RawMessage) error {
+	var p struct {
+		Blob string `json:"blob"`
+	}
+	if err := json.Unmarshal(params, &p); err != nil {
+		return err
+	}
+	keyring := slices.Clone(safe.Keyring)
+	keyring[0].Blob = []byte(p.Blob)
+	safe.Keyring = keyring
 	return nil
 }
 
@@ -475,6 +499,72 @@ func TestDeleteKeystore(t *testing.T) {
 	}
 	if _, err := f.safes.GetSafeByOwner(sc.Owner, KindInstance); !errors.Is(err, happydns.ErrSafeNotFound) {
 		t.Errorf("the instance safe is still stored: %v", err)
+	}
+}
+
+func TestUpdateKeystoreRefusals(t *testing.T) {
+	f := newKeystoreFixture(t, PolicyInstance)
+	sc := objectContext()
+	ctx := context.Background()
+	mine := f.create(t, sc.Owner, creatorKind, "Mine")
+	// Sealing creates the instance keystore, so the refusal below is for an
+	// existing one, not for one still to be provisioned.
+	sealOne(t, f.m, sc, "v")
+
+	// Its store has nothing to update: updating it would take a new key.
+	if _, err := f.m.UpdateKeystore(ctx, sc.Owner, mine.Ref, passphrase("q")); !errors.Is(err, ErrInvalidKeystore) {
+		t.Errorf("UpdateKeystore(no Updater) = %v, want ErrInvalidKeystore", err)
+	}
+	if mine.UpdateForm != nil {
+		t.Errorf("UpdateForm = %+v, want none", mine.UpdateForm)
+	}
+	if _, err := f.m.UpdateKeystore(ctx, sc.Owner, KindInstance, json.RawMessage(`{}`)); !errors.Is(err, ErrInstanceKeystore) {
+		t.Errorf("UpdateKeystore(instance) = %v, want ErrInstanceKeystore", err)
+	}
+	if _, err := f.m.UpdateKeystore(ctx, happydns.Identifier{0x02}, mine.Ref, passphrase("q")); !errors.Is(err, ErrUnknownKeystore) {
+		t.Errorf("UpdateKeystore(other owner) = %v, want ErrUnknownKeystore", err)
+	}
+}
+
+// sharedSafeStorage hands out the very safes it holds, as a cache would, and
+// cannot write them.
+type sharedSafeStorage struct {
+	*memSafeStorage
+	shared map[string]*happydns.Safe
+}
+
+func (s *sharedSafeStorage) ListOwnerSafes(owner happydns.Identifier) ([]*happydns.Safe, error) {
+	safes, err := s.memSafeStorage.ListOwnerSafes(owner)
+	for i, safe := range safes {
+		if kept, ok := s.shared[safe.Id.String()]; ok {
+			safes[i] = kept
+		} else {
+			s.shared[safe.Id.String()] = safe
+		}
+	}
+	return safes, err
+}
+
+func (s *sharedSafeStorage) UpdateSafe(*happydns.Safe) error { return errors.New("storage is down") }
+
+func TestUpdateKeystoreLeavesTheSafeOnStorageError(t *testing.T) {
+	safes := &sharedSafeStorage{memSafeStorage: newMemSafeStorage(), shared: map[string]*happydns.Safe{}}
+	m := newTestManager(t, Config{Policy: PolicyInstance, InstanceKey: testInstanceKey(t), Safes: safes, Defaults: newMemDefaults()})
+	sc := objectContext()
+	ctx := context.Background()
+	ks, err := m.CreateKeystore(ctx, sc.Owner, updaterKind, "Mine", passphrase("p"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := m.UpdateKeystore(ctx, sc.Owner, ks.Ref, json.RawMessage(`{"blob":"new"}`)); err == nil {
+		t.Fatal("UpdateKeystore succeeded though the safe was not stored")
+	}
+	list, err := safes.ListOwnerSafes(sc.Owner)
+	if err != nil || len(list) != 1 {
+		t.Fatalf("ListOwnerSafes = %v, %v", list, err)
+	}
+	if string(list[0].Keyring[0].Blob) == "new" {
+		t.Error("the safe handed out by the storage carries an update that was not stored")
 	}
 }
 
