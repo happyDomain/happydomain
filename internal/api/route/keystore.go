@@ -37,6 +37,8 @@ func DeclareKeystoreRoutes(router *gin.RouterGroup, keystores *usecase.KeystoreU
 	router.POST("/keystores", perClientRateLimiter(10), kc.CreateKeystore)
 	router.GET("/keystores/kinds", kc.ListKeystoreKinds)
 	router.PUT("/keystores/default", kc.SetDefaultKeystore)
+	// Limited, as updating some kinds asks a remote service.
+	router.PUT("/keystores/:ref", perClientRateLimiter(10), kc.UpdateKeystore)
 	router.DELETE("/keystores/:ref", kc.DeleteKeystore)
 	router.POST("/keystores/:ref/migrate", kc.MigrateKeystore)
 	// Limited, so that what unlocks a keystore is not guessed.

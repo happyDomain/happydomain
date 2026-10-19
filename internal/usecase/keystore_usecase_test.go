@@ -23,6 +23,7 @@ package usecase_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"maps"
 	"net/http"
@@ -153,6 +154,16 @@ func TestKeystoreUsecaseLifecycle(t *testing.T) {
 		t.Errorf("Delete(unknown) = %v, want a 404", err)
 	}
 
+	if _, err := uc.Update(ctx, owner, a.Ref, secrettest.PersonalParams()); httpStatus(err) != http.StatusBadRequest {
+		t.Errorf("Update(kind not updated) = %v, want a 400", err)
+	}
+	if _, err := uc.Update(ctx, owner, secret.KindInstance, json.RawMessage(`{}`)); httpStatus(err) != http.StatusForbidden {
+		t.Errorf("Update(instance) = %v, want a 403", err)
+	}
+	if _, err := uc.Update(ctx, owner, "nope", json.RawMessage(`{}`)); httpStatus(err) != http.StatusNotFound {
+		t.Errorf("Update(unknown) = %v, want a 404", err)
+	}
+
 	if _, err := uc.Migrate(ctx, owner, a.Ref, a.Ref); httpStatus(err) != http.StatusBadRequest {
 		t.Errorf("Migrate(to itself) = %v, want a 400", err)
 	}
@@ -251,6 +262,30 @@ func TestKeystoreUsecaseUnlock(t *testing.T) {
 		if k.Ref == ks.Ref && !k.Locked {
 			t.Error("the keystore locked is listed unlocked")
 		}
+	}
+}
+
+func TestKeystoreUsecaseUpdate(t *testing.T) {
+	ctx := context.Background()
+	uc, _, _ := keystoreUsecase(t, secrettest.WithUpdatableStore)
+	owner := happydns.Identifier{0x01}
+
+	ks, err := uc.Create(ctx, owner, secrettest.UpdatableKind, "U", secrettest.PersonalParams())
+	if err != nil {
+		t.Fatal(err)
+	}
+	updated, err := uc.Update(ctx, owner, ks.Ref, json.RawMessage(`{"passphrase":"new"}`))
+	if err != nil {
+		t.Fatalf("Update = %v", err)
+	}
+	if updated.Ref != ks.Ref || !updated.SafeId.Equals(ks.SafeId) || updated.Name != "U" {
+		t.Errorf("Update = %+v, want %+v unchanged", updated, ks)
+	}
+	if _, err := uc.Update(ctx, owner, ks.Ref, json.RawMessage(`{"passphrase":""}`)); httpStatus(err) != http.StatusBadRequest {
+		t.Errorf("Update(refused by the store) = %v, want a 400", err)
+	}
+	if _, err := uc.Update(ctx, happydns.Identifier{0x02}, ks.Ref, json.RawMessage(`{"passphrase":"new"}`)); httpStatus(err) != http.StatusNotFound {
+		t.Errorf("Update(another owner) = %v, want a 404", err)
 	}
 }
 

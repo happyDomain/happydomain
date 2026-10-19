@@ -162,6 +162,13 @@ func (u *KeystoreUsecase) Create(ctx context.Context, owner happydns.Identifier,
 	return ks, keystoreError(err)
 }
 
+// Update updates ref, a personal keystore of owner, from params, to replace
+// the credential it keeps.
+func (u *KeystoreUsecase) Update(ctx context.Context, owner happydns.Identifier, ref string, params json.RawMessage) (secret.Keystore, error) {
+	ks, err := u.manager.UpdateKeystore(ctx, owner, ref, params)
+	return ks, keystoreError(err)
+}
+
 // Unlock opens ref, a keystore of owner, with material, for the session of
 // ctx.
 func (u *KeystoreUsecase) Unlock(ctx context.Context, owner happydns.Identifier, ref string, material json.RawMessage) error {

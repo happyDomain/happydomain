@@ -43,19 +43,25 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-func keystoreRouter(t *testing.T, user *happydns.User) *gin.Engine {
+func keystoreManager(t *testing.T) *secret.Manager {
 	t.Helper()
-	gin.SetMode(gin.TestMode)
 	db, err := inmemory.Instantiate()
 	if err != nil {
 		t.Fatal(err)
 	}
 	h, _ := secret.GenerateInstanceKeyset()
 	key, _ := secret.NewInstanceKey(h)
-	m, err := secret.NewManager(secrettest.WithPersonalStore(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db, Defaults: db}))
+	m, err := secret.NewManager(secrettest.WithUpdatableStore(secrettest.WithPersonalStore(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db, Defaults: db})))
 	if err != nil {
 		t.Fatal(err)
 	}
+	return m
+}
+
+// keystoreRouter serves the keystores of m to user: two users given the same
+// m share its storage.
+func keystoreRouter(m *secret.Manager, user *happydns.User) *gin.Engine {
+	gin.SetMode(gin.TestMode)
 	kc := NewKeystoreController(usecase.NewKeystoreUsecase(m, nil))
 
 	r := gin.New()
@@ -64,6 +70,7 @@ func keystoreRouter(t *testing.T, user *happydns.User) *gin.Engine {
 	g.POST("/keystores", kc.CreateKeystore)
 	g.GET("/keystores/kinds", kc.ListKeystoreKinds)
 	g.PUT("/keystores/default", kc.SetDefaultKeystore)
+	g.PUT("/keystores/:ref", kc.UpdateKeystore)
 	g.DELETE("/keystores/:ref", kc.DeleteKeystore)
 	g.POST("/keystores/:ref/migrate", kc.MigrateKeystore)
 	return r
@@ -78,7 +85,8 @@ func do(r *gin.Engine, method, path, body string) *httptest.ResponseRecorder {
 }
 
 func TestKeystoreRoutes(t *testing.T) {
-	r := keystoreRouter(t, &happydns.User{Id: happydns.Identifier{0x01}})
+	m := keystoreManager(t)
+	r := keystoreRouter(m, &happydns.User{Id: happydns.Identifier{0x01}})
 
 	if w := do(r, http.MethodGet, "/keystores/kinds", ""); w.Code != http.StatusOK || !strings.Contains(w.Body.String(), secrettest.PersonalKind) {
 		t.Errorf("GET kinds = %d %s", w.Code, w.Body.String())
@@ -115,6 +123,44 @@ func TestKeystoreRoutes(t *testing.T) {
 		}
 	}
 
+	if w := do(r, http.MethodPut, "/keystores/"+created.Ref, `{"params":{"passphrase":"q"}}`); w.Code != http.StatusBadRequest {
+		t.Errorf("PUT a kind not updated = %d %s", w.Code, w.Body.String())
+	}
+	if w := do(r, http.MethodPut, "/keystores/nope", `{"params":{}}`); w.Code != http.StatusNotFound {
+		t.Errorf("PUT unknown = %d %s", w.Code, w.Body.String())
+	}
+	if w := do(r, http.MethodPut, "/keystores/"+secret.KindInstance, `{"params":{}}`); w.Code != http.StatusForbidden {
+		t.Errorf("PUT instance = %d %s", w.Code, w.Body.String())
+	}
+
+	w = do(r, http.MethodPost, "/keystores", `{"kind":"`+secrettest.UpdatableKind+`","name":"Upd","params":{"passphrase":"p"}}`)
+	var upd secret.Keystore
+	if err := json.Unmarshal(w.Body.Bytes(), &upd); w.Code != http.StatusCreated || err != nil {
+		t.Fatalf("POST updatable = %d %s", w.Code, w.Body.String())
+	}
+	w = do(r, http.MethodPut, "/keystores/"+upd.Ref, `{"params":{"passphrase":"s3cr3t-new"}}`)
+	if w.Code != http.StatusOK {
+		t.Errorf("PUT = %d %s", w.Code, w.Body.String())
+	}
+	if strings.Contains(w.Body.String(), "s3cr3t-new") || strings.Contains(w.Body.String(), "keyring") {
+		t.Errorf("the update answer leaks what the store keeps: %s", w.Body.String())
+	}
+	if w := do(r, http.MethodPut, "/keystores/"+upd.Ref, `{"params":{"passphrase":""}}`); w.Code != http.StatusBadRequest {
+		t.Errorf("PUT refused by the store = %d %s", w.Code, w.Body.String())
+	}
+	if w := do(r, http.MethodPut, "/keystores/"+upd.Ref, `not json`); w.Code != http.StatusBadRequest {
+		t.Errorf("PUT malformed = %d %s", w.Code, w.Body.String())
+	}
+
+	// Another user, on the same storage, reaches none of it.
+	other := keystoreRouter(m, &happydns.User{Id: happydns.Identifier{0x02}})
+	if w := do(other, http.MethodPut, "/keystores/"+upd.Ref, `{"params":{"passphrase":"x"}}`); w.Code != http.StatusNotFound {
+		t.Errorf("PUT by another user = %d %s", w.Code, w.Body.String())
+	}
+	if w := do(other, http.MethodDelete, "/keystores/"+created.Ref, ""); w.Code != http.StatusNotFound {
+		t.Errorf("DELETE by another user = %d %s", w.Code, w.Body.String())
+	}
+
 	if w := do(r, http.MethodPost, "/keystores/"+created.Ref+"/migrate", `{"to":"`+secret.KindInstance+`"}`); w.Code != http.StatusOK {
 		t.Errorf("POST migrate = %d %s", w.Code, w.Body.String())
 	}
@@ -128,11 +174,6 @@ func TestKeystoreRoutes(t *testing.T) {
 		t.Errorf("DELETE again = %d %s", w.Code, w.Body.String())
 	}
 
-	// Another user sees none of it.
-	other := keystoreRouter(t, &happydns.User{Id: happydns.Identifier{0x02}})
-	if w := do(other, http.MethodDelete, "/keystores/"+created.Ref, ""); w.Code != http.StatusNotFound {
-		t.Errorf("DELETE by another user = %d %s", w.Code, w.Body.String())
-	}
 }
 
 func TestKeystoreUnlockRoutes(t *testing.T) {

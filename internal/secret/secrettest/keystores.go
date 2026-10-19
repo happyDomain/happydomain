@@ -77,6 +77,32 @@ func (personalStore) Create(_ context.Context, safe *happydns.Safe, params json.
 	return nil
 }
 
+// UpdatableKind is a personal keystore its owner creates, then updates,
+// giving a passphrase: like PersonalKind, it keeps no secret.
+const UpdatableKind = "test-updatable"
+
+// WithUpdatableStore returns cfg knowing UpdatableKind.
+func WithUpdatableStore(cfg secret.Config) secret.Config {
+	return cfg.WithStores(map[string]secret.StoreFactory{
+		UpdatableKind: func(secret.Config) (secret.Store, error) { return updatableStore{}, nil },
+	})
+}
+
+type updatableStore struct{ personalStore }
+
+func (updatableStore) Unlock(_ context.Context, safe *happydns.Safe) (secret.UnlockedSafe, error) {
+	if safe.Kind != UpdatableKind {
+		return nil, errors.New("not an updatable test safe")
+	}
+	return personalUnlocked{id: safe.Id}, nil
+}
+
+func (s updatableStore) UpdateForm() []happydns.Field { return s.CreateForm() }
+
+func (s updatableStore) Update(ctx context.Context, safe *happydns.Safe, params json.RawMessage) error {
+	return s.Create(ctx, safe, params)
+}
+
 type personalUnlocked struct{ id happydns.Identifier }
 
 // The payload carries the associated data in clear, then the value: enough

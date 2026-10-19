@@ -55,6 +55,12 @@ type KeystoreCreation struct {
 	Params json.RawMessage `json:"params,omitempty" swaggertype:"object"`
 }
 
+// KeystoreUpdate asks to update a personal keystore.
+type KeystoreUpdate struct {
+	// Params holds what the keystore needs, following its update form.
+	Params json.RawMessage `json:"params,omitempty" swaggertype:"object"`
+}
+
 // KeystoreMigration asks to move the secrets of a keystore into another.
 type KeystoreMigration struct {
 	// To is the reference of the keystore receiving the secrets.
@@ -127,6 +133,37 @@ func (kc *KeystoreController) CreateKeystore(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusCreated, ks)
+}
+
+// UpdateKeystore updates a personal keystore.
+//
+//	@Summary		Update a keystore
+//	@Description	Update a personal keystore following its update form, to replace the credential it keeps. The secrets it holds are left as they are.
+//	@Tags			keystores
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Param			ref		path		string			true	"Keystore reference"
+//	@Param			body	body		KeystoreUpdate	true	"Parameters"
+//	@Success		200		{object}	secret.Keystore
+//	@Failure		400		{object}	happydns.ErrorResponse	"Invalid parameters, or keystore not updated"
+//	@Failure		401		{object}	happydns.ErrorResponse	"Authentication failure"
+//	@Failure		403		{object}	happydns.ErrorResponse	"Keystore of the instance"
+//	@Failure		404		{object}	happydns.ErrorResponse	"Keystore not found"
+//	@Router			/keystores/{ref} [put]
+func (kc *KeystoreController) UpdateKeystore(c *gin.Context) {
+	var req KeystoreUpdate
+	if err := c.ShouldBindJSON(&req); err != nil {
+		middleware.ErrorResponse(c, http.StatusBadRequest, err)
+		return
+	}
+
+	ks, err := kc.keystores.Update(c.Request.Context(), middleware.MyUser(c).Id, c.Param("ref"), req.Params)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+		return
+	}
+	c.JSON(http.StatusOK, ks)
 }
 
 // DeleteKeystore deletes a personal keystore holding no secret.
