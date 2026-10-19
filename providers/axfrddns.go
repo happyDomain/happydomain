@@ -37,16 +37,26 @@ type DDNSServer struct {
 	// The endpoint default mirrors ToDNSControlConfig below: an empty Server
 	// means 127.0.0.1, so the outbound guard has to see loopback rather than
 	// an empty field it would skip.
-	Server  string `json:"server,omitempty" happydomain:"label=Server,placeholder=127.0.0.1,endpoint=127.0.0.1"`
-	KeyName string `json:"keyname,omitempty" happydomain:"label=Key Name,placeholder=ddns,required"`
+	Server string `json:"server,omitempty" happydomain:"label=Server,placeholder=127.0.0.1,endpoint=127.0.0.1"`
+	// The key is only required to update the zone (see ToDNSControlConfig):
+	// a server may allow the transfer to an address, without any key.
+	KeyName string `json:"keyname,omitempty" happydomain:"label=Key Name,placeholder=ddns"`
 	KeyAlgo string `json:"algorithm,omitempty" happydomain:"label=Key Algorithm,default=hmac-sha256,choices=hmac-md5;hmac-sha1;hmac-sha256;hmac-sha512,required"`
 	// KeyBlob is the base64 of the key, as []byte fields used to be encoded:
 	// records stored before it became a Secret read the same.
-	KeyBlob happydns.Secret `json:"keyblob,omitzero" happydomain:"label=Secret Key,placeholder=a0b1c2d3e4f5==,required,secret"`
+	KeyBlob happydns.Secret `json:"keyblob,omitzero" happydomain:"label=Secret Key,placeholder=a0b1c2d3e4f5==,secret"`
+	// TransferOnly keeps happyDomain to zone transfers: the key, if any, is
+	// never given as update key, so a key the server grants transfers only is
+	// enough, and a leak of such a key gives no write access.
+	TransferOnly bool `json:"transfer_only,omitempty" happydomain:"label=Zone transfer only,description=happyDomain reads the zone through a transfer (AXFR) and never changes it: enough to monitor your domain. The key may then grant transfers only or be left empty if the server allows transfers to the address of happyDomain."`
 }
 
 func (s *DDNSServer) DNSControlName() string {
 	return "AXFRDDNS"
+}
+
+func (s *DDNSServer) IsReadOnly() bool {
+	return s.TransferOnly
 }
 
 func (s *DDNSServer) InstantiateProvider() (happydns.ProviderActuator, error) {
@@ -62,6 +72,16 @@ func (s *DDNSServer) ToDNSControlConfig() (map[string]string, error) {
 		config["master"] = "127.0.0.1"
 	}
 
+	if s.KeyName == "" && !s.KeyBlob.IsEmpty() {
+		return nil, fmt.Errorf("a secret key needs its key name")
+	}
+	if s.KeyName != "" && s.KeyBlob.IsEmpty() {
+		return nil, fmt.Errorf("the key name needs its secret key")
+	}
+	if s.KeyName == "" && !s.TransferOnly {
+		return nil, fmt.Errorf("a TSIG key is required to update the zone; without one, choose zone transfer only")
+	}
+
 	if s.KeyName != "" {
 		key, err := base64.StdEncoding.DecodeString(s.KeyBlob.Reveal())
 		if err != nil {
@@ -69,7 +89,12 @@ func (s *DDNSServer) ToDNSControlConfig() (map[string]string, error) {
 		}
 
 		config["transfer-key"] = strings.Join([]string{s.KeyAlgo, s.KeyName, base64.StdEncoding.EncodeToString(key)}, ":")
-		config["update-key"] = config["transfer-key"]
+
+		// Without an update key, an update that would get past the checks
+		// goes unsigned, and the server refuses it.
+		if !s.TransferOnly {
+			config["update-key"] = config["transfer-key"]
+		}
 	}
 
 	return config, nil
@@ -80,7 +105,7 @@ func init() {
 		return &DDNSServer{}
 	}, happydns.ProviderInfos{
 		Name:         "Dynamic DNS",
-		Description:  "If your zone is hosted on an authoritative name server that support Dynamic DNS (RFC 2136), such as Bind, Knot, ...",
+		Description:  "If your zone is hosted on an authoritative name server that support Dynamic DNS (RFC 2136), such as Bind, Knot, ... Also for monitoring only: a zone transfer (AXFR), with no write access.",
 		Capabilities: []string{"manages-soa-serial"},
 	}, providerReg.RegisterProvider)
 }
