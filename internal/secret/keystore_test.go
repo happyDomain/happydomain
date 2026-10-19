@@ -272,6 +272,212 @@ func TestCreateKeystoreRefusals(t *testing.T) {
 	f.create(t, happydns.Identifier{0x02}, creatorKind, "Mine")
 }
 
+func TestSealIntoChosenKeystore(t *testing.T) {
+	f := newKeystoreFixture(t, PolicyInstance)
+	sc := objectContext()
+	ctx := context.Background()
+	mine := f.create(t, sc.Owner, creatorKind, "Mine")
+
+	obj := &managedObject{ApiKey: happydns.NewSecret("a"), Other: happydns.NewSecret("b")}
+	if err := f.m.SealObjectInto(ctx, sc, obj, Destination{Keystore: mine.Ref}); err != nil {
+		t.Fatalf("SealObjectInto: %v", err)
+	}
+	if safeOf(t, obj.ApiKey) != mine.Ref || safeOf(t, obj.Other) != mine.Ref {
+		t.Errorf("sealed into %s and %s, want %s", safeOf(t, obj.ApiKey), safeOf(t, obj.Other), mine.Ref)
+	}
+
+	// Reread from storage, it opens.
+	back := &managedObject{ApiKey: sealedFromStorage(t, obj.ApiKey.Token())}
+	if err := f.m.OpenObject(ctx, sc, back); err != nil || back.ApiKey.Reveal() != "a" {
+		t.Errorf("OpenObject = %q, %v", back.ApiKey.Reveal(), err)
+	}
+
+	// Without a choice, a new secret goes where the object already is.
+	stored := &managedObject{ApiKey: sealedFromStorage(t, obj.ApiKey.Token()), Other: happydns.NewSecret("c")}
+	if err := f.m.SealObject(ctx, sc, stored); err != nil {
+		t.Fatal(err)
+	}
+	if safeOf(t, stored.Other) != mine.Ref {
+		t.Errorf("a new secret of an object in a personal keystore went to %s", safeOf(t, stored.Other))
+	}
+}
+
+func TestSealIntoMovesWhatIsSealedElsewhere(t *testing.T) {
+	f := newKeystoreFixture(t, PolicyInstance)
+	sc := objectContext()
+	ctx := context.Background()
+
+	obj := &managedObject{ApiKey: happydns.NewSecret("a")}
+	if err := f.m.SealObject(ctx, sc, obj); err != nil {
+		t.Fatal(err)
+	}
+	instanceSafe := safeOf(t, obj.ApiKey)
+
+	mine := f.create(t, sc.Owner, creatorKind, "Mine")
+
+	// As read from storage: sealed, not opened.
+	stored := &managedObject{ApiKey: sealedFromStorage(t, obj.ApiKey.Token()), Other: happydns.NewSecret("b")}
+	if err := f.m.SealObjectInto(ctx, sc, stored, Destination{Keystore: mine.Ref}); err != nil {
+		t.Fatalf("SealObjectInto: %v", err)
+	}
+	if safeOf(t, stored.ApiKey) != mine.Ref || safeOf(t, stored.Other) != mine.Ref {
+		t.Fatalf("not moved: %s, %s", safeOf(t, stored.ApiKey), safeOf(t, stored.Other))
+	}
+	if stored.ApiKey.Reveal() != "a" {
+		t.Errorf("moved value = %q", stored.ApiKey.Reveal())
+	}
+
+	// And back to the instance keystore.
+	again := &managedObject{ApiKey: sealedFromStorage(t, stored.ApiKey.Token())}
+	if err := f.m.SealObjectInto(ctx, sc, again, Destination{Keystore: KindInstance}); err != nil {
+		t.Fatal(err)
+	}
+	if safeOf(t, again.ApiKey) != instanceSafe {
+		t.Errorf("moved back into %s, want the instance safe %s", safeOf(t, again.ApiKey), instanceSafe)
+	}
+}
+
+func TestDefaultKeystore(t *testing.T) {
+	f := newKeystoreFixture(t, PolicyInstance)
+	sc := objectContext()
+	ctx := context.Background()
+	mine := f.create(t, sc.Owner, creatorKind, "Mine")
+
+	if err := f.m.SetDefaultKeystore(ctx, sc.Owner, mine.Ref); err != nil {
+		t.Fatal(err)
+	}
+	if ref, _ := f.m.DefaultKeystore(sc.Owner); ref != mine.Ref {
+		t.Errorf("DefaultKeystore = %q, want %q", ref, mine.Ref)
+	}
+	list, _ := f.m.Keystores(ctx, sc.Owner)
+	if ks := findKeystore(list, mine.Ref); ks == nil || !ks.Default {
+		t.Errorf("the default keystore is not flagged: %+v", list)
+	}
+	if ks := findKeystore(list, KindInstance); ks == nil || ks.Default {
+		t.Errorf("the instance keystore is still flagged default: %+v", ks)
+	}
+
+	if tok := sealOne(t, f.m, sc, "v"); safeOf(t, sealedFromStorage(t, tok)) != mine.Ref {
+		t.Errorf("a new secret did not go to the default keystore")
+	}
+
+	// An object used in the background does not go to a default that needs
+	// its owner: it falls back to the policy.
+	bg := &managedObject{ApiKey: happydns.NewSecret("v")}
+	if err := f.m.SealObjectInto(ctx, sc, bg, Destination{Unattended: true}); err != nil {
+		t.Fatalf("SealObjectInto(unattended): %v", err)
+	}
+	if safeOf(t, bg.ApiKey) == mine.Ref {
+		t.Error("an unattended object went to a keystore that needs its owner")
+	}
+
+	// Another owner cannot pick it.
+	if err := f.m.SetDefaultKeystore(ctx, happydns.Identifier{0x02}, mine.Ref); !errors.Is(err, ErrUnknownKeystore) {
+		t.Errorf("SetDefaultKeystore(other owner) = %v, want ErrUnknownKeystore", err)
+	}
+
+	// Cleared, the policy applies again.
+	if err := f.m.SetDefaultKeystore(ctx, sc.Owner, ""); err != nil {
+		t.Fatal(err)
+	}
+	if tok := sealOne(t, f.m, sc, "v"); safeOf(t, sealedFromStorage(t, tok)) == mine.Ref {
+		t.Error("a cleared default still applies")
+	}
+}
+
+func TestDestinationRefusals(t *testing.T) {
+	f := newKeystoreFixture(t, PolicyInstance)
+	sc := objectContext()
+	ctx := context.Background()
+	mine := f.create(t, sc.Owner, creatorKind, "Mine")
+	theirs := f.create(t, happydns.Identifier{0x02}, creatorKind, "Theirs")
+	unknown := happydns.Identifier{0x42}
+	unknownSafeRef := unknown.String()
+
+	for name, c := range map[string]struct {
+		dst  Destination
+		want error
+	}{
+		"unknown ref":              {Destination{Keystore: "nope"}, ErrUnknownKeystore},
+		"another owner's":          {Destination{Keystore: theirs.Ref}, ErrUnknownKeystore},
+		"unknown safe":             {Destination{Keystore: unknownSafeRef}, ErrUnknownKeystore},
+		"needs owner, unattended":  {Destination{Keystore: mine.Ref, Unattended: true}, ErrKeystoreNotUnattended},
+		"plaintext is no keystore": {Destination{Keystore: string(PolicyPlaintext)}, ErrUnknownKeystore},
+	} {
+		obj := &managedObject{ApiKey: happydns.NewSecret("v")}
+		if err := f.m.SealObjectInto(ctx, sc, obj, c.dst); !errors.Is(err, c.want) {
+			t.Errorf("SealObjectInto(%s) = %v, want %v", name, err, c.want)
+		}
+		if !obj.ApiKey.IsClear() {
+			t.Errorf("SealObjectInto(%s) changed the object", name)
+		}
+	}
+}
+
+func TestPlaintextPolicyWithKeystores(t *testing.T) {
+	f := newKeystoreFixture(t, PolicyPlaintext)
+	sc := objectContext()
+	ctx := context.Background()
+
+	obj := &managedObject{ApiKey: happydns.NewSecret("v")}
+	if err := f.m.SealObject(ctx, sc, obj); err != nil {
+		t.Fatal(err)
+	}
+	if obj.ApiKey.IsSealed() || IsSealed(obj.ApiKey.Token()) {
+		t.Error("the plaintext policy sealed a secret without any choice")
+	}
+
+	// The owner may still choose the instance keystore, or one of theirs.
+	obj = &managedObject{ApiKey: happydns.NewSecret("v")}
+	if err := f.m.SealObjectInto(ctx, sc, obj, Destination{Keystore: KindInstance}); err != nil {
+		t.Fatal(err)
+	}
+	if !IsSealed(obj.ApiKey.Token()) {
+		t.Error("the instance keystore chosen under the plaintext policy did not seal")
+	}
+
+	list, _ := f.m.Keystores(ctx, sc.Owner)
+	if ks := findKeystore(list, KindInstance); ks == nil || ks.Default {
+		t.Errorf("under the plaintext policy, the instance keystore = %+v, want listed, not default", ks)
+	}
+}
+
+func TestDeleteKeystore(t *testing.T) {
+	f := newKeystoreFixture(t, PolicyInstance)
+	sc := objectContext()
+	ctx := context.Background()
+	mine := f.create(t, sc.Owner, creatorKind, "Mine")
+	sealOne(t, f.m, sc, "v")
+	if err := f.m.SetDefaultKeystore(ctx, sc.Owner, mine.Ref); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := f.m.DeleteKeystore(ctx, sc.Owner, KindInstance, false); !errors.Is(err, ErrInstanceKeystore) {
+		t.Errorf("DeleteKeystore(instance) = %v, want ErrInstanceKeystore", err)
+	}
+	if err := f.m.DeleteKeystore(ctx, happydns.Identifier{0x02}, mine.Ref, false); !errors.Is(err, ErrUnknownKeystore) {
+		t.Errorf("DeleteKeystore(other owner) = %v, want ErrUnknownKeystore", err)
+	}
+
+	if err := f.m.DeleteKeystore(ctx, sc.Owner, mine.Ref, false); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.safes.GetSafe(mine.SafeId); !errors.Is(err, happydns.ErrSafeNotFound) {
+		t.Errorf("the safe is still stored: %v", err)
+	}
+	if ref, _ := f.m.DefaultKeystore(sc.Owner); ref != "" {
+		t.Errorf("the default still names the deleted keystore: %q", ref)
+	}
+
+	// The administrator may delete the instance keystore of an owner.
+	if err := f.m.DeleteKeystore(ctx, sc.Owner, KindInstance, true); err != nil {
+		t.Errorf("DeleteKeystore(instance, admin) = %v", err)
+	}
+	if _, err := f.safes.GetSafeByOwner(sc.Owner, KindInstance); !errors.Is(err, happydns.ErrSafeNotFound) {
+		t.Errorf("the instance safe is still stored: %v", err)
+	}
+}
+
 func TestKeystoreSafe(t *testing.T) {
 	f := newKeystoreFixture(t, PolicyInstance)
 	sc := objectContext()
@@ -290,5 +496,128 @@ func TestKeystoreSafe(t *testing.T) {
 	}
 	if _, err := f.m.KeystoreSafe(ctx, happydns.Identifier{0x02}, mine.Ref); !errors.Is(err, ErrUnknownKeystore) {
 		t.Errorf("KeystoreSafe(other owner) = %v, want ErrUnknownKeystore", err)
+	}
+}
+
+func TestSafesOf(t *testing.T) {
+	f := newKeystoreFixture(t, PolicyInstance)
+	sc := objectContext()
+	ctx := context.Background()
+	mine := f.create(t, sc.Owner, creatorKind, "Mine")
+
+	obj := &managedObject{ApiKey: happydns.NewSecret("a"), Other: happydns.NewSecret("b")}
+	if ids, err := SafesOf(obj); err != nil || len(ids) != 0 {
+		t.Errorf("SafesOf(clear) = %v, %v", ids, err)
+	}
+	if err := f.m.SealObjectInto(ctx, sc, obj, Destination{Keystore: mine.Ref}); err != nil {
+		t.Fatal(err)
+	}
+	ids, err := SafesOf(obj)
+	if err != nil || len(ids) != 1 || !ids[0].Equals(mine.SafeId) {
+		t.Errorf("SafesOf = %v, %v; want only %s", ids, err, mine.Ref)
+	}
+}
+
+func TestSealUnderPolicyIgnoresTheDefault(t *testing.T) {
+	f := newKeystoreFixture(t, PolicyInstance)
+	sc := objectContext()
+	ctx := context.Background()
+	mine := f.create(t, sc.Owner, creatorKind, "Mine")
+	if err := f.m.SetDefaultKeystore(ctx, sc.Owner, mine.Ref); err != nil {
+		t.Fatal(err)
+	}
+
+	obj := &managedObject{ApiKey: happydns.NewSecret("a")}
+	if err := f.m.SealObjectInto(ctx, sc, obj, Destination{}.UnderPolicy()); err != nil {
+		t.Fatalf("SealObjectInto(under policy): %v", err)
+	}
+	if safeOf(t, obj.ApiKey) == mine.Ref {
+		t.Error("sealed into the default of the owner rather than under the policy")
+	}
+}
+
+func TestDeleteOwnerSafesForgetsDefault(t *testing.T) {
+	f := newKeystoreFixture(t, PolicyInstance)
+	owner := objectContext().Owner
+	mine := f.create(t, owner, creatorKind, "Mine")
+	if err := f.m.SetDefaultKeystore(context.Background(), owner, mine.Ref); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.m.DeleteOwnerSafes(owner); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.defaults.GetDefaultKeystore(owner); !errors.Is(err, happydns.ErrNotFound) {
+		t.Errorf("the default survived the owner: %v", err)
+	}
+}
+
+func TestNoChoiceMovesNothing(t *testing.T) {
+	f := newKeystoreFixture(t, PolicyInstance)
+	sc := objectContext()
+	ctx := context.Background()
+
+	inInstance := &managedObject{ApiKey: happydns.NewSecret("a")}
+	if err := f.m.SealObject(ctx, sc, inInstance); err != nil {
+		t.Fatal(err)
+	}
+	instanceSafe := safeOf(t, inInstance.ApiKey)
+
+	mine := f.create(t, sc.Owner, creatorKind, "Mine")
+	if err := f.m.SetDefaultKeystore(ctx, sc.Owner, mine.Ref); err != nil {
+		t.Fatal(err)
+	}
+
+	// An object the instance keeps stays whole there: the default is for
+	// new objects.
+	stored := &managedObject{ApiKey: sealedFromStorage(t, inInstance.ApiKey.Token()), Other: happydns.NewSecret("b")}
+	if err := f.m.SealObject(ctx, sc, stored); err != nil {
+		t.Fatal(err)
+	}
+	if safeOf(t, stored.ApiKey) != instanceSafe || safeOf(t, stored.Other) != instanceSafe {
+		t.Errorf("an object of the instance keystore went to %s and %s", safeOf(t, stored.ApiKey), safeOf(t, stored.Other))
+	}
+
+	// A value sealed in a safe this instance does not know, as restored from
+	// elsewhere, is kept as it is.
+	foreign := "hds:1:AQ:c2VhbGVk"
+	obj := &managedObject{ApiKey: sealedFromStorage(t, foreign)}
+	if err := f.m.SealObject(ctx, sc, obj); err != nil {
+		t.Fatalf("SealObject(foreign sealed value) = %v", err)
+	}
+	if obj.ApiKey.Token() != foreign {
+		t.Errorf("a foreign sealed value changed: %q", obj.ApiKey.Token())
+	}
+	if out, err := f.m.SealValue(ctx, SecretContext{Owner: sc.Owner, ObjectType: "x", ObjectId: "y", Field: "z"}, foreign); err != nil || out != foreign {
+		t.Errorf("SealValue(foreign sealed value) = %q, %v", out, err)
+	}
+}
+
+func TestInstanceKeystoreIsNoPersonalOneOfItsKind(t *testing.T) {
+	f := newKeystoreFixture(t, Policy(provisioningCreatorKind))
+	sc := objectContext()
+	ctx := context.Background()
+
+	// Created first, the personal keystore is the oldest safe of its kind.
+	mine := f.create(t, sc.Owner, provisioningCreatorKind, "Mine")
+
+	obj := &managedObject{ApiKey: happydns.NewSecret("a")}
+	if err := f.m.SealObject(ctx, sc, obj); err != nil {
+		t.Fatalf("SealObject: %v", err)
+	}
+	instance := safeOf(t, obj.ApiKey)
+	if instance == mine.Ref {
+		t.Fatalf("sealed under the policy into the personal keystore %s", mine.Ref)
+	}
+
+	// Moved into the keystore of the instance, from the personal one.
+	moved := &managedObject{ApiKey: happydns.NewSecret("b")}
+	if err := f.m.SealObjectInto(ctx, sc, moved, Destination{Keystore: mine.Ref}); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.m.SealObjectInto(ctx, sc, moved, Destination{Keystore: provisioningCreatorKind}); err != nil {
+		t.Fatalf("SealObjectInto(instance): %v", err)
+	}
+	if got := safeOf(t, moved.ApiKey); got != instance {
+		t.Errorf("moved into %s, want the keystore of the instance %s", got, instance)
 	}
 }

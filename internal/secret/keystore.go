@@ -315,6 +315,42 @@ func (m *Manager) KeystoreSafe(_ context.Context, owner happydns.Identifier, ref
 	return safe.Id, nil
 }
 
+// DeleteKeystore deletes ref, a keystore of owner: whatever it holds no
+// longer opens. A keystore of the instance is only deleted when instance is
+// set, by the administrator. Whether the keystore still holds secrets is for
+// the caller to check.
+func (m *Manager) DeleteKeystore(ctx context.Context, owner happydns.Identifier, ref string, instance bool) error {
+	if m == nil || m.safes == nil {
+		return errNoManager
+	}
+
+	id, err := m.KeystoreSafe(ctx, owner, ref)
+	if errors.Is(err, happydns.ErrSafeNotFound) {
+		return fmt.Errorf("%w %q: not created yet", ErrUnknownKeystore, ref)
+	}
+	if err != nil {
+		return err
+	}
+	safe, err := m.safes.GetSafe(id)
+	if err != nil {
+		return err
+	}
+	if !isPersonal(safe) && !instance {
+		return ErrInstanceKeystore
+	}
+
+	if err := m.safes.DeleteSafe(safe.Id); err != nil {
+		return err
+	}
+
+	if m.defaults != nil {
+		if def, err := m.defaults.GetDefaultKeystore(owner); err == nil && def == ref {
+			return m.defaults.DeleteDefaultKeystore(owner)
+		}
+	}
+	return nil
+}
+
 // DefaultKeystore returns the keystore owner chose for new secrets, empty
 // when they chose none.
 func (m *Manager) DefaultKeystore(owner happydns.Identifier) (string, error) {
@@ -343,4 +379,168 @@ func (m *Manager) effectiveDefault(owner happydns.Identifier) (string, error) {
 		return "", nil
 	}
 	return string(m.policy), nil
+}
+
+// SetDefaultKeystore records ref as the keystore new secrets of owner go to
+// when nothing is chosen. An empty ref forgets the choice: the policy
+// applies again.
+func (m *Manager) SetDefaultKeystore(ctx context.Context, owner happydns.Identifier, ref string) error {
+	if m == nil {
+		return errNoManager
+	}
+	if m.defaults == nil {
+		return errNoDefaults
+	}
+	if ref == "" {
+		err := m.defaults.DeleteDefaultKeystore(owner)
+		if errors.Is(err, happydns.ErrNotFound) {
+			return nil
+		}
+		return err
+	}
+	if _, err := m.resolve(owner, Destination{Keystore: ref}); err != nil {
+		return err
+	}
+	return m.defaults.PutDefaultKeystore(owner, ref)
+}
+
+// newSealer returns the sealer of the keystore dst resolves to for owner.
+func (m *Manager) newSealer(ctx context.Context, owner happydns.Identifier, dst Destination) (*sealer, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	x, err := m.resolve(owner, dst)
+	if err != nil {
+		return nil, err
+	}
+	x.m, x.owner, x.move = m, owner, dst.Keystore != ""
+	return x, nil
+}
+
+// resolve finds the keystore dst names for owner, see Destination.
+func (m *Manager) resolve(owner happydns.Identifier, dst Destination) (*sealer, error) {
+	ref := dst.Keystore
+	explicit := ref != ""
+
+	inInstance := false
+	if !explicit && !dst.policyOnly {
+		var x *sealer
+		x, inInstance = m.current(owner, dst)
+		if x != nil {
+			return x, nil
+		}
+	}
+	// An object the instance keeps follows its policy, whatever the owner
+	// chose for new objects.
+	if ref == "" && !dst.policyOnly && !inInstance {
+		def, err := m.DefaultKeystore(owner)
+		if err != nil {
+			return nil, err
+		}
+		if def != "" {
+			if x, err := m.target(owner, def, dst.Unattended); err == nil {
+				return x, nil
+			}
+			// A default that no longer fits gives way to the policy.
+		}
+	}
+	if ref == "" {
+		if m.policy == PolicyPlaintext {
+			return &sealer{plaintext: true}, nil
+		}
+		ref = string(m.policy)
+	}
+
+	return m.target(owner, ref, dst.Unattended)
+}
+
+// current returns the sealer of the personal keystore an object already
+// uses, among dst.Current, when one fits dst; and whether the object uses a
+// keystore of the instance.
+func (m *Manager) current(owner happydns.Identifier, dst Destination) (*sealer, bool) {
+	if m.safes == nil {
+		return nil, false
+	}
+	inInstance := false
+	for _, id := range dst.Current {
+		safe, err := m.safes.GetSafe(id)
+		if err != nil || !safe.Owner.Equals(owner) {
+			continue
+		}
+		if !isPersonal(safe) {
+			inInstance = true
+			continue
+		}
+		if x, err := m.target(owner, safe.Id.String(), dst.Unattended); err == nil {
+			return x, inInstance
+		}
+	}
+	return nil, inInstance
+}
+
+// target returns the sealer of ref, a keystore of owner.
+func (m *Manager) target(owner happydns.Identifier, ref string, unattended bool) (*sealer, error) {
+	if p, ok := m.stores[ref].(Provisioner); ok {
+		if m.safes == nil {
+			return nil, fmt.Errorf("the %q keystore requires a safe storage", ref)
+		}
+		if unattended && !opensUnattended(p) {
+			return nil, fmt.Errorf("%w: %q", ErrKeystoreNotUnattended, ref)
+		}
+		return &sealer{provisioner: p, kind: ref}, nil
+	}
+
+	safe, err := m.keystoreSafe(owner, ref)
+	if err != nil {
+		return nil, err
+	}
+	if !isPersonal(safe) {
+		// A keystore of the instance whose store is not configured here.
+		return nil, fmt.Errorf("%w %q: its store is not configured", ErrUnknownKeystore, ref)
+	}
+	store, ok := m.stores[safe.Kind]
+	if !ok {
+		return nil, fmt.Errorf("keystore %q needs the %q secret store, which is not configured: %w", ref, safe.Kind, ErrUnknownKeystore)
+	}
+	if unattended && !opensUnattended(store) {
+		return nil, fmt.Errorf("%w: %q", ErrKeystoreNotUnattended, safe.Name)
+	}
+	return &sealer{safe: safe, kind: safe.Kind}, nil
+}
+
+// safeIdOf returns the safe s is sealed in.
+func safeIdOf(s happydns.Secret) (happydns.Identifier, bool) {
+	if !s.IsSealed() && !s.IsOpened() {
+		return nil, false
+	}
+	sv, err := ParseSealed(s.Token())
+	if err != nil {
+		return nil, false
+	}
+	return sv.SafeId, true
+}
+
+// SafeOfValue returns the safe value, as stored, is sealed in.
+func SafeOfValue(value string) (happydns.Identifier, bool) {
+	if !IsSealed(value) {
+		return nil, false
+	}
+	sv, err := ParseSealed(value)
+	if err != nil {
+		return nil, false
+	}
+	return sv.SafeId, true
+}
+
+// SafesOf lists the safes the secrets of obj, a pointer to a struct, are
+// sealed in, without opening any.
+func SafesOf(obj any) ([]happydns.Identifier, error) {
+	var ids []happydns.Identifier
+	err := Walk(obj, func(_ string, s *happydns.Secret) error {
+		if id, ok := safeIdOf(*s); ok && !slices.ContainsFunc(ids, id.Equals) {
+			ids = append(ids, id)
+		}
+		return nil
+	})
+	return ids, err
 }

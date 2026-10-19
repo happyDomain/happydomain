@@ -41,18 +41,29 @@ func secretFromValue(value string) (happydns.Secret, error) {
 }
 
 // SealValue returns value, a secret stored in a map rather than in a
-// struct, sealed under the current policy. A value already sealed is
-// returned as is, the placeholder refused. sc must name the field.
+// struct, sealed as SealValueInto does without any keystore chosen.
 func (m *Manager) SealValue(ctx context.Context, sc SecretContext, value string) (string, error) {
+	return m.SealValueInto(ctx, sc, value, Destination{})
+}
+
+// SealValueInto returns value, a secret stored in a map rather than in a
+// struct, sealed into the keystore dst resolves to: dst.Current lists the
+// safes the other values of the object use. A value already sealed there is
+// returned as is, one sealed elsewhere moved, the placeholder refused. sc
+// must name the field.
+func (m *Manager) SealValueInto(ctx context.Context, sc SecretContext, value string, dst Destination) (string, error) {
 	if value == happydns.RedactedSecret {
 		return "", ErrRedactedSecret
 	}
-	if IsSealed(value) {
-		return value, nil
-	}
-	s := happydns.NewSecret(value)
-	if err := m.SealSecret(ctx, sc, &s); err != nil {
+	s, err := secretFromValue(value)
+	if err != nil {
 		return "", err
+	}
+	if err := m.SealSecretInto(ctx, sc, &s, dst); err != nil {
+		return "", err
+	}
+	if s.IsSealed() {
+		return value, nil
 	}
 	return s.Token(), nil
 }

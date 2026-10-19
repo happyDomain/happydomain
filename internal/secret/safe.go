@@ -215,5 +215,11 @@ func (m *Manager) DeleteOwnerSafes(owner happydns.Identifier) error {
 			return fmt.Errorf("unable to delete safe %s: %w", id.String(), err)
 		}
 	}
+
+	if m.defaults != nil {
+		if err := m.defaults.DeleteDefaultKeystore(owner); err != nil && !errors.Is(err, happydns.ErrNotFound) {
+			return fmt.Errorf("unable to forget the default keystore of %s: %w", owner.String(), err)
+		}
+	}
 	return nil
 }

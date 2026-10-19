@@ -227,13 +227,48 @@ func (m *Manager) checkStartup(ctx context.Context) error {
 	return nil
 }
 
-// SealObject seals every clear Secret of obj, a pointer to a struct, under
-// the current policy. sc tells whose object it is; its Field is filled for
-// each secret. Sealed and opened secrets are left as they are, a redacted one
-// is an error.
+// Destination tells where the secrets of one object are sealed.
+type Destination struct {
+	// Keystore is the reference of the keystore chosen, see Keystore.Ref:
+	// the secrets of the object sealed elsewhere move there. Empty, nothing
+	// moves, and new secrets go where the object already is, else to the
+	// default keystore of its owner, else under the policy.
+	Keystore string
+
+	// Unattended is set for an object used without its owner, in the
+	// background: its secrets only go to a keystore that opens without
+	// them. A default that does not gives way to the policy.
+	Unattended bool
+
+	// Current lists the safes the object already uses, for values held
+	// outside of a struct. SealObjectInto finds them itself.
+	Current []happydns.Identifier
+
+	// policyOnly ignores the keystores of the owner, for a reseal.
+	policyOnly bool
+}
+
+// UnderPolicy returns d ignoring the keystores of the owner, for what is
+// sealed on their behalf, as a restore does.
+func (d Destination) UnderPolicy() Destination {
+	d.policyOnly = true
+	return d
+}
+
+// SealObject seals every clear Secret of obj, a pointer to a struct, as
+// SealObjectInto does without any keystore chosen.
+func (m *Manager) SealObject(ctx context.Context, sc SecretContext, obj any) error {
+	return m.SealObjectInto(ctx, sc, obj, Destination{})
+}
+
+// SealObjectInto seals every clear Secret of obj, a pointer to a struct, into
+// the keystore dst resolves to. sc tells whose object it is; its Field is
+// filled for each secret. When dst chooses a keystore, the secrets sealed
+// elsewhere are opened and sealed again there, so that the whole object ends
+// up in it. A redacted one is an error. dst is checked before obj is touched.
 //
 // A sealed secret stays opened: obj can still be used, and is now storable.
-func (m *Manager) SealObject(ctx context.Context, sc SecretContext, obj any) error {
+func (m *Manager) SealObjectInto(ctx context.Context, sc SecretContext, obj any, dst Destination) error {
 	if m == nil {
 		return errNoManager
 	}
@@ -241,8 +276,17 @@ func (m *Manager) SealObject(ctx context.Context, sc SecretContext, obj any) err
 		return err
 	}
 
+	current, err := SafesOf(obj)
+	if err != nil {
+		return err
+	}
+	dst.Current = append(dst.Current, current...)
+
 	// All the secrets of an object go to the same safe.
-	x := &sealer{m: m, owner: sc.Owner}
+	x, err := m.newSealer(ctx, sc.Owner, dst)
+	if err != nil {
+		return err
+	}
 
 	return Walk(obj, func(path string, s *happydns.Secret) error {
 		fsc := sc
@@ -254,30 +298,63 @@ func (m *Manager) SealObject(ctx context.Context, sc SecretContext, obj any) err
 // SealSecret seals s, a single secret, like SealObject does for each field.
 // sc must name the field.
 func (m *Manager) SealSecret(ctx context.Context, sc SecretContext, s *happydns.Secret) error {
+	return m.SealSecretInto(ctx, sc, s, Destination{})
+}
+
+// SealSecretInto seals s, a single secret, like SealObjectInto does for each
+// field. sc must name the field.
+func (m *Manager) SealSecretInto(ctx context.Context, sc SecretContext, s *happydns.Secret, dst Destination) error {
 	if m == nil {
 		return errNoManager
 	}
 	if err := sc.Validate(); err != nil {
 		return err
 	}
-	return (&sealer{m: m, owner: sc.Owner}).seal(ctx, sc, s)
+	if id, ok := safeIdOf(*s); ok {
+		dst.Current = append(dst.Current, id)
+	}
+	x, err := m.newSealer(ctx, sc.Owner, dst)
+	if err != nil {
+		return err
+	}
+	return x.seal(ctx, sc, s)
 }
 
-// sealer seals the secrets of one owner, looking its safe up and unlocking
-// it once.
+// sealer seals the secrets of one owner into one keystore, looking its safe
+// up and unlocking it once.
 type sealer struct {
-	m        *Manager
-	owner    happydns.Identifier
+	m     *Manager
+	owner happydns.Identifier
+
+	// plaintext stores clear secrets as they are, and leaves sealed ones.
+	plaintext bool
+
+	// move seals again into the safe of the sealer what is sealed elsewhere.
+	move bool
+
+	// provisioner creates the safe on first use, for a keystore of the
+	// instance; safe is then nil until needed.
+	provisioner Provisioner
+	kind        string
+
 	safe     *happydns.Safe
 	unlocked UnlockedSafe
+
+	// opened holds the safes unlocked to open what moves.
+	opened unlockedSafes
 }
 
 func (x *sealer) seal(ctx context.Context, sc SecretContext, s *happydns.Secret) error {
 	switch {
-	case s.IsEmpty(), s.IsSealed(), s.IsOpened():
+	case s.IsEmpty():
 		return nil
 	case s.IsRedacted():
 		return ErrRedactedSecret
+	case s.IsSealed(), s.IsOpened():
+		if x.plaintext || !x.move {
+			return nil
+		}
+		return x.moveHere(ctx, sc, s)
 	}
 
 	// Before any work: a safe may be created, or a store reached.
@@ -290,7 +367,7 @@ func (x *sealer) seal(ctx context.Context, sc SecretContext, s *happydns.Secret)
 		return errors.New("secret in an unknown state")
 	}
 
-	if x.m.policy == PolicyPlaintext {
+	if x.plaintext {
 		if strings.HasPrefix(string(clear), reservedPrefix) {
 			// Stored as is, it would read back as sealed, now or once a
 			// format to come claims its prefix.
@@ -304,20 +381,28 @@ func (x *sealer) seal(ctx context.Context, sc SecretContext, s *happydns.Secret)
 		return nil
 	}
 
-	if x.unlocked == nil {
-		kind := string(x.m.policy)
-		// Checked by NewManager.
-		store := x.m.stores[kind].(Provisioner)
+	return x.sealClear(ctx, sc, s, clear)
+}
 
-		safe, err := x.m.ownerSafe(ctx, x.owner, kind, store)
+// sealClear seals clear into the safe of the sealer, and makes s hold it.
+func (x *sealer) sealClear(ctx context.Context, sc SecretContext, s *happydns.Secret, clear []byte) error {
+	if x.unlocked == nil {
+		if x.safe == nil {
+			safe, err := x.m.ownerSafe(ctx, x.owner, x.kind, x.provisioner)
+			if err != nil {
+				return err
+			}
+			x.safe = safe
+		}
+		store, ok := x.m.stores[x.safe.Kind]
+		if !ok {
+			return fmt.Errorf("safe %s needs the %q secret store, which is not configured", x.safe.Id.String(), x.safe.Kind)
+		}
+		unlocked, err := store.Unlock(ctx, x.safe)
 		if err != nil {
 			return err
 		}
-		unlocked, err := store.Unlock(ctx, safe)
-		if err != nil {
-			return err
-		}
-		x.safe, x.unlocked = safe, unlocked
+		x.unlocked = unlocked
 	}
 
 	payload, err := x.unlocked.Seal(ctx, sc, clear)
@@ -326,6 +411,37 @@ func (x *sealer) seal(ctx context.Context, sc SecretContext, s *happydns.Secret)
 	}
 	s.SetOpened(FormatSealed(x.safe.Id, payload), clear)
 	return nil
+}
+
+// moveHere seals s again into the safe of the sealer, unless it already is
+// there.
+func (x *sealer) moveHere(ctx context.Context, sc SecretContext, s *happydns.Secret) error {
+	id, ok := safeIdOf(*s)
+	if !ok {
+		return errors.New("sealed secret without a safe")
+	}
+
+	if x.safe == nil {
+		// A safe of the instance not created yet holds nothing.
+		safe, err := x.m.safes.GetSafeByOwner(x.owner, x.kind)
+		if err != nil && !errors.Is(err, happydns.ErrSafeNotFound) {
+			return err
+		}
+		x.safe = safe
+	}
+	if x.safe != nil && x.safe.Id.Equals(id) {
+		return nil
+	}
+
+	if s.IsSealed() {
+		if x.opened == nil {
+			x.opened = unlockedSafes{}
+		}
+		if _, err := x.m.open(ctx, sc, s, x.opened); err != nil {
+			return err
+		}
+	}
+	return x.sealClear(ctx, sc, s, []byte(s.Reveal()))
 }
 
 // OpenObject opens every sealed Secret of obj, a pointer to a struct. Clear
