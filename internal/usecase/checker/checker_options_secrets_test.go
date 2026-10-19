@@ -23,8 +23,12 @@ package checker_test
 
 import (
 	"context"
+	"errors"
+	"strings"
 	"testing"
 
+	"git.happydns.org/happyDomain/internal/secret"
+	"git.happydns.org/happyDomain/internal/secret/secrettest"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	"git.happydns.org/happyDomain/model"
 )
@@ -45,11 +49,74 @@ func init() {
 	})
 }
 
+func instanceOptionsUC(t *testing.T) (*checkerUC.CheckerOptionsUsecase, *optionsStore) {
+	t.Helper()
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	m, err := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: secrettest.NewSafes()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	store := newOptionsStore()
+	return checkerUC.NewCheckerOptionsUsecase(store, nil).WithSecrets(m), store
+}
+
+func storedString(t *testing.T, store *optionsStore, userId *happydns.Identifier, key string) string {
+	t.Helper()
+	v, _ := store.data[posKey(secretChecker, userId, nil, nil)][key].(string)
+	return v
+}
+
+func TestSecretOptionsAreSealedAndOpenedForRuns(t *testing.T) {
+	uc, store := instanceOptionsUC(t)
+	user := idPtr()
+
+	if err := uc.SetCheckerOptions(context.Background(), secretChecker, nil, nil, nil, happydns.CheckerOptions{"api_key": "operator-key"}); err != nil {
+		t.Fatalf("SetCheckerOptions(admin): %v", err)
+	}
+	if err := uc.SetCheckerOptions(context.Background(), secretChecker, user, nil, nil, happydns.CheckerOptions{"user_token": "user-token", "plain": "visible"}); err != nil {
+		t.Fatalf("SetCheckerOptions(user): %v", err)
+	}
+
+	for _, v := range []string{storedString(t, store, nil, "api_key"), storedString(t, store, user, "user_token")} {
+		if !strings.HasPrefix(v, "hds:1:") {
+			t.Errorf("stored secret option = %q, want it sealed", v)
+		}
+	}
+	if storedString(t, store, user, "plain") != "visible" {
+		t.Error("a non-secret option must be stored as is")
+	}
+
+	merged, _, err := uc.BuildMergedCheckerOptionsWithAutoFill(context.Background(), secretChecker, user, nil, nil, nil)
+	if err != nil {
+		t.Fatalf("BuildMergedCheckerOptionsWithAutoFill: %v", err)
+	}
+	if merged["api_key"] != "operator-key" || merged["user_token"] != "user-token" || merged["plain"] != "visible" {
+		t.Errorf("merged = %v, want the secrets in clear", merged)
+	}
+
+	forUse, err := uc.GetCheckerOptionsForUse(context.Background(), secretChecker, user, nil, nil)
+	if err != nil || forUse["user_token"] != "user-token" {
+		t.Errorf("GetCheckerOptionsForUse = %v, %v; want the secrets in clear", forUse, err)
+	}
+}
+
+func TestSecretOptionsLegacyPlaintextStillWork(t *testing.T) {
+	uc, store := instanceOptionsUC(t)
+	user := idPtr()
+	store.data[posKey(secretChecker, user, nil, nil)] = happydns.CheckerOptions{"user_token": "legacy"}
+
+	merged, _, err := uc.BuildMergedCheckerOptionsWithAutoFill(context.Background(), secretChecker, user, nil, nil, nil)
+	if err != nil || merged["user_token"] != "legacy" {
+		t.Errorf("merged = %v, %v; want the legacy value", merged, err)
+	}
+}
+
 func TestRedactCheckerOptions(t *testing.T) {
-	uc := checkerUC.NewCheckerOptionsUsecase(newOptionsStore(), nil)
+	uc, _ := instanceOptionsUC(t)
 
 	out := uc.RedactCheckerOptions(secretChecker, happydns.CheckerOptions{
-		"user_token": "clear-token",
+		"user_token": "hds:1:AQ:c2VhbGVk",
 		"api_key":    "legacy-clear",
 		"plain":      "visible",
 	})
@@ -60,29 +127,129 @@ func TestRedactCheckerOptions(t *testing.T) {
 	if out := uc.RedactCheckerOptions(secretChecker, happydns.CheckerOptions{"plain": "x"}); out["user_token"] != nil {
 		t.Errorf("an absent secret must stay absent: %v", out)
 	}
+}
 
-	if v := uc.RedactCheckerOptionValue(secretChecker, "user_token", "clear-token"); v != happydns.RedactedSecret {
-		t.Errorf("RedactCheckerOptionValue(secret) = %v, want it withheld", v)
+func TestSecretOptionsEchoKeepsStoredValue(t *testing.T) {
+	uc, store := instanceOptionsUC(t)
+	user := idPtr()
+
+	if err := uc.SetCheckerOptions(context.Background(), secretChecker, user, nil, nil, happydns.CheckerOptions{"user_token": "kept", "plain": "a"}); err != nil {
+		t.Fatal(err)
 	}
-	if v := uc.RedactCheckerOptionValue(secretChecker, "plain", "visible"); v != "visible" {
-		t.Errorf("RedactCheckerOptionValue(plain) = %v, want it as is", v)
+	sealed := storedString(t, store, user, "user_token")
+
+	// Full replace echoing the placeholder.
+	if err := uc.SetCheckerOptions(context.Background(), secretChecker, user, nil, nil, happydns.CheckerOptions{"user_token": happydns.RedactedSecret, "plain": "b"}); err != nil {
+		t.Fatalf("SetCheckerOptions(echo): %v", err)
+	}
+	if storedString(t, store, user, "user_token") != sealed || storedString(t, store, user, "plain") != "b" {
+		t.Errorf("after full replace: %v", store.data[posKey(secretChecker, user, nil, nil)])
+	}
+
+	// Partial merge echoing the placeholder.
+	if _, err := uc.AddCheckerOptions(context.Background(), secretChecker, user, nil, nil, happydns.CheckerOptions{"user_token": happydns.RedactedSecret, "plain": "c"}); err != nil {
+		t.Fatalf("AddCheckerOptions(echo): %v", err)
+	}
+	if storedString(t, store, user, "user_token") != sealed {
+		t.Error("the merge replaced the stored secret by the placeholder")
+	}
+
+	// Single option echoing the placeholder.
+	if err := uc.SetCheckerOption(context.Background(), secretChecker, user, nil, nil, "user_token", happydns.RedactedSecret); err != nil {
+		t.Fatalf("SetCheckerOption(echo): %v", err)
+	}
+	if storedString(t, store, user, "user_token") != sealed {
+		t.Error("setting the placeholder replaced the stored secret")
+	}
+
+	// A new value replaces it.
+	if err := uc.SetCheckerOption(context.Background(), secretChecker, user, nil, nil, "user_token", "rotated"); err != nil {
+		t.Fatal(err)
+	}
+	if v := storedString(t, store, user, "user_token"); v == sealed || !strings.HasPrefix(v, "hds:1:") {
+		t.Errorf("after rotation = %q, want a new sealed value", v)
+	}
+}
+
+func TestSecretOptionsRefuseBadInput(t *testing.T) {
+	uc, _ := instanceOptionsUC(t)
+	user := idPtr()
+
+	if err := uc.ValidateOptions(secretChecker, user, nil, nil, happydns.CheckerOptions{"user_token": 42.0}, false); err == nil {
+		t.Error("a non-string secret option passed validation")
+	}
+	if err := uc.SetCheckerOptions(context.Background(), secretChecker, user, nil, nil, happydns.CheckerOptions{"user_token": 42.0}); err == nil {
+		t.Error("a non-string secret option was stored")
+	}
+
+	sealed := "hds:1:AQ:c2VhbGVk"
+	var verr happydns.ValidationError
+	if err := uc.SetCheckerOptions(context.Background(), secretChecker, user, nil, nil, happydns.CheckerOptions{"user_token": sealed}); !errors.As(err, &verr) {
+		t.Errorf("SetCheckerOptions(sealed from client) = %v, want a ValidationError", err)
+	}
+	if _, err := uc.MergeCheckerOptions(secretChecker, user, nil, nil, happydns.CheckerOptions{"user_token": sealed}); !errors.As(err, &verr) {
+		t.Errorf("MergeCheckerOptions(sealed from client) = %v, want a ValidationError", err)
+	}
+	if err := uc.SetCheckerOption(context.Background(), secretChecker, user, nil, nil, "user_token", sealed); !errors.As(err, &verr) {
+		t.Errorf("SetCheckerOption(sealed from client) = %v, want a ValidationError", err)
+	}
+}
+
+func TestSecretOptionsFailClosedWithoutManager(t *testing.T) {
+	store := newOptionsStore()
+	uc := checkerUC.NewCheckerOptionsUsecase(store, nil)
+	user := idPtr()
+
+	if err := uc.SetCheckerOptions(context.Background(), secretChecker, user, nil, nil, happydns.CheckerOptions{"user_token": "v"}); err == nil {
+		t.Error("a secret option was stored without a secret manager")
+	}
+	// Options without secrets need none.
+	if err := uc.SetCheckerOptions(context.Background(), secretChecker, user, nil, nil, happydns.CheckerOptions{"plain": "v"}); err != nil {
+		t.Errorf("SetCheckerOptions(plain) = %v", err)
+	}
+
+	store.data[posKey(secretChecker, user, nil, nil)] = happydns.CheckerOptions{"user_token": "hds:1:AQ:c2VhbGVk"}
+	if _, _, err := uc.BuildMergedCheckerOptionsWithAutoFill(context.Background(), secretChecker, user, nil, nil, nil); err == nil {
+		t.Error("a run got options with a secret it could not open")
+	}
+}
+
+// A sealed value is a secret whatever the documentation says: its checker no
+// longer loaded, or the option renamed since. It is opened for a run.
+func TestSealedOptionsAreSecretsWhateverTheDocs(t *testing.T) {
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	instance, _ := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: secrettest.NewSafes()})
+
+	user := idPtr()
+	sealed, err := instance.SealValue(context.Background(), checkerUC.OptionsSecretContext(secretChecker, user, nil, nil, "renamed"), "kept")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	store := newOptionsStore()
+	store.data[posKey(secretChecker, user, nil, nil)] = happydns.CheckerOptions{"renamed": sealed}
+
+	uc := checkerUC.NewCheckerOptionsUsecase(store, nil).WithSecrets(instance)
+	merged, _, err := uc.BuildMergedCheckerOptionsWithAutoFill(context.Background(), secretChecker, user, nil, nil, nil)
+	if err != nil || merged["renamed"] != "kept" {
+		t.Errorf("merged = %v, %v; want the undocumented secret opened", merged, err)
 	}
 }
 
 // What leaves happyDomain withholds every value that may be a secret: those
-// documented so, any option the documentation does not describe, and every
-// option of a checker this version does not load.
+// documented so, any sealed one, any option the documentation does not
+// describe, and every option of a checker this version does not load.
 func TestRedactOptionsWithholdsWhatMayBeSecret(t *testing.T) {
-	opts := happydns.CheckerOptions{
+	out := checkerUC.RedactOptions(secretChecker, happydns.CheckerOptions{
 		"user_token": "legacy-clear",
-		"plain":      "visible",
+		"plain":      "hds:1:AQ:c2VhbGVk",
 		"renamed":    "clear-but-undocumented",
 		"api_key":    "",
-	}
-	out := checkerUC.RedactOptions(secretChecker, opts)
+	})
 	want := happydns.CheckerOptions{
 		"user_token": happydns.RedactedSecret,
-		"plain":      "visible",
+		"plain":      happydns.RedactedSecret,
 		"renamed":    happydns.RedactedSecret,
 		"api_key":    "",
 	}
@@ -91,19 +258,27 @@ func TestRedactOptionsWithholdsWhatMayBeSecret(t *testing.T) {
 			t.Errorf("redacted[%q] = %v, want %v", k, out[k], v)
 		}
 	}
-	if opts["user_token"] != "legacy-clear" {
-		t.Errorf("the options given were changed: %v", opts)
+	if out := checkerUC.RedactOptions(secretChecker, happydns.CheckerOptions{"plain": "visible"}); out["plain"] != "visible" {
+		t.Errorf("a documented plain option = %v, want it as is", out["plain"])
 	}
 	if out := checkerUC.RedactOptions("gone_checker", happydns.CheckerOptions{"anything": "x"}); out["anything"] != happydns.RedactedSecret {
 		t.Errorf("an option of an unknown checker = %v, want it withheld", out["anything"])
 	}
 }
 
+// A client never sends a sealed value, whatever the option.
+func TestSealedValueFromClientRefusedOnAnyOption(t *testing.T) {
+	uc, _ := instanceOptionsUC(t)
+	var verr happydns.ValidationError
+	if err := uc.SetCheckerOptions(context.Background(), secretChecker, idPtr(), nil, nil, happydns.CheckerOptions{"plain": "hds:1:AQ:c2VhbGVk"}); !errors.As(err, &verr) {
+		t.Errorf("SetCheckerOptions = %v, want a ValidationError", err)
+	}
+}
+
 // Every value withheld comes back as the placeholder: echoed back, it keeps
 // the stored value, documented secret or not.
 func TestPlaceholderKeepsAnyStoredOption(t *testing.T) {
-	store := newOptionsStore()
-	uc := checkerUC.NewCheckerOptionsUsecase(store, nil)
+	uc, store := instanceOptionsUC(t)
 	user := idPtr()
 	store.data[posKey(secretChecker, user, nil, nil)] = happydns.CheckerOptions{"renamed": "undocumented", "plain": "a"}
 
@@ -113,19 +288,9 @@ func TestPlaceholderKeepsAnyStoredOption(t *testing.T) {
 	if v := store.data[posKey(secretChecker, user, nil, nil)]["renamed"]; v != "undocumented" {
 		t.Errorf("renamed = %v, want the stored value kept", v)
 	}
-	if v := store.data[posKey(secretChecker, user, nil, nil)]["plain"]; v != "b" {
-		t.Errorf("plain = %v, want it replaced", v)
-	}
 
 	if _, err := uc.AddCheckerOptions(context.Background(), secretChecker, user, nil, nil, happydns.CheckerOptions{"renamed": happydns.RedactedSecret}); err != nil {
 		t.Fatalf("AddCheckerOptions: %v", err)
-	}
-	if v := store.data[posKey(secretChecker, user, nil, nil)]["renamed"]; v != "undocumented" {
-		t.Errorf("renamed = %v, want the stored value kept", v)
-	}
-
-	if err := uc.SetCheckerOption(context.Background(), secretChecker, user, nil, nil, "renamed", happydns.RedactedSecret); err != nil {
-		t.Fatalf("SetCheckerOption: %v", err)
 	}
 	if v := store.data[posKey(secretChecker, user, nil, nil)]["renamed"]; v != "undocumented" {
 		t.Errorf("renamed = %v, want the stored value kept", v)
@@ -134,23 +299,45 @@ func TestPlaceholderKeepsAnyStoredOption(t *testing.T) {
 
 // The placeholder in the options of a run stands for what is stored.
 func TestPlaceholderInRunOptionsIsIgnored(t *testing.T) {
-	uc := checkerUC.NewCheckerOptionsUsecase(newOptionsStore(), nil)
+	uc, _ := instanceOptionsUC(t)
 	user := idPtr()
-	if err := uc.SetCheckerOptions(context.Background(), secretChecker, user, nil, nil, happydns.CheckerOptions{"plain": "stored"}); err != nil {
+	if err := uc.SetCheckerOptions(context.Background(), secretChecker, user, nil, nil, happydns.CheckerOptions{"user_token": "stored"}); err != nil {
 		t.Fatal(err)
 	}
 
-	merged, _, err := uc.BuildMergedCheckerOptionsWithAutoFill(context.Background(), secretChecker, user, nil, nil, happydns.CheckerOptions{"plain": happydns.RedactedSecret})
-	if err != nil || merged["plain"] != "stored" {
+	merged, _, err := uc.BuildMergedCheckerOptionsWithAutoFill(context.Background(), secretChecker, user, nil, nil, happydns.CheckerOptions{"user_token": happydns.RedactedSecret})
+	if err != nil || merged["user_token"] != "stored" {
 		t.Errorf("merged = %v, %v; want the stored value", merged, err)
+	}
+}
+
+// A sealed option is bound to its scope: copied into another user's options,
+// or another checker's, it does not open for a run.
+func TestSealedOptionsAreBoundToTheirScope(t *testing.T) {
+	uc, store := instanceOptionsUC(t)
+	victim, attacker := idPtr(), idPtr()
+	if err := uc.SetCheckerOptions(context.Background(), secretChecker, victim, nil, nil, happydns.CheckerOptions{"user_token": "victim-token"}); err != nil {
+		t.Fatal(err)
+	}
+	sealed := storedString(t, store, victim, "user_token")
+	store.data[posKey(secretChecker, attacker, nil, nil)] = happydns.CheckerOptions{"user_token": sealed}
+	store.data[posKey("gone_checker", victim, nil, nil)] = happydns.CheckerOptions{"user_token": sealed}
+
+	if merged, _, err := uc.BuildMergedCheckerOptionsWithAutoFill(context.Background(), secretChecker, attacker, nil, nil, nil); err == nil {
+		t.Errorf("opened in another user's scope: %v", merged)
+	}
+	if opts, err := uc.GetCheckerOptionsForUse(context.Background(), secretChecker, attacker, nil, nil); err == nil {
+		t.Errorf("opened for a precheck in another user's scope: %v", opts)
+	}
+	if merged, _, err := uc.BuildMergedCheckerOptionsWithAutoFill(context.Background(), "gone_checker", victim, nil, nil, nil); err == nil {
+		t.Errorf("opened under another checker: %v", merged)
 	}
 }
 
 // The placeholder with nothing stored behind it stands for no value: it is
 // dropped, never stored.
 func TestPlaceholderWithNothingStoredIsDropped(t *testing.T) {
-	store := newOptionsStore()
-	uc := checkerUC.NewCheckerOptionsUsecase(store, nil)
+	uc, store := instanceOptionsUC(t)
 	user := idPtr()
 
 	if err := uc.SetCheckerOptions(context.Background(), secretChecker, user, nil, nil, happydns.CheckerOptions{"plain": happydns.RedactedSecret, "user_token": happydns.RedactedSecret}); err != nil {
@@ -163,5 +350,37 @@ func TestPlaceholderWithNothingStoredIsDropped(t *testing.T) {
 		if v, ok := store.data[posKey(secretChecker, user, nil, nil)][k]; ok {
 			t.Errorf("stored %s = %v, want nothing", k, v)
 		}
+	}
+}
+
+// The context of the request reaches the secrets: a cancelled one neither
+// seals nor opens an option.
+func TestSecretOptionsHonourContext(t *testing.T) {
+	uc, store := instanceOptionsUC(t)
+	user := idPtr()
+	cancelled, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	if err := uc.SetCheckerOptions(cancelled, secretChecker, user, nil, nil, happydns.CheckerOptions{"user_token": "t"}); !errors.Is(err, context.Canceled) {
+		t.Errorf("SetCheckerOptions: got %v, want context.Canceled", err)
+	}
+	if _, err := uc.AddCheckerOptions(cancelled, secretChecker, user, nil, nil, happydns.CheckerOptions{"user_token": "t"}); !errors.Is(err, context.Canceled) {
+		t.Errorf("AddCheckerOptions: got %v, want context.Canceled", err)
+	}
+	if err := uc.SetCheckerOption(cancelled, secretChecker, user, nil, nil, "user_token", "t"); !errors.Is(err, context.Canceled) {
+		t.Errorf("SetCheckerOption: got %v, want context.Canceled", err)
+	}
+	if storedString(t, store, user, "user_token") != "" {
+		t.Error("an option was stored despite the cancelled context")
+	}
+
+	if err := uc.SetCheckerOptions(context.Background(), secretChecker, user, nil, nil, happydns.CheckerOptions{"user_token": "t"}); err != nil {
+		t.Fatalf("SetCheckerOptions: %v", err)
+	}
+	if _, _, err := uc.BuildMergedCheckerOptionsWithAutoFill(cancelled, secretChecker, user, nil, nil, nil); !errors.Is(err, context.Canceled) {
+		t.Errorf("BuildMergedCheckerOptionsWithAutoFill: got %v, want context.Canceled", err)
+	}
+	if _, err := uc.GetCheckerOptionsForUse(cancelled, secretChecker, user, nil, nil); !errors.Is(err, context.Canceled) {
+		t.Errorf("GetCheckerOptionsForUse: got %v, want context.Canceled", err)
 	}
 }

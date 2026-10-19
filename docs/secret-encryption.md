@@ -1,10 +1,16 @@
 # Encrypting stored credentials
 
-happyDomain stores credentials on behalf of its users: the API keys,
-passwords and TSIG keys of their DNS providers, the signing secret and the
-header values (an `Authorization` token, say) of their webhooks, and the
-endpoint of their UnifiedPush channels, enough to push to their device. By
-default they are stored in clear in the database, as they always were.
+happyDomain stores credentials on behalf of its users:
+
+- the API keys, passwords and TSIG keys of their DNS providers;
+- the signing secret and the header values (an `Authorization` token, say) of
+  their webhooks;
+- the endpoint of their UnifiedPush channels, enough to push to their device;
+- the checker options documented as secret, such as the API keys of the
+  blacklist sources, whether set by a user or by an administrator for every
+  user.
+
+By default they are stored in clear in the database, as they always were.
 
 The `instance` policy encrypts them under a keyset held by the server, outside
 the database. A leaked database dump or backup, or a database hosted apart from
@@ -13,9 +19,8 @@ a compromised happyDomain server, which holds the keyset.
 
 ## Limits of this version
 
-This first version covers the common path. Before enabling it, know that:
+Before enabling it, know that:
 
-- the checker options stay in clear, even those holding an API key;
 - the migrations below (`reseal`, `rewrap`, `drop-safes`) expect a single
   happyDomain process on the database. With several, a reseal may overwrite an
   update made at the same time by another process;
@@ -76,8 +81,8 @@ secret-policy=instance
 or `HAPPYDOMAIN_SECRET_KEYSET_FILE` and `HAPPYDOMAIN_SECRET_POLICY`.
 
 From then on, every credential saved is encrypted. Those already stored are
-encrypted the next time their provider or channel is saved; to do it at once,
-see [Migrating existing credentials](#migrating-existing-credentials).
+encrypted the next time their provider, channel or options are saved; to do it
+at once, see [Migrating existing credentials](#migrating-existing-credentials).
 
 Nothing changes for users.
 

@@ -73,7 +73,7 @@ func NewAdmin(app *App) *Admin {
 	providerAdminService := providerUC.NewService(app.store, nil, app.guards.Outbound, app.secrets)
 	app.usecases.providerAdmin = providerAdminService
 	if app.usecases.checkerOptionsUC == nil {
-		app.usecases.checkerOptionsUC = checkerUC.NewCheckerOptionsUsecase(app.store, app.store)
+		app.usecases.checkerOptionsUC = checkerUC.NewCheckerOptionsUsecase(app.store, app.store).WithSecrets(app.secrets)
 	}
 
 	// /metrics is not part of the /api group, so it needs the admin auth

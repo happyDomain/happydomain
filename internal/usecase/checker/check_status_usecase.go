@@ -181,7 +181,9 @@ func (u *CheckStatusUsecase) ListCheckerStatuses(ctx context.Context, target hap
 		status.EnabledRules = enabledRules
 
 		if u.optionsUC != nil && len(def.Rules) > 0 {
-			opts, optErr := u.optionsUC.GetCheckerOptions(
+			// Opened: prechecks of remote checkers hand the options over.
+			opts, optErr := u.optionsUC.GetCheckerOptionsForUse(
+				ctx,
 				def.ID,
 				happydns.TargetIdentifier(target.UserId),
 				happydns.TargetIdentifier(target.DomainId),

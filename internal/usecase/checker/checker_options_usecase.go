@@ -31,6 +31,7 @@ import (
 
 	checkerPkg "git.happydns.org/happyDomain/internal/dnschecker"
 	"git.happydns.org/happyDomain/internal/forms"
+	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -152,6 +153,7 @@ type CheckerOptionsUsecase struct {
 	autoFillStore  CheckAutoFillStorage
 	discoveryStore DiscoveryEntryStorage
 	adminOptions   map[string]happydns.CheckerOptions
+	secrets        *secret.Manager
 }
 
 // NewCheckerOptionsUsecase creates a new CheckerOptionsUsecase.
@@ -273,6 +275,10 @@ func (u *CheckerOptionsUsecase) SetCheckerOptions(
 	serviceId *happydns.Identifier,
 	opts happydns.CheckerOptions,
 ) error {
+	if err := checkIncomingOptions(checkerName, opts); err != nil {
+		return err
+	}
+
 	// Drop empties first so filterOptionsForScope doesn't have to handle them.
 	nonEmpty := make(happydns.CheckerOptions, len(opts))
 	for k, v := range opts {
@@ -303,6 +309,9 @@ func (u *CheckerOptionsUsecase) SetCheckerOptions(
 
 	scope := scopeFromIdentifiers(userId, domainId, serviceId)
 	filtered, _ := u.filterOptionsForScope(checkerName, scope, nonEmpty)
+	if err := u.sealOptions(ctx, checkerName, userId, domainId, serviceId, filtered); err != nil {
+		return err
+	}
 	return u.store.UpdateCheckerConfiguration(checkerName, userId, domainId, serviceId, filtered)
 }
 
@@ -317,6 +326,10 @@ func (u *CheckerOptionsUsecase) MergeCheckerOptions(
 	serviceId *happydns.Identifier,
 	newOpts happydns.CheckerOptions,
 ) (happydns.CheckerOptions, error) {
+	if err := checkIncomingOptions(checkerName, newOpts); err != nil {
+		return nil, err
+	}
+
 	existing, err := u.getScopedOptions(checkerName, userId, domainId, serviceId)
 	if err != nil {
 		return nil, err
@@ -374,6 +387,9 @@ func (u *CheckerOptionsUsecase) AddCheckerOptions(
 ) (happydns.CheckerOptions, error) {
 	merged, err := u.MergeCheckerOptions(checkerName, userId, domainId, serviceId, newOpts)
 	if err != nil {
+		return nil, err
+	}
+	if err := u.sealOptions(ctx, checkerName, userId, domainId, serviceId, merged); err != nil {
 		return nil, err
 	}
 	if err := u.store.UpdateCheckerConfiguration(checkerName, userId, domainId, serviceId, merged); err != nil {
@@ -535,6 +551,14 @@ func (u *CheckerOptionsUsecase) ValidateOptions(
 		}
 	}
 
+	for k := range computeFieldMeta(def).secretIds {
+		if v, ok := opts[k]; ok && !isEmptyValue(v) {
+			if _, isString := v.(string); !isString {
+				return fmt.Errorf("option %q is secret and must be a string", k)
+			}
+		}
+	}
+
 	// Rule-level semantic validation (beyond field shape).
 	for _, rule := range def.Rules {
 		if v, ok := rule.(happydns.OptionsValidator); ok {
@@ -561,6 +585,9 @@ func (u *CheckerOptionsUsecase) SetCheckerOption(
 	if value == happydns.RedactedSecret {
 		// The client echoes the placeholder: keep what is stored.
 		return nil
+	}
+	if err := checkIncomingOption(optName, value, secretIdsOf(checkerName)[optName]); err != nil {
+		return err
 	}
 
 	if def := checkerPkg.FindChecker(checkerName); def != nil {
@@ -593,6 +620,9 @@ func (u *CheckerOptionsUsecase) SetCheckerOption(
 		delete(existing, optName)
 	} else {
 		existing[optName] = value
+	}
+	if err := u.sealOptions(ctx, checkerName, userId, domainId, serviceId, existing); err != nil {
+		return err
 	}
 	return u.store.UpdateCheckerConfiguration(checkerName, userId, domainId, serviceId, existing)
 }
@@ -770,6 +800,10 @@ func (u *CheckerOptionsUsecase) BuildMergedCheckerOptionsWithAutoFill(
 	runOpts happydns.CheckerOptions,
 ) (happydns.CheckerOptions, []*happydns.StoredDiscoveryEntry, error) {
 	positionals, err := u.store.GetCheckerConfiguration(checkerName, userId, domainId, serviceId)
+	if err != nil {
+		return nil, nil, err
+	}
+	positionals, err = u.openPositionals(ctx, positionals)
 	if err != nil {
 		return nil, nil, err
 	}

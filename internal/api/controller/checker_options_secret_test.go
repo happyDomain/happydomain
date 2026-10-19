@@ -31,6 +31,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/internal/dnschecker"
+	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	"git.happydns.org/happyDomain/model"
@@ -56,7 +57,13 @@ func TestCheckerOptionsResponsesRedactSecrets(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	optionsUC := checkerUC.NewCheckerOptionsUsecase(db, db)
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	secrets, err := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db})
+	if err != nil {
+		t.Fatal(err)
+	}
+	optionsUC := checkerUC.NewCheckerOptionsUsecase(db, db).WithSecrets(secrets)
 	cc := NewCheckerController(nil, optionsUC, nil, nil, nil, nil, false)
 	user := &happydns.User{Id: happydns.Identifier("0123456789abcdef")}
 
@@ -85,7 +92,7 @@ func TestCheckerOptionsResponsesRedactSecrets(t *testing.T) {
 			t.Errorf("%s = %d %s", name, w.Code, body)
 			continue
 		}
-		if strings.Contains(body, "s3cr3t") {
+		if strings.Contains(body, "s3cr3t") || strings.Contains(body, "hds:1:") {
 			t.Errorf("%s leaks the secret: %s", name, body)
 		}
 	}
