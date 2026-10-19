@@ -30,6 +30,10 @@ import (
 
 // CreateDomainOnProvider creates a domain on the given provider.
 func (s *Service) CreateDomainOnProvider(ctx context.Context, provider *happydns.Provider, fqdn string) error {
+	if provider.IsReadOnly() {
+		return happydns.ForbiddenError{Msg: "this provider is read-only: happyDomain cannot create a domain on it."}
+	}
+
 	p, err := s.instantiate(ctx, provider)
 	if err != nil {
 		return err

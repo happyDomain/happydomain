@@ -65,6 +65,13 @@ func ParseProvider(msg *happydns.ProviderMessage) (p *happydns.Provider, err err
 	}
 
 	err = json.Unmarshal(msg.Provider, &p.Provider)
+	if err != nil {
+		return
+	}
+
+	// Derived from the settings, never trusted from the message: every
+	// Provider built here (creation, read, restore) then agrees.
+	p.ReadOnly = p.IsReadOnly()
 	return
 }
 
@@ -222,6 +229,10 @@ func (s *Service) update(ctx context.Context, providerID happydns.Identifier, us
 	if err != nil {
 		return nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to validate provider attributes: %s", err.Error())}
 	}
+
+	// Derived again: updateFn may have changed the settings since
+	// GetUserProvider parsed them.
+	provider.ReadOnly = provider.IsReadOnly()
 
 	err = s.store.UpdateProvider(provider)
 	if err != nil {

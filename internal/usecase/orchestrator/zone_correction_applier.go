@@ -83,6 +83,7 @@ func (uc *ZoneCorrectionApplierUsecase) computeExecutableCorrections(
 	user *happydns.User,
 	domain *happydns.Domain,
 	zone *happydns.Zone,
+	provider *happydns.Provider,
 	wantedCorrections []happydns.Identifier,
 ) (execCorrections []*happydns.Correction, targetRecords []happydns.Record, providerRecords []happydns.Record, nbDiffs int, err error) {
 	// Step 1: Compute the diff and get provider/WIP records.
@@ -95,11 +96,6 @@ func (uc *ZoneCorrectionApplierUsecase) computeExecutableCorrections(
 	targetRecords = adapter.BuildTargetRecords(providerRecords, corrections, wantedCorrections)
 
 	// Step 3: Get executable corrections from the provider for the target state.
-	provider, err := uc.providerService.GetUserProvider(ctx, user, domain.ProviderId)
-	if err != nil {
-		return nil, nil, nil, nbDiffs, err
-	}
-
 	execCorrections, nbDiffs, err = uc.zoneCorrector.ListZoneCorrections(ctx, provider, domain, targetRecords)
 	if err != nil {
 		return nil, nil, nil, nbDiffs, fmt.Errorf("unable to compute executable corrections: %w", err)
@@ -118,7 +114,12 @@ func (uc *ZoneCorrectionApplierUsecase) Prepare(
 	zone *happydns.Zone,
 	form *happydns.PrepareZoneForm,
 ) (*happydns.PrepareZoneResponse, error) {
-	execCorrections, _, _, nbDiffs, err := uc.computeExecutableCorrections(ctx, user, domain, zone, form.WantedCorrections)
+	provider, err := uc.providerService.GetUserProvider(ctx, user, domain.ProviderId)
+	if err != nil {
+		return nil, err
+	}
+
+	execCorrections, _, _, nbDiffs, err := uc.computeExecutableCorrections(ctx, user, domain, zone, provider, form.WantedCorrections)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +149,17 @@ func (uc *ZoneCorrectionApplierUsecase) Apply(
 	zone *happydns.Zone,
 	form *happydns.ApplyZoneForm,
 ) (*happydns.Zone, error) {
-	executableCorrections, targetRecords, providerRecords, _, err := uc.computeExecutableCorrections(ctx, user, domain, zone, form.WantedCorrections)
+	provider, err := uc.providerService.GetUserProvider(ctx, user, domain.ProviderId)
+	if err != nil {
+		return nil, err
+	}
+	// Only here: Prepare stays allowed, the differences are what monitoring a
+	// read-only provider is about.
+	if provider.IsReadOnly() {
+		return nil, happydns.ForbiddenError{Msg: "this provider is read-only: happyDomain cannot publish changes through it."}
+	}
+
+	executableCorrections, targetRecords, providerRecords, _, err := uc.computeExecutableCorrections(ctx, user, domain, zone, provider, form.WantedCorrections)
 	if err != nil {
 		return nil, err
 	}
@@ -180,8 +191,7 @@ func (uc *ZoneCorrectionApplierUsecase) Apply(
 	// Step 4b: If provider manages SOA serial, re-fetch to get the actual published state.
 	publishedRecords := targetRecords
 	refetched := false
-	provider, provErr := uc.providerService.GetUserProvider(ctx, user, domain.ProviderId)
-	if provErr == nil && providerReg.ProviderHasCapability(provider, "manages-soa-serial") {
+	if providerReg.ProviderHasCapability(provider, "manages-soa-serial") {
 		fetched, fetchErr := uc.zoneRetriever.RetrieveZone(ctx, provider, domain.DomainName)
 		if fetchErr != nil {
 			log.Printf("%s: unable to re-fetch zone after deploy, using target records: %s", domain.DomainName, fetchErr)
