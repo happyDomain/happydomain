@@ -185,6 +185,12 @@
                     {:else}
                         <em>{$t("provider.no-name")}</em>
                     {/if}
+                    {#if item._readonly}
+                        <Badge color="info" title={$t("provider.read-only-title")}>
+                            <Icon name="eye" aria-hidden="true" />
+                            {$t("provider.read-only")}
+                        </Badge>
+                    {/if}
                 </div>
                 {#if !(noLabel && noDropdown && !toolbar)}
                     <div class="d-flex">

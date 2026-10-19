@@ -27,7 +27,7 @@
     import { resolve } from "$app/paths";
     import type { ClassValue } from "svelte/elements";
 
-    import { Button, ButtonGroup, Icon, Spinner, Table } from "@sveltestrap/sveltestrap";
+    import { Badge, Button, ButtonGroup, Icon, Spinner, Table } from "@sveltestrap/sveltestrap";
 
     import { deleteDomain } from "$lib/api/domains";
     import { deleteProvider } from "$lib/api/provider";
@@ -158,6 +158,12 @@
                                 <span title={item._comment}>{item._comment}</span>
                             {:else}
                                 <em>{$t("provider.no-name")}</em>
+                            {/if}
+                            {#if item._readonly}
+                                <Badge color="info" title={$t("provider.read-only-title")}>
+                                    <Icon name="eye" aria-hidden="true" />
+                                    {$t("provider.read-only")}
+                                </Badge>
                             {/if}
                         </div>
                     </td>

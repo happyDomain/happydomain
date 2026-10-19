@@ -54,6 +54,7 @@
     import DiffZone from "$lib/components/zones/DiffZone.svelte";
     import DiffZoneView from "$lib/components/zones/DiffZoneView.svelte";
     import { domains_idx } from "$lib/stores/domains";
+    import { providers_idx } from "$lib/stores/providers";
     import { invalidateZoneDiff } from "$lib/stores/zonediff";
     import { userSession } from "$lib/stores/usersession";
     import { getZone, thisZone } from "$lib/stores/thiszone";
@@ -95,6 +96,10 @@
 
     // Nothing to apply: the action requested is a no-op, not a pending change.
     let nothingToApply = $derived(preparePhase === "select" && diffComputed && !zoneDiffLength);
+
+    // A read-only provider only shows the differences: the server refuses to
+    // apply them.
+    let readOnly = $derived(Boolean($providers_idx[domain?.id_provider]?._readonly));
 
     function Open(): void {
         zoneDiffLength = 0;
@@ -210,9 +215,15 @@
                 <p>{$t("wait.preparation")}</p>
             </div>
         {:else if preparePhase === "select"}
+            {#if readOnly && !nothingToApply}
+                <Alert color="info">
+                    <Icon name="eye" class="me-2" />
+                    {$t("domains.apply.read-only")}
+                </Alert>
+            {/if}
             <DiffZone
                 {domain}
-                selectable
+                selectable={!readOnly}
                 disabled={prepareInProgress || propagationInProgress}
                 bind:selectedDiff
                 zoneFrom={selectedHistory}
@@ -263,8 +274,8 @@
         {/if}
     </ModalBody>
     <ModalFooter>
-        {#if nothingToApply}
-            <!-- No pending change: only offer a way out, not a disabled apply button. -->
+        {#if nothingToApply || readOnly}
+            <!-- Nothing applicable: offer a way out, not a disabled apply button. -->
             <Button color="secondary" outline on:click={() => (isOpen = false)}>
                 {$t("common.close")}
             </Button>

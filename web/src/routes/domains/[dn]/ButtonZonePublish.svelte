@@ -29,6 +29,7 @@
     import { getDomain as APIGetDomain } from "$lib/api/domains";
     import type { Domain } from "$lib/model/domain";
     import { domains_idx } from "$lib/stores/domains";
+    import { providers_idx } from "$lib/stores/providers";
     import { thisZone } from "$lib/stores/thiszone";
     import { getCachedDiffZoneSummary, zoneDiffVersion } from "$lib/stores/zonediff";
     import { t } from "$lib/translations";
@@ -42,6 +43,14 @@
     }
 
     let { class: className, domain, history }: Props = $props();
+
+    // The server refuses to publish through a read-only provider: the button
+    // only opens the differences.
+    let readOnly = $derived(Boolean($providers_idx[domain.id_provider]?._readonly));
+    let publishLabel = $derived(
+        readOnly ? $t("domains.actions.view-diff") : $t("domains.actions.propagate"),
+    );
+    let publishIcon = $derived(readOnly ? "eye" : "cloud-upload");
 
     async function getDomain(id: string): Promise<Domain> {
         return await APIGetDomain(id);
@@ -61,24 +70,19 @@
         {#if $domains_idx[domain.id].zone_history && history === $domains_idx[domain.id].zone_history[0]}
             {#key $zoneDiffVersion}
                 {#await getCachedDiffZoneSummary(domain, "@", $thisZone.id)}
-                    <Button
-                        color="primary"
-                        outline
-                        title={$t("domains.actions.propagate")}
-                        on:click={showDiff}
-                    >
+                    <Button color="primary" outline title={publishLabel} on:click={showDiff}>
                         <Spinner size="sm" />
-                        {$t("domains.actions.propagate")}
+                        {publishLabel}
                     </Button>
                 {:then zoneDiffSummary}
                     <Button
                         color="primary"
                         outline={zoneDiffSummary && !zoneDiffSummary.nbDiffs}
-                        title={$t("domains.actions.propagate")}
+                        title={publishLabel}
                         on:click={showDiff}
                     >
-                        <Icon name="cloud-upload" aria-hidden="true" />
-                        {$t("domains.actions.propagate")}
+                        <Icon name={publishIcon} aria-hidden="true" />
+                        {publishLabel}
                         {#if zoneDiffSummary && zoneDiffSummary.nbDiffs}
                             <small class="text-muted">({zoneDiffSummary.nbDiffs})</small>
                         {/if}
@@ -100,10 +104,17 @@
                 {/await}
             {/key}
         {:else}
-            <Button color="warning" title={$t("domains.actions.rollback")} on:click={showDiff}>
-                <Icon name="cloud-upload" aria-hidden="true" />
-                {$t("domains.actions.rollback")}
-            </Button>
+            {#if readOnly}
+                <Button color="secondary" outline title={publishLabel} on:click={showDiff}>
+                    <Icon name={publishIcon} aria-hidden="true" />
+                    {publishLabel}
+                </Button>
+            {:else}
+                <Button color="warning" title={$t("domains.actions.rollback")} on:click={showDiff}>
+                    <Icon name="cloud-upload" aria-hidden="true" />
+                    {$t("domains.actions.rollback")}
+                </Button>
+            {/if}
             <p class="mt-2 mb-1 text-center">
                 {#await getDomain(domain.id)}
                     {$t("history.loading")}
