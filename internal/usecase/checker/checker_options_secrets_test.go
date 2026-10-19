@@ -29,6 +29,8 @@ import (
 
 	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/internal/secret/secrettest"
+	"git.happydns.org/happyDomain/internal/storage/inmemory"
+	kv "git.happydns.org/happyDomain/internal/storage/kvtpl"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	"git.happydns.org/happyDomain/model"
 )
@@ -214,26 +216,124 @@ func TestSecretOptionsFailClosedWithoutManager(t *testing.T) {
 	}
 }
 
+func TestSecretOptionsResealAndInspect(t *testing.T) {
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	safes := secrettest.NewSafes()
+	instance, _ := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: safes})
+	plaintext, _ := secret.NewManager(secret.Config{Policy: secret.PolicyPlaintext, InstanceKey: key, Safes: safes})
+
+	store := newListableOptionsStore()
+	user := idPtr()
+	store.data[posKey(secretChecker, user, nil, nil)] = happydns.CheckerOptions{"user_token": "legacy", "plain": "p"}
+	store.data[posKey(secretChecker, nil, nil, nil)] = happydns.CheckerOptions{"api_key": "operator"}
+
+	holder := checkerUC.NewCheckerOptionsSecrets(store, instance)
+	counts, err := holder.InspectSecrets(context.Background())
+	if err != nil || counts.Clear != 2 {
+		t.Fatalf("InspectSecrets = %+v, %v; want 2 clear", counts, err)
+	}
+
+	report, err := holder.ResealSecrets(context.Background())
+	if err != nil || report.Changed != 2 || report.Failed != 0 {
+		t.Fatalf("ResealSecrets = %+v, %v", report, err)
+	}
+	if v := storedString(t, store.optionsStore, user, "user_token"); !strings.HasPrefix(v, "hds:1:") {
+		t.Errorf("user option after reseal = %q", v)
+	}
+	counts, _ = holder.InspectSecrets(context.Background())
+	if counts.Sealed[secret.KindInstance] != 2 || counts.Clear != 0 {
+		t.Errorf("InspectSecrets after = %+v", counts)
+	}
+
+	report, err = checkerUC.NewCheckerOptionsSecrets(store, plaintext).ResealSecrets(context.Background())
+	if err != nil || report.Changed != 2 {
+		t.Fatalf("ResealSecrets(plaintext) = %+v, %v", report, err)
+	}
+	if v := storedString(t, store.optionsStore, user, "user_token"); v != "legacy" {
+		t.Errorf("user option back in clear = %q", v)
+	}
+}
+
+// listableOptionsStore also lists every stored configuration.
+type listableOptionsStore struct {
+	*optionsStore
+}
+
+func newListableOptionsStore() *listableOptionsStore {
+	return &listableOptionsStore{newOptionsStore()}
+}
+
+func (s *listableOptionsStore) ListAllCheckerConfigurations() (happydns.Iterator[happydns.CheckerOptionsPositional], error) {
+	var items []*happydns.CheckerOptionsPositional
+	for key, opts := range s.data {
+		parts := strings.Split(key, "|")
+		p := &happydns.CheckerOptionsPositional{CheckName: parts[0], Options: opts}
+		for i, dst := range []**happydns.Identifier{&p.UserId, &p.DomainId, &p.ServiceId} {
+			if parts[i+1] != "" {
+				id, _ := happydns.NewIdentifierFromString(parts[i+1])
+				*dst = &id
+			}
+		}
+		items = append(items, p)
+	}
+	return &positionalIterator{items: items, idx: -1}, nil
+}
+
+type positionalIterator struct {
+	items []*happydns.CheckerOptionsPositional
+	idx   int
+}
+
+func (it *positionalIterator) Next() bool                               { it.idx++; return it.idx < len(it.items) }
+func (it *positionalIterator) NextWithError() bool                      { return it.Next() }
+func (it *positionalIterator) Item() *happydns.CheckerOptionsPositional { return it.items[it.idx] }
+func (it *positionalIterator) DropItem() error                          { return nil }
+func (it *positionalIterator) Key() string                              { return "" }
+func (it *positionalIterator) Raw() any                                 { return nil }
+func (it *positionalIterator) Err() error                               { return nil }
+func (it *positionalIterator) Close()                                   {}
+
 // A sealed value is a secret whatever the documentation says: its checker no
-// longer loaded, or the option renamed since. It is opened for a run.
+// longer loaded, or the option renamed since. It is counted and resealed, so
+// that dropping the safes cannot lose it, and opened for a run.
 func TestSealedOptionsAreSecretsWhateverTheDocs(t *testing.T) {
 	h, _ := secret.GenerateInstanceKeyset()
 	key, _ := secret.NewInstanceKey(h)
-	instance, _ := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: secrettest.NewSafes()})
+	safes := secrettest.NewSafes()
+	instance, _ := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: safes})
+	plaintext, _ := secret.NewManager(secret.Config{Policy: secret.PolicyPlaintext, InstanceKey: key, Safes: safes})
 
 	user := idPtr()
-	sealed, err := instance.SealValue(context.Background(), checkerUC.OptionsSecretContext(secretChecker, user, nil, nil, "renamed"), "kept")
-	if err != nil {
-		t.Fatal(err)
+	seal := func(checker, k, v string) string {
+		out, err := instance.SealValue(context.Background(), checkerUC.OptionsSecretContext(checker, user, nil, nil, k), v)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return out
 	}
 
-	store := newOptionsStore()
-	store.data[posKey(secretChecker, user, nil, nil)] = happydns.CheckerOptions{"renamed": sealed}
+	store := newListableOptionsStore()
+	store.data[posKey("gone_checker", user, nil, nil)] = happydns.CheckerOptions{"token": seal("gone_checker", "token", "gone")}
+	store.data[posKey(secretChecker, user, nil, nil)] = happydns.CheckerOptions{"renamed": seal(secretChecker, "renamed", "kept")}
+
+	counts, err := checkerUC.NewCheckerOptionsSecrets(store, instance).InspectSecrets(context.Background())
+	if err != nil || counts.Sealed[secret.KindInstance] != 2 {
+		t.Errorf("InspectSecrets = %+v, %v; want both sealed values counted", counts, err)
+	}
 
 	uc := checkerUC.NewCheckerOptionsUsecase(store, nil).WithSecrets(instance)
 	merged, _, err := uc.BuildMergedCheckerOptionsWithAutoFill(context.Background(), secretChecker, user, nil, nil, nil)
 	if err != nil || merged["renamed"] != "kept" {
 		t.Errorf("merged = %v, %v; want the undocumented secret opened", merged, err)
+	}
+
+	report, err := checkerUC.NewCheckerOptionsSecrets(store, plaintext).ResealSecrets(context.Background())
+	if err != nil || report.Changed != 2 || report.Failed != 0 {
+		t.Fatalf("ResealSecrets(plaintext) = %+v, %v", report, err)
+	}
+	if v := store.data[posKey("gone_checker", user, nil, nil)]["token"]; v != "gone" {
+		t.Errorf("option of an unloaded checker = %v, want it back in clear", v)
 	}
 }
 
@@ -311,15 +411,59 @@ func TestPlaceholderInRunOptionsIsIgnored(t *testing.T) {
 	}
 }
 
+// A record that does not decode may hold sealed options: it is counted, and
+// keeps neither the others from being resealed nor the status from being
+// reported.
+func TestOptionsSecretsGoPastUndecodableRecords(t *testing.T) {
+	kvdb, err := inmemory.NewInMemoryStorage()
+	if err != nil {
+		t.Fatal(err)
+	}
+	db, err := kv.NewKVDatabase(kvdb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := kvdb.Put("cfg|corrupt", "not options"); err != nil {
+		t.Fatal(err)
+	}
+
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	instance, _ := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db})
+	user := idPtr()
+	if err := db.UpdateCheckerConfiguration(secretChecker, user, nil, nil, happydns.CheckerOptions{"user_token": "legacy"}); err != nil {
+		t.Fatal(err)
+	}
+
+	holder := checkerUC.NewCheckerOptionsSecrets(db, instance)
+	counts, err := holder.InspectSecrets(context.Background())
+	if err != nil || counts.Clear != 1 || counts.Undecodable != 1 {
+		t.Errorf("InspectSecrets = %+v, %v; want 1 clear, 1 undecodable", counts, err)
+	}
+
+	report, err := holder.ResealSecrets(context.Background())
+	if err != nil || report.Changed != 1 || report.Failed != 1 {
+		t.Errorf("ResealSecrets = %+v, %v; want the readable scope resealed, 1 failure", report, err)
+	}
+}
+
 // A sealed option is bound to its scope: copied into another user's options,
-// or another checker's, it does not open for a run.
+// or another checker's, it does not open for a run, and the reseal leaves it
+// as stored, reports it, and goes on with the others.
 func TestSealedOptionsAreBoundToTheirScope(t *testing.T) {
-	uc, store := instanceOptionsUC(t)
+	h, _ := secret.GenerateInstanceKeyset()
+	key, _ := secret.NewInstanceKey(h)
+	safes := secrettest.NewSafes()
+	instance, _ := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: safes})
+	plaintext, _ := secret.NewManager(secret.Config{Policy: secret.PolicyPlaintext, InstanceKey: key, Safes: safes})
+
+	store := newListableOptionsStore()
+	uc := checkerUC.NewCheckerOptionsUsecase(store, nil).WithSecrets(instance)
 	victim, attacker := idPtr(), idPtr()
 	if err := uc.SetCheckerOptions(context.Background(), secretChecker, victim, nil, nil, happydns.CheckerOptions{"user_token": "victim-token"}); err != nil {
 		t.Fatal(err)
 	}
-	sealed := storedString(t, store, victim, "user_token")
+	sealed := storedString(t, store.optionsStore, victim, "user_token")
 	store.data[posKey(secretChecker, attacker, nil, nil)] = happydns.CheckerOptions{"user_token": sealed}
 	store.data[posKey("gone_checker", victim, nil, nil)] = happydns.CheckerOptions{"user_token": sealed}
 
@@ -331,6 +475,17 @@ func TestSealedOptionsAreBoundToTheirScope(t *testing.T) {
 	}
 	if merged, _, err := uc.BuildMergedCheckerOptionsWithAutoFill(context.Background(), "gone_checker", victim, nil, nil, nil); err == nil {
 		t.Errorf("opened under another checker: %v", merged)
+	}
+
+	report, err := checkerUC.NewCheckerOptionsSecrets(store, plaintext).ResealSecrets(context.Background())
+	if err != nil || report.Changed != 1 || report.Failed != 2 {
+		t.Errorf("ResealSecrets = %+v, %v; want the victim resealed, 2 failures", report, err)
+	}
+	if v := storedString(t, store.optionsStore, attacker, "user_token"); v != sealed {
+		t.Errorf("a failed reseal changed the copy: %q", v)
+	}
+	if v := storedString(t, store.optionsStore, victim, "user_token"); v != "victim-token" {
+		t.Errorf("victim option after reseal = %q, want it in clear", v)
 	}
 }
 

@@ -108,8 +108,9 @@ func NewAdmin(app *App) *Admin {
 			TidyUp:                usecase.NewTidyUpUsecase(app.store),
 			Purge:                 usecase.NewPurgeUsecase(app.store),
 			Secrets: usecase.NewSecretsUsecase(app.secrets, map[string]usecase.SecretHolder{
-				providerUC.SecretObjectType: providerAdminService,
-				notifPkg.SecretObjectType:   notifUC.NewChannelSecrets(app.store, app.usecases.notificationRegistry),
+				providerUC.SecretObjectType:       providerAdminService,
+				notifPkg.SecretObjectType:         notifUC.NewChannelSecrets(app.store, app.usecases.notificationRegistry),
+				checkerUC.OptionsSecretObjectType: checkerUC.NewCheckerOptionsSecrets(app.store, app.secrets),
 			}, app.store),
 		},
 	)

@@ -279,6 +279,8 @@ func (u *CheckerOptionsUsecase) SetCheckerOptions(
 		return err
 	}
 
+	defer lockOptions(checkerName, userId, domainId, serviceId)()
+
 	// Drop empties first so filterOptionsForScope doesn't have to handle them.
 	nonEmpty := make(happydns.CheckerOptions, len(opts))
 	for k, v := range opts {
@@ -385,6 +387,8 @@ func (u *CheckerOptionsUsecase) AddCheckerOptions(
 	serviceId *happydns.Identifier,
 	newOpts happydns.CheckerOptions,
 ) (happydns.CheckerOptions, error) {
+	defer lockOptions(checkerName, userId, domainId, serviceId)()
+
 	merged, err := u.MergeCheckerOptions(checkerName, userId, domainId, serviceId, newOpts)
 	if err != nil {
 		return nil, err
@@ -611,6 +615,8 @@ func (u *CheckerOptionsUsecase) SetCheckerOption(
 			}
 		}
 	}
+
+	defer lockOptions(checkerName, userId, domainId, serviceId)()
 
 	existing, err := u.getScopedOptions(checkerName, userId, domainId, serviceId)
 	if err != nil {

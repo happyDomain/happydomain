@@ -106,8 +106,8 @@ curl --unix-socket happydomain.sock http://localhost/api/secrets/status
 curl --unix-socket happydomain.sock -X POST http://localhost/api/secrets/reseal
 ```
 
-`/api/secrets/status` counts, for providers and notification channels, the
-credentials:
+`/api/secrets/status` counts, for providers, notification channels and checker
+options, the credentials:
 
 - `clear`: stored in clear;
 - `sealed`: encrypted, and decrypting;
@@ -118,6 +118,11 @@ credentials:
 
 It also lists, under `instanceKeys`, the keys of the keyset and how many users'
 keys each one protects.
+
+Which checker options are secret comes from the checkers themselves. For a
+checker this version does not load, the options stored encrypted are still
+counted and resealed, but those stored in clear cannot be told apart from the
+others: they are neither counted nor encrypted.
 
 `/api/secrets/reseal` stores every credential the way the current policy stores
 new ones. It reports, for each type of object, how many it looked at, changed

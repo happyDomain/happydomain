@@ -25,6 +25,7 @@ import (
 	"context"
 	"fmt"
 	"maps"
+	"sync"
 
 	checkerPkg "git.happydns.org/happyDomain/internal/dnschecker"
 	"git.happydns.org/happyDomain/internal/secret"
@@ -42,6 +43,16 @@ const OptionsSecretObjectType = "checker-options"
 func (u *CheckerOptionsUsecase) WithSecrets(secrets *secret.Manager) *CheckerOptionsUsecase {
 	u.secrets = secrets
 	return u
+}
+
+// optionLocks serializes the writes to the options of one scope, so that a
+// reseal never writes back options read before a user's update.
+var optionLocks sync.Map
+
+func lockOptions(checkerName string, userId, domainId, serviceId *happydns.Identifier) func() {
+	mu, _ := optionLocks.LoadOrStore(optionsObjectId(checkerName, userId, domainId, serviceId), &sync.Mutex{})
+	mu.(*sync.Mutex).Lock()
+	return mu.(*sync.Mutex).Unlock
 }
 
 func optionsObjectId(checkerName string, userId, domainId, serviceId *happydns.Identifier) string {
@@ -258,4 +269,126 @@ func (u *CheckerOptionsUsecase) GetCheckerOptionsForUse(
 	merged, _ := u.mergeStoredOptions(checkerName, positionals)
 	u.overlayCLIAdmin(checkerName, merged)
 	return merged, nil
+}
+
+// CheckerOptionsSecrets lets the administrator follow and migrate how the
+// secret checker options are stored.
+type CheckerOptionsSecrets struct {
+	store   CheckerOptionsStorage
+	secrets *secret.Manager
+}
+
+func NewCheckerOptionsSecrets(store CheckerOptionsStorage, secrets *secret.Manager) *CheckerOptionsSecrets {
+	return &CheckerOptionsSecrets{store: store, secrets: secrets}
+}
+
+// InspectSecrets tells how the secret options of every scope are stored.
+func (cs *CheckerOptionsSecrets) InspectSecrets(ctx context.Context) (secret.Counts, error) {
+	var counts secret.Counts
+
+	iter, err := cs.store.ListAllCheckerConfigurations()
+	if err != nil {
+		return counts, err
+	}
+	defer iter.Close()
+
+	// One scope that cannot be looked at must not hide the others. It is
+	// counted: it may hold sealed options.
+	for iter.NextWithError() {
+		if iter.Err() != nil {
+			counts.Undecodable++
+			continue
+		}
+		p := iter.Item()
+		for k := range secretKeys(p.CheckName, p.Options) {
+			s, ok := p.Options[k].(string)
+			if !ok || s == "" {
+				continue
+			}
+			if err := cs.secrets.InspectValue(ctx, OptionsSecretContext(p.CheckName, p.UserId, p.DomainId, p.ServiceId, k), s, &counts); err != nil {
+				counts.Undecodable++
+			}
+		}
+	}
+
+	return counts, iter.Err()
+}
+
+// ResealSecrets stores the secret options of every scope the way the current
+// policy stores new secrets. A scope that fails is reported and skipped; run
+// it again to resume.
+func (cs *CheckerOptionsSecrets) ResealSecrets(ctx context.Context) (secret.ResealReport, error) {
+	report := secret.ResealReport{ObjectType: OptionsSecretObjectType}
+
+	iter, err := cs.store.ListAllCheckerConfigurations()
+	if err != nil {
+		return report, err
+	}
+
+	// Collected first: writing while iterating is not safe on every storage.
+	// A record that does not decode is reported, and the others resealed.
+	var scopes []*happydns.CheckerOptionsPositional
+	for iter.NextWithError() {
+		if err := iter.Err(); err != nil {
+			report.Processed++
+			report.Failed++
+			report.Errors = append(report.Errors, fmt.Sprintf("record %s: %s", iter.Key(), err.Error()))
+			continue
+		}
+		if len(secretKeys(iter.Item().CheckName, iter.Item().Options)) > 0 {
+			scopes = append(scopes, iter.Item())
+		}
+	}
+	err = iter.Err()
+	iter.Close()
+	if err != nil {
+		return report, err
+	}
+
+	for _, p := range scopes {
+		report.Processed++
+
+		changed, err := cs.resealScope(ctx, p.CheckName, p.UserId, p.DomainId, p.ServiceId)
+		if err != nil {
+			report.Failed++
+			report.Errors = append(report.Errors, fmt.Sprintf("options %s: %s", optionsObjectId(p.CheckName, p.UserId, p.DomainId, p.ServiceId), err.Error()))
+			continue
+		}
+		if changed {
+			report.Changed++
+		}
+	}
+
+	return report, nil
+}
+
+func (cs *CheckerOptionsSecrets) resealScope(ctx context.Context, checkerName string, userId, domainId, serviceId *happydns.Identifier) (bool, error) {
+	defer lockOptions(checkerName, userId, domainId, serviceId)()
+
+	uc := &CheckerOptionsUsecase{store: cs.store}
+	opts, err := uc.getScopedOptions(checkerName, userId, domainId, serviceId)
+	if err != nil {
+		return false, err
+	}
+
+	changed := false
+	for k := range secretKeys(checkerName, opts) {
+		s, ok := opts[k].(string)
+		if !ok || s == "" {
+			continue
+		}
+		out, c, err := cs.secrets.ResealValue(ctx, OptionsSecretContext(checkerName, userId, domainId, serviceId, k), s)
+		if err != nil {
+			return false, fmt.Errorf("option %q: %w", k, err)
+		}
+		if c {
+			opts[k] = out
+			changed = true
+		}
+	}
+	if !changed {
+		return false, nil
+	}
+
+	return true, cs.store.UpdateCheckerConfiguration(checkerName, userId, domainId, serviceId, opts)
 }
