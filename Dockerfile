@@ -37,7 +37,7 @@ COPY --from=gogenerator /src/docs/ docs/
 COPY web/ web/
 COPY --from=gogenerator /src/web/src/lib/dns_rr.ts web/src/lib/dns_rr.ts
 COPY --from=gogenerator /src/web/src/lib/services_specs.ts web/src/lib/services_specs.ts
-COPY --from=gogenerator /src/web/src/lib/services/caa-issuers.json web/src/lib/services/caa-issuers.json
+COPY --from=gogenerator /src/web/src/lib/services/svcs.CAAPolicy/issuers.json web/src/lib/services/svcs.CAAPolicy/issuers.json
 
 RUN --mount=type=cache,target=/usr/local/share/.cache/yarn \
     yarn --cwd web --network-timeout 100000 install && \

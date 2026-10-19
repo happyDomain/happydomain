@@ -28,6 +28,6 @@ package main
 //go:generate go run tools/gen_service_specs.go -o web/src/lib/services_specs.ts
 //go:generate go run tools/gen_service_bodies.go -o web/src/lib/services_bodies.ts
 //go:generate go run tools/gen_dns_type_mapping.go -o internal/usecase/service_specs_dns_types.go
-//go:generate go run tools/gen_caa_issuers.go -o web/src/lib/services/caa-issuers.json https://ccadb.my.salesforce-sites.com/ccadb/AllCAAIdentifiersReportCSVV2
+//go:generate go run tools/gen_caa_issuers.go -o web/src/lib/services/svcs.CAAPolicy/issuers.json https://ccadb.my.salesforce-sites.com/ccadb/AllCAAIdentifiersReportCSVV2
 //go:generate swag init --parseDependency --exclude internal/api-admin/ --generalInfo internal/api/route/route.go
 //go:generate swag init --parseDependency --output docs-admin --exclude internal/api/ --generalInfo internal/api-admin/route/route.go
