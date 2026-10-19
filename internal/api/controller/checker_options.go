@@ -105,7 +105,7 @@ func (cc *CheckerController) AddCheckerOptions(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
 		return
 	}
-	if _, err := cc.OptionsUC.AddCheckerOptions(checkerID, happydns.TargetIdentifier(target.UserId), happydns.TargetIdentifier(target.DomainId), happydns.TargetIdentifier(target.ServiceId), opts); err != nil {
+	if _, err := cc.OptionsUC.AddCheckerOptions(c.Request.Context(), checkerID, happydns.TargetIdentifier(target.UserId), happydns.TargetIdentifier(target.DomainId), happydns.TargetIdentifier(target.ServiceId), opts); err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
 	}
@@ -140,7 +140,7 @@ func (cc *CheckerController) ChangeCheckerOptions(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
 		return
 	}
-	if err := cc.OptionsUC.SetCheckerOptions(checkerID, happydns.TargetIdentifier(target.UserId), happydns.TargetIdentifier(target.DomainId), happydns.TargetIdentifier(target.ServiceId), opts); err != nil {
+	if err := cc.OptionsUC.SetCheckerOptions(c.Request.Context(), checkerID, happydns.TargetIdentifier(target.UserId), happydns.TargetIdentifier(target.DomainId), happydns.TargetIdentifier(target.ServiceId), opts); err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
 	}
@@ -215,7 +215,7 @@ func (cc *CheckerController) SetCheckerOption(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": err.Error()})
 		return
 	}
-	if err := cc.OptionsUC.SetCheckerOption(checkerID, happydns.TargetIdentifier(target.UserId), happydns.TargetIdentifier(target.DomainId), happydns.TargetIdentifier(target.ServiceId), optname, value); err != nil {
+	if err := cc.OptionsUC.SetCheckerOption(c.Request.Context(), checkerID, happydns.TargetIdentifier(target.UserId), happydns.TargetIdentifier(target.DomainId), happydns.TargetIdentifier(target.ServiceId), optname, value); err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
 	}

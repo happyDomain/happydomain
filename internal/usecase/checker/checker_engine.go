@@ -226,7 +226,7 @@ func (e *Engine) RunExecution(ctx context.Context, exec *happydns.Execution, pla
 
 func (e *Engine) runPipeline(ctx context.Context, def *happydns.CheckerDefinition, target happydns.CheckTarget, plan *happydns.CheckPlan, planID *happydns.Identifier, runOpts happydns.CheckerOptions) (happydns.CheckState, *happydns.CheckEvaluation, error) {
 	// Resolve options (stored + run + auto-fill).
-	mergedOpts, injectedEntries, err := e.optionsUC.BuildMergedCheckerOptionsWithAutoFill(def.ID, happydns.TargetIdentifier(target.UserId), happydns.TargetIdentifier(target.DomainId), happydns.TargetIdentifier(target.ServiceId), runOpts)
+	mergedOpts, injectedEntries, err := e.optionsUC.BuildMergedCheckerOptionsWithAutoFill(ctx, def.ID, happydns.TargetIdentifier(target.UserId), happydns.TargetIdentifier(target.DomainId), happydns.TargetIdentifier(target.ServiceId), runOpts)
 	if err != nil {
 		return happydns.CheckState{}, nil, fmt.Errorf("resolving options: %w", err)
 	}

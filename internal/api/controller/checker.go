@@ -161,7 +161,7 @@ func (cc *CheckerController) ListAvailableChecks(c *gin.Context) {
 	target := targetFromContext(c)
 	includeAvailables := c.Query("with_availables") == "true"
 
-	result, err := cc.statusUC.ListCheckerStatuses(target, includeAvailables)
+	result, err := cc.statusUC.ListCheckerStatuses(c.Request.Context(), target, includeAvailables)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return

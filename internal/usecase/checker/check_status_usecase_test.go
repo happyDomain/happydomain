@@ -22,6 +22,7 @@
 package checker_test
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 	"time"
@@ -63,7 +64,7 @@ func TestCheckStatusUsecase_ListCheckerStatuses(t *testing.T) {
 	did, _ := happydns.NewRandomIdentifier()
 	target := happydns.CheckTarget{UserId: uid.String(), DomainId: did.String()}
 
-	statuses, err := uc.ListCheckerStatuses(target, true)
+	statuses, err := uc.ListCheckerStatuses(context.Background(), target, true)
 	if err != nil {
 		t.Fatalf("ListCheckerStatuses() error: %v", err)
 	}
@@ -97,7 +98,7 @@ func TestCheckStatusUsecase_ListCheckerStatuses_WithPlan(t *testing.T) {
 		t.Fatalf("CreateCheckPlan() error: %v", err)
 	}
 
-	statuses, err := uc.ListCheckerStatuses(target, true)
+	statuses, err := uc.ListCheckerStatuses(context.Background(), target, true)
 	if err != nil {
 		t.Fatalf("ListCheckerStatuses() error: %v", err)
 	}
@@ -144,7 +145,7 @@ func TestCheckStatusUsecase_ListCheckerStatuses_WithEvaluation(t *testing.T) {
 		t.Fatalf("CreateExecution() error: %v", err)
 	}
 
-	statuses, err := uc.ListCheckerStatuses(target, true)
+	statuses, err := uc.ListCheckerStatuses(context.Background(), target, true)
 	if err != nil {
 		t.Fatalf("ListCheckerStatuses() error: %v", err)
 	}

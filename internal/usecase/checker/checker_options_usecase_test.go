@@ -162,7 +162,7 @@ func TestSetAndGetCheckerOptions(t *testing.T) {
 	uid := idPtr()
 	opts := happydns.CheckerOptions{"key1": "value1", "key2": float64(42)}
 
-	if err := uc.SetCheckerOptions("c1", uid, nil, nil, opts); err != nil {
+	if err := uc.SetCheckerOptions(context.Background(), "c1", uid, nil, nil, opts); err != nil {
 		t.Fatal(err)
 	}
 
@@ -180,7 +180,7 @@ func TestSetCheckerOptions_FiltersEmptyValues(t *testing.T) {
 	uc := checkerUC.NewCheckerOptionsUsecase(store, nil)
 
 	opts := happydns.CheckerOptions{"keep": "yes", "drop_nil": nil, "drop_empty": ""}
-	if err := uc.SetCheckerOptions("c1", nil, nil, nil, opts); err != nil {
+	if err := uc.SetCheckerOptions(context.Background(), "c1", nil, nil, nil, opts); err != nil {
 		t.Fatal(err)
 	}
 
@@ -204,9 +204,9 @@ func TestAddCheckerOptions_MergesIntoExisting(t *testing.T) {
 	uc := checkerUC.NewCheckerOptionsUsecase(store, nil)
 
 	uid := idPtr()
-	_ = uc.SetCheckerOptions("c1", uid, nil, nil, happydns.CheckerOptions{"a": "1", "b": "2"})
+	_ = uc.SetCheckerOptions(context.Background(), "c1", uid, nil, nil, happydns.CheckerOptions{"a": "1", "b": "2"})
 
-	merged, err := uc.AddCheckerOptions("c1", uid, nil, nil, happydns.CheckerOptions{"b": "updated", "c": "3"})
+	merged, err := uc.AddCheckerOptions(context.Background(), "c1", uid, nil, nil, happydns.CheckerOptions{"b": "updated", "c": "3"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -226,9 +226,9 @@ func TestAddCheckerOptions_DeletesEmptyValues(t *testing.T) {
 	uc := checkerUC.NewCheckerOptionsUsecase(store, nil)
 
 	uid := idPtr()
-	_ = uc.SetCheckerOptions("c1", uid, nil, nil, happydns.CheckerOptions{"a": "1", "b": "2"})
+	_ = uc.SetCheckerOptions(context.Background(), "c1", uid, nil, nil, happydns.CheckerOptions{"a": "1", "b": "2"})
 
-	merged, err := uc.AddCheckerOptions("c1", uid, nil, nil, happydns.CheckerOptions{"a": nil, "b": ""})
+	merged, err := uc.AddCheckerOptions(context.Background(), "c1", uid, nil, nil, happydns.CheckerOptions{"a": nil, "b": ""})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -245,7 +245,7 @@ func TestGetCheckerOption_SingleKey(t *testing.T) {
 	uc := checkerUC.NewCheckerOptionsUsecase(store, nil)
 
 	uid := idPtr()
-	_ = uc.SetCheckerOptions("c1", uid, nil, nil, happydns.CheckerOptions{"x": "hello"})
+	_ = uc.SetCheckerOptions(context.Background(), "c1", uid, nil, nil, happydns.CheckerOptions{"x": "hello"})
 
 	val, err := uc.GetCheckerOption("c1", uid, nil, nil, "x")
 	if err != nil {
@@ -269,9 +269,9 @@ func TestSetCheckerOption_SingleKey(t *testing.T) {
 	uc := checkerUC.NewCheckerOptionsUsecase(store, nil)
 
 	uid := idPtr()
-	_ = uc.SetCheckerOptions("c1", uid, nil, nil, happydns.CheckerOptions{"a": "1"})
+	_ = uc.SetCheckerOptions(context.Background(), "c1", uid, nil, nil, happydns.CheckerOptions{"a": "1"})
 
-	if err := uc.SetCheckerOption("c1", uid, nil, nil, "b", "2"); err != nil {
+	if err := uc.SetCheckerOption(context.Background(), "c1", uid, nil, nil, "b", "2"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -289,9 +289,9 @@ func TestSetCheckerOption_DeletesEmpty(t *testing.T) {
 	uc := checkerUC.NewCheckerOptionsUsecase(store, nil)
 
 	uid := idPtr()
-	_ = uc.SetCheckerOptions("c1", uid, nil, nil, happydns.CheckerOptions{"a": "1", "b": "2"})
+	_ = uc.SetCheckerOptions(context.Background(), "c1", uid, nil, nil, happydns.CheckerOptions{"a": "1", "b": "2"})
 
-	if err := uc.SetCheckerOption("c1", uid, nil, nil, "a", nil); err != nil {
+	if err := uc.SetCheckerOption(context.Background(), "c1", uid, nil, nil, "a", nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -317,11 +317,11 @@ func TestGetCheckerOptions_MergesScopes(t *testing.T) {
 	did := idPtr()
 
 	// Admin sets defaults.
-	_ = uc.SetCheckerOptions("c1", nil, nil, nil, happydns.CheckerOptions{"a": "admin", "shared": "admin"})
+	_ = uc.SetCheckerOptions(context.Background(), "c1", nil, nil, nil, happydns.CheckerOptions{"a": "admin", "shared": "admin"})
 	// User overrides shared.
-	_ = uc.SetCheckerOptions("c1", uid, nil, nil, happydns.CheckerOptions{"b": "user", "shared": "user"})
+	_ = uc.SetCheckerOptions(context.Background(), "c1", uid, nil, nil, happydns.CheckerOptions{"b": "user", "shared": "user"})
 	// Domain overrides shared again.
-	_ = uc.SetCheckerOptions("c1", uid, did, nil, happydns.CheckerOptions{"c": "domain", "shared": "domain"})
+	_ = uc.SetCheckerOptions(context.Background(), "c1", uid, did, nil, happydns.CheckerOptions{"c": "domain", "shared": "domain"})
 
 	got, err := uc.GetCheckerOptions("c1", uid, did, nil)
 	if err != nil {
@@ -350,10 +350,10 @@ func TestGetCheckerOptions_ServiceScopeOverridesAll(t *testing.T) {
 	did := idPtr()
 	sid := idPtr()
 
-	_ = uc.SetCheckerOptions("c1", nil, nil, nil, happydns.CheckerOptions{"key": "admin"})
-	_ = uc.SetCheckerOptions("c1", uid, nil, nil, happydns.CheckerOptions{"key": "user"})
-	_ = uc.SetCheckerOptions("c1", uid, did, nil, happydns.CheckerOptions{"key": "domain"})
-	_ = uc.SetCheckerOptions("c1", uid, did, sid, happydns.CheckerOptions{"key": "service"})
+	_ = uc.SetCheckerOptions(context.Background(), "c1", nil, nil, nil, happydns.CheckerOptions{"key": "admin"})
+	_ = uc.SetCheckerOptions(context.Background(), "c1", uid, nil, nil, happydns.CheckerOptions{"key": "user"})
+	_ = uc.SetCheckerOptions(context.Background(), "c1", uid, did, nil, happydns.CheckerOptions{"key": "domain"})
+	_ = uc.SetCheckerOptions(context.Background(), "c1", uid, did, sid, happydns.CheckerOptions{"key": "service"})
 
 	got, err := uc.GetCheckerOptions("c1", uid, did, sid)
 	if err != nil {
@@ -371,9 +371,9 @@ func TestGetCheckerOptionsPositional_ReturnsAllLevels(t *testing.T) {
 	uid := idPtr()
 	did := idPtr()
 
-	_ = uc.SetCheckerOptions("c1", nil, nil, nil, happydns.CheckerOptions{"a": "1"})
-	_ = uc.SetCheckerOptions("c1", uid, nil, nil, happydns.CheckerOptions{"b": "2"})
-	_ = uc.SetCheckerOptions("c1", uid, did, nil, happydns.CheckerOptions{"c": "3"})
+	_ = uc.SetCheckerOptions(context.Background(), "c1", nil, nil, nil, happydns.CheckerOptions{"a": "1"})
+	_ = uc.SetCheckerOptions(context.Background(), "c1", uid, nil, nil, happydns.CheckerOptions{"b": "2"})
+	_ = uc.SetCheckerOptions(context.Background(), "c1", uid, did, nil, happydns.CheckerOptions{"c": "3"})
 
 	positionals, err := uc.GetCheckerOptionsPositional("c1", uid, did, nil)
 	if err != nil {
@@ -412,7 +412,7 @@ func TestAddCheckerOptions_CreatesNewScope(t *testing.T) {
 	uc := checkerUC.NewCheckerOptionsUsecase(store, nil)
 
 	uid := idPtr()
-	merged, err := uc.AddCheckerOptions("c1", uid, nil, nil, happydns.CheckerOptions{"new": "value"})
+	merged, err := uc.AddCheckerOptions(context.Background(), "c1", uid, nil, nil, happydns.CheckerOptions{"new": "value"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1342,9 +1342,9 @@ func TestBuildMergedCheckerOptionsWithAutoFill_InjectsValues(t *testing.T) {
 	afStore.zones[zoneId.String()] = &happydns.ZoneMessage{}
 
 	uc := checkerUC.NewCheckerOptionsUsecase(optStore, afStore)
-	_ = uc.SetCheckerOptions("af_inject", uid, nil, nil, happydns.CheckerOptions{"user_opt": "hello"})
+	_ = uc.SetCheckerOptions(context.Background(), "af_inject", uid, nil, nil, happydns.CheckerOptions{"user_opt": "hello"})
 
-	merged, _, err := uc.BuildMergedCheckerOptionsWithAutoFill("af_inject", uid, did, nil, nil)
+	merged, _, err := uc.BuildMergedCheckerOptionsWithAutoFill(context.Background(), "af_inject", uid, did, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1383,7 +1383,7 @@ func TestBuildMergedCheckerOptionsWithAutoFill_OverridesRunOpts(t *testing.T) {
 	uc := checkerUC.NewCheckerOptionsUsecase(optStore, afStore)
 
 	// Even if runOpts tries to set the auto-fill field, auto-fill wins.
-	merged, _, err := uc.BuildMergedCheckerOptionsWithAutoFill("af_override", uid, did, nil,
+	merged, _, err := uc.BuildMergedCheckerOptionsWithAutoFill(context.Background(), "af_override", uid, did, nil,
 		happydns.CheckerOptions{"dn": "user-provided.com."})
 	if err != nil {
 		t.Fatal(err)
@@ -1408,7 +1408,7 @@ func TestSetCheckerOptions_StripsAutoFillKeys(t *testing.T) {
 	uc := checkerUC.NewCheckerOptionsUsecase(optStore, nil)
 
 	uid := idPtr()
-	err := uc.SetCheckerOptions("af_strip", uid, nil, nil, happydns.CheckerOptions{
+	err := uc.SetCheckerOptions(context.Background(), "af_strip", uid, nil, nil, happydns.CheckerOptions{
 		"dn":     "should-be-stripped",
 		"normal": "kept",
 	})
@@ -1548,7 +1548,7 @@ func TestBuildMergedCheckerOptionsWithAutoFill_NoOverrideBlocksRunOpts(t *testin
 	})
 
 	// RunOpts tries to override locked.
-	merged, _, err := uc.BuildMergedCheckerOptionsWithAutoFill("no_override_runopt", uid, nil, nil, happydns.CheckerOptions{
+	merged, _, err := uc.BuildMergedCheckerOptionsWithAutoFill(context.Background(), "no_override_runopt", uid, nil, nil, happydns.CheckerOptions{
 		"locked": false,
 	})
 	if err != nil {
@@ -1576,7 +1576,7 @@ func TestBuildMergedCheckerOptionsWithAutoFill_NoOverrideBlocksRunOptsWhenUnset(
 
 	// No stored value for "locked" at any scope. RunOpts must still not be
 	// able to supply it: NoOverride fields are owned by their declaration scope.
-	merged, _, err := uc.BuildMergedCheckerOptionsWithAutoFill("no_override_runopt_unset", nil, nil, nil, happydns.CheckerOptions{
+	merged, _, err := uc.BuildMergedCheckerOptionsWithAutoFill(context.Background(), "no_override_runopt_unset", nil, nil, nil, happydns.CheckerOptions{
 		"locked": true,
 	})
 	if err != nil {
@@ -1605,7 +1605,7 @@ func TestSetCheckerOptions_StripsNoOverrideAtLowerScope(t *testing.T) {
 	uid := idPtr()
 
 	// Try to set locked at user scope; should be silently stripped.
-	err := uc.SetCheckerOptions("no_override_set", uid, nil, nil, happydns.CheckerOptions{
+	err := uc.SetCheckerOptions(context.Background(), "no_override_set", uid, nil, nil, happydns.CheckerOptions{
 		"locked":    true,
 		"threshold": float64(99),
 	})
@@ -1646,7 +1646,7 @@ func TestAddCheckerOptions_StripsNoOverrideAtLowerScope(t *testing.T) {
 	})
 
 	// Try to add locked at user scope; should be silently skipped.
-	result, err := uc.AddCheckerOptions("no_override_add", uid, nil, nil, happydns.CheckerOptions{
+	result, err := uc.AddCheckerOptions(context.Background(), "no_override_add", uid, nil, nil, happydns.CheckerOptions{
 		"locked":    true,
 		"threshold": float64(75),
 	})
@@ -1676,13 +1676,13 @@ func TestSetCheckerOption_RejectsNoOverrideAtLowerScope(t *testing.T) {
 	uid := idPtr()
 
 	// Setting at admin scope should work.
-	err := uc.SetCheckerOption("no_override_set_single", nil, nil, nil, "locked", true)
+	err := uc.SetCheckerOption(context.Background(), "no_override_set_single", nil, nil, nil, "locked", true)
 	if err != nil {
 		t.Fatalf("expected SetCheckerOption at admin scope to succeed, got: %v", err)
 	}
 
 	// Setting at user scope should fail.
-	err = uc.SetCheckerOption("no_override_set_single", uid, nil, nil, "locked", false)
+	err = uc.SetCheckerOption(context.Background(), "no_override_set_single", uid, nil, nil, "locked", false)
 	if err == nil {
 		t.Fatal("expected error when setting NoOverride field at lower scope")
 	}

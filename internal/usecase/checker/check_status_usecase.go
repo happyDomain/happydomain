@@ -126,7 +126,7 @@ func ListPlannedExecutions(provider PlannedJobProvider, budgetChecker BudgetChec
 // When false, it is restricted to checkers that would be auto-scheduled on
 // this target plus those activated by an existing CheckPlan, so callers can
 // surface only what actually runs.
-func (u *CheckStatusUsecase) ListCheckerStatuses(target happydns.CheckTarget, includeAvailables bool) ([]happydns.CheckerStatus, error) {
+func (u *CheckStatusUsecase) ListCheckerStatuses(ctx context.Context, target happydns.CheckTarget, includeAvailables bool) ([]happydns.CheckerStatus, error) {
 	checkers := checkerPkg.GetCheckers()
 	plans, err := u.planStore.ListCheckPlansByTarget(target)
 	if err != nil {
@@ -189,7 +189,7 @@ func (u *CheckStatusUsecase) ListCheckerStatuses(target happydns.CheckTarget, in
 			)
 			if optErr != nil {
 				log.Printf("ListCheckerStatuses: resolve options for precheck on %s: %v", def.ID, optErr)
-			} else if failures, pcErr := checkerPkg.PrecheckRules(context.Background(), def, opts); pcErr != nil {
+			} else if failures, pcErr := checkerPkg.PrecheckRules(ctx, def, opts); pcErr != nil {
 				log.Printf("ListCheckerStatuses: precheck on %s: %v", def.ID, pcErr)
 			} else if len(failures) > 0 {
 				status.PrecheckFailures = failures

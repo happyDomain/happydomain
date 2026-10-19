@@ -22,6 +22,7 @@
 package checker
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"maps"
@@ -265,6 +266,7 @@ func (u *CheckerOptionsUsecase) overlayCLIAdmin(checkerName string, dst happydns
 // Keys with nil or empty-string values are excluded from the stored map.
 // Auto-fill keys are also stripped since they are system-provided at runtime.
 func (u *CheckerOptionsUsecase) SetCheckerOptions(
+	ctx context.Context,
 	checkerName string,
 	userId *happydns.Identifier,
 	domainId *happydns.Identifier,
@@ -331,6 +333,7 @@ func (u *CheckerOptionsUsecase) MergeCheckerOptions(
 // and persists the result. Keys with nil or empty-string values are deleted from the
 // scope rather than stored.
 func (u *CheckerOptionsUsecase) AddCheckerOptions(
+	ctx context.Context,
 	checkerName string,
 	userId *happydns.Identifier,
 	domainId *happydns.Identifier,
@@ -515,6 +518,7 @@ func (u *CheckerOptionsUsecase) ValidateOptions(
 // SetCheckerOption sets a single option value at the given scope level.
 // If value is nil or empty string, the key is deleted from the scope.
 func (u *CheckerOptionsUsecase) SetCheckerOption(
+	ctx context.Context,
 	checkerName string,
 	userId *happydns.Identifier,
 	domainId *happydns.Identifier,
@@ -715,6 +719,7 @@ func (u *CheckerOptionsUsecase) buildAutoFillContext(
 // persist the consumer→entry lineage after the run completes. It is nil
 // when no such field was auto-filled.
 func (u *CheckerOptionsUsecase) BuildMergedCheckerOptionsWithAutoFill(
+	ctx context.Context,
 	checkerName string,
 	userId *happydns.Identifier,
 	domainId *happydns.Identifier,
