@@ -23,6 +23,7 @@ package secret
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -86,11 +87,16 @@ func ReadKeysetFile(path string) (*keyset.Handle, error) {
 	}
 	defer f.Close()
 
-	h, err := insecurecleartextkeyset.Read(keyset.NewJSONReader(f))
+	h, err := ReadKeyset(f)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read keyset %s: %w", path, err)
 	}
 	return h, nil
+}
+
+// ReadKeyset reads a cleartext JSON keyset from r.
+func ReadKeyset(r io.Reader) (*keyset.Handle, error) {
+	return insecurecleartextkeyset.Read(keyset.NewJSONReader(r))
 }
 
 // WriteNewKeysetFile writes h as a cleartext JSON keyset readable by its

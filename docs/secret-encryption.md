@@ -235,6 +235,24 @@ This kind is meant for an instance whose users have an account on the server,
 and is not enabled by default: list `file` in `-secret-store` to enable it. On
 an instance shared with users who do not, leave it out.
 
+### Key file keystores
+
+The `keyfile` kind encrypts like the instance keystore, but under a keyset of
+the user's own: a Tink cleartext JSON keyset file (`happydomain secret-keyset
+generate` writes one) in their directory, named as for
+[file keystores](#file-keystores), which share `-secret-file-dir`:
+
+```
+secret-store=plaintext,instance,keyfile
+secret-file-dir=/srv/happydomain/secrets
+```
+
+The key of the keystore is wrapped by that keyset. The file is read whenever
+the keystore is unlocked: the keystore opens by itself, for notifications and
+scheduled checks too, as soon as the file exists, and stays locked without it.
+A file replaced by another keyset does not open it. Lost, the credentials the
+keystore holds are lost. Like `file`, this kind is not enabled by default.
+
 ### Program keystores
 
 The `program` kind resolves each reference by running a program of its
@@ -389,7 +407,7 @@ happyDomain refuses to start rather than fail credential by credential when:
   encrypted with;
 - credentials are encrypted in the database but no keyset is configured;
 - safes of a kind are stored in the database, but that kind is left out of
-  `secret-store` (by default all but `file` and `program`): the
+  `secret-store` (by default all but `file`, `keyfile` and `program`): the
   credentials they hold would no longer decrypt;
 - `secret-policy=plaintext` while `plaintext` is left out of `secret-store`;
 - the Vault of the instance is configured partly, or refuses the AppRole

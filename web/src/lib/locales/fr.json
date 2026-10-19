@@ -603,6 +603,7 @@
             "passphrase": "Verrouillé par une phrase de passe",
             "login-password": "Lié au mot de passe de connexion",
             "file": "Références vers des fichiers du serveur",
+            "keyfile": "Chiffré avec une clé en fichier sur le serveur",
             "program": "Références résolues par un programme du serveur",
             "vault": "Références vers le Vault de l'instance",
             "vault-user": "Références vers votre propre Vault"

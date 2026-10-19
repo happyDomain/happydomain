@@ -27,7 +27,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/tink-crypto/tink-go/v2/aead"
 	"github.com/tink-crypto/tink-go/v2/keyset"
 
 	"git.happydns.org/happyDomain/model"
@@ -74,7 +73,7 @@ func (s *instanceStore) CheckStartup(context.Context) error {
 
 // Provision gives safe a new key, wrapped by the instance keyset.
 func (s *instanceStore) Provision(_ context.Context, safe *happydns.Safe) error {
-	dek, err := keyset.NewHandle(aead.AES256GCMKeyTemplate())
+	dek, err := GenerateInstanceKeyset()
 	if err != nil {
 		return err
 	}
@@ -92,11 +91,12 @@ func (s *instanceStore) Unlock(_ context.Context, safe *happydns.Safe) (Unlocked
 		return nil, fmt.Errorf("safe %s is of kind %q, not %q", safe.Id.String(), safe.Kind, KindInstance)
 	}
 
-	dek, err := s.key.Unwrap(safe)
-	if err != nil {
-		return nil, err
+	for _, w := range safe.Keyring {
+		if w.KEK == KindInstance {
+			return s.key.open(safe, w)
+		}
 	}
-	return newAEADSafe(safe.Id, dek)
+	return nil, fmt.Errorf("safe %s has no key wrapped by the instance keyset", safe.Id.String())
 }
 
 // Unwrap returns the key of safe from w, one of its instance entries: kept

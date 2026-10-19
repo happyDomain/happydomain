@@ -80,7 +80,7 @@ func TestDefaultStores(t *testing.T) {
 
 	// Those reaching the files or programs of the server are enabled on
 	// purpose only.
-	optIn := []string{KindFile, KindProgram}
+	optIn := []string{KindFile, KindKeyFile, KindProgram}
 	for _, kind := range KnownStores() {
 		if !slices.Contains(optIn, kind) && !slices.Contains(got, kind) {
 			t.Errorf("DefaultStores() = %v, want it to hold the store %q", got, kind)

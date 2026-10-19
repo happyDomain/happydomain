@@ -159,12 +159,18 @@ func wrapAssociatedData(safe *happydns.Safe) []byte {
 
 // Wrap encrypts dek, the key of safe, under the instance keyset.
 func (k *InstanceKey) Wrap(safe *happydns.Safe, dek *keyset.Handle) (happydns.WrappedKeyset, error) {
+	return k.WrapAs(KindInstance, safe, dek)
+}
+
+// WrapAs encrypts dek, the key of safe, under this keyset, as an entry of the
+// keyring named after kind: a store wrapping keys under a keyset of its own.
+func (k *InstanceKey) WrapAs(kind string, safe *happydns.Safe, dek *keyset.Handle) (happydns.WrappedKeyset, error) {
 	var buf bytes.Buffer
 	if err := dek.WriteWithAssociatedData(keyset.NewBinaryWriter(&buf), k.aead, wrapAssociatedData(safe)); err != nil {
 		return happydns.WrappedKeyset{}, fmt.Errorf("unable to wrap the key of safe %s: %w", safe.Id.String(), err)
 	}
 
-	return happydns.WrappedKeyset{KEK: KindInstance, Blob: buf.Bytes()}, nil
+	return happydns.WrappedKeyset{KEK: kind, Blob: buf.Bytes()}, nil
 }
 
 // Unwrap decrypts the key of safe from its instance keyring entry.
@@ -176,6 +182,15 @@ func (k *InstanceKey) Unwrap(safe *happydns.Safe) (*keyset.Handle, error) {
 	}
 
 	return nil, fmt.Errorf("safe %s has no key wrapped by the instance keyset", safe.Id.String())
+}
+
+// open returns what seals and opens the secrets of safe, whose key is in w.
+func (k *InstanceKey) open(safe *happydns.Safe, w happydns.WrappedKeyset) (UnlockedSafe, error) {
+	dek, err := k.unwrapEntry(safe, w)
+	if err != nil {
+		return nil, err
+	}
+	return newAEADSafe(safe.Id, dek)
 }
 
 // unwrapEntry decrypts the key of safe from w, one of its instance entries.

@@ -228,9 +228,26 @@ func (u *fileUnlocked) read(ref string) ([]byte, error) {
 	}
 	defer root.Close()
 
+	content, err := readSmallFile(root, ref)
+	if err != nil {
+		return nil, err
+	}
+
+	// A file edited on Windows ends in CRLF: drop the whole line ending.
+	content = bytes.TrimSuffix(content, []byte("\n"))
+	content = bytes.TrimSuffix(content, []byte("\r"))
+	if len(content) == 0 {
+		return nil, errors.New("this file of the keystore directory is empty")
+	}
+	return content, nil
+}
+
+// readSmallFile returns the content of the regular file name of root, of
+// maxSecretFileSize at most.
+func readSmallFile(root *os.Root, name string) ([]byte, error) {
 	// Without waiting: a named pipe would block until a writer comes. It
 	// is refused below, as anything but a regular file.
-	f, err := root.OpenFile(ref, os.O_RDONLY|syscall.O_NONBLOCK, 0)
+	f, err := root.OpenFile(name, os.O_RDONLY|syscall.O_NONBLOCK, 0)
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil, errNoSecretFile
 	}
@@ -246,12 +263,6 @@ func (u *fileUnlocked) read(ref string) ([]byte, error) {
 	content, err := io.ReadAll(io.LimitReader(f, maxSecretFileSize+1))
 	if err != nil || len(content) > maxSecretFileSize {
 		return nil, errUnreadableSecret
-	}
-
-	content = bytes.TrimSuffix(content, []byte("\n"))
-	content = bytes.TrimSuffix(content, []byte("\r"))
-	if len(content) == 0 {
-		return nil, errors.New("this file of the keystore directory is empty")
 	}
 	return content, nil
 }
