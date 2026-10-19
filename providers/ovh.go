@@ -37,7 +37,7 @@ var (
 )
 
 type OVHAPI struct {
-	Endpoint    string `json:"endpoint,omitempty" happydomain:"label=Endpoint,placeholder=ovh-eu,description=API endpoint (ovh-eu, ovh-ca, ovh-us, etc.)"`
+	Endpoint    string `json:"endpoint,omitempty" happydomain:"label=Endpoint,placeholder=ovh-eu,description=API endpoint: ovh-eu or ovh-ca or ovh-us…"`
 	ConsumerKey string `json:"consumerkey,omitempty" happydomain:"label=Consumer Key,required,secret,description=OVH Consumer Key obtained from API token generation"`
 }
 

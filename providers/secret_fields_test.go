@@ -142,3 +142,25 @@ func TestNotSecretAllowlistIsCurrent(t *testing.T) {
 		}
 	}
 }
+
+// knownTagOptions lists what forms.GenField understands in a happydomain tag.
+var knownTagOptions = map[string]bool{
+	"label": true, "placeholder": true, "default": true, "description": true,
+	"choices": true, "endpoint": true, "hidden": true, "required": true,
+	"secret": true, "textarea": true,
+}
+
+// The tag is split on commas: a comma in a description cuts it, and the rest
+// is taken for the label.
+func TestProviderTagsHaveNoStrayComma(t *testing.T) {
+	for _, name := range sortedProviders() {
+		for _, f := range providerFields(t, name) {
+			for opt := range strings.SplitSeq(f.tag, ",") {
+				key, _, _ := strings.Cut(opt, "=")
+				if f.tag != "" && !knownTagOptions[strings.ToLower(key)] {
+					t.Errorf("%s: unknown tag option %q, a comma in a value?", f.name, opt)
+				}
+			}
+		}
+	}
+}

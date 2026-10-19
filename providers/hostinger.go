@@ -30,7 +30,7 @@ import (
 )
 
 type HostingerAPI struct {
-	APIToken string `json:"api_token,omitempty" happydomain:"label=API Token,secret,required,description=Your Hostinger API token, generated from hPanel > Account > API"`
+	APIToken string `json:"api_token,omitempty" happydomain:"label=API Token,secret,required,description=Your Hostinger API token: generate it from hPanel > Account > API"`
 }
 
 func (s *HostingerAPI) LibdnsProvider() any {
