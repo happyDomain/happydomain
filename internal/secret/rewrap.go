@@ -51,7 +51,7 @@ func (m *Manager) keyUsage() (usage map[uint32]int, unreadable int, err error) {
 	usage = map[uint32]int{}
 	err = eachSafe(m.safes, func(safe *happydns.Safe) {
 		for _, w := range safe.Keyring {
-			if w.KEK != KEKInstance {
+			if w.KEK != KindInstance {
 				continue
 			}
 			id, err := wrappingKeyId(w)
@@ -138,7 +138,7 @@ func (m *Manager) rewrapSafe(id happydns.Identifier) (bool, error) {
 	keyring := make([]happydns.WrappedKeyset, 0, len(safe.Keyring))
 	placed := false
 	for _, e := range safe.Keyring {
-		if e.KEK != KEKInstance {
+		if e.KEK != KindInstance {
 			keyring = append(keyring, e)
 		} else if !placed {
 			keyring = append(keyring, w)
@@ -158,7 +158,7 @@ func (m *Manager) rewrapSafe(id happydns.Identifier) (bool, error) {
 // key than the primary one.
 func (k *InstanceKey) needsRewrap(safe *happydns.Safe) (bool, error) {
 	for _, w := range safe.Keyring {
-		if w.KEK != KEKInstance {
+		if w.KEK != KindInstance {
 			continue
 		}
 		id, err := wrappingKeyId(w)

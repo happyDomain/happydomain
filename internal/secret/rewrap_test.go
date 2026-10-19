@@ -198,7 +198,7 @@ func TestKeyStatusCountsUnreadableSafes(t *testing.T) {
 		Id:      happydns.Identifier("broken"),
 		Owner:   happydns.Identifier{0x09},
 		Kind:    KindInstance,
-		Keyring: []happydns.WrappedKeyset{{KEK: KEKInstance, Blob: []byte("not a wrapped keyset")}},
+		Keyring: []happydns.WrappedKeyset{{KEK: KindInstance, Blob: []byte("not a wrapped keyset")}},
 	}
 
 	keys, err := m.KeyStatus()
@@ -271,7 +271,7 @@ func TestRewrapCollapsesInstanceEntries(t *testing.T) {
 	safe, _ = store.GetSafeByOwner(sc.Owner, KindInstance)
 	n := 0
 	for _, w := range safe.Keyring {
-		if w.KEK == KEKInstance {
+		if w.KEK == KindInstance {
 			n++
 		}
 	}

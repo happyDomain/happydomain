@@ -34,11 +34,9 @@ import (
 )
 
 const (
-	// KindInstance is a safe whose key is wrapped by the instance keyset.
+	// KindInstance is a safe whose key is wrapped by the instance keyset,
+	// and names the entries of that keyset in a keyring.
 	KindInstance = "instance"
-
-	// KEKInstance names the instance keyset in a keyring.
-	KEKInstance = "instance"
 
 	wrapVersion = "hds:1:safe"
 )

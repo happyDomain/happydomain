@@ -77,7 +77,7 @@ func TestInstanceStoreRoundTrip(t *testing.T) {
 	if err := store.Provision(ctx, safe); err != nil {
 		t.Fatalf("Provision: %v", err)
 	}
-	if len(safe.Keyring) != 1 || safe.Keyring[0].KEK != KEKInstance {
+	if len(safe.Keyring) != 1 || safe.Keyring[0].KEK != KindInstance {
 		t.Fatalf("keyring = %+v, want one instance entry", safe.Keyring)
 	}
 
@@ -159,7 +159,7 @@ func TestInstanceSafeCreatedOnceUnderConcurrency(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(safe.Keyring) != 1 || safe.Keyring[0].KEK != KEKInstance || safe.CreatedAt.IsZero() {
+	if len(safe.Keyring) != 1 || safe.Keyring[0].KEK != KindInstance || safe.CreatedAt.IsZero() {
 		t.Errorf("created safe = %+v", safe)
 	}
 }
@@ -175,8 +175,8 @@ func TestWrapUnwrapRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Wrap: %v", err)
 	}
-	if w.KEK != KEKInstance {
-		t.Errorf("KEK = %q, want %q", w.KEK, KEKInstance)
+	if w.KEK != KindInstance {
+		t.Errorf("KEK = %q, want %q", w.KEK, KindInstance)
 	}
 	safe.Keyring = []happydns.WrappedKeyset{w}
 
@@ -245,7 +245,7 @@ func TestUnwrapRefusesWrongKeyAndTamperedBlob(t *testing.T) {
 	blob := append([]byte(nil), w.Blob...)
 	blob[10] ^= 0x01
 	tampered := *safe
-	tampered.Keyring = []happydns.WrappedKeyset{{KEK: KEKInstance, Blob: blob}}
+	tampered.Keyring = []happydns.WrappedKeyset{{KEK: KindInstance, Blob: blob}}
 	if _, err := key.Unwrap(&tampered); err == nil {
 		t.Error("a tampered wrapped keyset unwrapped")
 	}

@@ -164,13 +164,13 @@ func (k *InstanceKey) Wrap(safe *happydns.Safe, dek *keyset.Handle) (happydns.Wr
 		return happydns.WrappedKeyset{}, fmt.Errorf("unable to wrap the key of safe %s: %w", safe.Id.String(), err)
 	}
 
-	return happydns.WrappedKeyset{KEK: KEKInstance, Blob: buf.Bytes()}, nil
+	return happydns.WrappedKeyset{KEK: KindInstance, Blob: buf.Bytes()}, nil
 }
 
 // Unwrap decrypts the key of safe from its instance keyring entry.
 func (k *InstanceKey) Unwrap(safe *happydns.Safe) (*keyset.Handle, error) {
 	for _, w := range safe.Keyring {
-		if w.KEK != KEKInstance {
+		if w.KEK != KindInstance {
 			continue
 		}
 
