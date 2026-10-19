@@ -590,6 +590,8 @@
         "unused": "Ne contient aucun identifiant.",
         "used-by": "{{n:eq; 1:Contient les identifiants de :; default:Contient les identifiants de {{n}} objets :}}",
         "migrate": "Migrer",
+        "update": "Mettre à jour",
+        "updated": "Coffre mis à jour.",
         "migrate-to": "Déplacer les identifiants vers…",
         "migrated": "{{changed}} objets déplacés.",
         "migrated-partly": "{{changed}} objets déplacés, {{failed}} n'ont pas pu l'être :",

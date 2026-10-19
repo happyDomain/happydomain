@@ -43,6 +43,7 @@
         lockKeystore,
         migrateKeystore,
         setDefaultKeystore,
+        updateKeystore,
         type Keystore,
         type KeystoreKind,
     } from "$lib/api/keystores";
@@ -92,6 +93,24 @@
 
     function lock(ks: Keystore) {
         act(ks.ref!, () => lockKeystore(ks.ref!));
+    }
+
+    // The keystore whose update form is open, and what is entered in it.
+    let updating = $state("");
+    let updateParams: Record<string, unknown> = $state({});
+
+    function toggleUpdate(ks: Keystore) {
+        updating = updating === ks.ref ? "" : ks.ref!;
+        updateParams = {};
+    }
+
+    function update(ks: Keystore) {
+        act(ks.ref!, async () => {
+            await updateKeystore(ks.ref!, updateParams);
+            updating = "";
+            updateParams = {};
+            toasts.addToast({ message: $t("keystores.updated"), type: "success", timeout: 5000 });
+        });
     }
 
     function del(ks: Keystore) {
@@ -222,6 +241,43 @@
                             {objects.map((o) => o.label || o.objectId).join(", ")}
                         {/if}
                     </div>
+                    {#if updating === ks.ref}
+                        <form
+                            class="mt-2"
+                            onsubmit={(e) => {
+                                e.preventDefault();
+                                update(ks);
+                            }}
+                        >
+                            {#each ks.updateForm ?? [] as field (field.id)}
+                                <ResourceInput
+                                    edit
+                                    index={"keystore-update-" + field.id}
+                                    specs={field as Field}
+                                    bind:value={updateParams[field.id!]}
+                                />
+                            {/each}
+                            <Button
+                                type="submit"
+                                color="primary"
+                                size="sm"
+                                disabled={busy.has(ks.ref!)}
+                            >
+                                {#if busy.has(ks.ref!)}
+                                    <Spinner size="sm" />
+                                {/if}
+                                {$t("keystores.update")}
+                            </Button>
+                            <Button
+                                color="secondary"
+                                outline
+                                size="sm"
+                                on:click={() => toggleUpdate(ks)}
+                            >
+                                {$t("common.cancel")}
+                            </Button>
+                        </form>
+                    {/if}
                 </div>
                 <div class="d-flex flex-wrap gap-1 align-items-start">
                     {#if ks.interactive && ks.available}
@@ -234,6 +290,18 @@
                         >
                             <i class={ks.locked ? "bi bi-unlock" : "bi bi-lock"}></i>
                             {$t(ks.locked ? "keystores.unlock" : "keystores.lock")}
+                        </Button>
+                    {/if}
+                    {#if ks.updateForm?.length && ks.available && updating !== ks.ref}
+                        <Button
+                            color="secondary"
+                            outline
+                            size="sm"
+                            disabled={busy.has(ks.ref!)}
+                            on:click={() => toggleUpdate(ks)}
+                        >
+                            <i class="bi bi-key"></i>
+                            {$t("keystores.update")}
                         </Button>
                     {/if}
                     {#if !ks.default && ks.available}

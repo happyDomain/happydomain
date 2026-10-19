@@ -27,6 +27,7 @@ import {
     postKeystoresByRefLock,
     postKeystoresByRefMigrate,
     postKeystoresByRefUnlock,
+    putKeystoresByRef,
     putKeystoresDefault,
 } from "$lib/api-base/sdk.gen";
 import type {
@@ -55,6 +56,16 @@ export async function createKeystore(
 ): Promise<SecretKeystore> {
     return unwrapSdkResponse(
         await postKeystores({ body: { kind, name, params } }),
+    ) as SecretKeystore;
+}
+
+/** Updates a personal keystore with the params its update form asks for. */
+export async function updateKeystore(
+    ref: string,
+    params: Record<string, unknown>,
+): Promise<SecretKeystore> {
+    return unwrapSdkResponse(
+        await putKeystoresByRef({ path: { ref }, body: { params } }),
     ) as SecretKeystore;
 }
 
