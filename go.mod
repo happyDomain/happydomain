@@ -51,7 +51,7 @@ require (
 	github.com/lib/pq v1.12.3
 	github.com/libdns/dreamhost v0.2.0
 	github.com/libdns/godaddy v1.1.0
-	github.com/libdns/ionos v1.2.0
+	github.com/libdns/ionos v1.3.0
 	github.com/libdns/libdns v1.1.1
 	github.com/libdns/spaceship v1.0.0
 	github.com/miekg/dns v1.1.73
