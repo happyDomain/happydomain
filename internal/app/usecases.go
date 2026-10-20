@@ -30,6 +30,7 @@ import (
 	"git.happydns.org/happyDomain/internal/usecase"
 	authuserUC "git.happydns.org/happyDomain/internal/usecase/authuser"
 	backupUC "git.happydns.org/happyDomain/internal/usecase/backup"
+	bimiUC "git.happydns.org/happyDomain/internal/usecase/bimi"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	domainUC "git.happydns.org/happyDomain/internal/usecase/domain"
 	domainlogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
@@ -93,6 +94,7 @@ func (app *App) initUsecases() {
 	abstract.SetServiceHostingHost(resolveHostingHost(app.cfg))
 	app.usecases.emailAutoconfig = emailAutoconfigUC.NewUsecase(app.store, zoneService.GetZoneUC)
 	app.usecases.mtasts = mtastsUC.NewUsecase(app.store, zoneService.GetZoneUC)
+	app.usecases.bimi = bimiUC.NewUsecase(app.store, zoneService.GetZoneUC)
 
 	domainService := domainUC.NewService(
 		app.store,

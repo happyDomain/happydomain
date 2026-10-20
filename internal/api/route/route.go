@@ -52,6 +52,7 @@ type Dependencies struct {
 	DomainLog             happydns.DomainLogUsecase
 	EmailAutoconfig       happydns.EmailAutoconfigUsecase
 	MTASTS                happydns.MTASTSUsecase
+	BIMI                  happydns.BIMIUsecase
 	FailureTracker        happydns.FailureTracker
 	FaviconService        *favicon.FaviconService
 	OutboundGuard         *netguard.Guard
@@ -153,7 +154,8 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 	hostingRL := perClientRateLimiter(30)
 	DeclareEmailAutoconfigRoutes(baseRoutes, hostingRL, dep.EmailAutoconfig)
 	DeclareMTASTSRoutes(baseRoutes, hostingRL, dep.MTASTS)
-	DeclareCaddyRoutes(apiRoutes, hostingRL, dep.EmailAutoconfig, dep.MTASTS)
+	DeclareBIMIRoutes(baseRoutes, hostingRL, dep.BIMI)
+	DeclareCaddyRoutes(apiRoutes, hostingRL, dep.EmailAutoconfig, dep.MTASTS, dep.BIMI)
 
 	DeclareProviderSpecsRoutes(apiRoutes, dep.ProviderSpecs)
 	DeclareRegistrationRoutes(apiRoutes, dep.AuthUser, dep.CaptchaVerifier)
