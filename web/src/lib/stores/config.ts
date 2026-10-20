@@ -33,6 +33,7 @@ interface AppConfig {
     disable_registration?: boolean;
     enable_keystore_extraction?: boolean;
     hide_feedback?: boolean;
+    mail_autoconfig_host?: string;
     msg_header?: {
         text: string;
         color: Color;

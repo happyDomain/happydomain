@@ -39,6 +39,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/services/abstract"
 )
 
 var (
@@ -118,6 +119,12 @@ func init() {
 
 func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, captchaVerifier happydns.CaptchaVerifier) {
 	appConfig := map[string]any{}
+
+	// Must match what the analyzer recognizes as this instance, which is not
+	// necessarily the hostname the browser used to reach the UI.
+	if host := abstract.GetAutoconfigHost(); host != "" {
+		appConfig["mail_autoconfig_host"] = strings.TrimSuffix(host, ".")
+	}
 
 	if cfg.DisableCheckerScheduler {
 		appConfig["disable_checker_scheduler"] = true

@@ -30,6 +30,7 @@
     import type { AbstractEmailAutoConfigBody } from "$lib/services_bodies";
     import type { dnsTypeSRV, dnsTypeCNAME } from "$lib/dns_rr";
     import BasicInput from "$lib/components/inputs/basic.svelte";
+    import { appConfig } from "$lib/stores/config";
     import { t } from "$lib/translations";
 
     interface Props {
@@ -206,13 +207,9 @@
             : undefined;
     });
 
-    // HTTP discovery — toggles add/remove the three records. The CNAME/SRV
-    // targets point at the happyDomain instance currently serving this UI,
-    // which is also the host that answers Mozilla Autoconfig and Microsoft
-    // Autodiscover XML.
-    const discoveryTarget = ensureTrailingDot(
-        typeof window !== "undefined" ? window.location.hostname : "",
-    );
+    // HTTP discovery: toggles add/remove the three records. The targets are
+    // the host the backend analyzer recognizes as ours, not the browser's.
+    const discoveryTarget = ensureTrailingDot($appConfig.mail_autoconfig_host ?? "");
     $effect(() => {
         if (publishHTTP === initialPublishHTTP) return;
         if (publishHTTP) {
