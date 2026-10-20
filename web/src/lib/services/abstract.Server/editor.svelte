@@ -25,26 +25,20 @@
     import { Input } from "@sveltestrap/sveltestrap";
 
     import { getRrtype, newRR } from "$lib/dns_rr";
-    import type { dnsTypeA, dnsTypeAAAA, dnsTypeSSHFP } from "$lib/dns_rr";
+    import type { dnsTypeA, dnsTypeAAAA } from "$lib/dns_rr";
     import type { Domain } from "$lib/model/domain";
     import type { AbstractServerBody } from "$lib/services_bodies";
-    import TableRecords from "$lib/components/records/TableRecords.svelte";
     import BasicInput from "$lib/components/inputs/basic.svelte";
-    import RawInput from "$lib/components/inputs/raw.svelte";
+    import SSHFPEditor from "$lib/components/services/SSHFPEditor.svelte";
 
     interface Props {
         dn: string;
         origin: Domain;
+        readonly?: boolean;
         value: AbstractServerBody;
     }
 
-    let { dn, origin, value = $bindable() }: Props = $props();
-
-    // Read back through the body on each access: the state proxy hands out the
-    // reactive array, which a plain assignment expression would not.
-    if (!value.SSHFP) value.SSHFP = [];
-    const fingerprints = (): dnsTypeSSHFP[] => value.SSHFP ?? [];
-
+    let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
 </script>
 
 <div>
@@ -92,42 +86,5 @@
         SSH Fingerprint
         <small class="text-muted">Server's SSH fingerprint</small>
     </h4>
-    <!--RecordsLines {dn} {origin} bind:rrs={value["ns"]} /-->
-    <TableRecords class="mt-3" {dn} edit rrs={fingerprints()} rrtype="SSHFP">
-        {#snippet header(field: string)}
-            {#if field == "Algorithm"}
-                Algorithm
-            {:else if field == "Type"}
-                Type
-            {:else if field == "FingerPrint"}
-                Fingerprint
-            {/if}
-        {/snippet}
-        {#snippet field(idx: number, field: string)}
-            {@const rr = fingerprints()[idx] as Record<string, any>}
-            {#if field == "Algorithm"}
-                <RawInput
-                    edit
-                    index={"SSHFP-" + idx.toString()}
-                    specs={{
-                        id: "algorithm",
-                        type: "uint",
-                    }}
-                    bind:value={rr[field]}
-                />
-            {:else if field == "Type"}
-                <RawInput
-                    edit
-                    index={"SSHFP-" + idx.toString()}
-                    specs={{
-                        id: "type",
-                        type: "uint",
-                    }}
-                    bind:value={rr[field]}
-                />
-            {:else if field == "FingerPrint"}
-                <RawInput edit index={"SSHFP-" + idx.toString()} bind:value={rr[field]} />
-            {/if}
-        {/snippet}
-    </TableRecords>
+    <SSHFPEditor {dn} {origin} {readonly} bind:value />
 </div>

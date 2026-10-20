@@ -1,0 +1,21 @@
+{
+    "sshfp": {
+        "algorithm": "Algorithme",
+        "type": "Type d'empreinte",
+        "fingerprint": "Empreinte",
+        "retrieve": {
+            "description": "Lisez les clés d'hôte directement depuis le serveur, plutôt que de recopier les empreintes à la main.",
+            "host": "Serveur SSH",
+            "port": "Port",
+            "action": "Récupérer",
+            "added": "{{count}} empreinte(s) ajoutée(s).",
+            "nothing-new": "Toutes les empreintes proposées par le serveur sont déjà publiées ici.",
+            "status": {
+                "blocked": "Cette instance happyDomain n'a pas le droit de joindre cette adresse.",
+                "connect-error": "Le serveur SSH n'a pas pu être joint.",
+                "handshake-error": "Le serveur a répondu, mais pas comme un serveur SSH.",
+                "timeout": "Le serveur SSH n'a pas répondu à temps."
+            }
+        }
+    }
+}

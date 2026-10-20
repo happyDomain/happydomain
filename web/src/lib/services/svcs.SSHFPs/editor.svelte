@@ -22,9 +22,7 @@
 -->
 
 <script lang="ts">
-    import { Button, Icon, Input } from "@sveltestrap/sveltestrap";
-    import { t } from "$lib/translations";
-    import { getRrtype, newRR, type dnsTypeSSHFP } from "$lib/dns_rr";
+    import SSHFPEditor from "$lib/components/services/SSHFPEditor.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { SvcsSSHFPsBody } from "$lib/services_bodies";
 
@@ -36,76 +34,6 @@
     }
 
     let { dn, origin, readonly = false, value = $bindable() }: Props = $props();
-
-    // Read back through the body on each access: the state proxy hands out the
-    // reactive array, which a plain assignment expression would not.
-    if (!value.SSHFP) value.SSHFP = [];
-    const fingerprints = (): dnsTypeSSHFP[] => value.SSHFP ?? [];
-
-    function addSSHFP() {
-        fingerprints().push({
-            ...(newRR("", getRrtype("SSHFP")) as dnsTypeSSHFP),
-            Algorithm: 1,
-            Type: 1,
-        });
-    }
-
-    function deleteSSHFP(idx: number) {
-        fingerprints().splice(idx, 1);
-    }
 </script>
 
-<table class="table table-striped table-hover">
-    <thead>
-        <tr>
-            <th>Algorithm</th>
-            <th>Type</th>
-            <th>Fingerprint</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        {#if fingerprints().length}
-            {#each fingerprints() as fingerprint, idx}
-                <tr>
-                    <td>
-                        <Input type="number" bsSize="sm" bind:value={fingerprint.Algorithm} />
-                    </td>
-                    <td>
-                        <Input type="number" bsSize="sm" bind:value={fingerprint.Type} />
-                    </td>
-                    <td>
-                        <Input bsSize="sm" bind:value={fingerprint.FingerPrint} />
-                    </td>
-                    <td>
-                        <Button
-                            type="button"
-                            color="danger"
-                            outline
-                            size="sm"
-                            onclick={() => deleteSSHFP(idx)}
-                        >
-                            <Icon name="trash" />
-                        </Button>
-                    </td>
-                </tr>
-            {/each}
-        {/if}
-    </tbody>
-    <tfoot>
-        <tr>
-            <td colspan="4">
-                <Button
-                    type="button"
-                    color="primary"
-                    outline
-                    size="sm"
-                    onclick={addSSHFP}
-                >
-                    <Icon name="plus" />
-                    {$t("common.new-row")}
-                </Button>
-            </td>
-        </tr>
-    </tfoot>
-</table>
+<SSHFPEditor {dn} {origin} {readonly} bind:value />
