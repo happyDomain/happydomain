@@ -15,6 +15,26 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             "nearAlone": true
         }
     },
+    "abstract.BIMI": {
+        "name": "BIMI (hosted logo)",
+        "_svctype": "abstract.BIMI",
+        "family": "abstract",
+        "categories": [
+            "email"
+        ],
+        "record_types": [
+            16,
+            5
+        ],
+        "restrictions": {
+            "nearAlone": true,
+            "needTypes": [
+                16,
+                5
+            ],
+            "single": true
+        }
+    },
     "abstract.CalDAV": {
         "name": "CalDAV (Calendar)",
         "_svctype": "abstract.CalDAV",

@@ -72,6 +72,8 @@ git.happydns.org/checker-xmpp v0.2.0 h1:p8c15zEBoWxoYkZ2fmRx42f209WBPMpD00wbH02/
 git.happydns.org/checker-xmpp v0.2.0/go.mod h1:Mrq1QxtkwZiYCDDlPf+r3pE+NT8wpqReBDhD7eGs0R4=
 git.happydns.org/checker-zonemaster v0.1.0 h1:1Qa0HtAGTfNU/3XvHhxDNJR9Td8DLQa8PrcNbexoeyI=
 git.happydns.org/checker-zonemaster v0.1.0/go.mod h1:HnVHYW3EZWy03Z0g1KMLUT9XJbIzmgoFBfid/jpe6kA=
+git.happydns.org/svg-tiny-ps v1.0.0 h1:H/jdiD68G0TbGUbUHCPkY6GFkdR0uBq1Ryweq+CAJmM=
+git.happydns.org/svg-tiny-ps v1.0.0/go.mod h1:VfSKFdoqGZxI6wKXtxFukOOI5+fJJHDmER6TCBOYc54=
 github.com/Azure/azure-sdk-for-go/sdk/azcore v1.22.0 h1:aokoqcHvaGjiM3VpjKDfMMnF/8epJ+Q1HLJ7CudztqE=
 github.com/Azure/azure-sdk-for-go/sdk/azcore v1.22.0/go.mod h1:/WYEx9pcM9Y+Dd/APJaNlSvVSvzl54rrMdZT5+Oi2LM=
 github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.14.0 h1:CU4+EJeJi3TKYWEcYuSdWsjzw0nVsK/H0MSQOiPcymU=

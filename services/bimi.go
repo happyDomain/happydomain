@@ -157,6 +157,9 @@ func init() {
 				},
 			},
 		},
-		1,
+		// After abstract.BIMI (weight 1), which claims the TXT record only
+		// when the files it points to are hosted by happyDomain. What is left
+		// here is a domain hosting its own logo.
+		5,
 	)
 }
