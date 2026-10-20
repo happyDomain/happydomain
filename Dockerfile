@@ -41,6 +41,7 @@ COPY --from=gogenerator /src/web/src/lib/services/svcs.CAAPolicy/issuers.json we
 
 RUN --mount=type=cache,target=/usr/local/share/.cache/yarn \
     yarn --cwd web --network-timeout 100000 install && \
+    yarn --cwd web --offline svelte-kit sync && \
     yarn --cwd web --offline generate:api && \
     yarn --cwd web --offline build
 
@@ -50,6 +51,7 @@ COPY web-admin/ web-admin/
 
 RUN --mount=type=cache,target=/usr/local/share/.cache/yarn \
     yarn --cwd web-admin --network-timeout 100000 install && \
+    yarn --cwd web-admin --offline svelte-kit sync && \
     yarn --cwd web-admin --offline generate:api && \
     yarn --cwd web-admin --offline build
 
