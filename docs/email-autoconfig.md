@@ -36,7 +36,8 @@ auto-configuration XML — that's the target of the `autoconfig.` and
 | Public host for hosted services      | `--service-hosting-host` / `HAPPYDOMAIN_SERVICE_HOSTING_HOST` | derived from `--externalurl` |
 
 `--service-hosting-host` replaces `--mail-autoconfig-host`, which is still
-honoured as a deprecated alias. It is shared with [MTA-STS](mta-sts.md).
+honoured as a deprecated alias. It is shared with [MTA-STS](mta-sts.md) and
+[BIMI](bimi.md).
 
 If neither is set, happyDomain uses the host part of `--externalurl`. The same
 hostname must be reachable over HTTPS and able to get a valid certificate for
@@ -60,7 +61,8 @@ not the proxy (see [reverse-proxy.md](reverse-proxy.md)).
 The Caddy hook is shared by every hosted service. For this one, it authorises
 certificates for `autoconfig.<X>` / `autodiscover.<X>` where `X` is a domain
 registered in happyDomain *and* has the Email Auto-configuration service
-configured. It also covers `mta-sts.<X>` for [MTA-STS](mta-sts.md).
+configured. It also covers `mta-sts.<X>` for [MTA-STS](mta-sts.md) and
+`bimi.<X>` for [BIMI](bimi.md).
 
 ## End-user flow
 
@@ -100,11 +102,11 @@ happydomain.example.com {
     reverse_proxy happydomain:8081
 }
 
-# Catch-all for the hosted services: autoconfig.<X>, autodiscover.<X>, and
-# mta-sts.<X>. Caddy obtains a certificate on-demand for each new <X> only
-# when the /api/caddy/ask endpoint authorises it.
+# Catch-all for the hosted services: autoconfig.<X>, autodiscover.<X>,
+# mta-sts.<X> and bimi.<X>. Caddy obtains a certificate on-demand for each
+# new <X> only when the /api/caddy/ask endpoint authorises it.
 https:// {
-    @hosted header_regexp Host ^(?:autoconfig|autodiscover|mta-sts)\.
+    @hosted header_regexp Host ^(?:autoconfig|autodiscover|mta-sts|bimi)\.
     handle @hosted {
         reverse_proxy happydomain:8081
     }
