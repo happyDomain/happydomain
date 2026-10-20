@@ -24,11 +24,8 @@ import {
     type ComplianceIssue,
     registerValidators,
 } from "$lib/services/compliance";
+import { BIMI_DRAFT as DRAFT, dmarcIssues, selectorIssues } from "$lib/services/bimi";
 import { isBIMIDeclination, parseBIMI } from "./model";
-import { parseDMARC } from "$lib/services/svcs.DMARC/model";
-
-const SELECTOR_LABEL_RE = /^[A-Za-z0-9_-]+$/;
-const DRAFT = "https://datatracker.ietf.org/doc/draft-brand-indicators-for-message-identification/";
 
 function isHttps(uri: string): boolean {
     return /^https:\/\//i.test(uri.trim());
@@ -42,37 +39,7 @@ function bimiSync(raw: Record<string, any>, ctx: ComplianceContext): ComplianceI
     const txtValue: string = typeof txt.Txt === "string" ? txt.Txt : "";
     const name: string = typeof txt.Hdr?.Name === "string" ? txt.Hdr.Name : "";
 
-    // Selector: owner name must be "<selector>._bimi" (relative to the apex).
-    let selector = "";
-    if (name.endsWith("._bimi")) {
-        selector = name.slice(0, -"._bimi".length);
-    } else if (name === "_bimi") {
-        selector = "";
-    } else {
-        issues.push({
-            id: "bimi.wrong-owner-name",
-            severity: "error",
-            params: { name },
-            docUrl: DRAFT,
-        });
-    }
-
-    if (!selector) {
-        issues.push({
-            id: "bimi.missing-selector",
-            severity: "error",
-            field: "selector",
-            docUrl: DRAFT,
-        });
-    } else if (!SELECTOR_LABEL_RE.test(selector)) {
-        issues.push({
-            id: "bimi.invalid-selector",
-            severity: "error",
-            params: { selector },
-            field: "selector",
-            docUrl: DRAFT,
-        });
-    }
+    issues.push(...selectorIssues(name));
 
     if (!txtValue.trim()) return issues;
 
@@ -166,32 +133,7 @@ function bimiSync(raw: Record<string, any>, ctx: ComplianceContext): ComplianceI
         });
     }
 
-    // Cross-record check: BIMI requires DMARC with an enforcing policy.
-    if (ctx.zone) {
-        const dmarcs = ctx.findAllServices("svcs.DMARC");
-        if (dmarcs.length === 0) {
-            issues.push({
-                id: "bimi.no-dmarc",
-                severity: "warning",
-                docUrl: DRAFT,
-            });
-        } else {
-            const policies = dmarcs
-                .map((s) => {
-                    const t = (s.Service as Record<string, any>)?.txt;
-                    const tv = typeof t?.Txt === "string" ? t.Txt : "";
-                    return tv ? parseDMARC(tv).p : undefined;
-                })
-                .filter((p): p is string => Boolean(p));
-            if (policies.length > 0 && policies.every((p) => p === "none")) {
-                issues.push({
-                    id: "bimi.weak-dmarc-policy",
-                    severity: "warning",
-                    docUrl: DRAFT,
-                });
-            }
-        }
-    }
+    issues.push(...dmarcIssues(ctx));
 
     return issues;
 }
