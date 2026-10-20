@@ -81,3 +81,10 @@ Sync:
 - wrong owner name, missing/invalid selector, invalid `v=`, missing `l=` (outside declination), `l=` or `a=` not HTTPS (error)
 - DMARC policy is `none` everywhere, no DMARC in zone, `l=` not `.svg`, `e=` not HTTPS (warning)
 - declination detected, missing VMC `a=`, `a=` not `.pem` (info)
+
+### For sale (`svcs.ForSale`)
+
+Sync:
+- wrong owner name, missing `v=FORSALE1;`, content that is not a tag-value pair, several pairs in one record, duplicated pair, empty or over-long value, invalid price, invalid URI (error)
+- unknown tag, unusual URI scheme, TTL above an hour, `_for-sale` records disagreeing on their TTL (warning)
+- the domain is announced for sale without any detail (info)
