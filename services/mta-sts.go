@@ -136,6 +136,9 @@ func init() {
 				},
 			},
 		},
-		1,
+		// After abstract.MTASTS (weight 1), which claims the TXT record only
+		// when the policy file is hosted by happyDomain. What is left here is
+		// a domain serving its own policy file.
+		5,
 	)
 }

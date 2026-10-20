@@ -183,6 +183,26 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
         "record_types": null,
         "restrictions": {}
     },
+    "abstract.MTASTS": {
+        "name": "MTA-STS (hosted policy)",
+        "_svctype": "abstract.MTASTS",
+        "family": "abstract",
+        "categories": [
+            "email"
+        ],
+        "record_types": [
+            16,
+            5
+        ],
+        "restrictions": {
+            "nearAlone": true,
+            "needTypes": [
+                16,
+                5
+            ],
+            "single": true
+        }
+    },
     "abstract.MatrixIM": {
         "name": "Matrix IM",
         "_svctype": "abstract.MatrixIM",

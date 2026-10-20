@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "abstract": {
+            "MTASTS": {
+                "name": "MTA-STS (hosted policy)",
+                "description": "Require authenticated TLS for incoming mail, with the RFC 8461 policy file served by happyDomain."
+            }
+        }
+    }
+}
