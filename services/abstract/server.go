@@ -30,6 +30,7 @@ import (
 	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
 	svc "git.happydns.org/happyDomain/internal/serviceanalyzer"
+	"git.happydns.org/happyDomain/services/common"
 )
 
 type Server struct {
@@ -126,9 +127,7 @@ next_pool:
 		if s.AAAA != nil {
 			s.AAAA = helpers.RRRelativeSubdomain(s.AAAA, a.GetOrigin(), dn).(*dns.AAAA)
 		}
-		for i := range s.SSHFP {
-			s.SSHFP[i] = helpers.RRRelativeSubdomain(s.SSHFP[i], a.GetOrigin(), dn).(*dns.SSHFP)
-		}
+		s.SSHFP = common.SSHFPRelative(s.SSHFP, a.GetOrigin(), dn)
 
 		for _, rr := range rrs {
 			if err := a.UseRR(rr, dn, s); err != nil {

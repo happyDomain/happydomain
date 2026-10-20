@@ -26,19 +26,13 @@ import (
 
 	"github.com/miekg/dns"
 
-	"git.happydns.org/happyDomain/internal/helpers"
 	svc "git.happydns.org/happyDomain/internal/serviceanalyzer"
 	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/services/common"
 )
 
-type SSHFP struct {
-	Algorithm   uint8  `json:"algorithm"`
-	Type        uint8  `json:"type"`
-	FingerPrint string `json:"fingerprint"`
-}
-
 type SSHFPs struct {
-	SSHFP []*SSHFP `json:"SSHFP,omitempty" happydomain:"label=SSH Fingerprint,description=Server's SSH fingerprint"`
+	SSHFP []*dns.SSHFP `json:"SSHFP,omitempty" happydomain:"label=SSH Fingerprint,description=Server's SSH fingerprint"`
 }
 
 func (s *SSHFPs) GetNbResources() int {
@@ -51,12 +45,16 @@ func (s *SSHFPs) GenComment() string {
 
 func (s *SSHFPs) GetRecords(domain string, ttl uint32, origin string) (rrs []happydns.Record, err error) {
 	for _, sshfp := range s.SSHFP {
-		rr := helpers.NewRecord(domain, "SSHFP", ttl, origin)
-		rr.(*dns.SSHFP).Algorithm = sshfp.Algorithm
-		rr.(*dns.SSHFP).Type = sshfp.Type
-		rr.(*dns.SSHFP).FingerPrint = sshfp.FingerPrint
+		// Services saved before the body carried whole records only hold
+		// algorithm, type and fingerprint, which decode into an empty header.
+		if sshfp.Hdr.Rrtype == 0 {
+			rr := *sshfp
+			rr.Hdr.Rrtype = dns.TypeSSHFP
+			rr.Hdr.Class = dns.ClassINET
+			sshfp = &rr
+		}
 
-		rrs = append(rrs, rr)
+		rrs = append(rrs, sshfp)
 	}
 
 	return
@@ -76,11 +74,7 @@ func sshfp_analyze(a *svc.Analyzer) error {
 
 		for _, rr := range rrs {
 			if sshfp, ok := rr.(*dns.SSHFP); ok {
-				s.SSHFP = append(s.SSHFP, &SSHFP{
-					Algorithm:   sshfp.Algorithm,
-					Type:        sshfp.Type,
-					FingerPrint: sshfp.FingerPrint,
-				})
+				s.SSHFP = append(s.SSHFP, common.SSHFPRelative([]*dns.SSHFP{sshfp}, a.GetOrigin(), dn)...)
 
 				if err := a.UseRR(rr, dn, s); err != nil {
 					return err

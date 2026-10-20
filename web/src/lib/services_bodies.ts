@@ -176,11 +176,7 @@ export interface SvcsSPFBody {
 }
 
 export interface SvcsSSHFPsBody {
-    SSHFP?: Array<{
-        algorithm: number;
-        type: number;
-        fingerprint: string;
-    }>;
+    SSHFP?: Array<dnsTypeSSHFP>;
 }
 
 export interface SvcsSpecialCNAMEBody {

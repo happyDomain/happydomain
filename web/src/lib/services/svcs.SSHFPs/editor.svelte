@@ -24,10 +24,9 @@
 <script lang="ts">
     import { Button, Icon, Input } from "@sveltestrap/sveltestrap";
     import { t } from "$lib/translations";
+    import { getRrtype, newRR, type dnsTypeSSHFP } from "$lib/dns_rr";
     import type { Domain } from "$lib/model/domain";
     import type { SvcsSSHFPsBody } from "$lib/services_bodies";
-
-    type SSHFPEntry = NonNullable<SvcsSSHFPsBody["SSHFP"]>[number];
 
     interface Props {
         dn: string;
@@ -41,10 +40,14 @@
     // Read back through the body on each access: the state proxy hands out the
     // reactive array, which a plain assignment expression would not.
     if (!value.SSHFP) value.SSHFP = [];
-    const fingerprints = (): SSHFPEntry[] => value.SSHFP ?? [];
+    const fingerprints = (): dnsTypeSSHFP[] => value.SSHFP ?? [];
 
     function addSSHFP() {
-        fingerprints().push({ algorithm: 1, type: 1, fingerprint: "" });
+        fingerprints().push({
+            ...(newRR("", getRrtype("SSHFP")) as dnsTypeSSHFP),
+            Algorithm: 1,
+            Type: 1,
+        });
     }
 
     function deleteSSHFP(idx: number) {
@@ -66,13 +69,13 @@
             {#each fingerprints() as fingerprint, idx}
                 <tr>
                     <td>
-                        <Input type="number" bsSize="sm" bind:value={fingerprint.algorithm} />
+                        <Input type="number" bsSize="sm" bind:value={fingerprint.Algorithm} />
                     </td>
                     <td>
-                        <Input type="number" bsSize="sm" bind:value={fingerprint.type} />
+                        <Input type="number" bsSize="sm" bind:value={fingerprint.Type} />
                     </td>
                     <td>
-                        <Input bsSize="sm" bind:value={fingerprint.fingerprint} />
+                        <Input bsSize="sm" bind:value={fingerprint.FingerPrint} />
                     </td>
                     <td>
                         <Button
