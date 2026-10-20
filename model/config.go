@@ -78,7 +78,8 @@ type Options struct {
 
 	// ServiceHostingHost is the public FQDN that the services hosted by
 	// happyDomain should target with their CNAMEs: autoconfig./autodiscover.
-	// for the email auto-configuration, mta-sts. for the MTA-STS policy file.
+	// for the email auto-configuration, mta-sts. for the MTA-STS policy file,
+	// bimi. for the BIMI logo and certificate.
 	// When empty, it falls back to MailAutoconfigHost, then to ExternalURL.Host.
 	ServiceHostingHost string
 
