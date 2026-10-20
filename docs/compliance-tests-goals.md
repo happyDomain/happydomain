@@ -113,3 +113,17 @@ Sync, name servers:
 Sync, DS records:
 - DS without any NS, unknown digest type, key tag out of the uint16 range, digest whose length or alphabet does not match its digest type (error)
 - SHA-1 digest, algorithm deprecated by RFC 8624, duplicate DS (warning)
+
+### SRV (`svcs.UnknownSRV` and the SRV-based abstract services)
+
+The checks live in `$lib/services/srv-compliance` and are registered by every
+service built on SRV records: `svcs.UnknownSRV`, `abstract.RFC6186`,
+`abstract.LibravatarServer`, `abstract.SIP`, `abstract.XMPP`, `abstract.LDAP`,
+`abstract.MatrixIM`, `abstract.CalDAV`, `abstract.CardDAV` and
+`abstract.Kerberos`, each naming the body fields to read. Records are grouped
+by owner name first, so two sets of a same service stay independent.
+
+Sync:
+- owner not spelled `_service._protocol`, target of `.` next to a real one, invalid target, priority/weight/port outside the uint16 range, port 0 on a real target, target that is a CNAME (error)
+- duplicate host and port, in-zone target with no A/AAAA (warning)
+- weight of 0 next to non-zero ones at the same priority (info)
