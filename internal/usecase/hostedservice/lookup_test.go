@@ -322,3 +322,76 @@ func TestFindService_ParentStorageError(t *testing.T) {
 		t.Errorf("FindService error = %v; want the storage error", err)
 	}
 }
+
+// The live DNS records refer to the last published zone: until the work in
+// progress one is applied, its services must still be found.
+func TestFindServices_PublishedZone(t *testing.T) {
+	wip := &abstract.MTASTS{}
+	published := &abstract.MTASTS{}
+	older := &abstract.MTASTS{}
+
+	wipZone, wipID := zoneWith(1, wip)
+	pubZone, pubID := zoneWith(2, published)
+	oldZone, oldID := zoneWith(3, older)
+
+	store := func(history ...happydns.Identifier) Store {
+		return NewStore(
+			&hostedservicetest.FakeDomains{ByName: map[string][]*happydns.Domain{
+				"example.com.": {{DomainName: "example.com.", ZoneHistory: history}},
+			}},
+			&hostedservicetest.FakeZones{ByID: map[string]*happydns.Zone{
+				wipID.String(): wipZone,
+				pubID.String(): pubZone,
+				oldID.String(): oldZone,
+			}},
+		)
+	}
+
+	t.Run("work in progress first, then last published", func(t *testing.T) {
+		got, err := FindServices[*abstract.MTASTS](store(wipID, pubID, oldID), "example.com.")
+		if err != nil {
+			t.Fatalf("FindServices: %v", err)
+		}
+		if len(got) != 2 || got[0] != wip || got[1] != published {
+			t.Errorf("FindServices = %v; want [wip, published]", got)
+		}
+	})
+
+	t.Run("nothing published yet", func(t *testing.T) {
+		got, err := FindServices[*abstract.MTASTS](store(wipID), "example.com.")
+		if err != nil || len(got) != 1 || got[0] != wip {
+			t.Errorf("FindServices = (%v, %v); want [wip]", got, err)
+		}
+	})
+
+	t.Run("published zone cannot be loaded", func(t *testing.T) {
+		got, err := FindServices[*abstract.MTASTS](store(wipID, happydns.Identifier{0x99}), "example.com.")
+		if err != nil || len(got) != 1 || got[0] != wip {
+			t.Errorf("FindServices = (%v, %v); want [wip]", got, err)
+		}
+	})
+
+	t.Run("service only in the published zone", func(t *testing.T) {
+		bare, bareID := zoneWith(4)
+		s := store(bareID, pubID)
+		s.Zones.(*hostedservicetest.FakeZones).ByID[bareID.String()] = bare
+
+		got, err := FindServices[*abstract.MTASTS](s, "example.com.")
+		if err != nil || len(got) != 1 || got[0] != published {
+			t.Errorf("FindServices = (%v, %v); want [published]", got, err)
+		}
+	})
+
+	t.Run("FindService keeps returning the work in progress one", func(t *testing.T) {
+		got, err := FindService[*abstract.MTASTS](store(wipID, pubID), "example.com.")
+		if err != nil || got != wip {
+			t.Errorf("FindService = (%p, %v); want %p", got, err, wip)
+		}
+	})
+
+	t.Run("unknown domain", func(t *testing.T) {
+		if _, err := FindServices[*abstract.MTASTS](store(wipID), "unknown.example."); !errors.Is(err, happydns.ErrNotFound) {
+			t.Errorf("FindServices error = %v; want ErrNotFound", err)
+		}
+	})
+}
