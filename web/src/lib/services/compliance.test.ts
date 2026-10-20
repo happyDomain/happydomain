@@ -24,7 +24,14 @@ import {
     asArray,
     buildContext,
     getValidators,
+    hasAddress,
     hasValidators,
+    inZoneSubdomain,
+    isCnameOwner,
+    isUint16,
+    isValidHostname,
+    normalizeFqdn,
+    originFqdn,
     registerValidators,
     runAsyncValidators,
     runSyncValidators,
@@ -317,5 +324,142 @@ describe("runAsyncValidators", () => {
         await expect(runAsyncValidators(TYPE, {}, CTX, controller.signal)).resolves.toEqual([]);
         expect(consoleErr).toHaveBeenCalled();
         consoleErr.mockRestore();
+    });
+});
+
+describe("isUint16", () => {
+    it.each([0, 1, 65535])("accepts %s", (v) => expect(isUint16(v)).toBe(true));
+    it.each([-1, 65536, 1.5, NaN, Infinity, "10", null, undefined, {}])("rejects %s", (v) =>
+        expect(isUint16(v)).toBe(false),
+    );
+});
+
+describe("normalizeFqdn", () => {
+    it("drops one or several trailing dots", () => {
+        expect(normalizeFqdn("a.example.com.")).toBe("a.example.com");
+        expect(normalizeFqdn("a.example.com..")).toBe("a.example.com");
+    });
+
+    it("lowercases", () => {
+        expect(normalizeFqdn("WWW.Example.COM")).toBe("www.example.com");
+    });
+
+    it("turns the root and the empty string into the empty string", () => {
+        expect(normalizeFqdn(".")).toBe("");
+        expect(normalizeFqdn("")).toBe("");
+    });
+});
+
+describe("isValidHostname", () => {
+    it.each(["a", "mx1.example.com", "xn--bcher-kva.example", "a-b.c", "1.2.3"])(
+        "accepts %s",
+        (n) => expect(isValidHostname(n)).toBe(true),
+    );
+
+    it.each([
+        "",
+        "a..b",
+        ".a",
+        "-a.com",
+        "a-.com",
+        "a_b.com",
+        "_dmarc.example.com",
+        "a b.com",
+        "é.com",
+        "a.com.",
+    ])("rejects %j", (n) => expect(isValidHostname(n)).toBe(false));
+
+    it("enforces the 63 character label limit", () => {
+        expect(isValidHostname("a".repeat(63) + ".com")).toBe(true);
+        expect(isValidHostname("a".repeat(64) + ".com")).toBe(false);
+    });
+
+    it("enforces the 253 character name limit", () => {
+        const label = "a".repeat(61);
+        const ok = [label, label, label, label].join("."); // 247
+        expect(isValidHostname(ok)).toBe(true);
+        expect(isValidHostname(ok + ".bbbbbbb")).toBe(false); // 255
+    });
+});
+
+describe("inZoneSubdomain", () => {
+    it("returns '' for the apex, ignoring case and trailing dots", () => {
+        expect(inZoneSubdomain("Example.com.", "example.com")).toBe("");
+    });
+
+    it("returns the relative name, possibly multi-label", () => {
+        expect(inZoneSubdomain("mx.example.com.", "example.com.")).toBe("mx");
+        expect(inZoneSubdomain("a.b.example.com", "example.com.")).toBe("a.b");
+    });
+
+    it("returns null outside the zone", () => {
+        expect(inZoneSubdomain("mx.other.org.", "example.com.")).toBeNull();
+    });
+
+    it("does not match a suffix that is not on a label boundary", () => {
+        expect(inZoneSubdomain("notexample.com.", "example.com.")).toBeNull();
+    });
+
+    it("does not match a parent of the origin", () => {
+        expect(inZoneSubdomain("com.", "example.com.")).toBeNull();
+    });
+
+    it("returns null when the origin is empty or the root", () => {
+        expect(inZoneSubdomain("example.com.", "")).toBeNull();
+        expect(inZoneSubdomain("example.com.", ".")).toBeNull();
+    });
+});
+
+describe("originFqdn", () => {
+    it("returns the domain of the origin", () => {
+        expect(originFqdn(buildContext("@", ORIGIN, null))).toBe("example.com.");
+    });
+
+    it("returns '' when the origin has no domain or is missing", () => {
+        expect(originFqdn(buildContext("@", makeDomain({ domain: undefined as any }), null))).toBe(
+            "",
+        );
+        expect(originFqdn(buildContext("@", null as any, null))).toBe("");
+    });
+});
+
+describe("isCnameOwner and hasAddress", () => {
+    const alias = (rrtype?: number) =>
+        makeService(
+            "svcs.Alias",
+            rrtype === undefined ? {} : { record: { Hdr: { Rrtype: rrtype } } },
+        );
+    const ctxWith = (services: Record<string, any[]>) =>
+        buildContext("@", ORIGIN, makeZone({ services }));
+
+    it("isCnameOwner is true for a CNAME alias", () => {
+        expect(isCnameOwner(ctxWith({ mx: [alias(5)] }), "mx")).toBe(true);
+    });
+
+    it("isCnameOwner is true when a CNAME sits among other aliases", () => {
+        expect(isCnameOwner(ctxWith({ mx: [alias(39), alias(5)] }), "mx")).toBe(true);
+    });
+
+    it("isCnameOwner is false for ALIAS and DNAME", () => {
+        expect(isCnameOwner(ctxWith({ mx: [alias(65401)] }), "mx")).toBe(false);
+        expect(isCnameOwner(ctxWith({ mx: [alias(39)] }), "mx")).toBe(false);
+    });
+
+    it("isCnameOwner is false without record, service, zone or name", () => {
+        expect(isCnameOwner(ctxWith({ mx: [alias()] }), "mx")).toBe(false);
+        expect(isCnameOwner(ctxWith({ mx: [] }), "mx")).toBe(false);
+        expect(isCnameOwner(ctxWith({}), "mx")).toBe(false);
+        expect(isCnameOwner(buildContext("@", ORIGIN, null), "mx")).toBe(false);
+    });
+
+    it("hasAddress is true with an abstract.Server or any alias", () => {
+        expect(hasAddress(ctxWith({ mx: [makeService("abstract.Server")] }), "mx")).toBe(true);
+        expect(hasAddress(ctxWith({ mx: [alias(5)] }), "mx")).toBe(true);
+    });
+
+    it("hasAddress is false with unrelated services, nothing or no zone", () => {
+        expect(hasAddress(ctxWith({ mx: [makeService("svcs.TXT")] }), "mx")).toBe(false);
+        expect(hasAddress(ctxWith({}), "mx")).toBe(false);
+        expect(hasAddress(buildContext("@", ORIGIN, null), "mx")).toBe(false);
     });
 });

@@ -108,6 +108,75 @@ export function asArray<T>(raw: unknown): T[] {
     return Array.isArray(raw) ? (raw as T[]) : [raw as T];
 }
 
+/** RRtype of a CNAME, as carried in the Hdr of an alias record. */
+export const TYPE_CNAME = 5;
+
+const HOSTNAME_LABEL_RE = /^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/;
+
+/** Whether a value is a valid 16-bit unsigned integer, as DNS uint16 fields require. */
+export function isUint16(v: unknown): v is number {
+    return typeof v === "number" && Number.isInteger(v) && v >= 0 && v <= 65535;
+}
+
+/** Drops the trailing dots and lowercases, so two spellings of the same FQDN compare equal. */
+export function normalizeFqdn(name: string): string {
+    return name.replace(/\.+$/, "").toLowerCase();
+}
+
+/**
+ * Checks the LDH syntax of a hostname. Expects a normalizeFqdn() result: a
+ * trailing dot would leave an empty last label, which is rejected.
+ */
+export function isValidHostname(name: string): boolean {
+    if (!name || name.length > 253) return false;
+    const labels = name.split(".");
+    return labels.every((l) => HOSTNAME_LABEL_RE.test(l));
+}
+
+/**
+ * Returns the in-zone subdomain (relative to origin) for a target FQDN,
+ * or null when the target is outside the edited zone.
+ */
+export function inZoneSubdomain(target: string, origin: string): string | null {
+    const t = normalizeFqdn(target);
+    const o = normalizeFqdn(origin);
+    if (!o) return null;
+    if (t === o) return "";
+    if (t.endsWith("." + o)) return t.slice(0, -(o.length + 1));
+    return null;
+}
+
+/** The FQDN of the zone being edited. */
+export function originFqdn(ctx: ComplianceContext): string {
+    return (ctx.origin as { domain?: string })?.domain ?? "";
+}
+
+/**
+ * Tells whether a name of the edited zone owns a real CNAME. ALIAS and its kin
+ * do not count, the provider resolves them into addresses. Neither does a
+ * DNAME, which redirects the subtree below its owner, not the owner itself.
+ */
+export function isCnameOwner(ctx: ComplianceContext, subdomain: string): boolean {
+    return ctx
+        .findServices(subdomain, "svcs.Alias")
+        .some(
+            (service) =>
+                (service.Service as Record<string, any> | undefined)?.record?.Hdr?.Rrtype ===
+                TYPE_CNAME,
+        );
+}
+
+/**
+ * Tells whether a name of the edited zone resolves to an address: either an
+ * A/AAAA of its own, or an alias the provider will resolve for us.
+ */
+export function hasAddress(ctx: ComplianceContext, subdomain: string): boolean {
+    return (
+        ctx.findServices(subdomain, "abstract.Server").length > 0 ||
+        ctx.findServices(subdomain, "svcs.Alias").length > 0
+    );
+}
+
 export function buildContext(dn: string, origin: Domain, zone: Zone | null): ComplianceContext {
     return {
         dn,
