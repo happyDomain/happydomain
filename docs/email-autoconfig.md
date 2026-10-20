@@ -36,7 +36,7 @@ auto-configuration XML — that's the target of the `autoconfig.` and
 | Public host for hosted services      | `--service-hosting-host` / `HAPPYDOMAIN_SERVICE_HOSTING_HOST` | derived from `--externalurl` |
 
 `--service-hosting-host` replaces `--mail-autoconfig-host`, which is still
-honoured as a deprecated alias.
+honoured as a deprecated alias. It is shared with [MTA-STS](mta-sts.md).
 
 If neither is set, happyDomain uses the host part of `--externalurl`. The same
 hostname must be reachable over HTTPS and able to get a valid certificate for
@@ -60,7 +60,7 @@ not the proxy (see [reverse-proxy.md](reverse-proxy.md)).
 The Caddy hook is shared by every hosted service. For this one, it authorises
 certificates for `autoconfig.<X>` / `autodiscover.<X>` where `X` is a domain
 registered in happyDomain *and* has the Email Auto-configuration service
-configured. It also covers `mta-sts.<X>` for MTA-STS.
+configured. It also covers `mta-sts.<X>` for [MTA-STS](mta-sts.md).
 
 ## End-user flow
 
