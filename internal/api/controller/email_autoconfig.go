@@ -46,8 +46,10 @@ func NewEmailAutoconfigController(uc happydns.EmailAutoconfigUsecase) *EmailAuto
 	return &EmailAutoconfigController{uc: uc}
 }
 
-// resolveDomain extracts the domain to look up. Priority: emailaddress query
-// param → Host header (with the autoconfig./autodiscover. prefix stripped).
+// resolveDomain extracts the domain to look up. Priority: the first non-empty
+// email query param among emailParamNames (its domain part) → the Host header
+// with its port stripped. Callers pass no param names when only the Host
+// header is meaningful.
 func resolveDomain(c *gin.Context, emailParamNames ...string) string {
 	for _, name := range emailParamNames {
 		if v := c.Query(name); v != "" {
@@ -63,6 +65,29 @@ func resolveDomain(c *gin.Context, emailParamNames ...string) string {
 	return host
 }
 
+// respondMissingDomain aborts a request from which no domain can be resolved.
+// The response is marked no-store: a cache cannot key an entry on what the
+// request lacks.
+func respondMissingDomain(c *gin.Context) {
+	c.Header("Cache-Control", "no-store")
+	c.AbortWithStatusJSON(http.StatusBadRequest, happydns.ErrorResponse{Message: "missing domain"})
+}
+
+// respondUsecaseError turns a usecase error into a 404 with notFoundMessage
+// for happydns.ErrNotFound, and a 500 otherwise. The response is marked
+// no-store so that no cache keeps a negative answer after the data changes,
+// e.g. an admin configuring the service right after a client was told there
+// was none.
+func respondUsecaseError(c *gin.Context, err error, notFoundMessage string) {
+	c.Header("Cache-Control", "no-store")
+
+	if errors.Is(err, happydns.ErrNotFound) {
+		c.AbortWithStatusJSON(http.StatusNotFound, happydns.ErrorResponse{Message: notFoundMessage})
+		return
+	}
+	c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: err.Error()})
+}
+
 // MozillaAutoconfig serves the Thunderbird config-v1.1.xml format.
 //
 //	@Summary	Mail-client auto-configuration (Mozilla Autoconfig)
@@ -76,17 +101,13 @@ func resolveDomain(c *gin.Context, emailParamNames ...string) string {
 func (ec *EmailAutoconfigController) MozillaAutoconfig(c *gin.Context) {
 	domain := resolveDomain(c, "emailaddress")
 	if domain == "" {
-		c.AbortWithStatusJSON(http.StatusBadRequest, happydns.ErrorResponse{Message: "missing domain"})
+		respondMissingDomain(c)
 		return
 	}
 
 	body, err := ec.uc.MozillaConfig(dns.Fqdn(domain), c.Query("emailaddress"))
 	if err != nil {
-		if errors.Is(err, happydns.ErrNotFound) {
-			c.AbortWithStatusJSON(http.StatusNotFound, happydns.ErrorResponse{Message: "no auto-configuration found for this domain"})
-			return
-		}
-		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: err.Error()})
+		respondUsecaseError(c, err, "no auto-configuration found for this domain")
 		return
 	}
 
@@ -134,17 +155,13 @@ func (ec *EmailAutoconfigController) MSAutodiscover(c *gin.Context) {
 		domain = emailAddress[at+1:]
 	}
 	if domain == "" {
-		c.AbortWithStatusJSON(http.StatusBadRequest, happydns.ErrorResponse{Message: "missing domain"})
+		respondMissingDomain(c)
 		return
 	}
 
 	body, err := ec.uc.AutodiscoverConfig(dns.Fqdn(domain), emailAddress)
 	if err != nil {
-		if errors.Is(err, happydns.ErrNotFound) {
-			c.AbortWithStatusJSON(http.StatusNotFound, happydns.ErrorResponse{Message: "no auto-configuration found for this domain"})
-			return
-		}
-		c.AbortWithStatusJSON(http.StatusInternalServerError, happydns.ErrorResponse{Message: err.Error()})
+		respondUsecaseError(c, err, "no auto-configuration found for this domain")
 		return
 	}
 
