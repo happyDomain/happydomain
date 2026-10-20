@@ -168,3 +168,37 @@ func (rc *ResolverController) CheckDMARCReportAuth(c *gin.Context) {
 
 	c.JSON(http.StatusOK, resp)
 }
+
+// FetchSSHHostKeys collects the host keys an SSH server offers, so the SSHFP
+// records of a host can be filled in without copying fingerprints by hand.
+//
+//	@Summary	Collect the host keys of an SSH server.
+//	@Schemes
+//	@Description	Open an SSH connection to the given host, once per host key algorithm, and return the fingerprints of the keys the server presents, in the encoding SSHFP records use. Nothing is ever authenticated: the exchange is aborted before any credential is offered.
+//	@Tags			resolver
+//	@Accept			json
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Param			body	body		happydns.SSHHostKeysRequest	true	"SSH host to reach"
+//	@Success		200		{object}	happydns.SSHHostKeysResponse
+//	@Failure		400		{object}	happydns.ErrorResponse	"Invalid input"
+//	@Failure		401		{object}	happydns.ErrorResponse	"Authentication failure"
+//	@Failure		429		{object}	happydns.ErrorResponse	"Too many requests"
+//	@Failure		500		{object}	happydns.ErrorResponse
+//	@Router			/resolver/ssh-hostkeys [post]
+func (rc *ResolverController) FetchSSHHostKeys(c *gin.Context) {
+	var req happydns.SSHHostKeysRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("%s sends invalid SSHHostKeysRequest JSON: %s", c.ClientIP(), err.Error())
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errmsg": fmt.Sprintf("Something is wrong in received data: %s", err.Error())})
+		return
+	}
+
+	resp, err := rc.resolverService.FetchSSHHostKeys(req)
+	if err != nil {
+		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
