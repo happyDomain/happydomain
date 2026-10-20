@@ -22,39 +22,19 @@
 package route
 
 import (
-	"net/http"
-	"time"
-
 	"github.com/gin-gonic/gin"
 
-	ratelimit "github.com/JGLTechnologies/gin-rate-limit"
-
 	"git.happydns.org/happyDomain/internal/api/controller"
-	"git.happydns.org/happyDomain/internal/api/middleware"
 	happydns "git.happydns.org/happyDomain/model"
 )
 
 // DeclareEmailAutoconfigRoutes wires the public HTTP endpoints for mail-client
-// auto-configuration onto the provided base and API route groups. baseRoutes
-// receives the well-known XML paths dictated by the standards (Mozilla and
-// Microsoft); apiRoutes receives the Caddy validation hook.
-func DeclareEmailAutoconfigRoutes(baseRoutes, apiRoutes *gin.RouterGroup, uc happydns.EmailAutoconfigUsecase) {
+// auto-configuration: the well-known XML paths dictated by the standards
+// (Mozilla and Microsoft).
+func DeclareEmailAutoconfigRoutes(baseRoutes *gin.RouterGroup, rl gin.HandlerFunc, uc happydns.EmailAutoconfigUsecase) {
 	if uc == nil {
 		return
 	}
-
-	store := ratelimit.InMemoryStore(&ratelimit.InMemoryOptions{
-		Rate:  time.Minute,
-		Limit: 30,
-	})
-	rl := ratelimit.RateLimiter(store, &ratelimit.Options{
-		ErrorHandler: func(c *gin.Context, info ratelimit.Info) {
-			c.AbortWithStatusJSON(http.StatusTooManyRequests, happydns.ErrorResponse{
-				Message: "Too many requests. Please try again later.",
-			})
-		},
-		KeyFunc: middleware.ClientKey,
-	})
 
 	ctrl := controller.NewEmailAutoconfigController(uc)
 
@@ -71,7 +51,4 @@ func DeclareEmailAutoconfigRoutes(baseRoutes, apiRoutes *gin.RouterGroup, uc hap
 		baseRoutes.GET(path, rl, ctrl.MSAutodiscover)
 		baseRoutes.POST(path, rl, ctrl.MSAutodiscover)
 	}
-
-	// Caddy on-demand TLS ask hook.
-	apiRoutes.GET("/caddy/ask", rl, ctrl.CaddyAsk)
 }
