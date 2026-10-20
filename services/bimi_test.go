@@ -149,3 +149,22 @@ func TestBIMIFieldsAnalyzeRejectsBadInput(t *testing.T) {
 		}
 	}
 }
+
+func TestSplitBIMIName(t *testing.T) {
+	for _, tc := range []struct {
+		name, selector, domain string
+		ok                     bool
+	}{
+		{"default._bimi.example.com.", "default", "example.com.", true},
+		{"brand._bimi.sub.example.com.", "brand", "sub.example.com.", true},
+		{"default._bimi", "", "", false},
+		{"._bimi.example.com.", "", "", false},
+		{"_bimi.example.com.", "", "", false},
+		{"default._dmarc.example.com.", "", "", false},
+	} {
+		selector, domain, ok := svcs.SplitBIMIName(tc.name)
+		if selector != tc.selector || domain != tc.domain || ok != tc.ok {
+			t.Errorf("SplitBIMIName(%q) = (%q, %q, %v); want (%q, %q, %v)", tc.name, selector, domain, ok, tc.selector, tc.domain, tc.ok)
+		}
+	}
+}

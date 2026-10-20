@@ -103,17 +103,27 @@ func (t *BIMIFields) String() string {
 	return strings.Join(fields, ";")
 }
 
+// SplitBIMIName splits the owner name of a BIMI record,
+// <selector>._bimi.<domain>, into its selector and the domain it applies to.
+// ok is false when the name is not a BIMI record name.
+func SplitBIMIName(name string) (selector, domain string, ok bool) {
+	idx := strings.Index(name, "._bimi.")
+	if idx <= 0 {
+		return "", "", false
+	}
+	return name[:idx], name[idx+len("._bimi."):], true
+}
+
 func bimi_analyze(a *svc.Analyzer) (err error) {
 	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeTXT}) {
-		idx := strings.Index(record.Header().Name, "._bimi.")
-		if idx <= 0 {
+		_, domain, ok := SplitBIMIName(record.Header().Name)
+		if !ok {
 			continue
 		}
 		txt, ok := record.(*happydns.TXT)
 		if !ok || !strings.HasPrefix(txt.Txt, "v=BIMI") {
 			continue
 		}
-		domain := record.Header().Name[idx+len("._bimi."):]
 
 		err = a.UseRR(record, domain, &BIMI{
 			Record: helpers.RRRelativeSubdomain(record, a.GetOrigin(), domain).(*happydns.TXT),
@@ -133,7 +143,7 @@ func init() {
 		},
 		bimi_analyze,
 		happydns.ServiceInfos{
-			Name:        "BIMI",
+			Name: "BIMI",
 			Categories: []string{
 				"email",
 			},
