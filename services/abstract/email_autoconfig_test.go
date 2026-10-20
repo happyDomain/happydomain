@@ -27,6 +27,9 @@ import (
 
 	"github.com/miekg/dns"
 
+	svc "git.happydns.org/happyDomain/internal/serviceanalyzer"
+	happydns "git.happydns.org/happyDomain/model"
+	_ "git.happydns.org/happyDomain/services"
 	"git.happydns.org/happyDomain/services/abstract"
 )
 
@@ -134,5 +137,77 @@ func TestEmailAutoConfig_GenComment(t *testing.T) {
 		if !strings.Contains(got, want) {
 			t.Errorf("GenComment missing %q in %q", want, got)
 		}
+	}
+}
+
+// analyzeAutoConfig analyzes a zone publishing the full autoconfig set with
+// the given CNAME targets, and returns the EmailAutoConfig it recognized, if any.
+func analyzeAutoConfig(t *testing.T, autoconfigTarget, autodiscoverTarget string) *abstract.EmailAutoConfig {
+	t.Helper()
+
+	var records []happydns.Record
+	for _, text := range []string{
+		"autoconfig.example.com. 3600 IN CNAME " + autoconfigTarget,
+		"autodiscover.example.com. 3600 IN CNAME " + autodiscoverTarget,
+		"_imaps._tcp.example.com. 3600 IN SRV 0 1 993 imap.example.com.",
+		"_submission._tcp.example.com. 3600 IN SRV 0 1 587 smtp.example.com.",
+	} {
+		rr, err := dns.NewRR(text)
+		if err != nil {
+			t.Fatalf("dns.NewRR(%q): %v", text, err)
+		}
+		records = append(records, rr)
+	}
+
+	services, _, err := svc.AnalyzeZone("example.com.", records)
+	if err != nil {
+		t.Fatalf("AnalyzeZone: %v", err)
+	}
+
+	for _, s := range services[""] {
+		if ec, ok := s.Service.(*abstract.EmailAutoConfig); ok {
+			return ec
+		}
+	}
+	return nil
+}
+
+func TestEmailAutoConfig_Analyze(t *testing.T) {
+	abstract.SetServiceHostingHost("happydomain.example.com")
+	t.Cleanup(func() { abstract.SetServiceHostingHost("") })
+
+	ec := analyzeAutoConfig(t, "happydomain.example.com.", "happydomain.example.com.")
+	if ec == nil {
+		t.Fatal("CNAMEs pointing at this instance were not claimed")
+	}
+	if ec.IncomingSRV == nil || ec.OutgoingSRV == nil {
+		t.Errorf("SRV records were not consumed: incoming=%v outgoing=%v", ec.IncomingSRV, ec.OutgoingSRV)
+	}
+}
+
+// A third-party provider using the same naming convention must not be
+// mistaken for happyDomain-hosted auto-configuration.
+func TestEmailAutoConfig_Analyze_ForeignTarget(t *testing.T) {
+	abstract.SetServiceHostingHost("happydomain.example.com")
+	t.Cleanup(func() { abstract.SetServiceHostingHost("") })
+
+	for name, targets := range map[string][2]string{
+		"both foreign":         {"mail.example.net.", "mail.example.net."},
+		"foreign autoconfig":   {"mail.example.net.", "happydomain.example.com."},
+		"foreign autodiscover": {"happydomain.example.com.", "mail.example.net."},
+	} {
+		if ec := analyzeAutoConfig(t, targets[0], targets[1]); ec != nil {
+			t.Errorf("%s: CNAMEs not pointing at this instance were claimed", name)
+		}
+	}
+}
+
+// Without a configured host nothing can be confirmed as ours, so no CNAME is
+// claimed.
+func TestEmailAutoConfig_Analyze_NoHostConfigured(t *testing.T) {
+	abstract.SetServiceHostingHost("")
+
+	if ec := analyzeAutoConfig(t, "happydomain.example.com.", "happydomain.example.com."); ec != nil {
+		t.Error("CNAMEs were claimed although no hosting host is configured")
 	}
 }
