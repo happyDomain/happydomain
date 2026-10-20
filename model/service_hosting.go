@@ -33,3 +33,17 @@ type HostedDomainValidator interface {
 	// certificate for an arbitrary domain.
 	IsManaged(fqdn string) (bool, error)
 }
+
+// MTASTSUsecase serves the public MTA-STS policy file (RFC 8461) for the
+// domains that asked happyDomain to host it.
+//
+// All methods take fully-qualified domain names. The usecase looks up the
+// owning Domain in storage, finds the latest Zone, and reads the MTASTS
+// service body to render the policy.
+type MTASTSUsecase interface {
+	HostedDomainValidator
+
+	// Policy renders the RFC 8461 policy file for the given domain, which may
+	// be given either as the bare domain or as its mta-sts. host.
+	Policy(domainFQDN string) ([]byte, error)
+}
