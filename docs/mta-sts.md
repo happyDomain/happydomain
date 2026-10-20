@@ -44,9 +44,10 @@ endpoints, whose limit they share.
 The policy endpoint derives the domain from the `Host` header: RFC 8461 pins
 the URL down exactly, leaving no room for a query parameter.
 
-The Caddy hook is shared by every hosted service. For this one, it authorises
-certificates for `mta-sts.<X>` where `X` is a domain registered in happyDomain
-*and* has the MTA-STS (hosted policy) service with the policy hosting enabled.
+The Caddy hook is shared by every hosted service, [BIMI](bimi.md) included.
+For this one, it authorises certificates for `mta-sts.<X>` where `X` is a
+domain registered in happyDomain *and* has the MTA-STS (hosted policy) service
+with the policy hosting enabled.
 Nothing else gets a certificate.
 
 ## End-user flow
