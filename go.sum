@@ -446,8 +446,8 @@ github.com/libdns/dreamhost v0.2.0 h1:JbG2krVervdmhhGpC8n8r58mQstH2BopQTfRoeCwKm
 github.com/libdns/dreamhost v0.2.0/go.mod h1:DbQC03lpobGlkL//K/aFiEPep8tOCA6s5NDy/uWDNjs=
 github.com/libdns/godaddy v1.1.0 h1:mxB107yFulEGApacljrCfaR4faR/9d9SyrGmjD2VubU=
 github.com/libdns/godaddy v1.1.0/go.mod h1:ZU6B93OoBN8jTbN97Ud5QdgbNvd6asV0EO8KVrGMWm4=
-github.com/libdns/ionos v1.2.0 h1:FQ2xQTBfsjc7aMArRBBCs9l48Squt76GHXbxDsqOKgw=
-github.com/libdns/ionos v1.2.0/go.mod h1:g/JYno/+VXdujTGPBDMDeCfeLF0PJyJynsCrFu+2EFQ=
+github.com/libdns/ionos v1.3.0 h1:kkBthBg6Pd+fI8WljMKP+Sa/L7ciPr4OGevH9M9jW34=
+github.com/libdns/ionos v1.3.0/go.mod h1:+noOfaNMuaNOtsBNVHmOcRDfNKiTCflj8+TfPJF2gLw=
 github.com/libdns/libdns v1.1.1 h1:wPrHrXILoSHKWJKGd0EiAVmiJbFShguILTg9leS/P/U=
 github.com/libdns/libdns v1.1.1/go.mod h1:4Bj9+5CQiNMVGf87wjX4CY3HQJypUHRuLvlsfsZqLWQ=
 github.com/libdns/spaceship v1.0.0 h1:v+O5e4mNyfns/H73nrM3+bYpIc4y1nuxv3dgBcCtJII=
