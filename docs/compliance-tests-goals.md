@@ -127,3 +127,10 @@ Sync:
 - owner not spelled `_service._protocol`, target of `.` next to a real one, invalid target, priority/weight/port outside the uint16 range, port 0 on a real target, target that is a CNAME (error)
 - duplicate host and port, in-zone target with no A/AAAA (warning)
 - weight of 0 next to non-zero ones at the same priority (info)
+
+### PTR (`svcs.PTR`)
+
+Sync:
+- empty or invalid target, target that is a CNAME (error)
+- reverse name carrying other records, owner labels that cannot be read as an address in reverse (warning)
+- target left relative, PTR published outside of any reverse tree (info)

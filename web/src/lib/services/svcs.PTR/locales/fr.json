@@ -1,0 +1,34 @@
+{
+    "compliance": {
+        "ptr": {
+            "empty-target": {
+                "title": "Le pointeur n'a pas de cible",
+                "detail": "Renseignez le nom d'hôte vers lequel cette adresse doit se résoudre."
+            },
+            "invalid-target": {
+                "title": "Cible « {{target}} » invalide",
+                "detail": "Un PTR doit pointer vers un nom d'hôte valide, au sens de la RFC 1035."
+            },
+            "relative-target": {
+                "title": "La cible « {{target}} » n'a pas de point final",
+                "detail": "La cible d'un PTR est censée être un nom absolu. Sans le point final, certains hébergeurs y ajoutent la zone inverse, ce qui rend la réponse absurde."
+            },
+            "target-is-cname": {
+                "title": "La cible « {{target}} » est un alias",
+                "detail": "Un PTR doit répondre par un nom d'hôte, jamais par un CNAME (RFC 1034 § 3.6.2)."
+            },
+            "not-alone": {
+                "title": "« {{subdomain}} » porte d'autres enregistrements",
+                "detail": "Un nom inverse est censé ne répondre que par des pointeurs. Plusieurs PTR sur une même adresse restent légaux, mais beaucoup de programmes ne regardent que le premier reçu."
+            },
+            "forward-zone": {
+                "title": "« {{subdomain}} » n'est pas un nom inverse",
+                "detail": "Les enregistrements PTR vivent normalement sous in-addr.arpa ou ip6.arpa. En dehors, presque personne ne les consulte."
+            },
+            "bad-reverse-label": {
+                "title": "« {{label}} » n'est pas un libellé valide pour cette zone inverse",
+                "detail": "« {{subdomain}} » se lit comme une adresse à l'envers : des nombres décimaux de 0 à 255 sous in-addr.arpa, des chiffres hexadécimaux isolés sous ip6.arpa."
+            }
+        }
+    }
+}

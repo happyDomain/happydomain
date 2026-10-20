@@ -1,4 +1,36 @@
 {
+    "compliance": {
+        "ptr": {
+            "empty-target": {
+                "title": "The pointer has no target",
+                "detail": "Fill in the host name this address should resolve back to."
+            },
+            "invalid-target": {
+                "title": "Invalid target \"{{target}}\"",
+                "detail": "A PTR must point to a valid host name, as defined by RFC 1035."
+            },
+            "relative-target": {
+                "title": "The target \"{{target}}\" has no trailing dot",
+                "detail": "A PTR target is meant to be an absolute name. Without the final dot, some providers append the reverse zone to it, which turns the answer into nonsense."
+            },
+            "target-is-cname": {
+                "title": "The target \"{{target}}\" is an alias",
+                "detail": "A PTR must answer with a host name, never a CNAME (RFC 1034 sec. 3.6.2)."
+            },
+            "not-alone": {
+                "title": "\"{{subdomain}}\" carries other records",
+                "detail": "A reverse name is expected to answer with pointers and nothing else. Several PTR records at the same address are legal, but many programs only look at the first one they get."
+            },
+            "forward-zone": {
+                "title": "\"{{subdomain}}\" is not a reverse name",
+                "detail": "PTR records normally live under in-addr.arpa or ip6.arpa. Outside of those, almost nothing looks them up."
+            },
+            "bad-reverse-label": {
+                "title": "\"{{label}}\" is not a valid label for this reverse zone",
+                "detail": "\"{{subdomain}}\" reads as an address in reverse: decimal numbers from 0 to 255 under in-addr.arpa, single hexadecimal digits under ip6.arpa."
+            }
+        }
+    },
     "svcinfo": {
         "svcs": {
             "PTR": {
