@@ -1,0 +1,57 @@
+{
+    "compliance": {
+        "bimi": {
+            "hosted-no-host": {
+                "title": "Les fichiers ne sont publiés nulle part",
+                "detail": "L'enregistrement BIMI pointe vers bimi.<domaine>, qui a besoin d'un CNAME vers cette instance de happyDomain pour servir le logo et le certificat."
+            },
+            "hosted-no-logo": {
+                "title": "Aucun logo envoyé",
+                "detail": "happyDomain n'a aucun logo à servir pour cet enregistrement. C'est le cas après l'import d'une zone : les fichiers ne peuvent pas être retrouvés depuis le DNS, envoyez-les à nouveau."
+            },
+            "hosted-logo-no-title": {
+                "title": "Le logo n'a pas de <title>",
+                "detail": "Le profil SVG Tiny Portable/Secure exigé par BIMI attend un élément <title> nommant la marque."
+            }
+        }
+    },
+    "services": {
+        "bimi-hosted": {
+            "title": "Brand Indicators for Message Identification",
+            "intro": "Affiche le logo de votre marque à côté de vos e-mails dans les clients de messagerie qui le prennent en charge. happyDomain héberge le logo et son certificat, et génère l'enregistrement BIMI qui pointe vers eux.",
+            "requirements": "La plupart des fournisseurs de messagerie (Gmail, Yahoo, Apple Mail) n'affichent le logo qu'avec un Verified Mark Certificate ou un Common Mark Certificate, et pour le courrier passant une politique DMARC en quarantine ou reject.",
+            "selector": "Sélecteur",
+            "selector-desc": "Nom de l'enregistrement BIMI. Utilisez « default » sauf si vous publiez plusieurs logos.",
+            "logo": "Logo",
+            "logo-desc": "Fichier SVG au profil SVG Tiny Portable/Secure (baseProfile=\"tiny-ps\"), carré, de 32 Kio au plus.",
+            "logo-upload": "Envoyer un logo (SVG)",
+            "logo-none": "Aucun logo envoyé pour l'instant.",
+            "certificate": "Certificat de marque",
+            "certificate-desc": "Verified Mark Certificate (VMC) ou Common Mark Certificate (CMC) émis pour votre logo, au format PEM, avec sa chaîne.",
+            "certificate-upload": "Envoyer un certificat (PEM)",
+            "certificate-none": "Aucun certificat : la plupart des fournisseurs de messagerie n'afficheront pas le logo.",
+            "certificate-loaded": "{{count}} certificat(s) dans la chaîne.",
+            "certificate-remove": "Retirer le certificat",
+            "hosting": "Hébergement",
+            "hosting-desc": "happyDomain sert les fichiers sur bimi.{{domain}}, grâce à un CNAME pointant vers cette instance.",
+            "preview": "Enregistrement généré",
+            "preview-unavailable": "L'enregistrement est généré à l'enregistrement de la zone.",
+            "logo-too-large": "Le logo dépasse 32 Kio.",
+            "logo-not-svg": "Ce fichier n'est pas une image SVG.",
+            "logo-not-tiny-ps": "Le logo doit utiliser le profil SVG Tiny Portable/Secure (baseProfile=\"tiny-ps\").",
+            "logo-active-content": "Le logo ne doit contenir ni script ni gestionnaire d'événement.",
+            "logo-external-reference": "Le logo ne doit pas faire référence à des ressources externes.",
+            "certificate-too-large": "Le fichier du certificat dépasse 64 Kio.",
+            "certificate-not-pem": "Ce fichier n'est pas un certificat PEM.",
+            "certificate-not-only-certificates": "Le fichier ne doit contenir que des certificats, jamais de clé privée."
+        }
+    },
+    "svcinfo": {
+        "abstract": {
+            "BIMI": {
+                "name": "BIMI (logo hébergé)",
+                "description": "Affichez le logo de votre marque à côté de vos e-mails, le logo et son certificat étant servis par happyDomain."
+            }
+        }
+    }
+}

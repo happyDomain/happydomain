@@ -1,0 +1,57 @@
+{
+    "compliance": {
+        "bimi": {
+            "hosted-no-host": {
+                "title": "The files are not published anywhere",
+                "detail": "The BIMI record points to bimi.<domain>, which needs a CNAME toward this happyDomain instance to serve the logo and the certificate."
+            },
+            "hosted-no-logo": {
+                "title": "No logo uploaded",
+                "detail": "happyDomain has no logo to serve for this record. This happens after importing a zone: the files cannot be recovered from DNS, upload them again."
+            },
+            "hosted-logo-no-title": {
+                "title": "The logo has no <title>",
+                "detail": "The SVG Tiny Portable/Secure profile required by BIMI expects a <title> element naming the brand."
+            }
+        }
+    },
+    "services": {
+        "bimi-hosted": {
+            "title": "Brand Indicators for Message Identification",
+            "intro": "Displays your brand logo next to your emails in the mail clients that support it. happyDomain hosts the logo and its certificate, and generates the BIMI record pointing to them.",
+            "requirements": "Most mail providers (Gmail, Yahoo, Apple Mail) only display the logo with a Verified Mark Certificate or a Common Mark Certificate, and for mail passing a DMARC policy at quarantine or reject.",
+            "selector": "Selector",
+            "selector-desc": "Name of the BIMI record. Use \"default\" unless you publish multiple logos.",
+            "logo": "Logo",
+            "logo-desc": "SVG file using the SVG Tiny Portable/Secure profile (baseProfile=\"tiny-ps\"), square, at most 32 KiB.",
+            "logo-upload": "Upload a logo (SVG)",
+            "logo-none": "No logo uploaded yet.",
+            "certificate": "Mark certificate",
+            "certificate-desc": "Verified Mark Certificate (VMC) or Common Mark Certificate (CMC) issued for your logo, in PEM format, with its chain.",
+            "certificate-upload": "Upload a certificate (PEM)",
+            "certificate-none": "No certificate: most mail providers will not display the logo.",
+            "certificate-loaded": "{{count}} certificate(s) in the chain.",
+            "certificate-remove": "Remove the certificate",
+            "hosting": "Hosting",
+            "hosting-desc": "happyDomain serves the files at bimi.{{domain}}, through a CNAME pointing to this instance.",
+            "preview": "Generated record",
+            "preview-unavailable": "The record is generated when the zone is saved.",
+            "logo-too-large": "The logo is over 32 KiB.",
+            "logo-not-svg": "This file is not an SVG image.",
+            "logo-not-tiny-ps": "The logo must use the SVG Tiny Portable/Secure profile (baseProfile=\"tiny-ps\").",
+            "logo-active-content": "The logo must not contain scripts or event handlers.",
+            "logo-external-reference": "The logo must not reference external resources.",
+            "certificate-too-large": "The certificate file is over 64 KiB.",
+            "certificate-not-pem": "This file is not a PEM certificate.",
+            "certificate-not-only-certificates": "The file must only contain certificates, never a private key."
+        }
+    },
+    "svcinfo": {
+        "abstract": {
+            "BIMI": {
+                "name": "BIMI (hosted logo)",
+                "description": "Display your brand logo next to your emails, with the logo and its certificate served by happyDomain."
+            }
+        }
+    }
+}
