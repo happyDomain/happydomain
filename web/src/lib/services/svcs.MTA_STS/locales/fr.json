@@ -106,5 +106,13 @@
                 "detail": "Le motif listé dans {{url}} ne correspond à aucun enregistrement MX. Retirez l'entrée ou ajoutez le MX manquant."
             }
         }
+    },
+    "svcinfo": {
+        "svcs": {
+            "MTA_STS": {
+                "name": "MTA-STS",
+                "description": "MTA Strict Transport Security pour SMTP."
+            }
+        }
     }
 }
