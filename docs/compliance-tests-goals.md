@@ -102,3 +102,14 @@ flattened into addresses, so neither the chain nor an empty target concerns
 them. `svcs.SpecialCNAME` shares those checks, with RFC 8552 underscore labels
 allowed in the target, and keys its coexistence rule on the `_service._proto`
 name it carries rather than on the subdomain it is attached to.
+
+### Delegation (`abstract.Delegation`)
+
+Sync, name servers:
+- no NS at all, empty or invalid target, target that is a CNAME (RFC 2181 sec. 10.3) (error)
+- target inside the delegated subtree with no glue published in the parent zone (error)
+- single name server, duplicate target, in-zone target outside the subtree with no A/AAAA (warning)
+
+Sync, DS records:
+- DS without any NS, unknown digest type, key tag out of the uint16 range, digest whose length or alphabet does not match its digest type (error)
+- SHA-1 digest, algorithm deprecated by RFC 8624, duplicate DS (warning)

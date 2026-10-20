@@ -23,6 +23,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
     asArray,
     buildContext,
+    checkDigest,
     getValidators,
     hasAddress,
     hasValidators,
@@ -520,5 +521,30 @@ describe("isCnameOwner with a SubAlias", () => {
 
     it("is false under an underscore name", () => {
         expect(isCnameOwner(sub("_sip._tcp"), "x")).toBe(false);
+    });
+});
+
+describe("checkDigest", () => {
+    const L = { 1: 40, 2: 64 };
+
+    it("reports an unknown type without lengths", () => {
+        expect(checkDigest("aa", 9, L)).toEqual({ status: "unknown-type" });
+    });
+
+    it("accepts a digest of the right length, whatever its case", () => {
+        expect(checkDigest("A".repeat(40), 1, L)).toEqual({ status: "ok", expected: 40, got: 40 });
+    });
+
+    it("tells a truncated digest from a non hexadecimal one", () => {
+        expect(checkDigest("abcd", 1, L)).toEqual({ status: "bad-length", expected: 40, got: 4 });
+        expect(checkDigest("z".repeat(40), 1, L)).toEqual({
+            status: "not-hex",
+            expected: 40,
+            got: 40,
+        });
+    });
+
+    it("treats an empty digest as not hexadecimal", () => {
+        expect(checkDigest("", 2, L)).toEqual({ status: "not-hex", expected: 64, got: 0 });
     });
 });
