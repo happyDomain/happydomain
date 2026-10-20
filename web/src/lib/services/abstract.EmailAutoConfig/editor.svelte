@@ -209,7 +209,7 @@
 
     // HTTP discovery: toggles add/remove the three records. The targets are
     // the host the backend analyzer recognizes as ours, not the browser's.
-    const discoveryTarget = ensureTrailingDot($appConfig.mail_autoconfig_host ?? "");
+    const discoveryTarget = ensureTrailingDot($appConfig.service_hosting_host ?? "");
     $effect(() => {
         if (publishHTTP === initialPublishHTTP) return;
         if (publishHTTP) {

@@ -47,8 +47,8 @@ func mkCNAME(name, target string) *dns.CNAME {
 }
 
 func TestEmailAutoConfig_GetRecords(t *testing.T) {
-	abstract.SetAutoconfigHost("happydomain.example.com")
-	t.Cleanup(func() { abstract.SetAutoconfigHost("") })
+	abstract.SetServiceHostingHost("happydomain.example.com")
+	t.Cleanup(func() { abstract.SetServiceHostingHost("") })
 
 	svc := &abstract.EmailAutoConfig{
 		IncomingSRV:       mkSRV("_imaps._tcp", 993, "imap.example.com."),
@@ -103,8 +103,8 @@ func TestEmailAutoConfig_GetRecords(t *testing.T) {
 }
 
 func TestEmailAutoConfig_GetRecords_NoDiscovery(t *testing.T) {
-	abstract.SetAutoconfigHost("")
-	t.Cleanup(func() { abstract.SetAutoconfigHost("") })
+	abstract.SetServiceHostingHost("")
+	t.Cleanup(func() { abstract.SetServiceHostingHost("") })
 
 	svc := &abstract.EmailAutoConfig{
 		IncomingSRV: mkSRV("_imap._tcp", 143, "imap.example.com."),

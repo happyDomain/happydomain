@@ -61,18 +61,18 @@ func injectedAppConfig(t *testing.T) map[string]any {
 	return cfg
 }
 
-func TestDeclareRoutes_MailAutoconfigHost(t *testing.T) {
-	t.Cleanup(func() { abstract.SetAutoconfigHost("") })
+func TestDeclareRoutes_ServiceHostingHost(t *testing.T) {
+	t.Cleanup(func() { abstract.SetServiceHostingHost("") })
 
-	abstract.SetAutoconfigHost("happydomain.example.com.")
-	if got := injectedAppConfig(t)["mail_autoconfig_host"]; got != "happydomain.example.com" {
-		t.Errorf("mail_autoconfig_host = %v, want the host without its trailing dot", got)
+	abstract.SetServiceHostingHost("happydomain.example.com.")
+	if got := injectedAppConfig(t)["service_hosting_host"]; got != "happydomain.example.com" {
+		t.Errorf("service_hosting_host = %v, want the host without its trailing dot", got)
 	}
 }
 
-func TestDeclareRoutes_NoMailAutoconfigHost(t *testing.T) {
-	abstract.SetAutoconfigHost("")
-	if got, ok := injectedAppConfig(t)["mail_autoconfig_host"]; ok {
-		t.Errorf("mail_autoconfig_host = %v, want the key absent when no host is configured", got)
+func TestDeclareRoutes_NoServiceHostingHost(t *testing.T) {
+	abstract.SetServiceHostingHost("")
+	if got, ok := injectedAppConfig(t)["service_hosting_host"]; ok {
+		t.Errorf("service_hosting_host = %v, want the key absent when no host is configured", got)
 	}
 }

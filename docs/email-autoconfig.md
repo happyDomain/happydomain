@@ -33,12 +33,15 @@ auto-configuration XML — that's the target of the `autoconfig.` and
 | Setting                              | CLI flag / env                                | Default               |
 | ------------------------------------ | --------------------------------------------- | --------------------- |
 | Public happyDomain URL               | `--externalurl` / `HAPPYDOMAIN_EXTERNAL_URL`  | `http://localhost:8081` |
-| Public host for autoconfig endpoints | `--mail-autoconfig-host` / `HAPPYDOMAIN_MAIL_AUTOCONFIG_HOST` | derived from `--externalurl` |
+| Public host for hosted services      | `--service-hosting-host` / `HAPPYDOMAIN_SERVICE_HOSTING_HOST` | derived from `--externalurl` |
 
-If `--mail-autoconfig-host` is left unset, happyDomain uses the host part of
-`--externalurl`. The same hostname must be reachable over HTTPS and able to
-get a valid certificate for `autoconfig.<user-domain>` and
-`autodiscover.<user-domain>` (see the Caddy section below).
+`--service-hosting-host` replaces `--mail-autoconfig-host`, which is still
+honoured as a deprecated alias.
+
+If neither is set, happyDomain uses the host part of `--externalurl`. The same
+hostname must be reachable over HTTPS and able to get a valid certificate for
+`autoconfig.<user-domain>` and `autodiscover.<user-domain>` (see the Caddy
+section below).
 
 ## Endpoints exposed by happyDomain
 
@@ -123,7 +126,7 @@ services:
     image: happydomain/happydomain:latest
     environment:
       HAPPYDOMAIN_EXTERNAL_URL: https://happydomain.example.com
-      HAPPYDOMAIN_MAIL_AUTOCONFIG_HOST: happydomain.example.com
+      HAPPYDOMAIN_SERVICE_HOSTING_HOST: happydomain.example.com
     expose:
       - 8081
     volumes:

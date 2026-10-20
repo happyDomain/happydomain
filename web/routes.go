@@ -122,8 +122,8 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, captchaVerifi
 
 	// Must match what the analyzer recognizes as this instance, which is not
 	// necessarily the hostname the browser used to reach the UI.
-	if host := abstract.GetAutoconfigHost(); host != "" {
-		appConfig["mail_autoconfig_host"] = strings.TrimSuffix(host, ".")
+	if host := abstract.GetServiceHostingHost(); host != "" {
+		appConfig["service_hosting_host"] = strings.TrimSuffix(host, ".")
 	}
 
 	if cfg.DisableCheckerScheduler {

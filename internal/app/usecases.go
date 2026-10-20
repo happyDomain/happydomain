@@ -48,6 +48,19 @@ import (
 	"git.happydns.org/happyDomain/services/abstract"
 )
 
+// resolveHostingHost returns the FQDN the CNAMEs pointing at this instance
+// should target: ServiceHostingHost, else the deprecated MailAutoconfigHost,
+// else the host of ExternalURL.
+func resolveHostingHost(cfg *happydns.Options) string {
+	if cfg.ServiceHostingHost != "" {
+		return cfg.ServiceHostingHost
+	}
+	if cfg.MailAutoconfigHost != "" {
+		return cfg.MailAutoconfigHost
+	}
+	return cfg.ExternalURL.Hostname()
+}
+
 func (app *App) initUsecases() {
 	sessionService := sessionUC.NewService(app.store)
 	authUserService := authuserUC.NewAuthUserUsecases(
@@ -76,13 +89,7 @@ func (app *App) initUsecases() {
 	)
 	app.usecases.domainLog = domainLogService
 
-	// Email auto-configuration: derive the autoconfig CNAME target from
-	// MailAutoconfigHost (if set) or fall back to ExternalURL.Host.
-	autoconfigHost := app.cfg.MailAutoconfigHost
-	if autoconfigHost == "" {
-		autoconfigHost = app.cfg.ExternalURL.Hostname()
-	}
-	abstract.SetAutoconfigHost(autoconfigHost)
+	abstract.SetServiceHostingHost(resolveHostingHost(app.cfg))
 	app.usecases.emailAutoconfig = emailAutoconfigUC.NewUsecase(app.store, zoneService.GetZoneUC)
 
 	domainService := domainUC.NewService(
