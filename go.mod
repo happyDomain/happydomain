@@ -37,6 +37,7 @@ require (
 	git.happydns.org/checker-tls v0.8.0
 	git.happydns.org/checker-xmpp v0.2.0
 	git.happydns.org/checker-zonemaster v0.1.0
+	git.happydns.org/svg-tiny-ps v1.0.0
 	github.com/DNSControl/dnscontrol/v4 v4.46.0
 	github.com/JGLTechnologies/gin-rate-limit v1.5.9
 	github.com/altcha-org/altcha-lib-go v1.0.0

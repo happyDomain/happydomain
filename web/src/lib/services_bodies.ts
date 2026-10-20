@@ -7,6 +7,13 @@ export interface AbstractACMEChallengeBody {
     txt: dnsTypeTXT;
 }
 
+export interface AbstractBIMIBody {
+    logo?: string;
+    vmc?: string;
+    txt?: dnsTypeTXT;
+    hostCNAME?: dnsTypeCNAME;
+}
+
 export interface AbstractCalDAVBody {
     records: Array<dnsTypeSRV>;
     paths?: Array<dnsTypeTXT>;
@@ -209,6 +216,7 @@ export interface SvcsUnknownSRVBody {
 
 export interface ServiceBodies {
     "abstract.ACMEChallenge": AbstractACMEChallengeBody;
+    "abstract.BIMI": AbstractBIMIBody;
     "abstract.CalDAV": AbstractCalDAVBody;
     "abstract.CardDAV": AbstractCardDAVBody;
     "abstract.Delegation": AbstractDelegationBody;
