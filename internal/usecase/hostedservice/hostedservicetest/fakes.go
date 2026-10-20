@@ -34,11 +34,17 @@ type FakeDomains struct {
 
 	// Err, when set, is returned by every lookup.
 	Err error
+
+	// ErrByName, when it holds fqdn, is returned for that lookup only.
+	ErrByName map[string]error
 }
 
 func (f *FakeDomains) FindDomainsByName(fqdn string) ([]*happydns.Domain, error) {
 	if f.Err != nil {
 		return nil, f.Err
+	}
+	if err, ok := f.ErrByName[fqdn]; ok {
+		return nil, err
 	}
 	if domains, ok := f.ByName[fqdn]; ok {
 		return domains, nil

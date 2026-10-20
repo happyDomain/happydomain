@@ -67,28 +67,36 @@ func StripPrefix(fqdn string, prefixes ...string) (string, bool) {
 	return fqdn, false
 }
 
-// FindService walks every owner of the given domain, loads the latest zone,
-// and returns the first service of type T found in it.
+// FindService returns the first service of type T configured at fqdn itself.
+// fqdn is looked up as a registered domain, then as a subdomain of each of its
+// parents, closest first: the service must never come from another subdomain
+// of the same zone.
 //
 // Returns happydns.ErrNotFound if no domain matches or none has the service.
 func FindService[T happydns.ServiceBody](s Store, fqdn string) (T, error) {
 	var zero T
 
-	domains, err := s.Domains.FindDomainsByName(fqdn)
-	if err != nil {
-		return zero, err
-	}
+	labels := dns.SplitDomainName(strings.ToLower(dns.Fqdn(fqdn)))
+	for i := range labels {
+		parent := dns.Fqdn(strings.Join(labels[i:], "."))
+		subdomain := happydns.Subdomain(strings.Join(labels[:i], "."))
 
-	for _, d := range domains {
-		if len(d.ZoneHistory) == 0 {
+		domains, err := s.Domains.FindDomainsByName(parent)
+		if errors.Is(err, happydns.ErrNotFound) {
 			continue
+		} else if err != nil {
+			return zero, err
 		}
-		zone, err := s.Zones.Get(d.ZoneHistory[0])
-		if err != nil {
-			continue
-		}
-		for _, services := range zone.Services {
-			for _, svc := range services {
+
+		for _, d := range domains {
+			if len(d.ZoneHistory) == 0 {
+				continue
+			}
+			zone, err := s.Zones.Get(d.ZoneHistory[0])
+			if err != nil {
+				continue
+			}
+			for _, svc := range zone.Services[subdomain] {
 				if body, ok := svc.Service.(T); ok {
 					return body, nil
 				}

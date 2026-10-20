@@ -196,3 +196,129 @@ func TestIsManaged(t *testing.T) {
 		}
 	})
 }
+
+// storeWithZones wires one domain per key of zones, each owning a zone that
+// holds the given services at their subdomain.
+func storeWithZones(zones map[string]map[happydns.Subdomain]happydns.ServiceBody) Store {
+	domains := &hostedservicetest.FakeDomains{ByName: map[string][]*happydns.Domain{}}
+	fakeZones := &hostedservicetest.FakeZones{ByID: map[string]*happydns.Zone{}}
+
+	var n byte
+	for name, services := range zones {
+		n++
+		zoneID := happydns.Identifier{0x40 + n}
+		zone := &happydns.Zone{
+			ZoneMeta: happydns.ZoneMeta{Id: zoneID},
+			Services: map[happydns.Subdomain][]*happydns.Service{},
+		}
+		for sub, s := range services {
+			zone.Services[sub] = append(zone.Services[sub], &happydns.Service{Service: s})
+		}
+		domains.ByName[name] = []*happydns.Domain{{DomainName: name, ZoneHistory: []happydns.Identifier{zoneID}}}
+		fakeZones.ByID[zoneID.String()] = zone
+	}
+
+	return NewStore(domains, fakeZones)
+}
+
+// The service must be the one of the requested name: a service configured on
+// a subdomain does not apply to the apex, nor the other way around.
+func TestFindService_Subdomain(t *testing.T) {
+	apex := &abstract.MTASTS{}
+	sub := &abstract.MTASTS{}
+	store := storeWithZones(map[string]map[happydns.Subdomain]happydns.ServiceBody{
+		"example.com.": {"": apex, "sub": sub},
+	})
+
+	for fqdn, want := range map[string]*abstract.MTASTS{
+		"example.com.":       apex,
+		"sub.example.com.":   sub,
+		"SUB.example.com":    sub,
+		"other.example.com.": nil,
+		"a.sub.example.com.": nil,
+		"com.":               nil,
+		".":                  nil,
+		"":                   nil,
+	} {
+		got, err := FindService[*abstract.MTASTS](store, fqdn)
+		if want == nil {
+			if !errors.Is(err, happydns.ErrNotFound) {
+				t.Errorf("FindService(%q) = (%p, %v); want ErrNotFound", fqdn, got, err)
+			}
+			continue
+		}
+		if err != nil || got != want {
+			t.Errorf("FindService(%q) = (%p, %v); want %p", fqdn, got, err, want)
+		}
+	}
+
+	t.Run("deeper subdomain", func(t *testing.T) {
+		deep := &abstract.MTASTS{}
+		store := storeWithZones(map[string]map[happydns.Subdomain]happydns.ServiceBody{
+			"example.com.": {"a.sub": deep},
+		})
+
+		if got, err := FindService[*abstract.MTASTS](store, "a.sub.example.com."); err != nil || got != deep {
+			t.Errorf("FindService = (%p, %v); want %p", got, err, deep)
+		}
+	})
+
+	// The apex must not borrow the service of a subdomain: the Caddy hook would
+	// then authorise a certificate for the apex host.
+	t.Run("only a subdomain carries it", func(t *testing.T) {
+		store := storeWithZones(map[string]map[happydns.Subdomain]happydns.ServiceBody{
+			"example.com.": {"sub": &abstract.MTASTS{}},
+		})
+
+		if _, err := FindService[*abstract.MTASTS](store, "example.com."); !errors.Is(err, happydns.ErrNotFound) {
+			t.Errorf("FindService(apex) error = %v; want ErrNotFound", err)
+		}
+		if managed, err := IsManaged[*abstract.MTASTS](store, "mta-sts.example.com.", "mta-sts."); err != nil || managed {
+			t.Errorf("IsManaged(mta-sts.<apex>) = (%v, %v); want (false, nil)", managed, err)
+		}
+	})
+}
+
+// A subdomain registered as a domain of its own takes precedence over the
+// same name inside its parent's zone, and only a missing service lets the
+// lookup fall back to the parent.
+func TestFindService_ClosestDomain(t *testing.T) {
+	inParent := &abstract.MTASTS{}
+	inChild := &abstract.MTASTS{}
+
+	t.Run("closest wins", func(t *testing.T) {
+		store := storeWithZones(map[string]map[happydns.Subdomain]happydns.ServiceBody{
+			"example.com.":     {"sub": inParent},
+			"sub.example.com.": {"": inChild},
+		})
+
+		if got, err := FindService[*abstract.MTASTS](store, "sub.example.com."); err != nil || got != inChild {
+			t.Errorf("FindService = (%p, %v); want the registered domain's %p", got, err, inChild)
+		}
+	})
+
+	t.Run("falls back to the parent", func(t *testing.T) {
+		store := storeWithZones(map[string]map[happydns.Subdomain]happydns.ServiceBody{
+			"example.com.":     {"sub": inParent},
+			"sub.example.com.": {"": &abstract.EmailAutoConfig{}},
+		})
+
+		if got, err := FindService[*abstract.MTASTS](store, "sub.example.com."); err != nil || got != inParent {
+			t.Errorf("FindService = (%p, %v); want the parent's %p", got, err, inParent)
+		}
+	})
+}
+
+// The lookup only moves on to the parent when the closer name is unknown: any
+// other storage error must surface instead of being masked by a parent match.
+func TestFindService_ParentStorageError(t *testing.T) {
+	boom := errors.New("storage is down")
+	store := storeWithZones(map[string]map[happydns.Subdomain]happydns.ServiceBody{
+		"example.com.": {"sub": &abstract.MTASTS{}},
+	})
+	store.Domains.(*hostedservicetest.FakeDomains).ErrByName = map[string]error{"example.com.": boom}
+
+	if _, err := FindService[*abstract.MTASTS](store, "sub.example.com."); !errors.Is(err, boom) {
+		t.Errorf("FindService error = %v; want the storage error", err)
+	}
+}

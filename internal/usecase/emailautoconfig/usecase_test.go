@@ -96,3 +96,30 @@ func TestIsManaged(t *testing.T) {
 		}
 	}
 }
+
+// The service is only offered at the subdomain it is configured on.
+func TestIsManaged_Subdomain(t *testing.T) {
+	zoneID := happydns.Identifier{0x42}
+	zone := &happydns.Zone{
+		ZoneMeta: happydns.ZoneMeta{Id: zoneID},
+		Services: map[happydns.Subdomain][]*happydns.Service{
+			"sub": {{Service: sampleService()}},
+		},
+	}
+	uc := NewUsecase(
+		&hostedservicetest.FakeDomains{ByName: map[string][]*happydns.Domain{
+			"example.com.": {{DomainName: "example.com.", ZoneHistory: []happydns.Identifier{zoneID}}},
+		}},
+		&hostedservicetest.FakeZones{ByID: map[string]*happydns.Zone{zoneID.String(): zone}},
+	)
+
+	for fqdn, want := range map[string]bool{
+		"autoconfig.sub.example.com.": true,
+		"autoconfig.example.com.":     false,
+	} {
+		got, err := uc.IsManaged(fqdn)
+		if err != nil || got != want {
+			t.Errorf("IsManaged(%q) = (%v, %v); want (%v, nil)", fqdn, got, err, want)
+		}
+	}
+}
