@@ -1,4 +1,48 @@
 {
+    "compliance": {
+        "sshfp": {
+            "no-record": {
+                "title": "Aucune empreinte publiée",
+                "detail": "Ce service ne publie encore rien. Récupérez les clés d'hôte depuis le serveur, ou ajoutez une empreinte à la main."
+            },
+            "unknown-algorithm": {
+                "title": "Algorithme de clé « {{algorithm}} » inconnu",
+                "detail": "Seuls RSA (1), DSA (2), ECDSA (3), Ed25519 (4) et Ed448 (6) sont définis. Un client ignorera tout le reste."
+            },
+            "unknown-type": {
+                "title": "Type d'empreinte « {{type}} » inconnu",
+                "detail": "Seuls SHA-1 (1) et SHA-256 (2) sont définis pour les enregistrements SSHFP."
+            },
+            "invalid-fingerprint": {
+                "title": "L'empreinte n'est pas hexadécimale",
+                "detail": "Une empreinte SSHFP s'écrit en chiffres hexadécimaux, sans deux-points ni espace. Celle qu'affiche ssh-keyscan en base64 doit d'abord être convertie."
+            },
+            "fingerprint-length": {
+                "title": "Une empreinte {{hash}} devrait faire {{expected}} caractères, et non {{got}}",
+                "detail": "L'empreinte ne correspond pas au type déclaré : les clients refuseront la connexion comme si la clé d'hôte avait changé."
+            },
+            "sha1-only": {
+                "title": "La clé {{algorithm}} n'est publiée qu'en SHA-1",
+                "detail": "La RFC 6594 demande une empreinte SHA-256. Publiez-la à côté de celle en SHA-1, que les clients anciens lisent encore."
+            },
+            "dsa-deprecated": {
+                "title": "Les clés DSA sont obsolètes",
+                "detail": "OpenSSH a désactivé DSA par défaut il y a des années, puis l'a retiré. Publiez plutôt une clé Ed25519 ou ECDSA."
+            },
+            "duplicate": {
+                "title": "Empreinte en double",
+                "detail": "Le même algorithme, le même type et la même empreinte apparaissent plusieurs fois. Ne gardez qu'un seul enregistrement."
+            },
+            "owner-is-cname": {
+                "title": "« {{subdomain}} » est un alias",
+                "detail": "Un CNAME ne peut pas cohabiter avec les enregistrements SSHFP de son nom (RFC 1034 § 3.6.2). Publiez les empreintes sur le nom vers lequel pointe l'alias."
+            },
+            "no-address": {
+                "title": "« {{subdomain}} » n'a pas de A/AAAA dans cette zone",
+                "detail": "Un SSHFP n'est consulté que pour un nom auquel un utilisateur se connecte. Ajoutez une entrée Serveur pour ce nom, ou déplacez les empreintes vers le nom de la machine."
+            }
+        }
+    },
     "sshfp": {
         "algorithm": "Algorithme",
         "type": "Type d'empreinte",

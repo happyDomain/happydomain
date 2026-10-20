@@ -1,4 +1,48 @@
 {
+    "compliance": {
+        "sshfp": {
+            "no-record": {
+                "title": "No fingerprint published",
+                "detail": "This service publishes nothing yet. Retrieve the host keys from the server, or add a fingerprint by hand."
+            },
+            "unknown-algorithm": {
+                "title": "Unknown key algorithm \"{{algorithm}}\"",
+                "detail": "Only RSA (1), DSA (2), ECDSA (3), Ed25519 (4) and Ed448 (6) are defined. A client will ignore anything else."
+            },
+            "unknown-type": {
+                "title": "Unknown fingerprint type \"{{type}}\"",
+                "detail": "Only SHA-1 (1) and SHA-256 (2) are defined for SSHFP records."
+            },
+            "invalid-fingerprint": {
+                "title": "The fingerprint is not hexadecimal",
+                "detail": "An SSHFP fingerprint is written as hexadecimal digits, with no colon and no space. The one ssh-keyscan prints in base64 has to be converted first."
+            },
+            "fingerprint-length": {
+                "title": "A {{hash}} fingerprint should be {{expected}} characters long, not {{got}}",
+                "detail": "The fingerprint does not match the declared type, so clients will refuse the connection as if the host key had changed."
+            },
+            "sha1-only": {
+                "title": "The {{algorithm}} key is only published with SHA-1",
+                "detail": "RFC 6594 asks for a SHA-256 fingerprint. Publish it next to the SHA-1 one, which older clients still read."
+            },
+            "dsa-deprecated": {
+                "title": "DSA keys are obsolete",
+                "detail": "OpenSSH disabled DSA by default years ago and has since removed it. Publish an Ed25519 or an ECDSA key instead."
+            },
+            "duplicate": {
+                "title": "Duplicate fingerprint",
+                "detail": "The same algorithm, type and fingerprint appear more than once. Keep only one record."
+            },
+            "owner-is-cname": {
+                "title": "\"{{subdomain}}\" is an alias",
+                "detail": "A CNAME cannot coexist with the SSHFP records of its name (RFC 1034 sec. 3.6.2). Publish the fingerprints on the name the alias points to."
+            },
+            "no-address": {
+                "title": "\"{{subdomain}}\" has no A/AAAA in this zone",
+                "detail": "An SSHFP is only ever looked up for a name a user connects to. Add a Server entry for this name, or move the fingerprints to the name of the machine."
+            }
+        }
+    },
     "sshfp": {
         "algorithm": "Algorithm",
         "type": "Fingerprint type",

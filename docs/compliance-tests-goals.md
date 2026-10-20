@@ -134,3 +134,20 @@ Sync:
 - empty or invalid target, target that is a CNAME (error)
 - reverse name carrying other records, owner labels that cannot be read as an address in reverse (warning)
 - target left relative, PTR published outside of any reverse tree (info)
+
+### SSHFP (`svcs.SSHFPs`)
+
+Sync:
+- unknown key algorithm or fingerprint type, non-hexadecimal fingerprint, fingerprint whose length does not match its type, owner name that is a CNAME (error)
+- key published with SHA-1 only, DSA key, duplicate, owner with no A/AAAA in the zone (warning)
+- service publishing nothing yet (info)
+
+RFC 4255 sec. 5 only trusts these records under DNSSEC, but neither the zone
+nor the domain carries a signing state to key a message off, so nothing is
+raised about it.
+
+The editor also fills the fingerprints in from the server itself, through
+`POST /api/resolver/ssh-hostkeys`. Unlike the other resolver routes, that one
+is authenticated and rate limited: it opens a TCP connection to a host and a
+port the caller picks, which netguard restricts to globally routable addresses
+but which would still make a port prober out of an anonymous endpoint.
