@@ -68,14 +68,29 @@ func StripPrefix(fqdn string, prefixes ...string) (string, bool) {
 }
 
 // FindService returns the first service of type T configured at fqdn itself.
-// fqdn is looked up as a registered domain, then as a subdomain of each of its
-// parents, closest first: the service must never come from another subdomain
-// of the same zone.
+// See FindServices for how fqdn is looked up.
 //
 // Returns happydns.ErrNotFound if no domain matches or none has the service.
 func FindService[T happydns.ServiceBody](s Store, fqdn string) (T, error) {
 	var zero T
 
+	svcs, err := FindServices[T](s, fqdn)
+	if err != nil {
+		return zero, err
+	}
+	return svcs[0], nil
+}
+
+// FindServices returns the services of type T configured at fqdn itself: the
+// one of the zone being edited first, then the one of the last published zone,
+// which the live DNS records still refer to until the first is applied.
+//
+// fqdn is looked up as a registered domain, then as a subdomain of each of its
+// parents, closest first: the service must never come from another subdomain
+// of the same zone.
+//
+// Returns happydns.ErrNotFound if no domain matches or none has the service.
+func FindServices[T happydns.ServiceBody](s Store, fqdn string) ([]T, error) {
 	labels := dns.SplitDomainName(strings.ToLower(dns.Fqdn(fqdn)))
 	for i := range labels {
 		parent := dns.Fqdn(strings.Join(labels[i:], "."))
@@ -85,26 +100,32 @@ func FindService[T happydns.ServiceBody](s Store, fqdn string) (T, error) {
 		if errors.Is(err, happydns.ErrNotFound) {
 			continue
 		} else if err != nil {
-			return zero, err
+			return nil, err
 		}
 
 		for _, d := range domains {
-			if len(d.ZoneHistory) == 0 {
-				continue
-			}
-			zone, err := s.Zones.Get(d.ZoneHistory[0])
-			if err != nil {
-				continue
-			}
-			for _, svc := range zone.Services[subdomain] {
-				if body, ok := svc.Service.(T); ok {
-					return body, nil
+			// ZoneHistory is newest first: [0] is the zone being edited, [1]
+			// the last published one.
+			var found []T
+			for _, zoneID := range d.ZoneHistory[:min(len(d.ZoneHistory), 2)] {
+				zone, err := s.Zones.Get(zoneID)
+				if err != nil {
+					continue
 				}
+				for _, svc := range zone.Services[subdomain] {
+					if body, ok := svc.Service.(T); ok {
+						found = append(found, body)
+						break
+					}
+				}
+			}
+			if len(found) > 0 {
+				return found, nil
 			}
 		}
 	}
 
-	return zero, happydns.ErrNotFound
+	return nil, happydns.ErrNotFound
 }
 
 // hosted is implemented by service bodies that can be configured for the DNS
