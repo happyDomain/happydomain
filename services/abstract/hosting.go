@@ -27,7 +27,7 @@ import (
 )
 
 // The services that publish a CNAME toward happyDomain (email
-// auto-configuration, and others to come) all target the same public hostname.
+// auto-configuration, MTA-STS) all target the same public hostname.
 // It is a property of the deployment rather than of the zone, hence a single
 // package-global set once at startup.
 var (
@@ -36,8 +36,8 @@ var (
 )
 
 // SetServiceHostingHost configures the FQDN that the hosting CNAMEs
-// (autoconfig., autodiscover.) should point to. Called by the app at startup
-// with the resolved host.
+// (autoconfig., autodiscover., mta-sts.) should point to. Called by the app at
+// startup with the resolved host.
 func SetServiceHostingHost(host string) {
 	serviceHostingHostMu.Lock()
 	defer serviceHostingHostMu.Unlock()

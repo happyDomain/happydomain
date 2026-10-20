@@ -77,9 +77,9 @@ type Options struct {
 	ExternalURL url.URL
 
 	// ServiceHostingHost is the public FQDN that the services hosted by
-	// happyDomain should target with their CNAMEs (autoconfig./autodiscover.
-	// for the email auto-configuration). When empty, it falls back to
-	// MailAutoconfigHost, then to ExternalURL.Host.
+	// happyDomain should target with their CNAMEs: autoconfig./autodiscover.
+	// for the email auto-configuration, mta-sts. for the MTA-STS policy file.
+	// When empty, it falls back to MailAutoconfigHost, then to ExternalURL.Host.
 	ServiceHostingHost string
 
 	// MailAutoconfigHost is the former, email-only name of ServiceHostingHost.

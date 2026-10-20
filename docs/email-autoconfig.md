@@ -57,9 +57,10 @@ not the proxy (see [reverse-proxy.md](reverse-proxy.md)).
 | GET/POST| `/autodiscover/autodiscover.xml`    | Same, lowercase variant                       |
 | GET     | `/api/caddy/ask`                    | Caddy on-demand TLS validation hook           |
 
-The Caddy hook only authorises certificates for `autoconfig.<X>` /
-`autodiscover.<X>` where `X` is a domain registered in happyDomain *and* has
-the Email Auto-configuration service configured.
+The Caddy hook is shared by every hosted service. For this one, it authorises
+certificates for `autoconfig.<X>` / `autodiscover.<X>` where `X` is a domain
+registered in happyDomain *and* has the Email Auto-configuration service
+configured. It also covers `mta-sts.<X>` for MTA-STS.
 
 ## End-user flow
 
@@ -99,12 +100,12 @@ happydomain.example.com {
     reverse_proxy happydomain:8081
 }
 
-# Catch-all for autoconfig.<X> and autodiscover.<X>.
-# Caddy obtains a certificate on-demand for each new <X> only when the
-# /api/caddy/ask endpoint authorises it.
+# Catch-all for the hosted services: autoconfig.<X>, autodiscover.<X>, and
+# mta-sts.<X>. Caddy obtains a certificate on-demand for each new <X> only
+# when the /api/caddy/ask endpoint authorises it.
 https:// {
-    @autoconfig header_regexp Host ^(?:autoconfig|autodiscover)\.
-    handle @autoconfig {
+    @hosted header_regexp Host ^(?:autoconfig|autodiscover|mta-sts)\.
+    handle @hosted {
         reverse_proxy happydomain:8081
     }
 
