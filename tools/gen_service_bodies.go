@@ -125,6 +125,10 @@ func toTSType(t reflect.Type, indent int, imports map[string]bool) string {
 		if t.Elem().Kind() == reflect.Uint8 && t.Name() == "IP" {
 			return "string"
 		}
+		// encoding/json marshals a []byte as a base64 string.
+		if t.Kind() == reflect.Slice && t.Elem().Kind() == reflect.Uint8 {
+			return "string"
+		}
 		return "Array<" + toTSType(t.Elem(), indent, imports) + ">"
 	case reflect.Map:
 		return "Record<string, " + toTSType(t.Elem(), indent, imports) + ">"
