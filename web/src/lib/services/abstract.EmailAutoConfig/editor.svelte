@@ -31,6 +31,7 @@
     import type { dnsTypeSRV, dnsTypeCNAME } from "$lib/dns_rr";
     import BasicInput from "$lib/components/inputs/basic.svelte";
     import { appConfig } from "$lib/stores/config";
+    import { ensureTrailingDot, isStubRecord } from "$lib/services/records";
     import { t } from "$lib/translations";
 
     interface Props {
@@ -54,20 +55,12 @@
     function stripDot(s: string | undefined | null): string {
         return (s ?? "").replace(/\.$/, "");
     }
-    function ensureTrailingDot(host: string): string {
-        if (!host) return "";
-        return host.endsWith(".") ? host : host + ".";
-    }
 
     // ── Initial form state, derived from raw records ─────────────────────
 
-    // The backend service-spec usecase auto-allocates pointer-to-DNS fields
-    // with empty stub records (Hdr.Name == "") when serving a freshly-created
-    // service. Drop those before reading anything else, otherwise the
-    // unedited form would round-trip a phantom SRV/CNAME back to the zone.
-    function isStubRecord(r: { Hdr?: { Name?: string } } | null | undefined): boolean {
-        return r != null && (!r.Hdr || !r.Hdr.Name);
-    }
+    // Drop the stub records the backend allocates before reading anything else,
+    // otherwise the unedited form would round-trip a phantom SRV/CNAME back to
+    // the zone.
     if (isStubRecord(value.incomingSRV)) value.incomingSRV = undefined;
     if (isStubRecord(value.outgoingSRV)) value.outgoingSRV = undefined;
     if (isStubRecord(value.autoconfigCNAME)) value.autoconfigCNAME = undefined;
