@@ -29,9 +29,11 @@ import {
     inZoneSubdomain,
     isCnameOwner,
     isUint16,
+    isValidDnsName,
     isValidHostname,
     normalizeFqdn,
     originFqdn,
+    recordFqdn,
     registerValidators,
     runAsyncValidators,
     runSyncValidators,
@@ -461,5 +463,62 @@ describe("isCnameOwner and hasAddress", () => {
         expect(hasAddress(ctxWith({ mx: [makeService("svcs.TXT")] }), "mx")).toBe(false);
         expect(hasAddress(ctxWith({}), "mx")).toBe(false);
         expect(hasAddress(buildContext("@", ORIGIN, null), "mx")).toBe(false);
+    });
+});
+
+describe("isValidDnsName", () => {
+    it("accepts underscore labels", () => {
+        expect(isValidDnsName("_sip._tcp.example.com")).toBe(true);
+        expect(isValidDnsName("_dmarc.example.com")).toBe(true);
+    });
+
+    it("still rejects bad labels", () => {
+        expect(isValidDnsName("")).toBe(false);
+        expect(isValidDnsName("not a name")).toBe(false);
+        expect(isValidDnsName("-bad.example.com")).toBe(false);
+        expect(isValidDnsName("a".repeat(64) + ".example.com")).toBe(false);
+        expect(isValidDnsName("a.".repeat(130) + "com")).toBe(false);
+    });
+
+    it("strips only one leading underscore", () => {
+        expect(isValidDnsName("__x.example.com")).toBe(false);
+    });
+});
+
+describe("recordFqdn", () => {
+    const ctx = (dn: string) => buildContext(dn, ORIGIN, null);
+
+    it("falls back on the service subdomain when the header name is empty", () => {
+        expect(recordFqdn("", ctx("www"))).toBe("www.example.com");
+        expect(recordFqdn(undefined, ctx("www"))).toBe("www.example.com");
+    });
+
+    it("is the apex for an empty or @ name on an empty subdomain", () => {
+        expect(recordFqdn("", ctx(""))).toBe("example.com");
+        expect(recordFqdn("@", ctx(""))).toBe("example.com");
+    });
+
+    it("joins the header name and the subdomain", () => {
+        expect(recordFqdn("_sip._tcp", ctx("sub"))).toBe("_sip._tcp.sub.example.com");
+        expect(recordFqdn("_sip._tcp", ctx(""))).toBe("_sip._tcp.example.com");
+    });
+});
+
+describe("isCnameOwner with a SubAlias", () => {
+    const sub = (Name: string) =>
+        buildContext(
+            "",
+            ORIGIN,
+            makeZone({
+                services: { x: [makeService("svcs.SpecialCNAME", { cname: { Hdr: { Name } } })] },
+            }),
+        );
+
+    it("is true for an empty header name", () => {
+        expect(isCnameOwner(sub(""), "x")).toBe(true);
+    });
+
+    it("is false under an underscore name", () => {
+        expect(isCnameOwner(sub("_sip._tcp"), "x")).toBe(false);
     });
 });

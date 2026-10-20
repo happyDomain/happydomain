@@ -88,3 +88,17 @@ Sync:
 - wrong owner name, missing `v=FORSALE1;`, content that is not a tag-value pair, several pairs in one record, duplicated pair, empty or over-long value, invalid price, invalid URI (error)
 - unknown tag, unusual URI scheme, TTL above an hour, `_for-sale` records disagreeing on their TTL (warning)
 - the domain is announced for sale without any detail (info)
+
+### Aliases (`svcs.Alias`, `svcs.SpecialCNAME`)
+
+Sync:
+- CNAME at the apex, CNAME sharing its name with another record, DNAME conflicting with a CNAME at the same name (error)
+- empty target, syntactically invalid target, record aliasing its own name (error)
+- in-zone target that is itself an alias, in-zone target publishing nothing (warning)
+
+The target checks apply to every kind of alias, but only a CNAME and a DNAME
+are walked: the provider-resolved kinds (ALIAS, ANAME, R53_ALIAS, ...) are
+flattened into addresses, so neither the chain nor an empty target concerns
+them. `svcs.SpecialCNAME` shares those checks, with RFC 8552 underscore labels
+allowed in the target, and keys its coexistence rule on the `_service._proto`
+name it carries rather than on the subdomain it is attached to.

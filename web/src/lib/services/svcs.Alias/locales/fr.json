@@ -8,6 +8,34 @@
             "dname-not-alone": {
                 "title": "Un DNAME entre en conflit avec les autres enregistrements de « {{subdomain}} »",
                 "detail": "Un DNAME redirige tout un sous-arbre, il ne peut pas cohabiter avec un CNAME portant le même nom (RFC 6672 § 2.4)."
+            },
+            "special-cname-not-alone": {
+                "title": "Un CNAME doit être seul sur « {{subdomain}} »",
+                "detail": "Un autre enregistrement utilise déjà ce nom de service. La RFC 1034 § 3.6.2 interdit tout autre enregistrement à côté d'un CNAME."
+            },
+            "cname-at-apex": {
+                "title": "Un CNAME ne peut pas être placé à la racine de « {{domain}} »",
+                "detail": "La racine porte toujours le SOA et les NS de la zone : un CNAME ne peut donc jamais y être seul. Utilisez plutôt un ALIAS si votre hébergeur le gère."
+            },
+            "empty-target": {
+                "title": "L'alias n'a pas de cible",
+                "detail": "Renseignez le nom de domaine vers lequel cet alias doit pointer."
+            },
+            "invalid-target": {
+                "title": "Cible « {{target}} » invalide",
+                "detail": "La cible d'un alias doit être un nom d'hôte valide, au sens de la RFC 1035."
+            },
+            "cname-loop": {
+                "title": "L'alias pointe vers lui-même (« {{target}} »)",
+                "detail": "Un enregistrement qui s'alias sur son propre nom ne se résout jamais : choisissez une autre cible."
+            },
+            "cname-chain": {
+                "title": "La cible « {{target}} » est elle-même un alias",
+                "detail": "Enchaîner les alias ralentit chaque résolution, et certains résolveurs refusent de suivre la chaîne. Pointez directement vers le nom final."
+            },
+            "dangling-target": {
+                "title": "La cible « {{target}} » ne porte aucun enregistrement dans cette zone",
+                "detail": "L'alias pointe à l'intérieur de cette zone, vers un nom qui ne publie rien. Vérifiez l'orthographe, ou ajoutez les enregistrements que ce nom devrait porter."
             }
         }
     }

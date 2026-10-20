@@ -134,6 +134,16 @@ export function isValidHostname(name: string): boolean {
 }
 
 /**
+ * Same as isValidHostname, but tolerates the underscore-prefixed labels the
+ * attribute leaves of RFC 8552 are made of (_sip._tcp, _dmarc, _domainkey...).
+ * They are perfectly valid domain names, they are just not host names.
+ */
+export function isValidDnsName(name: string): boolean {
+    if (!name || name.length > 253) return false;
+    return name.split(".").every((l) => HOSTNAME_LABEL_RE.test(l.replace(/^_/, "")));
+}
+
+/**
  * Returns the in-zone subdomain (relative to origin) for a target FQDN,
  * or null when the target is outside the edited zone.
  */
@@ -151,19 +161,41 @@ export function originFqdn(ctx: ComplianceContext): string {
     return (ctx.origin as { domain?: string })?.domain ?? "";
 }
 
+function subdomainFqdn(subdomain: string, origin: string): string {
+    const o = normalizeFqdn(origin);
+    return subdomain ? normalizeFqdn(subdomain) + "." + o : o;
+}
+
+/**
+ * Builds the FQDN a record is published at, from the owner name it carries.
+ * Records travel relative to the subdomain holding their service, so an empty
+ * Hdr.Name means the service subdomain itself.
+ */
+export function recordFqdn(hdrName: string | undefined, ctx: ComplianceContext): string {
+    // "@" is the legacy spelling of the apex.
+    const labels = [hdrName ?? "", ctx.dn].filter((l) => l !== "" && l !== "@");
+    return subdomainFqdn(labels.join("."), originFqdn(ctx));
+}
+
 /**
  * Tells whether a name of the edited zone owns a real CNAME. ALIAS and its kin
  * do not count, the provider resolves them into addresses. Neither does a
  * DNAME, which redirects the subtree below its owner, not the owner itself.
  */
 export function isCnameOwner(ctx: ComplianceContext, subdomain: string): boolean {
-    return ctx
-        .findServices(subdomain, "svcs.Alias")
-        .some(
-            (service) =>
-                (service.Service as Record<string, any> | undefined)?.record?.Hdr?.Rrtype ===
-                TYPE_CNAME,
-        );
+    const cname = (service: { Service?: unknown }) =>
+        (service.Service as Record<string, any> | undefined)?.record?.Hdr?.Rrtype === TYPE_CNAME;
+
+    // A SubAlias is owned by an underscore name carried in its own header, not
+    // by the subdomain it is attached to: only an empty header name means it
+    // is published at the subdomain itself.
+    const ownedBySubdomain = (service: { Service?: unknown }) =>
+        ((service.Service as Record<string, any> | undefined)?.cname?.Hdr?.Name ?? "") === "";
+
+    return (
+        ctx.findServices(subdomain, "svcs.Alias").some(cname) ||
+        ctx.findServices(subdomain, "svcs.SpecialCNAME").some(ownedBySubdomain)
+    );
 }
 
 /**
