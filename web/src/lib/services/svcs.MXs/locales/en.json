@@ -9,6 +9,10 @@
                 "title": "Null MX preference should be 0 (got {{preference}})",
                 "detail": "RFC 7505 specifies preference 0 for the null MX record."
             },
+            "empty-target": {
+                "title": "MX record has no target",
+                "detail": "Set a target hostname, or use \".\" for a RFC 7505 null MX."
+            },
             "invalid-target": {
                 "title": "Invalid MX target \"{{target}}\"",
                 "detail": "MX targets must be valid hostnames per RFC 1035."

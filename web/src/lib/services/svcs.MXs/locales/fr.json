@@ -9,6 +9,10 @@
                 "title": "La préférence d'un null MX doit être 0 (reçu {{preference}})",
                 "detail": "La RFC 7505 spécifie une préférence à 0 pour l'enregistrement null MX."
             },
+            "empty-target": {
+                "title": "L'enregistrement MX n'a pas de cible",
+                "detail": "Définissez un nom d'hôte cible, ou utilisez « . » pour un null MX au sens de la RFC 7505."
+            },
             "invalid-target": {
                 "title": "Cible MX invalide « {{target}} »",
                 "detail": "Les cibles MX doivent être des noms d'hôtes valides au sens de la RFC 1035."

@@ -50,8 +50,9 @@ function mxSync(raw: Record<string, any>, ctx: ComplianceContext): ComplianceIss
 
     const origin = originFqdn(ctx);
 
-    // RFC 7505 null MX: target ".", preference 0, MUST be the sole record.
-    const nullMxes = records.filter((r) => r.Mx?.trim() === "." || r.Mx?.trim() === "");
+    // RFC 7505 null MX: target ".", preference 0, MUST be the sole record. An
+    // empty target is not a null MX, it is a record left without a target.
+    const nullMxes = records.filter((r) => r.Mx?.trim() === ".");
     const hasNullMx = nullMxes.length > 0;
     if (hasNullMx && records.length > 1) {
         issues.push({
@@ -77,8 +78,17 @@ function mxSync(raw: Record<string, any>, ctx: ComplianceContext): ComplianceIss
         const target = (r.Mx ?? "").trim();
         const field = `mx[${idx}]`;
 
-        if (target === "" || target === ".") {
+        if (target === ".") {
             // null MX, validated above.
+            return;
+        }
+
+        if (target === "") {
+            issues.push({
+                id: "mx.empty-target",
+                severity: "error",
+                field,
+            });
             return;
         }
 

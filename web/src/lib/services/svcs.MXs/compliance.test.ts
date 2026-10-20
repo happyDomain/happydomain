@@ -83,6 +83,39 @@ describe("MX compliance: null MX (RFC 7505)", () => {
 });
 
 describe("MX compliance: target validity", () => {
+    it("flags a record left without a target", () => {
+        expect(ids(run([MX("")]))).toEqual(["mx.empty-target"]);
+    });
+    it("does not take an empty target for a null MX", () => {
+        const found = ids(run([MX(""), MX("mail.external.tld.")]));
+        expect(found).toContain("mx.empty-target");
+        expect(found).not.toContain("mx.null-mx-with-others");
+    });
+    it("also flags a whitespace-only or missing target", () => {
+        expect(ids(run([MX("   ")]))).toEqual(["mx.empty-target"]);
+        expect(ids(run([{ Preference: 10 }]))).toEqual(["mx.empty-target"]);
+    });
+    it("locates the empty record by its index", () => {
+        const empty = run([MX("mail.external.tld."), MX("")]).find(
+            (i) => i.id === "mx.empty-target",
+        );
+        expect(empty?.field).toBe("mx[1]");
+        expect(empty?.severity).toBe("error");
+    });
+    it("keeps validating the other records next to an empty one", () => {
+        expect(ids(run([MX(""), MX("mail server.tld.")]))).toEqual([
+            "mx.empty-target",
+            "mx.invalid-target",
+        ]);
+    });
+    it("does not flag a sole null MX as empty", () => {
+        expect(ids(run([{ Mx: ".", Preference: 0 }]))).not.toContain("mx.empty-target");
+    });
+    it("still reports a null MX alongside an empty record", () => {
+        const found = ids(run([{ Mx: ".", Preference: 0 }, MX("")]));
+        expect(found).toContain("mx.null-mx-with-others");
+        expect(found).toContain("mx.empty-target");
+    });
     it("flags an invalid hostname target", () => {
         const issues = run([MX("mail server.tld.")]);
         expect(ids(issues)).toContain("mx.invalid-target");
@@ -102,6 +135,10 @@ describe("MX compliance: in-zone cross checks", () => {
         const z = zone({ mail: [alias(5)] });
         const issues = run([MX("mail.example.com.")], z);
         expect(ids(issues)).toContain("mx.target-is-cname");
+    });
+    it("does not also warn about a missing address when the target is a CNAME", () => {
+        const z = zone({ mail: [alias(5)] });
+        expect(ids(run([MX("mail.example.com.")], z))).not.toContain("mx.target-no-address");
     });
     it("does not flag MX target that is an ALIAS owner in the zone", () => {
         // An ALIAS is resolved into addresses by the provider, RFC 5321 sec.
