@@ -47,3 +47,20 @@ type MTASTSUsecase interface {
 	// be given either as the bare domain or as its mta-sts. host.
 	Policy(domainFQDN string) ([]byte, error)
 }
+
+// BIMIUsecase serves the files of the BIMI records (the SVG logo and the mark
+// certificate) for the domains that asked happyDomain to host them.
+//
+// All methods take fully-qualified domain names, which must be the bimi. host
+// of the domain: the files are never served from any other host name. The
+// name is the file name requested, which must be the current one.
+type BIMIUsecase interface {
+	HostedDomainValidator
+
+	// Logo returns the SVG logo of the domain served under the given name.
+	Logo(hostFQDN, name string) ([]byte, error)
+
+	// Certificate returns the PEM mark certificate of the domain served
+	// under the given name.
+	Certificate(hostFQDN, name string) ([]byte, error)
+}
