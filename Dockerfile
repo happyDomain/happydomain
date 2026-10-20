@@ -25,7 +25,7 @@ COPY generate.go ./
 
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    mkdir -p web/src/lib/services && \
+    mkdir -p web/src/lib/services/svcs.CAAPolicy && \
     go generate ./...
 
 
