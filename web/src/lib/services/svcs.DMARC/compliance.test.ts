@@ -453,6 +453,11 @@ describe("DMARC compliance: http(s) report URI", () => {
 });
 
 describe("DMARC compliance: record structure", () => {
+    it("does not suggest a one letter tag for a one character typo", () => {
+        const issues = run("v=DMARC1;p=none;x=1");
+        expect(ids(issues)).toContain("dmarc.unknown-tag");
+        expect(ids(issues)).not.toContain("dmarc.unknown-tag-suggestion");
+    });
     it("says nothing about a record made of known tags", () => {
         const issues = run("v=DMARC1;p=reject;adkim=s;fo=1;ri=3600;pct=100");
         expect(ids(issues)).toEqual([]);
@@ -460,6 +465,58 @@ describe("DMARC compliance: record structure", () => {
     it("accepts a known tag spelled in upper case", () => {
         const issues = run("v=DMARC1;p=reject;RUA=mailto:d@example.com");
         expect(ids(issues)).toEqual([]);
+    });
+    it("warns on an unknown tag", () => {
+        const issues = run("v=DMARC1;p=reject;widget=bar");
+        const unknown = issues.find((i) => i.id === "dmarc.unknown-tag");
+        expect(unknown?.params).toEqual({ tag: "widget" });
+    });
+    it("suggests the tag a typo was aiming at", () => {
+        const issues = run("v=DMARC1;p=reject;adkin=s");
+        const unknown = issues.find((i) => i.id === "dmarc.unknown-tag-suggestion");
+        expect(unknown?.params).toEqual({ tag: "adkin", suggestion: "adkim" });
+    });
+    it("does not suggest a one letter tag for a two letter typo", () => {
+        const issues = run("v=DMARC1;p=reject;pc=1");
+        const unknown = issues.find((i) => i.id === "dmarc.unknown-tag-suggestion");
+        expect(unknown?.params).toEqual({ tag: "pc", suggestion: "pct" });
+    });
+    it("suggests after a missing, an extra or a changed letter", () => {
+        for (const [typo, known] of [
+            ["adki", "adkim"],
+            ["adkimm", "adkim"],
+            ["aspd", "aspf"],
+            ["pcnt", "pct"],
+        ]) {
+            const unknown = run(`v=DMARC1;p=reject;${typo}=1`).find(
+                (i) => i.id === "dmarc.unknown-tag-suggestion",
+            );
+            expect(unknown?.params).toMatchObject({ suggestion: known });
+        }
+    });
+    it("does not guess when the tag is two edits away", () => {
+        for (const typo of ["adkmi", "adk", "adkimmm"]) {
+            const found = ids(run(`v=DMARC1;p=reject;${typo}=1`));
+            expect(found).toContain("dmarc.unknown-tag");
+            expect(found).not.toContain("dmarc.unknown-tag-suggestion");
+        }
+    });
+    it("keeps the case the author wrote when quoting an unknown tag", () => {
+        const unknown = run("v=DMARC1;p=reject;Widget=1").find((i) => i.id === "dmarc.unknown-tag");
+        expect(unknown?.params).toEqual({ tag: "Widget" });
+    });
+    it("warns on an unknown tag only once per occurrence", () => {
+        const found = run("v=DMARC1;p=reject;widget=1;widget=2").filter(
+            (i) => i.id === "dmarc.unknown-tag",
+        );
+        expect(found).toHaveLength(2);
+    });
+    it("infos on a tag defined by later work on DMARC", () => {
+        for (const tag of ["np", "psd", "t"]) {
+            const later = run(`v=DMARC1;p=reject;${tag}=y`).find((i) => i.id === "dmarc.later-tag");
+            expect(later?.params).toEqual({ tag });
+            expect(later?.severity).toBe("info");
+        }
     });
     it("warns on a repeated tag", () => {
         const issues = run("v=DMARC1;p=reject;p=none");

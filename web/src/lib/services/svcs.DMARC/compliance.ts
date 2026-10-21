@@ -176,6 +176,7 @@ const KNOWN_TAGS = new Set([
     "ruf",
     "pct",
 ]);
+const LATER_TAGS = new Set(["np", "psd", "t"]);
 
 /**
  * Unlike parseKeyValueTxt, keeps the case of a tag, the empty pairs, the chunks
@@ -199,10 +200,35 @@ function dmarcTags(txt: string): { key: string; value: string; separated: boolea
         });
 }
 
+/** Tells whether one edit turns a into b, to guess the tag that was meant. */
+function isNeighbour(a: string, b: string): boolean {
+    if (Math.abs(a.length - b.length) > 1) return false;
+    if (a === b) return false;
+
+    let i = 0;
+    let j = 0;
+    let edits = 0;
+    while (i < a.length && j < b.length) {
+        if (a[i] === b[j]) {
+            i++;
+            j++;
+            continue;
+        }
+        if (++edits > 1) return false;
+        if (a.length > b.length) i++;
+        else if (a.length < b.length) j++;
+        else {
+            i++;
+            j++;
+        }
+    }
+    return edits + (a.length - i) + (b.length - j) <= 1;
+}
+
 /**
- * Reports what a receiver drops from the structure of a record: a chunk with
- * no "=", a tag given twice, a known tag left empty. None of this is an error,
- * the record stays valid and just does less than it reads like it does.
+ * Reports the tags a receiver will drop. Unknown tags MUST be ignored (sec.
+ * 6.3), so none of this is an error: the record stays valid, it just does less
+ * than it reads like it does, which a typo makes easy to miss.
  */
 function tagIssues(txtValue: string): ComplianceIssue[] {
     const issues: ComplianceIssue[] = [];
@@ -231,16 +257,42 @@ function tagIssues(txtValue: string): ComplianceIssue[] {
         }
         seen.add(tag);
 
-        // v= and p= have their own missing-* reports, no need to say it twice.
-        if (KNOWN_TAGS.has(tag) && !value && tag !== "v" && tag !== "p") {
-            issues.push({
-                id: "dmarc.empty-tag-value",
-                severity: "warning",
-                params: { tag },
-                field: tag,
-                docUrl: RFC + "#section-6.4",
-            });
+        if (KNOWN_TAGS.has(tag)) {
+            // v= and p= have their own missing-* reports, no need to say it twice.
+            if (!value && tag !== "v" && tag !== "p") {
+                issues.push({
+                    id: "dmarc.empty-tag-value",
+                    severity: "warning",
+                    params: { tag },
+                    field: tag,
+                    docUrl: RFC + "#section-6.4",
+                });
+            }
+            continue;
         }
+
+        if (LATER_TAGS.has(tag)) {
+            issues.push({
+                id: "dmarc.later-tag",
+                severity: "info",
+                params: { tag },
+                docUrl: RFC + "#section-6.3",
+            });
+            continue;
+        }
+
+        // One or two characters are too short to tell a typo from another tag.
+        const suggestion =
+            tag.length < 2
+                ? ""
+                : ([...KNOWN_TAGS].find((known) => known.length > 1 && isNeighbour(tag, known)) ??
+                  "");
+        issues.push({
+            id: suggestion ? "dmarc.unknown-tag-suggestion" : "dmarc.unknown-tag",
+            severity: "warning",
+            params: suggestion ? { tag: key, suggestion } : { tag: key },
+            docUrl: RFC + "#section-6.3",
+        });
     }
 
     return issues;

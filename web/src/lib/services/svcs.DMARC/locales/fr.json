@@ -109,6 +109,18 @@
                 "title": "{{tag}} pointe vers l'hôte {{host}}, sans domaine",
                 "detail": "Un nom sans point ne se résout que dans un domaine de recherche local, pas depuis les serveurs qui vous envoient les rapports."
             },
+            "unknown-tag": {
+                "title": "La balise « {{tag}} » ne fait pas partie de DMARC",
+                "detail": "Les destinataires ignorent les balises qu'ils ne connaissent pas (RFC 7489 sec. 6.3) : celle-ci ne change donc rien. Retirez-la ou vérifiez son orthographe."
+            },
+            "unknown-tag-suggestion": {
+                "title": "La balise « {{tag}} » ne fait pas partie de DMARC : vouliez-vous écrire {{suggestion}}= ?",
+                "detail": "Les destinataires ignorent les balises qu'ils ne connaissent pas : ce que vous vouliez configurer n'est pas appliqué du tout."
+            },
+            "later-tag": {
+                "title": "La balise {{tag}}= n'est pas définie par la RFC 7489",
+                "detail": "Elle provient des travaux en cours sur DMARC : les destinataires implémentant la RFC 7489 l'ignorent, ceux suivant la nouvelle spécification la prennent en compte."
+            },
             "duplicate-tag": {
                 "title": "La balise {{tag}}= apparaît plusieurs fois",
                 "detail": "Laquelle l'emporte n'est pas spécifié. N'en gardez qu'une seule pour que l'enregistrement dise la même chose à tous les destinataires."
