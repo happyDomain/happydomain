@@ -36,7 +36,11 @@ export interface DMARCValue {
 }
 
 export function parseDMARC(val: string): DMARCValue {
-    const parsed = parseKeyValueTxt(val);
+    // Tag names are case-insensitive for receivers, so the editor reads them so.
+    const parsed: Record<string, string> = {};
+    for (const [key, value] of Object.entries(parseKeyValueTxt(val))) {
+        parsed[key.toLowerCase()] = value;
+    }
 
     return {
         v: parsed.v,

@@ -23,6 +23,13 @@ import { describe, it, expect } from "vitest";
 import { parseDMARC, stringifyDMARC, type DMARCValue } from "./model";
 
 describe("parseDMARC", () => {
+    it("reads tag names whatever their case", () => {
+        const parsed = parseDMARC("v=DMARC1; P=reject; Adkim=s; RUA=mailto:d@example.com");
+        expect(parsed.p).toBe("reject");
+        expect(parsed.adkim).toBe("s");
+        expect(parsed.rua).toEqual(["mailto:d@example.com"]);
+    });
+
     it("should parse a minimal DMARC record", () => {
         const result = parseDMARC("v=DMARC1;p=none");
         expect(result).toEqual({

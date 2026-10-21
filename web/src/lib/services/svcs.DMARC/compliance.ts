@@ -161,6 +161,91 @@ function externalDestinations(
     return externals;
 }
 
+// The tags RFC 7489 sec. 6.4 defines, and the ones later work on DMARC adds:
+// a receiver following RFC 7489 ignores the latter, but they are deliberate.
+const KNOWN_TAGS = new Set([
+    "v",
+    "p",
+    "sp",
+    "adkim",
+    "aspf",
+    "fo",
+    "rf",
+    "ri",
+    "rua",
+    "ruf",
+    "pct",
+]);
+
+/**
+ * Unlike parseKeyValueTxt, keeps the case of a tag, the empty pairs, the chunks
+ * with no "=" and the repeated tags.
+ */
+function dmarcTags(txt: string): { key: string; value: string; separated: boolean }[] {
+    return txt
+        .trim()
+        .replace(/^"|"$/g, "")
+        .split(";")
+        .map((pair) => pair.trim())
+        .filter((pair) => pair !== "")
+        .map((pair) => {
+            const sep = pair.indexOf("=");
+            if (sep < 0) return { key: pair, value: "", separated: false };
+            return {
+                key: pair.slice(0, sep).trim(),
+                value: pair.slice(sep + 1).trim(),
+                separated: true,
+            };
+        });
+}
+
+/**
+ * Reports what a receiver drops from the structure of a record: a chunk with
+ * no "=", a tag given twice, a known tag left empty. None of this is an error,
+ * the record stays valid and just does less than it reads like it does.
+ */
+function tagIssues(txtValue: string): ComplianceIssue[] {
+    const issues: ComplianceIssue[] = [];
+    const seen = new Set<string>();
+
+    for (const { key, value, separated } of dmarcTags(txtValue)) {
+        if (!separated) {
+            issues.push({
+                id: "dmarc.malformed-pair",
+                severity: "warning",
+                params: { pair: key },
+                docUrl: RFC + "#section-6.4",
+            });
+            continue;
+        }
+
+        const tag = key.toLowerCase();
+        if (seen.has(tag)) {
+            issues.push({
+                id: "dmarc.duplicate-tag",
+                severity: "warning",
+                params: { tag },
+                field: tag,
+                docUrl: RFC + "#section-6.4",
+            });
+        }
+        seen.add(tag);
+
+        // v= and p= have their own missing-* reports, no need to say it twice.
+        if (KNOWN_TAGS.has(tag) && !value && tag !== "v" && tag !== "p") {
+            issues.push({
+                id: "dmarc.empty-tag-value",
+                severity: "warning",
+                params: { tag },
+                field: tag,
+                docUrl: RFC + "#section-6.4",
+            });
+        }
+    }
+
+    return issues;
+}
+
 /**
  * Counts the DMARC records sharing the owner name of the edited one. Policy
  * discovery drops a name publishing several of them (RFC 7489 sec. 6.6.3), so
@@ -349,6 +434,8 @@ function dmarcSync(raw: Record<string, any>, ctx: ComplianceContext): Compliance
         issues.push({ id: "dmarc.parse-error", severity: "error", field: "txt" });
         return issues;
     }
+
+    issues.push(...tagIssues(txtValue));
 
     // v=DMARC1 must be present and first (RFC 7489 sec. 6.3).
     if (!val.v) {

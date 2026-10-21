@@ -452,6 +452,69 @@ describe("DMARC compliance: http(s) report URI", () => {
     });
 });
 
+describe("DMARC compliance: record structure", () => {
+    it("says nothing about a record made of known tags", () => {
+        const issues = run("v=DMARC1;p=reject;adkim=s;fo=1;ri=3600;pct=100");
+        expect(ids(issues)).toEqual([]);
+    });
+    it("accepts a known tag spelled in upper case", () => {
+        const issues = run("v=DMARC1;p=reject;RUA=mailto:d@example.com");
+        expect(ids(issues)).toEqual([]);
+    });
+    it("warns on a repeated tag", () => {
+        const issues = run("v=DMARC1;p=reject;p=none");
+        expect(ids(issues)).toContain("dmarc.duplicate-tag");
+    });
+    it("warns on a chunk carrying no value", () => {
+        const issues = run("v=DMARC1;p=reject;junk");
+        const malformed = issues.find((i) => i.id === "dmarc.malformed-pair");
+        expect(malformed?.params).toMatchObject({ pair: "junk" });
+    });
+    it("warns on a tag left empty", () => {
+        const issues = run("v=DMARC1;p=reject;pct=");
+        expect(ids(issues)).toContain("dmarc.empty-tag-value");
+    });
+    it("leaves an empty p= to the missing-policy report", () => {
+        const issues = run("v=DMARC1;p=");
+        expect(ids(issues)).toContain("dmarc.missing-policy");
+        expect(ids(issues)).not.toContain("dmarc.empty-tag-value");
+    });
+    it("warns on a repeated tag whatever the case of the second one", () => {
+        const issues = run("v=DMARC1;P=none;p=reject");
+        expect(ids(issues)).toContain("dmarc.duplicate-tag");
+    });
+    it("names the repeated tag", () => {
+        const dup = run("v=DMARC1;p=reject;pct=50;pct=60").find(
+            (i) => i.id === "dmarc.duplicate-tag",
+        );
+        expect(dup?.params).toEqual({ tag: "pct" });
+        expect(dup?.field).toBe("pct");
+    });
+    it("warns on every known tag left empty, not on v= alone", () => {
+        for (const tag of ["pct", "rua", "ruf", "fo", "adkim"]) {
+            expect(ids(run(`v=DMARC1;p=reject;${tag}=`))).toContain("dmarc.empty-tag-value");
+        }
+        expect(ids(run("v=DMARC1;p=reject;sp= "))).toContain("dmarc.empty-tag-value");
+    });
+    it("leaves an empty v= to the version report", () => {
+        const issues = run("v=;p=reject");
+        expect(ids(issues)).not.toContain("dmarc.empty-tag-value");
+    });
+    it("reads a record wrapped in quotes", () => {
+        const issues = run('"v=DMARC1;p=reject;junk"');
+        expect(ids(issues)).toContain("dmarc.malformed-pair");
+    });
+    it("tolerates blanks around the separators", () => {
+        const issues = run("v = DMARC1 ; p = reject ; pct = 50");
+        expect(ids(issues)).not.toContain("dmarc.malformed-pair");
+        expect(ids(issues)).not.toContain("dmarc.empty-tag-value");
+    });
+    it("tolerates a trailing semicolon", () => {
+        const issues = run("v=DMARC1;p=reject;");
+        expect(ids(issues)).toEqual([]);
+    });
+});
+
 describe("DMARC compliance: cross-checks with DKIM / SPF", () => {
     it("counts a CNAME delegated DKIM selector as a DKIM record", () => {
         const zone = makeZone({
