@@ -35,6 +35,12 @@ function run(txt: string, name = "_dmarc.example.com."): ComplianceIssue[] {
 }
 
 const svc = (svctype: string) => makeService(svctype);
+
+// A DKIM selector of the zone, as the cross-checks read it.
+const KEY = "A".repeat(360);
+const dkim = (txt: string, name = "selector1._domainkey") =>
+    makeService("svcs.DKIMRecord", { txt: { Hdr: { Name: name }, Txt: txt } });
+
 function runWithZone(txt: string, zone: Zone): ComplianceIssue[] {
     const v = getValidators("svcs.DMARC");
     return v!.sync!(
@@ -205,6 +211,36 @@ describe("DMARC compliance: cross-checks with DKIM / SPF", () => {
         const issues = runWithZone("v=DMARC1;p=reject", zone);
         expect(ids(issues)).not.toContain("dmarc.no-alignment-source-enforcing");
         expect(ids(issues)).not.toContain("dmarc.no-alignment-source");
+    });
+    it("warns when the zone relies on SPF only", () => {
+        const zone = makeZone({ services: { "": [svc("svcs.SPF")] } });
+        const issues = runWithZone("v=DMARC1;p=reject", zone);
+        expect(ids(issues)).toContain("dmarc.no-dkim-record");
+    });
+    it("warns about SPF only whether or not the policy is enforcing", () => {
+        const zone = makeZone({ services: { "": [svc("svcs.SPF")] } });
+        for (const policy of ["none", "quarantine", "reject"]) {
+            const issues = runWithZone(`v=DMARC1;p=${policy}`, zone);
+            expect(ids(issues)).toContain("dmarc.no-dkim-record");
+        }
+    });
+    it("reports strict DKIM alignment too when the zone relies on SPF only", () => {
+        const zone = makeZone({ services: { "": [svc("svcs.SPF")] } });
+        const issues = runWithZone("v=DMARC1;p=reject;adkim=s", zone);
+        expect(ids(issues)).toContain("dmarc.no-dkim-record");
+        expect(ids(issues)).toContain("dmarc.strict-dkim-no-record");
+    });
+    it("does not add the SPF only warning when nothing aligns at all", () => {
+        const zone = makeZone({ services: { "": [] } });
+        const issues = runWithZone("v=DMARC1;p=reject", zone);
+        expect(ids(issues)).not.toContain("dmarc.no-dkim-record");
+    });
+    it("does not warn about DKIM when a selector is published", () => {
+        const zone = makeZone({
+            services: { "": [svc("svcs.SPF"), dkim("v=DKIM1;p=" + KEY)] },
+        });
+        const issues = runWithZone("v=DMARC1;p=reject", zone);
+        expect(ids(issues)).not.toContain("dmarc.no-dkim-record");
     });
 });
 

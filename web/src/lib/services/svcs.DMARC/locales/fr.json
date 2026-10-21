@@ -93,6 +93,10 @@
                 "title": "Impossible de vérifier l'autorisation à {{domain}}",
                 "detail": "La résolution de {{queriedName}} a échoué : {{error}}"
             },
+            "no-dkim-record": {
+                "title": "Aucun sélecteur DKIM dans cette zone",
+                "detail": "L'alignement SPF échoue dès qu'un message est transféré ou passe par une liste de diffusion. Publiez un sélecteur DKIM pour que DMARC continue de passer."
+            },
             "strict-dkim-no-record": {
                 "title": "adkim=s mais aucun enregistrement DKIM dans cette zone",
                 "detail": "L'alignement DKIM strict requiert que le domaine signataire d= corresponde exactement. Sans DKIM publié, seul l'alignement SPF peut aboutir."

@@ -310,12 +310,21 @@ function dmarcSync(raw: Record<string, any>, ctx: ComplianceContext): Compliance
                 params: { policy },
                 docUrl: RFC + "#section-3",
             });
-        } else if (val.adkim === "s" && !hasDkim) {
+        } else if (!hasDkim) {
+            // SPF alone stops aligning as soon as a message is relayed: only a
+            // DKIM signature survives a mailing list or a forwarder.
             issues.push({
-                id: "dmarc.strict-dkim-no-record",
+                id: "dmarc.no-dkim-record",
                 severity: "warning",
-                docUrl: RFC + "#section-3.1",
+                docUrl: RFC + "#section-3",
             });
+            if (val.adkim === "s") {
+                issues.push({
+                    id: "dmarc.strict-dkim-no-record",
+                    severity: "warning",
+                    docUrl: RFC + "#section-3.1",
+                });
+            }
         }
     }
 
