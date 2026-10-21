@@ -191,6 +191,8 @@ describe("DMARC compliance: cross-checks with DKIM / SPF", () => {
         const zone = makeZone();
         const issues = runWithZone("v=DMARC1;p=reject", zone);
         expect(ids(issues)).toContain("dmarc.no-alignment-source-enforcing");
+        const issue = issues.find((i) => i.id === "dmarc.no-alignment-source-enforcing");
+        expect(issue?.params).toEqual({ policy: "reject" });
     });
     it("warns on p=none with no DKIM and no SPF", () => {
         const zone = makeZone();

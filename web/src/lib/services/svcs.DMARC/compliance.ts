@@ -307,6 +307,7 @@ function dmarcSync(raw: Record<string, any>, ctx: ComplianceContext): Compliance
             issues.push({
                 id: enforcing ? "dmarc.no-alignment-source-enforcing" : "dmarc.no-alignment-source",
                 severity: enforcing ? "error" : "warning",
+                params: { policy },
                 docUrl: RFC + "#section-3",
             });
         } else if (val.adkim === "s" && !hasDkim) {
