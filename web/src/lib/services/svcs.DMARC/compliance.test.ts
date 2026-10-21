@@ -172,6 +172,28 @@ describe("DMARC compliance: rua / ruf", () => {
 });
 
 describe("DMARC compliance: cross-checks with DKIM / SPF", () => {
+    it("counts a CNAME delegated DKIM selector as a DKIM record", () => {
+        const zone = makeZone({
+            services: {
+                "": [svc("svcs.SPF")],
+                "selector1._domainkey": [svc("svcs.Alias")],
+            },
+        });
+        const issues = runWithZone("v=DMARC1;p=reject;adkim=s", zone);
+        expect(ids(issues)).not.toContain("dmarc.no-dkim-record");
+        expect(ids(issues)).not.toContain("dmarc.strict-dkim-no-record");
+    });
+    it("does not call DKIM revoked when a delegated selector sits next to a revoked one", () => {
+        const zone = makeZone({
+            services: {
+                "": [svc("svcs.SPF")],
+                "old._domainkey": [dkim("v=DKIM1;p=", "old._domainkey")],
+                "selector1._domainkey": [svc("svcs.Alias")],
+            },
+        });
+        const issues = runWithZone("v=DMARC1;p=reject", zone);
+        expect(ids(issues)).not.toContain("dmarc.all-dkim-revoked");
+    });
     it("does not flag cross-checks when zone is unknown", () => {
         const issues = run("v=DMARC1;p=reject;adkim=s");
         expect(ids(issues)).not.toContain("dmarc.strict-dkim-no-record");
@@ -241,6 +263,61 @@ describe("DMARC compliance: cross-checks with DKIM / SPF", () => {
         });
         const issues = runWithZone("v=DMARC1;p=reject", zone);
         expect(ids(issues)).not.toContain("dmarc.no-dkim-record");
+        expect(ids(issues)).not.toContain("dmarc.all-dkim-revoked");
+        expect(ids(issues)).not.toContain("dmarc.all-dkim-testing");
+    });
+    it("warns when every DKIM selector is revoked", () => {
+        const zone = makeZone({
+            services: { "": [dkim("v=DKIM1;p="), dkim("v=DKIM1;p=")] },
+        });
+        const issues = runWithZone("v=DMARC1;p=reject", zone);
+        expect(ids(issues)).toContain("dmarc.all-dkim-revoked");
+    });
+    it("warns when every DKIM selector is in testing mode", () => {
+        const zone = makeZone({
+            services: { "": [dkim("v=DKIM1;t=y;p=" + KEY), dkim("v=DKIM1;p=")] },
+        });
+        const issues = runWithZone("v=DMARC1;p=reject", zone);
+        expect(ids(issues)).toContain("dmarc.all-dkim-testing");
+        expect(ids(issues)).not.toContain("dmarc.all-dkim-revoked");
+    });
+    it("stays quiet when one selector among several is usable", () => {
+        const zone = makeZone({
+            services: { "": [dkim("v=DKIM1;t=y;p=" + KEY), dkim("v=DKIM1;p=" + KEY)] },
+        });
+        const issues = runWithZone("v=DMARC1;p=reject", zone);
+        expect(ids(issues)).not.toContain("dmarc.all-dkim-testing");
+        expect(ids(issues)).not.toContain("dmarc.all-dkim-revoked");
+    });
+    it("leaves a selector whose record cannot be read out of the verdict", () => {
+        const zone = makeZone({
+            services: { "": [dkim("v=DKIM1;p="), dkim(""), dkim("not a dkim record")] },
+        });
+        const issues = runWithZone("v=DMARC1;p=reject", zone);
+        expect(ids(issues)).toContain("dmarc.all-dkim-revoked");
+    });
+    it("stays quiet when no selector can be read at all", () => {
+        const zone = makeZone({ services: { "": [dkim(""), dkim("   ")] } });
+        const issues = runWithZone("v=DMARC1;p=reject", zone);
+        expect(ids(issues)).not.toContain("dmarc.all-dkim-revoked");
+        expect(ids(issues)).not.toContain("dmarc.all-dkim-testing");
+    });
+    it("takes t=y among several flags for testing mode", () => {
+        const zone = makeZone({ services: { "": [dkim("v=DKIM1;t=y:s;p=" + KEY)] } });
+        const issues = runWithZone("v=DMARC1;p=reject", zone);
+        expect(ids(issues)).toContain("dmarc.all-dkim-testing");
+    });
+    it("counts the selectors published under a subdomain", () => {
+        const zone = makeZone({
+            services: { "": [svc("svcs.SPF")], mail: [dkim("v=DKIM1;p=")] },
+        });
+        const issues = runWithZone("v=DMARC1;p=reject", zone);
+        expect(ids(issues)).toContain("dmarc.all-dkim-revoked");
+    });
+    it("stays quiet when only the s flag is set", () => {
+        const zone = makeZone({ services: { "": [dkim("v=DKIM1;t=s;p=" + KEY)] } });
+        const issues = runWithZone("v=DMARC1;p=reject", zone);
+        expect(ids(issues)).not.toContain("dmarc.all-dkim-testing");
     });
 });
 
