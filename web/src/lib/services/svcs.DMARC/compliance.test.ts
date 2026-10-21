@@ -413,12 +413,30 @@ describe("DMARC compliance: external reporting (sync hint)", () => {
         expect(ids(issues)).not.toContain("dmarc.external-reporting");
     });
     it("does not flag a rua pointing at a subdomain of the protected domain", () => {
-        // Same apex, different label. Strictly speaking RFC 7489 still wants
-        // an authorization record across labels, but this is a sync-only hint;
-        // the async check still runs against the resolver.
+        // Same Organizational Domain: sec. 7.1 asks for nothing there.
         const issues = run("v=DMARC1;p=reject;rua=mailto:dmarc@reports.example.com");
-        const ext = issues.find((i) => i.id === "dmarc.external-reporting");
-        expect(ext?.params).toMatchObject({ domain: "reports.example.com" });
+        expect(ids(issues)).not.toContain("dmarc.external-reporting");
+    });
+    it("does not take a name merely ending like the protected domain for a subdomain", () => {
+        const issues = run("v=DMARC1;p=reject;rua=mailto:dmarc@notexample.com");
+        expect(ids(issues)).toContain("dmarc.external-reporting");
+    });
+    it("still flags a parent of the protected domain, which may be a public suffix", () => {
+        const v = getValidators("svcs.DMARC");
+        const issues = v!.sync!(
+            {
+                txt: {
+                    Hdr: { Name: "_dmarc.sub" },
+                    Txt: "v=DMARC1;p=reject;rua=mailto:d@example.com",
+                },
+            },
+            buildContext("_dmarc.sub", ORIGIN, null),
+        );
+        expect(ids(issues)).toContain("dmarc.external-reporting");
+    });
+    it("compares the destination without regard to case", () => {
+        const issues = run("v=DMARC1;p=reject;rua=mailto:dmarc@Reports.EXAMPLE.com");
+        expect(ids(issues)).not.toContain("dmarc.external-reporting");
     });
     it("dedupes external destinations", () => {
         const issues = run(

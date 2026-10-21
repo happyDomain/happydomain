@@ -91,6 +91,16 @@ export function isAddressLiteral(host: string): boolean {
     return host.startsWith("[") || IPV4_RE.test(host);
 }
 
+/**
+ * RFC 7489 sec. 7.1 asks for an authorization record only outside the
+ * Organizational Domain of the protected name. Without a public suffix list,
+ * only the protected domain and its own subdomains are known to be inside; a
+ * parent is not assumed to be, and still goes through the authorization check.
+ */
+function isWithinProtectedDomain(host: string, protectedDomain: string): boolean {
+    return host === protectedDomain || host.endsWith("." + protectedDomain);
+}
+
 // mailtoTarget extracts the destination domain from a "mailto:" URI, dropping
 // the optional "!size" suffix allowed by RFC 7489 sec. 6.2 ("!10m" etc.).
 // Returns null when the URI is not a syntactically valid mailto address.
@@ -404,7 +414,7 @@ function dmarcSync(raw: Record<string, any>, ctx: ComplianceContext): Compliance
                 if (!isMailto(u)) continue;
                 const t = mailtoTarget(u);
                 if (!t) continue;
-                if (t.domain && t.domain !== protectedDomain) {
+                if (t.domain && !isWithinProtectedDomain(t.domain, protectedDomain)) {
                     externalDomains.add(t.domain);
                 }
             }
@@ -498,7 +508,7 @@ async function dmarcAsync(
         for (const u of val[tag] ?? []) {
             if (!isMailto(u)) continue;
             const t = mailtoTarget(u);
-            if (!t || t.domain === protectedDomain) continue;
+            if (!t || isWithinProtectedDomain(t.domain, protectedDomain)) continue;
             if (!externals.has(t.domain)) {
                 externals.set(t.domain, { tag, address: t.address });
             }
