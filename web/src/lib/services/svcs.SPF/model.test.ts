@@ -150,7 +150,9 @@ describe("validateSPF", () => {
     });
 
     it("delegates lookup-budget reporting to the recursive walk", () => {
-        const includes = Array.from({ length: 11 }, (_, i) => `include:i${i}.example.com`).join(" ");
+        const includes = Array.from({ length: 11 }, (_, i) => `include:i${i}.example.com`).join(
+            " ",
+        );
         const issues = validateSPF(parseSPF(`v=spf1 ${includes} -all`), ctx);
         expect(ids(issues)).not.toContain("spf.too-many-lookups");
         expect(ids(issues)).not.toContain("spf.many-lookups");

@@ -246,7 +246,9 @@ export async function validateSPFRecursive(
         timeout: "spf.include-resolver-error",
         resolver: "spf.include-resolver-error",
     };
-    const walk = (node: { domain?: string; mechanism?: string; error?: string; children?: any[] } | undefined) => {
+    const walk = (
+        node: { domain?: string; mechanism?: string; error?: string; children?: any[] } | undefined,
+    ) => {
         if (!node) return;
         const err = node.error;
         if (err && err !== "budget" && err !== "depth") {
@@ -266,6 +268,5 @@ export async function validateSPFRecursive(
 
 registerValidators("svcs.SPF", {
     sync: (raw, ctx) => validateSPF(parseSPF(raw?.txt?.Txt ?? ""), ctx),
-    async: (raw, ctx, signal) =>
-        validateSPFRecursive(parseSPF(raw?.txt?.Txt ?? ""), ctx, signal),
+    async: (raw, ctx, signal) => validateSPFRecursive(parseSPF(raw?.txt?.Txt ?? ""), ctx, signal),
 });

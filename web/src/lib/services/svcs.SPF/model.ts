@@ -105,7 +105,11 @@ export function parseTerm(raw: string): ParsedTerm {
     let name = s;
     let value: string | undefined;
 
-    if (eqIdx !== -1 && (colonIdx === -1 || eqIdx < colonIdx) && (slashIdx === -1 || eqIdx < slashIdx)) {
+    if (
+        eqIdx !== -1 &&
+        (colonIdx === -1 || eqIdx < colonIdx) &&
+        (slashIdx === -1 || eqIdx < slashIdx)
+    ) {
         isModifier = qualifier === undefined;
         name = s.slice(0, eqIdx);
         value = s.slice(eqIdx + 1);
