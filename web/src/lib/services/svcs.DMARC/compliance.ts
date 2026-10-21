@@ -114,6 +114,54 @@ function mailtoTarget(uri: string): { address: string; domain: string } | null {
 }
 
 /**
+ * Lists the report destinations of a record, one entry per rua/ruf URI whose
+ * host could be read. Both schemes are collected: sec. 7.1 keys the
+ * authorization on the destination domain, not on the way reports reach it.
+ */
+function reportDestinations(
+    val: DMARCValue,
+): { tag: "rua" | "ruf"; host: string; destination: string }[] {
+    const destinations: { tag: "rua" | "ruf"; host: string; destination: string }[] = [];
+
+    for (const tag of ["rua", "ruf"] as const) {
+        for (const uri of val[tag] ?? []) {
+            const u = uri.trim();
+            if (isMailto(u)) {
+                const target = mailtoTarget(u);
+                if (target) {
+                    destinations.push({ tag, host: target.domain, destination: target.address });
+                }
+            } else if (isHttp(u)) {
+                const target = httpTarget(u);
+                if (target && !isAddressLiteral(target.host)) {
+                    destinations.push({ tag, host: target.host, destination: stripSizeLimit(u) });
+                }
+            }
+        }
+    }
+
+    return destinations;
+}
+
+/**
+ * Keeps the destinations that sec. 7.1 asks an authorization record for, one
+ * per host: the first reference wins, so an issue can point back at its URI.
+ */
+function externalDestinations(
+    val: DMARCValue,
+    protectedDomain: string,
+): Map<string, { tag: "rua" | "ruf"; destination: string }> {
+    const externals = new Map<string, { tag: "rua" | "ruf"; destination: string }>();
+
+    for (const { tag, host, destination } of reportDestinations(val)) {
+        if (!host || isWithinProtectedDomain(host, protectedDomain)) continue;
+        if (!externals.has(host)) externals.set(host, { tag, destination });
+    }
+
+    return externals;
+}
+
+/**
  * Tells whether the DKIM selectors of the zone can actually sign anything: a
  * selector whose key is revoked (empty p=) or still in testing mode (t=y) is
  * published, but yields no alignment DMARC can rely on. Services whose record
@@ -408,22 +456,12 @@ function dmarcSync(raw: Record<string, any>, ctx: ComplianceContext): Compliance
     // and the async validator does the actual lookup.
     const protectedDomain = protectedDomainOf(ctx);
     if (protectedDomain) {
-        const externalDomains = new Set<string>();
-        for (const tag of ["rua", "ruf"] as const) {
-            for (const u of val[tag] ?? []) {
-                if (!isMailto(u)) continue;
-                const t = mailtoTarget(u);
-                if (!t) continue;
-                if (t.domain && !isWithinProtectedDomain(t.domain, protectedDomain)) {
-                    externalDomains.add(t.domain);
-                }
-            }
-        }
-        for (const d of externalDomains) {
+        for (const [domain, ref] of externalDestinations(val, protectedDomain)) {
             issues.push({
                 id: "dmarc.external-reporting",
                 severity: "info",
-                params: { domain: d },
+                params: { domain },
+                field: ref.tag,
                 docUrl: RFC + "#section-7.1",
             });
         }
@@ -478,9 +516,10 @@ function dmarcSync(raw: Record<string, any>, ctx: ComplianceContext): Compliance
 }
 
 // dmarcAsync verifies the RFC 7489 sec. 7.1 cross-domain reporting
-// authorization for every distinct external mailto destination found in the
-// rua/ruf lists. The check is skipped when no external destination is in use,
-// or when the protected owner cannot be derived from the editing context.
+// authorization for every distinct external destination found in the rua/ruf
+// lists, whatever its scheme. The check is skipped when no external
+// destination is in use, or when the protected owner cannot be derived from the
+// editing context.
 async function dmarcAsync(
     raw: Record<string, any>,
     ctx: ComplianceContext,
@@ -500,20 +539,7 @@ async function dmarcAsync(
     const protectedDomain = protectedDomainOf(ctx);
     if (!protectedDomain) return [];
 
-    // Map each external domain to the (tag, address) pair that referenced it
-    // first, so the issue can point back at the offending URI.
-    type Ref = { tag: "rua" | "ruf"; address: string };
-    const externals = new Map<string, Ref>();
-    for (const tag of ["rua", "ruf"] as const) {
-        for (const u of val[tag] ?? []) {
-            if (!isMailto(u)) continue;
-            const t = mailtoTarget(u);
-            if (!t || isWithinProtectedDomain(t.domain, protectedDomain)) continue;
-            if (!externals.has(t.domain)) {
-                externals.set(t.domain, { tag, address: t.address });
-            }
-        }
-    }
+    const externals = externalDestinations(val, protectedDomain);
     if (externals.size === 0) return [];
 
     const issues: ComplianceIssue[] = [];
@@ -532,7 +558,7 @@ async function dmarcAsync(
                 issues.push({
                     id: "dmarc.report-auth-no-dmarc",
                     severity: "error",
-                    params: { domain, queriedName, address: ref.address, tag: ref.tag },
+                    params: { domain, queriedName, destination: ref.destination, tag: ref.tag },
                     field: ref.tag,
                     docUrl: RFC + "#section-7.1",
                 });
@@ -541,7 +567,7 @@ async function dmarcAsync(
                 issues.push({
                     id: "dmarc.report-auth-missing",
                     severity: "error",
-                    params: { domain, queriedName, address: ref.address, tag: ref.tag },
+                    params: { domain, queriedName, destination: ref.destination, tag: ref.tag },
                     field: ref.tag,
                     docUrl: RFC + "#section-7.1",
                 });

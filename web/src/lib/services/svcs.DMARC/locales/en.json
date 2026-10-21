@@ -119,7 +119,7 @@
             },
             "report-auth-missing": {
                 "title": "{{domain}} does not authorize reports for this domain",
-                "detail": "No TXT record found at {{queriedName}}. Without it, {{address}} will silently drop your DMARC reports."
+                "detail": "No TXT record found at {{queriedName}}. Without it, {{destination}} will silently drop your DMARC reports."
             },
             "report-auth-no-dmarc": {
                 "title": "Authorization record at {{domain}} is malformed",

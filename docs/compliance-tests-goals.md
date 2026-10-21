@@ -60,12 +60,13 @@ Sync:
 - invalid `fo`, unknown `rf`, empty URI, no alignment source (`p=none`), `adkim=s` without DKIM in zone (warning)
 - report URI in plain http, pointing at an address literal or at a single-label host (warning)
 - zone relying on SPF only (no DKIM selector), every DKIM selector of the zone revoked or in testing mode (warning)
-- `p=none`, `pct<100`, external reporting destination detected (info)
+- `p=none`, `pct<100`, external reporting destination detected, whatever the URI scheme (info)
 
 A destination is external unless its host is the protected domain or one of its
 subdomains (RFC 7489 sec. 7.1 exempts the Organizational Domain). No public
 suffix list is shipped to the browser, so a parent of the protected domain is
-still asked for an authorization record.
+still asked for an authorization record. An address literal, having no domain
+to ask, is left alone.
 
 Async (through `dmarc-report-auth`):
 - external reporting authorization missing/external domain has no DMARC (error)
