@@ -33,7 +33,7 @@
 </script>
 
 <svelte:head>
-    <title>happyDomain</title>
+    <title>HappyDomain</title>
 </svelte:head>
 
 <Home />

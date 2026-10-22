@@ -93,11 +93,11 @@ export async function buildDiagnosticsReport(reportedError?: string): Promise<st
         const build = [version.version];
         if (version["last-commit"]) build.push(version["last-commit"]);
         if (version["dirty-build"]) build.push("dirty build");
-        lines.push(`happyDomain: ${build.join(", ")}`);
+        lines.push(`HappyDomain: ${build.join(", ")}`);
     } catch {
         // An instance too old to expose /api/version, or unreachable: that is
         // in itself a useful thing to read in a report.
-        lines.push("happyDomain: version unavailable");
+        lines.push("HappyDomain: version unavailable");
     }
 
     if (typeof window !== "undefined") {
@@ -112,7 +112,7 @@ export async function buildDiagnosticsReport(reportedError?: string): Promise<st
     const events = get(diagnostics);
     if (events.length) {
         lines.push("");
-        lines.push("Errors recorded by happyDomain:");
+        lines.push("Errors recorded by HappyDomain:");
         lines.push(...events.map(formatEvent));
     }
 

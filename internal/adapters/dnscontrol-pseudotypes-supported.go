@@ -162,7 +162,7 @@ func recordFromRecordConfig(rc *models.RecordConfig) (happydns.Record, error) {
 		// dropPseudoRecords is supposed to have removed those already. Refusing
 		// here is what keeps the promise that ToRR() is never reached with a
 		// type it would call log.Fatalf on.
-		return nil, fmt.Errorf("%s is a pseudo-type happyDomain is unable to represent", rc.Type)
+		return nil, fmt.Errorf("%s is a pseudo-type HappyDomain is unable to represent", rc.Type)
 	}
 
 	rr := rc.ToRR()
@@ -231,7 +231,7 @@ func pseudoRecordConfigFromRecord(rr happydns.Record, origin string) (*models.Re
 
 	name, known := supportedPseudoTypesByRrtype[prr.Hdr.Rrtype]
 	if !known {
-		return nil, fmt.Errorf("unable to publish a record of type %s: happyDomain doesn't know it", dns.TypeToString[prr.Hdr.Rrtype])
+		return nil, fmt.Errorf("unable to publish a record of type %s: HappyDomain doesn't know it", dns.TypeToString[prr.Hdr.Rrtype])
 	}
 
 	adapter := supportedPseudoTypes[name]

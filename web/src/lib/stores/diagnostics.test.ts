@@ -31,13 +31,13 @@ import { buildDiagnosticsReport, diagnostics } from "./diagnostics";
 describe("buildDiagnosticsReport", () => {
     beforeEach(() => diagnostics.clear());
 
-    it("reports the version and the errors happyDomain met", async () => {
+    it("reports the version and the errors HappyDomain met", async () => {
         diagnostics.record("NetworkError when attempting to fetch resource.", "An error occured!");
 
         const report = await buildDiagnosticsReport();
 
-        expect(report).toContain("happyDomain: 1.2.3, deadbeef");
-        expect(report).toContain("Errors recorded by happyDomain:");
+        expect(report).toContain("HappyDomain: 1.2.3, deadbeef");
+        expect(report).toContain("Errors recorded by HappyDomain:");
         expect(report).toContain("NetworkError when attempting to fetch resource.");
     });
 

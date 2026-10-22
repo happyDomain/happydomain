@@ -32,7 +32,6 @@ interface Params {
     id?: string;
     domain?: string;
     type?: string;
-    happyDomain?: string;
     thing?: string;
     identify?: string;
     provider?: string;

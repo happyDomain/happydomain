@@ -22,7 +22,7 @@
     "services": {
         "mta-sts": {
             "title": "MTA Strict Transport Security",
-            "intro": "Demande aux autres serveurs de messagerie de ne délivrer vers votre domaine qu'en TLS authentifié. Au-delà de l'enregistrement DNS, la norme exige un fichier de politique servi en HTTPS : happyDomain peut l'héberger pour vous.",
+            "intro": "Demande aux autres serveurs de messagerie de ne délivrer vers votre domaine qu'en TLS authentifié. Au-delà de l'enregistrement DNS, la norme exige un fichier de politique servi en HTTPS : HappyDomain peut l'héberger pour vous.",
             "policy": "Politique",
             "mode": "Mode",
             "mode-testing": "Test : signaler les échecs, mais délivrer quand même",
@@ -34,8 +34,8 @@
             "mx-desc": "Noms d'hôtes autorisés à recevoir le courrier de ce domaine, tels qu'ils figurent dans vos enregistrements MX. Un préfixe *. correspond à exactement un label.",
             "add-mx": "Ajouter un serveur MX",
             "hosting": "Hébergement de la politique",
-            "host-policy": "Laisser happyDomain servir le fichier de politique (CNAME mta-sts.)",
-            "host-policy-desc": "Une fois activé, happyDomain crée un CNAME pour mta-sts.<votre-domaine> pointant vers cette instance happyDomain, qui sert la politique ci-dessous en HTTPS. Laissez décoché si vous servez le fichier depuis votre propre serveur web.",
+            "host-policy": "Laisser HappyDomain servir le fichier de politique (CNAME mta-sts.)",
+            "host-policy-desc": "Une fois activé, HappyDomain crée un CNAME pour mta-sts.<votre-domaine> pointant vers cette instance HappyDomain, qui sert la politique ci-dessous en HTTPS. Laissez décoché si vous servez le fichier depuis votre propre serveur web.",
             "preview": "Fichier de politique",
             "preview-empty": "Rien ne sera servi pour l'instant : les politiques en mode test ou strict nécessitent au moins un serveur MX autorisé."
         }
@@ -44,7 +44,7 @@
         "abstract": {
             "MTASTS": {
                 "name": "MTA-STS (politique hébergée)",
-                "description": "Exiger du TLS authentifié pour le courrier entrant, avec le fichier de politique RFC 8461 servi par happyDomain."
+                "description": "Exiger du TLS authentifié pour le courrier entrant, avec le fichier de politique RFC 8461 servi par HappyDomain."
             }
         }
     }

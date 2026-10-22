@@ -156,7 +156,7 @@ func (uc *ZoneCorrectionApplierUsecase) Apply(
 	// Only here: Prepare stays allowed, the differences are what monitoring a
 	// read-only provider is about.
 	if provider.IsReadOnly() {
-		return nil, happydns.ForbiddenError{Msg: "this provider is read-only: happyDomain cannot publish changes through it."}
+		return nil, happydns.ForbiddenError{Msg: "this provider is read-only: HappyDomain cannot publish changes through it."}
 	}
 
 	executableCorrections, targetRecords, providerRecords, _, err := uc.computeExecutableCorrections(ctx, user, domain, zone, provider, form.WantedCorrections)

@@ -58,7 +58,7 @@
 </script>
 
 <svelte:head>
-    <title>{$t("checkers.title")} - happyDomain</title>
+    <title>{$t("checkers.title")} - HappyDomain</title>
 </svelte:head>
 
 <Container class="flex-fill my-5">

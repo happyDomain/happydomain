@@ -42,7 +42,7 @@
 </script>
 
 <svelte:head>
-    <title>{$t("settings.title")} - happyDomain</title>
+    <title>{$t("settings.title")} - HappyDomain</title>
 </svelte:head>
 
 <Container class="my-4 pb-5">

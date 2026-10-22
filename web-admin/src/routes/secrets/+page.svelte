@@ -156,7 +156,7 @@
 
         <h2 class="h4 mb-3">Migrations</h2>
         <p class="text-muted">
-            Run them with a single happyDomain process on the database. They can be interrupted:
+            Run them with a single HappyDomain process on the database. They can be interrupted:
             running them again resumes the work.
         </p>
         <Row class="g-4">
@@ -166,7 +166,7 @@
                     icon="arrow-repeat"
                     color={resealNeeded ? "primary" : "secondary"}
                     label="Reseal credentials"
-                    confirmText="Store every credential the way the current policy stores new ones? Make sure a single happyDomain process is running."
+                    confirmText="Store every credential the way the current policy stores new ones? Make sure a single HappyDomain process is running."
                     run={postSecretsReseal}
                     onDone={fetchStatus}
                 >

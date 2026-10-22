@@ -165,23 +165,17 @@
                     </h3>
                     <Row class="align-items-center mb-2">
                         <label class="col-auto" for="locale-select">
-                            Choose happy<span class="fw-bold">Domain</span> language:
+                            Choose HappyDomain language:
                         </label>
                         <Col>
                             <LocaleSelect size="sm" />
                         </Col>
                     </Row>
                     <p>
-                        <!-- eslint-disable-next-line svelte/no-at-html-tags -- Translations ship with the app; interpolated values are literals or escaped -->
-                        {@html $t("onboarding.welcome.purpose", {
-                            happyDomain: `happy<span class="fw-bold">Domain</span>`,
-                        })}
+                        {$t("onboarding.welcome.purpose")}
                     </p>
                     <p>
-                        <!-- eslint-disable-next-line svelte/no-at-html-tags -- Translations ship with the app; interpolated values are literals or escaped -->
-                        {@html $t("onboarding.welcome.use", {
-                            happyDomain: `happy<span class="fw-bold">Domain</span>`,
-                        })}
+                        {$t("onboarding.welcome.use")}
                     </p>
                     <Alert color="warning">
                         <strong>{$t("onboarding.welcome.beta.intro")}</strong>
@@ -375,10 +369,7 @@
                         {$t("onboarding.no-sale.title")}
                     </h3>
                     <p class="text-justify text-indent mt-4 mb-3">
-                        <!-- eslint-disable-next-line svelte/no-at-html-tags -- Translations ship with the app; interpolated values are literals or escaped -->
-                        {@html $t("onboarding.no-sale.description", {
-                            happyDomain: `happy<span class="fw-bold">Domain</span>`,
-                        })}
+                        {$t("onboarding.no-sale.description")}
                     </p>
                     <p class="text-justify text-indent mt-3 mb-4">
                         {$t("onboarding.no-sale.buy-advice")}

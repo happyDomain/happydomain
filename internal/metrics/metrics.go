@@ -123,7 +123,7 @@ var (
 	// dashboards and alerts can group/diff across deployments.
 	BuildInfo = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "happydomain_build_info",
-		Help: "Build information about the running happyDomain instance. Always 1; metadata is in the labels.",
+		Help: "Build information about the running HappyDomain instance. Always 1; metadata is in the labels.",
 	}, []string{"version", "revision", "dirty", "build_date"})
 )
 

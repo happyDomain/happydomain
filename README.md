@@ -1,7 +1,7 @@
-happyDomain
+HappyDomain
 ===========
 
-happyDomain is a free web application that centralizes the management of your domain names from different registrars and hosts.
+HappyDomain is a free web application that centralizes the management of your domain names from different registrars and hosts.
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](./LICENSE)
 [![Docker Hub](https://img.shields.io/docker/pulls/happydomain/happydomain)](https://hub.docker.com/r/happydomain/happydomain)
@@ -12,7 +12,7 @@ happyDomain is a free web application that centralizes the management of your do
 [![GitHub Stars](https://img.shields.io/github/stars/happyDomain/happydomain)](https://github.com/happyDomain/happydomain)
 [![Latest Release](https://img.shields.io/github/v/release/happyDomain/happydomain)](https://github.com/happyDomain/happydomain/releases)
 
-![Screenshots of happyDomain](./docs/header.webp)
+![Screenshots of HappyDomain](./docs/header.webp)
 
 **Website:** [happydomain.org](https://www.happydomain.org/) | **Demo:** [try.happydomain.org](https://try.happydomain.org/)
 
@@ -47,7 +47,7 @@ Features
 * Multiple users with authentication or one user without authentication
 * Compatible with external authentication ([OpenID Connect](https://help.happydomain.org/en/introduction/deploy/oidc) or through JWT tokens: Auth0, ...)
 
-**happyDomain is functional but still very much a work in progress: it's a carefully crafted proof of concept that evolves thanks to you!**
+**HappyDomain is functional but still very much a work in progress: it's a carefully crafted proof of concept that evolves thanks to you!**
 
 Given the diversity of DNS configurations and user needs, we haven't yet identified all the bugs. **If something doesn't work, please don't leave: [tell us what's wrong](https://github.com/happyDomain/happydomain/issues).** We're highly responsive and each reported bug helps us improve the tool for everyone.
 
@@ -59,7 +59,7 @@ Getting Started With Docker
 
 We are a Docker sponsored OSS project! Thus you can easily try and/or deploy our app using Docker/podman/kubernetes/...
 
-You can use `docker compose` to launch happyDomain:
+You can use `docker compose` to launch HappyDomain:
 
 ```
 git clone https://framagit.org/happyDomain/happyDomain.git
@@ -73,9 +73,9 @@ Or directly with the `docker run`:
 docker run -e HAPPYDOMAIN_NO_AUTH=1 -p 8081:8081 happydomain/happydomain
 ```
 
-This command will launch happyDomain in a few seconds, for evaluation purposes (no authentication, volatile storage, ...). With your browser, just go to <http://localhost:8081> and enjoy!
+This command will launch HappyDomain in a few seconds, for evaluation purposes (no authentication, volatile storage, ...). With your browser, just go to <http://localhost:8081> and enjoy!
 
-In order to deploy happyDomain, check the [Docker image documentation](https://hub.docker.com/r/happydomain/happydomain).
+In order to deploy HappyDomain, check the [Docker image documentation](https://hub.docker.com/r/happydomain/happydomain).
 
 
 Install from binary
@@ -86,7 +86,7 @@ Prebuilt binaries are available at: <https://get.happydomain.org/>
 Choose a directory (the latest version available, or `master`) and choose the binary that corresponds to your operating system and CPU architecture.
 
 
-Use happyDomain
+Use HappyDomain
 ---------------
 
 The binary comes with sane default options to start with.
@@ -101,7 +101,7 @@ After some initialization, it should show you:
     Admin listening on ./happydomain.sock
     Ready, listening on :8081
 
-Go to http://localhost:8081/ to start using happyDomain.
+Go to http://localhost:8081/ to start using HappyDomain.
 
 
 ### Database configuration
@@ -135,7 +135,7 @@ Data are stored in memory and lost when service is stopped.
 
 PostgreSQL support is provided primarily for installations that already have an existing PostgreSQL database infrastructure in place. This allows you to leverage your current database setup, backup procedures, and operational tooling without deploying additional database systems.
 
-happyDomain uses PostgreSQL in a key-value storage mode, storing all data in a single table with `key` and `value` columns. While this works reliably, note that PostgreSQL is not the optimal choice for key-value workloads compared to dedicated key-value stores. If you're deploying from scratch and need scalability beyond LevelDB, consider using a storage backend specifically designed for key-value operations instead.
+HappyDomain uses PostgreSQL in a key-value storage mode, storing all data in a single table with `key` and `value` columns. While this works reliably, note that PostgreSQL is not the optimal choice for key-value workloads compared to dedicated key-value stores. If you're deploying from scratch and need scalability beyond LevelDB, consider using a storage backend specifically designed for key-value operations instead.
 
 ```
     -postgres-database string
@@ -156,11 +156,11 @@ happyDomain uses PostgreSQL in a key-value storage mode, storing all data in a s
 
 #### Oracle NoSQL Database
 
-Oracle NoSQL Database is a fully managed cloud service from Oracle Cloud Infrastructure (OCI) that provides on-demand throughput and storage-based provisioning. happyDomain can use it as a scalable, cloud-based storage backend for production deployments.
+Oracle NoSQL Database is a fully managed cloud service from Oracle Cloud Infrastructure (OCI) that provides on-demand throughput and storage-based provisioning. HappyDomain can use it as a scalable, cloud-based storage backend for production deployments.
 
 To use Oracle NoSQL Database, you'll need to have an OCI account with a NoSQL table created. The table should have a primary key field named `key` (string type) and a `value` field (JSON type) to store the data. Authentication uses OCI's IAM with API signing keys.
 
-Configure the following options to connect happyDomain to your Oracle NoSQL Database:
+Configure the following options to connect HappyDomain to your Oracle NoSQL Database:
 
 ```
     -oci-compartment string
@@ -185,7 +185,7 @@ DBMS as Mysql/Mariadb are no more supported or planned.
 
 ### Accounts and data
 
-When you register on a happyDomain instance, the account is created and stored in **that instance's own database** (whichever storage engine it was configured with above). Nothing is ever sent to happydomain.org: the only exception is if you are actually using the project's own hosted instance at `app.happydomain.org`, which is just one deployment among the many that can run this software.
+When you register on a HappyDomain instance, the account is created and stored in **that instance's own database** (whichever storage engine it was configured with above). Nothing is ever sent to happydomain.org: the only exception is if you are actually using the project's own hosted instance at `app.happydomain.org`, which is just one deployment among the many that can run this software.
 
 By default, registration is open and a verification email is sent before the account can be used. The administrator of an instance can change this behavior with a few flags:
 
@@ -195,7 +195,7 @@ By default, registration is open and a verification email is sent before the acc
 
 See the [configuration documentation](https://help.happydomain.org/en/introduction/deploy/config) for the full list of authentication-related options.
 
-**happyDomain never becomes your provider.** It only acts as a friendly interface on top of your existing setup, whether that is an actual DNS server or a hosting provider. Your data, the zone's content, genuinely lives with your provider (or authoritative server); happyDomain does not take it over or store a canonical copy of it.
+**HappyDomain never becomes your provider.** It only acts as a friendly interface on top of your existing setup, whether that is an actual DNS server or a hosting provider. Your data, the zone's content, genuinely lives with your provider (or authoritative server); HappyDomain does not take it over or store a canonical copy of it.
 
 ### Persistent configuration
 
@@ -247,12 +247,12 @@ The standard [`DO_NOT_TRACK`](https://donottrack.sh/) environment variable is al
 
 #### Behind a reverse proxy?
 
-happyDomain ignores `X-Forwarded-For` unless you declare which proxies may set
+HappyDomain ignores `X-Forwarded-For` unless you declare which proxies may set
 it, with `-trusted-proxy`. See [docs/reverse-proxy.md](docs/reverse-proxy.md).
 
 #### DNS server or router on your own network?
 
-happyDomain only connects to publicly routable addresses. To manage a PowerDNS,
+HappyDomain only connects to publicly routable addresses. To manage a PowerDNS,
 BIND, AdGuard Home, OpenWrt, Mikrotik or UniFi instance you host yourself, name
 its address with `-outbound-allowed-target`. See
 [docs/outbound-targets.md](docs/outbound-targets.md).
@@ -265,16 +265,16 @@ them under a keyset held by the server, see
 
 Note that this is unrelated to the passwords used for registration and
 authentication: those are hashed in the database, never stored in clear.
-Encryption only applies to secrets that happyDomain has to send back to third
+Encryption only applies to secrets that HappyDomain has to send back to third
 parties, such as providers' API keys and passwords or webhook secrets. Such
-secrets cannot be hashed, because happyDomain needs to read them back in clear
+secrets cannot be hashed, because HappyDomain needs to read them back in clear
 to use them.
 
 #### Need OVH API?
 
 OVH doesn't have simple API key or credentials. It depends on a web flow to retrieve the key.
 
-To be able to initiate the authentication flow, your happyDomain instance need to have a dedicated Application Key.
+To be able to initiate the authentication flow, your HappyDomain instance need to have a dedicated Application Key.
 
 [Follow those instructions if you need to connect to OVH](https://help.happydomain.org/en/introduction/deploy/ovh).
 
@@ -284,7 +284,7 @@ Building
 
 ### Dependencies
 
-In order to build the happyDomain project, you'll need the following dependencies:
+In order to build the HappyDomain project, you'll need the following dependencies:
 
 * `go`;
 * `nodejs` tested with version 22;
@@ -347,7 +347,7 @@ Reporting an issue
 
 One sentence is enough, we'll come back to you if we need more.
 
-The quickest way is the **Report a problem** entry in happyDomain's user menu (it also appears on error messages): it collects your version, your browser and the errors happyDomain recorded, shows them to you, then opens a pre-filled issue on the forge of your choice. You only describe what you were doing.
+The quickest way is the **Report a problem** entry in HappyDomain's user menu (it also appears on error messages): it collects your version, your browser and the errors HappyDomain recorded, shows them to you, then opens a pre-filled issue on the forge of your choice. You only describe what you were doing.
 
 You can of course [open an issue](https://github.com/happyDomain/happydomain/issues) by hand, write to us at contact@happydomain.org if you have no account on a forge, or come and talk about it on [Matrix](https://matrix.to/#/#happyDNS:matrix.org).
 
@@ -399,6 +399,6 @@ We do not differentiate between bad human code and AI vibe code. There are stric
 License
 -------
 
-happyDomain is licensed under the [GNU Affero General Public License v3.0](./LICENSE) (AGPL-3.0).
+HappyDomain is licensed under the [GNU Affero General Public License v3.0](./LICENSE) (AGPL-3.0).
 
 A commercial license is also available, contact us if interested.

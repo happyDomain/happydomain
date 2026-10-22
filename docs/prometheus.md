@@ -1,11 +1,11 @@
-# Scraping happyDomain checker metrics with Prometheus
+# Scraping HappyDomain checker metrics with Prometheus
 
-happyDomain exposes check results as time-series metrics that Prometheus can
+HappyDomain exposes check results as time-series metrics that Prometheus can
 scrape directly. This lets you alert on DNS health checks, track trends over
 time, and correlate domain health with the rest of your infrastructure.
 
 > **Scope of this document:** user-facing metrics from the checker subsystem.
-> The admin-socket `/metrics` endpoint (happyDomain internal instrumentation)
+> The admin-socket `/metrics` endpoint (HappyDomain internal instrumentation)
 > is covered separately in [metrics.md](metrics.md).
 
 ---
@@ -17,7 +17,7 @@ time, and correlate domain health with the rest of your infrastructure.
 The metrics endpoints require authentication. You need a long-lived API token
 (not your login session).
 
-1. Log in to happyDomain.
+1. Log in to HappyDomain.
 2. Go to the **Account** page (top-right user menu).
 3. Scroll down to the **Security & Access** section.
 4. Click **Create API key**.

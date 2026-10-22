@@ -2,7 +2,7 @@ FROM alpine:3.24
 
 ARG VERSION=dev
 
-LABEL org.opencontainers.image.title="happyDomain" \
+LABEL org.opencontainers.image.title="HappyDomain" \
       org.opencontainers.image.description="Making DNS simple for everyone" \
       org.opencontainers.image.url="https://happydomain.org" \
       org.opencontainers.image.source="https://git.happydns.org/happydomain" \

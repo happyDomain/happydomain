@@ -15,10 +15,10 @@ three parts:
    format. Most mail providers (Gmail, Yahoo, Apple Mail) only display the logo
    when there is one.
 
-Hosting the two files is what stops most people. happyDomain ships a
+Hosting the two files is what stops most people. HappyDomain ships a
 **BIMI (hosted logo)** service that takes care of all three parts. It stores
 the logo and the certificate, serves them at `https://bimi.<domain>/bimi/`
-behind a `bimi.<domain>` CNAME toward the happyDomain instance, and generates
+behind a `bimi.<domain>` CNAME toward the HappyDomain instance, and generates
 the TXT record pointing to them.
 
 The plain **BIMI** service remains available for domains that host the files
@@ -26,7 +26,7 @@ themselves: it only manages the TXT record.
 
 ## Configuration
 
-happyDomain needs to know the public FQDN where it serves hosted content: it is
+HappyDomain needs to know the public FQDN where it serves hosted content: it is
 the target of the `bimi.` CNAME. This is the `--service-hosting-host` setting
 described in the [email auto-configuration](email-autoconfig.md) page, which
 shares it. The deprecated `--mail-autoconfig-host` is an alias of it, so it
@@ -35,7 +35,7 @@ applies to BIMI too.
 That hostname must be reachable over HTTPS and able to get a valid certificate
 for `bimi.<user-domain>`.
 
-## Endpoints exposed by happyDomain
+## Endpoints exposed by HappyDomain
 
 All three are public, rate-limited and read-only, under the same conditions as the
 [email auto-configuration](email-autoconfig.md#endpoints-exposed-by-happydomain)
@@ -48,26 +48,26 @@ endpoints, whose limit they share.
 | GET    | `/api/caddy/ask`    | Caddy on-demand TLS validation hook     |
 
 The file endpoints derive the domain from the `Host` header, and only answer on
-`bimi.<domain>` host names: the files are user content, so happyDomain never
+`bimi.<domain>` host names: the files are user content, so HappyDomain never
 serves them from its own host name. `<name>` is derived from the content of the
 file (the first 16 hex digits of its SHA-256), so only the current files are
 served: a former name gets a 404.
 
 The Caddy hook is shared by every hosted service. For this one, it authorises
-certificates for `bimi.<X>` where `X` is a domain registered in happyDomain
+certificates for `bimi.<X>` where `X` is a domain registered in HappyDomain
 *and* has the BIMI (hosted logo) service with its `bimi.` CNAME. Nothing else
 gets a certificate.
 
 ## End-user flow
 
-1. User adds their domain to happyDomain (existing flow).
+1. User adds their domain to HappyDomain (existing flow).
 2. From the service catalogue (Email category), the user picks
    "BIMI (hosted logo)".
 3. The dedicated form asks for:
    - The selector, `default` unless several logos are published.
    - The logo, an SVG Tiny PS file of at most 32 KiB.
    - Optionally, the mark certificate with its chain, in PEM format.
-4. The form shows the TXT record that will be published. happyDomain
+4. The form shows the TXT record that will be published. HappyDomain
    generates it from the files, so it always points at what is served.
 5. Saving generates the TXT record and the `bimi.` CNAME. The user applies the
    diff to the zone as usual.
@@ -79,7 +79,7 @@ gets a certificate.
 The Caddy setup is the one of the
 [email auto-configuration](email-autoconfig.md#deploying-with-caddy-recommended),
 whose catch-all covers the `bimi.` host names: a single Caddy instance fronts
-happyDomain and handles TLS for the main UI and every hosted service. If you
+HappyDomain and handles TLS for the main UI and every hosted service. If you
 deployed it before BIMI support, add `bimi` to the `@hosted` host regexp
 (`^(?:autoconfig|autodiscover|mta-sts|bimi)\.`), otherwise Caddy ignores the
 `bimi.` host names.
@@ -96,11 +96,11 @@ The first time a receiving mail server hits
 
 1. Receives the request for an unknown hostname.
 2. Calls `https://happydomain.example.com/api/caddy/ask?domain=bimi.example.com`.
-3. happyDomain checks: parent `example.com` is registered and has the BIMI
+3. HappyDomain checks: parent `example.com` is registered and has the BIMI
    hosted-logo service with its `bimi.` CNAME → returns 200.
 4. Caddy obtains a Let's Encrypt certificate for `bimi.example.com` and
-   reverse-proxies the request to happyDomain.
-5. happyDomain serves the logo from the user's stored service config.
+   reverse-proxies the request to HappyDomain.
+5. HappyDomain serves the logo from the user's stored service config.
 
 Subsequent requests reuse the cached certificate.
 
@@ -120,7 +120,7 @@ Subsequent requests reuse the cached certificate.
   `Content-Security-Policy`, so that a browser opening the logo directly never
   runs anything from it.
 - As file names change with their content, a new logo gets a new URL that
-  receivers have not cached yet. For the same reason, happyDomain lets
+  receivers have not cached yet. For the same reason, HappyDomain lets
   intermediaries cache the files for a day (`Cache-Control: public,
   max-age=86400`).
 - The files cannot be recovered from DNS: after importing a zone, the record

@@ -410,7 +410,7 @@
         <p class="small text-muted mt-1 mb-0">
             {$t("services.email-autoconfig.publish-http-desc", {
                 default:
-                    "When enabled, happyDomain creates CNAMEs for autoconfig.<your-domain> and autodiscover.<your-domain> pointing to this happyDomain instance, which serves the corresponding XML over HTTPS so Thunderbird and Outlook can self-configure.",
+                    "When enabled, HappyDomain creates CNAMEs for autoconfig.<your-domain> and autodiscover.<your-domain> pointing to this HappyDomain instance, which serves the corresponding XML over HTTPS so Thunderbird and Outlook can self-configure.",
             })}
         </p>
     </FormGroup>

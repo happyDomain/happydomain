@@ -1,6 +1,6 @@
 # Encrypting stored credentials
 
-happyDomain stores credentials on behalf of its users:
+HappyDomain stores credentials on behalf of its users:
 
 - the API keys, passwords and TSIG keys of their DNS providers;
 - the signing secret and the header values (an `Authorization` token, say) of
@@ -14,15 +14,15 @@ By default they are stored in clear in the database, as they always were.
 
 The `instance` policy encrypts them under a keyset held by the server, outside
 the database. A leaked database dump or backup, or a database hosted apart from
-happyDomain, no longer gives the credentials away. It does not protect against
-a compromised happyDomain server, which holds the keyset.
+HappyDomain, no longer gives the credentials away. It does not protect against
+a compromised HappyDomain server, which holds the keyset.
 
 ## Limits of this version
 
 Before enabling it, know that:
 
 - the migrations below (`reseal`, `rewrap`, `drop-safes`) expect a single
-  happyDomain process on the database. With several, a reseal may overwrite an
+  HappyDomain process on the database. With several, a reseal may overwrite an
   update made at the same time by another process;
 - when a credential no longer decrypts, users get a generic error.
 
@@ -34,7 +34,7 @@ happydomain secret-keyset generate /etc/happydomain/secret-keyset.json
 
 The keyset is a cleartext [Tink](https://developers.google.com/tink) JSON
 keyset, which `tinkey` can also read. The file is created readable by its owner
-only; make sure that owner is the user happyDomain runs as. happyDomain warns
+only; make sure that owner is the user HappyDomain runs as. HappyDomain warns
 at startup when the file can be read by other users. The command never
 overwrites an existing file.
 
@@ -92,7 +92,7 @@ Nothing changes for users.
 
 A keystore is where the credentials of a user are sealed. Each user has:
 
-- the keystores of the instance, such as `instance`: happyDomain creates
+- the keystores of the instance, such as `instance`: HappyDomain creates
   them on first use, and only the administrator deletes them;
 - the personal keystores they create themselves, under a name, from a kind
   the instance offers: `passphrase` (locked by a passphrase),
@@ -139,7 +139,7 @@ passphrase: they are interactive. Such a keystore is unlocked for the session
 creating it, with what its owner just gave. Otherwise it is locked until its
 owner unlocks it, from the settings or when an action needs it: a dialog then
 asks for what opens it, and the action goes on. It stays unlocked, in the
-memory of the happyDomain process only, until its owner logs out or their
+memory of the HappyDomain process only, until its owner logs out or their
 session ends; a restart locks every keystore again.
 
 A locked keystore is answered with a `423 Locked` naming it, with the form of
@@ -157,7 +157,7 @@ does not rebind them: they still open with the previous password, which their
 owner gives when asked. Each one so unlocked follows the new password at the
 next password change from the settings.
 
-happyDomain offers two such kinds, enabled by default (see `-secret-store`):
+HappyDomain offers two such kinds, enabled by default (see `-secret-store`):
 
 - `passphrase`: its owner chooses a passphrase when creating it, at least 8
   characters long, and gives it again to unlock it. Nobody can recover it,
@@ -175,7 +175,7 @@ endpoint is rate limited.
 
 Some kinds of keystore keep no credential: in place of each, their owner
 enters a reference to it, such as its key in a file of theirs, which
-happyDomain resolves only when it uses the credential. The reference is not
+HappyDomain resolves only when it uses the credential. The reference is not
 secret: the owner of a provider reads it back as they entered it, and sends it
 back as is. A secret field whose keystore keeps references takes a reference,
 shown in clear, with a hint of what to enter as its placeholder.
@@ -184,9 +184,9 @@ Credentials stored elsewhere never move into such a keystore, where they would
 be taken for references: migrating into one is refused, and choosing one for an
 object holding stored credentials asks for a reference in each field. Out of
 it, the credentials themselves go: migrating to another keystore resolves the
-references and seals what they stand for. As this brings into happyDomain what
+references and seals what they stand for. As this brings into HappyDomain what
 the references kept out of it, it is refused unless the administrator starts
-happyDomain with `-enable-keystore-extraction`, without which the web
+HappyDomain with `-enable-keystore-extraction`, without which the web
 interface offers no migration out of such a keystore. A reference sent back while choosing
 a keystore keeping credentials is refused rather than sealed as the credential.
 
@@ -200,10 +200,10 @@ credentials are.
 
 ### File keystores
 
-The `file` kind resolves each reference to a file on the happyDomain server,
+The `file` kind resolves each reference to a file on the HappyDomain server,
 holding one credential, as the secrets of a container or the credentials of a
 systemd unit do. The file is read whenever the credential is used: changing
-it changes the credential, without touching happyDomain. Its final newline is
+it changes the credential, without touching HappyDomain. Its final newline is
 dropped; a file empty without it, or larger than 64 KiB, is refused.
 
 The administrator chooses a directory, and gives each user who keeps files
@@ -228,7 +228,7 @@ directory itself. A reference is the path of a file relative to it, such as
 `ovh_app_secret`, or `cloudflare_token` in a keystore of the `work`
 subdirectory. Nothing outside the directory of the owner is read, through a
 symbolic link neither: a user never reads the files of another, nor the
-instance keyset. happyDomain needs to read the files, and nothing more:
+instance keyset. HappyDomain needs to read the files, and nothing more:
 neither write to them nor list them.
 
 Such keystores open without their owner, so notifications and scheduled checks
@@ -259,14 +259,14 @@ keystore holds are lost. Like `file`, this kind is not enabled by default.
 ### Program keystores
 
 The `program` kind resolves each reference by running a program of its
-owner, on the happyDomain server: a wrapper around `pass`, a password manager
+owner, on the HappyDomain server: a wrapper around `pass`, a password manager
 command line, a script reading a hardware token... The program is run with the
 reference as its only argument, without a shell, and what it writes on its
 standard output, without its final newline, is the credential. It runs
 whenever the credential is used, and once more when it is saved, to check
 that it answers.
 
-**The program runs with the rights of the happyDomain process**, which reads
+**The program runs with the rights of the HappyDomain process**, which reads
 the instance keyset and the database: whoever writes the program of a user
 holds these rights, and reads the credentials of every user. Enable this kind
 only on an instance whose users are trusted as its administrator, such as an
@@ -299,7 +299,7 @@ exec pass show "$1"
 ```
 
 The program runs in the directory of its owner, with none of the environment
-of happyDomain: only `PATH` (`/usr/local/bin:/usr/bin:/bin`), and where the
+of HappyDomain: only `PATH` (`/usr/local/bin:/usr/bin:/bin`), and where the
 credential belongs, in `HAPPYDOMAIN_USER` (the identifier of the user),
 `HAPPYDOMAIN_OBJECT_TYPE` (`provider`...), `HAPPYDOMAIN_OBJECT_ID` and
 `HAPPYDOMAIN_FIELD`. A program needing more, such as `HOME` for `pass`, sets
@@ -330,7 +330,7 @@ too.
 
 #### The Vault of the instance: `vault`
 
-happyDomain logs in to the Vault of the instance with an AppRole:
+HappyDomain logs in to the Vault of the instance with an AppRole:
 
 ```
 secret-vault-addr=https://vault.example:8200
@@ -341,7 +341,7 @@ secret-vault-secret-id-file=/etc/happydomain/vault-secret-id
 `-secret-vault-mount` names the KV v2 engine (`secret` by default),
 `-secret-vault-approle-mount` the AppRole auth method (`approle`),
 `-secret-vault-namespace` a namespace, and `-secret-vault-ca-file` the
-certificate authorities trusted besides those of the system. happyDomain keeps
+certificate authorities trusted besides those of the system. HappyDomain keeps
 the token, renews it before it expires, and logs in again once Vault no longer
 knows it.
 
@@ -359,10 +359,10 @@ path "secret/data/happydomain/*" {
 
 Users write their secrets there with access of their own to Vault, for
 instance through a templated policy per identity. The AppRole reads the
-secrets of every user: happyDomain is what keeps each to their own path.
+secrets of every user: HappyDomain is what keeps each to their own path.
 
 Once `-secret-vault-addr` is set, the role ID and the file of the secret ID
-are required. At startup, an AppRole Vault refuses stops happyDomain; a Vault
+are required. At startup, an AppRole Vault refuses stops HappyDomain; a Vault
 that cannot be reached does not, and the credentials it holds fail until it is
 back.
 
@@ -370,13 +370,13 @@ back.
 
 A user creates such a keystore from the address of their Vault, a token of
 theirs, and optionally the mount of the KV v2 engine (`secret` by default) and
-a namespace. happyDomain asks Vault whether it knows the token first. The
+a namespace. HappyDomain asks Vault whether it knows the token first. The
 policies of the token tell what the keystore reaches: give it the read of the
-secrets happyDomain needs, and nothing more. A token with a limited number of
+secrets HappyDomain needs, and nothing more. A token with a limited number of
 uses is refused, as each reading consumes one, and so is one that expires and
 cannot be renewed.
 
-happyDomain renews the token when it uses it, once two thirds of its lease are
+HappyDomain renews the token when it uses it, once two thirds of its lease are
 gone. A token unused for longer than its lease still expires, and one with a
 maximum TTL ends there: make it periodic, without a maximum TTL, for instance
 through a token role allowing it (creating a periodic token directly needs
@@ -386,7 +386,7 @@ through a token role allowing it (creating a periodic token directly needs
 vault token create -role=happydomain -policy=happydomain-read
 ```
 
-where `happydomain-read` grants the read of the secrets happyDomain needs.
+where `happydomain-read` grants the read of the secrets HappyDomain needs.
 
 Once Vault no longer knows the token, its owner replaces it from their
 keystores: the secrets it holds, references, open again with the new one.
@@ -402,7 +402,7 @@ token needs it.
 
 ## Startup checks
 
-happyDomain refuses to start rather than fail credential by credential when:
+HappyDomain refuses to start rather than fail credential by credential when:
 
 - the `instance` policy is chosen without a keyset;
 - the keyset does not open the check record stored in the database the first
@@ -469,7 +469,7 @@ again resumes the work.
    The file keeps its owner, group and mode. Back it up, as described in
    [Backing up the keyset](#backing-up-the-keyset).
 
-2. Restart happyDomain: until then, it keeps protecting new users' keys with
+2. Restart HappyDomain: until then, it keeps protecting new users' keys with
    the previous key.
 
 3. Re-encrypt the users' keys under the new key. The credentials themselves are
@@ -537,13 +537,13 @@ was not rewrapped since. Neither the database nor the administrative backup
 holds the keyset.
 
 Without a copy, the credentials it protected are lost for good, and
-happyDomain refuses to start, with or without a new keyset (see [Startup
-checks](#startup-checks)). To start again, have happyDomain forget the lost
+HappyDomain refuses to start, with or without a new keyset (see [Startup
+checks](#startup-checks)). To start again, have HappyDomain forget the lost
 keyset:
 
-1. Stop happyDomain, and back up the database.
+1. Stop HappyDomain, and back up the database.
 
-2. Run, with the configuration happyDomain runs with (its configuration file,
+2. Run, with the configuration HappyDomain runs with (its configuration file,
    environment and flags):
 
    ```
@@ -563,7 +563,7 @@ keyset:
    docker compose run --rm -i happydomain abandon-secret-keyset
    ```
 
-3. Start happyDomain again, either:
+3. Start HappyDomain again, either:
 
    - with `secret-policy=plaintext` and no keyset: credentials entered again
      are stored in clear;

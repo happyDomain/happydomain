@@ -42,7 +42,7 @@
 </script>
 
 <svelte:head>
-    <title>{$t("menu.provider-features")} - happyDomain</title>
+    <title>{$t("menu.provider-features")} - HappyDomain</title>
 </svelte:head>
 
 <Container class="d-flex flex-column flex-fill py-3">

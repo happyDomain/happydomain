@@ -1,6 +1,6 @@
-# Adding a service to happyDomain
+# Adding a service to HappyDomain
 
-A **service** is how happyDomain presents a group of DNS records as one
+A **service** is how HappyDomain presents a group of DNS records as one
 meaningful thing: an SPF policy, a set of mail servers, a CAA policy, a
 "domain for sale" statement. This page describes what a service is expected to
 look like, what you have to write, and what happens on its own.
@@ -40,7 +40,7 @@ Why it matters:
 - Editing one record does not force a complex update path through a service that
   would have to recompute its abstract state, decide which record the change
   belongs to, and rebuild the rest of the RRset.
-- Nothing is lost. Tags, parameters and oddities happyDomain does not know about
+- Nothing is lost. Tags, parameters and oddities HappyDomain does not know about
   survive a load/save round trip, because they were never dropped in the first
   place.
 

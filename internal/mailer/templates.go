@@ -94,7 +94,7 @@ const mailHTMLTpl = `<!DOCTYPE html>
           <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse: collapse; max-width: 600px;">
             <tr>
               <td style="padding: 0 4px 24px;">
-                <img alt="happyDomain" src="cid:happydomain.png" width="231" height="28" style="display: block; width: 231px; height: 28px; border: 0; outline: none; text-decoration: none;">
+                <img alt="HappyDomain" src="cid:happydomain.png" width="231" height="28" style="display: block; width: 231px; height: 28px; border: 0; outline: none; text-decoration: none;">
               </td>
             </tr>
             <tr>
@@ -103,7 +103,7 @@ const mailHTMLTpl = `<!DOCTYPE html>
                   <tr>
                     <td class="hd-card" style="padding: 40px; font-family: Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #282828; word-break: break-word;">
                       {{ .Content }}
-                      <p style="margin: 24px 0 0; padding-top: 24px; border-top: 1px solid #dcdcce; color: #5e5e56;">Regards,<br><strong style="color: #282828;">Fred</strong>, customer support at happyDomain</p>
+                      <p style="margin: 24px 0 0; padding-top: 24px; border-top: 1px solid #dcdcce; color: #5e5e56;">Regards,<br><strong style="color: #282828;">Fred</strong>, customer support at HappyDomain</p>
                     </td>
                   </tr>
                 </table>
@@ -111,7 +111,7 @@ const mailHTMLTpl = `<!DOCTYPE html>
             </tr>
             <tr>
               <td align="center" style="padding: 24px 16px 0; font-family: Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px; line-height: 1.6; color: #5e5e56;">
-                <strong style="font-family: Lexend, Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 600; color: #016f4f;">happyDomain</strong>, finally a simple interface for domain names.<br>
+                <strong style="font-family: Lexend, Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 600; color: #016f4f;">HappyDomain</strong>, finally a simple interface for domain names.<br>
                 <a href="https://www.happydomain.org/" style="color: #5e5e56; text-decoration: underline;">happydomain.org</a>
                 &nbsp;&middot;&nbsp;
                 <a href="https://www.happydomain.org/en/legal-notice/" style="color: #5e5e56; text-decoration: underline;">Legal notice</a>
@@ -125,4 +125,4 @@ const mailHTMLTpl = `<!DOCTYPE html>
 </html>`
 
 // mailTXTTpl is the template used for text emails.
-const mailTXTTpl = "{{ .Content }}\n\n-- \nFred, customer support at happyDomain\nLegal notice: https://www.happydomain.org/en/legal-notice/"
+const mailTXTTpl = "{{ .Content }}\n\n-- \nFred, customer support at HappyDomain\nLegal notice: https://www.happydomain.org/en/legal-notice/"

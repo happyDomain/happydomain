@@ -1,6 +1,6 @@
 # Email auto-configuration
 
-happyDomain ships an integrated **Email Auto-configuration** service that lets
+HappyDomain ships an integrated **Email Auto-configuration** service that lets
 users publish IMAP/POP3/SMTP settings for their mail clients via the three
 de-facto standards mail clients try in order:
 
@@ -11,43 +11,43 @@ de-facto standards mail clients try in order:
 3. **Microsoft Autodiscover** — `https://autodiscover.<domain>/Autodiscover/Autodiscover.xml`
    (Outlook).
 
-A single happyDomain service emits the SRV records *and* the CNAMEs for the
-two HTTP-based standards. happyDomain itself serves the XML responses for
+A single HappyDomain service emits the SRV records *and* the CNAMEs for the
+two HTTP-based standards. HappyDomain itself serves the XML responses for
 those CNAMEs, so users get a fully working mail-client auto-configuration
 out of the box, without operating an extra Web server.
 
 The HTTP-based standards require valid HTTPS certificates on
-`autoconfig.<domain>` and `autodiscover.<domain>`. happyDomain delegates that
+`autoconfig.<domain>` and `autodiscover.<domain>`. HappyDomain delegates that
 to a reverse proxy (Caddy is the recommended choice) that uses **on-demand
-TLS** to obtain certificates automatically. happyDomain exposes a small
+TLS** to obtain certificates automatically. HappyDomain exposes a small
 validation endpoint that Caddy queries before issuing each certificate, so
 certificates are only obtained for domains that actually opted into the
 service.
 
 ## Configuration
 
-happyDomain needs to know the public FQDN where it serves the
+HappyDomain needs to know the public FQDN where it serves the
 auto-configuration XML — that's the target of the `autoconfig.` and
 `autodiscover.` CNAMEs the service emits.
 
 | Setting                              | CLI flag / env                                | Default               |
 | ------------------------------------ | --------------------------------------------- | --------------------- |
-| Public happyDomain URL               | `--externalurl` / `HAPPYDOMAIN_EXTERNAL_URL`  | `http://localhost:8081` |
+| Public HappyDomain URL               | `--externalurl` / `HAPPYDOMAIN_EXTERNAL_URL`  | `http://localhost:8081` |
 | Public host for hosted services      | `--service-hosting-host` / `HAPPYDOMAIN_SERVICE_HOSTING_HOST` | derived from `--externalurl` |
 
 `--service-hosting-host` replaces `--mail-autoconfig-host`, which is still
 honoured as a deprecated alias. It is shared with [MTA-STS](mta-sts.md) and
 [BIMI](bimi.md).
 
-If neither is set, happyDomain uses the host part of `--externalurl`. The same
+If neither is set, HappyDomain uses the host part of `--externalurl`. The same
 hostname must be reachable over HTTPS and able to get a valid certificate for
 `autoconfig.<user-domain>` and `autodiscover.<user-domain>` (see the Caddy
 section below).
 
-## Endpoints exposed by happyDomain
+## Endpoints exposed by HappyDomain
 
 All three are public, rate-limited (30 req/min per client IP), and read-only.
-None require authentication. Since happyDomain is meant to be fronted by Caddy
+None require authentication. Since HappyDomain is meant to be fronted by Caddy
 here, declare it with `-trusted-proxy` so the limiter sees the real client and
 not the proxy (see [reverse-proxy.md](reverse-proxy.md)).
 
@@ -60,13 +60,13 @@ not the proxy (see [reverse-proxy.md](reverse-proxy.md)).
 
 The Caddy hook is shared by every hosted service. For this one, it authorises
 certificates for `autoconfig.<X>` / `autodiscover.<X>` where `X` is a domain
-registered in happyDomain *and* has the Email Auto-configuration service
+registered in HappyDomain *and* has the Email Auto-configuration service
 configured. It also covers `mta-sts.<X>` for [MTA-STS](mta-sts.md) and
 `bimi.<X>` for [BIMI](bimi.md).
 
 ## End-user flow
 
-1. User adds their domain to happyDomain (existing flow).
+1. User adds their domain to HappyDomain (existing flow).
 2. From the service catalogue (Email category), the user picks
    "Email Auto-configuration".
 3. The dedicated form asks for:
@@ -83,7 +83,7 @@ configured. It also covers `mta-sts.<X>` for [MTA-STS](mta-sts.md) and
 
 ## Deploying with Caddy (recommended)
 
-A single Caddy instance can front happyDomain and handle TLS for both the
+A single Caddy instance can front HappyDomain and handle TLS for both the
 main UI and the auto-configuration endpoints.
 
 ### Caddyfile
@@ -166,11 +166,11 @@ The first time Thunderbird/Outlook hits
 
 1. Receives the request for an unknown hostname.
 2. Calls `https://happydomain.example.com/api/caddy/ask?domain=autoconfig.example.com`.
-3. happyDomain checks: parent `example.com` is registered, has the Email
+3. HappyDomain checks: parent `example.com` is registered, has the Email
    Auto-configuration service → returns 200.
 4. Caddy obtains a Let's Encrypt certificate for `autoconfig.example.com` and
-   reverse-proxies the request to happyDomain.
-5. happyDomain renders the Mozilla XML from the user's stored service
+   reverse-proxies the request to HappyDomain.
+5. HappyDomain renders the Mozilla XML from the user's stored service
    config and returns it.
 
 Subsequent requests reuse the cached certificate.

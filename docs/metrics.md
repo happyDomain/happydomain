@@ -1,6 +1,6 @@
-# happyDomain Metrics
+# HappyDomain Metrics
 
-happyDomain exposes Prometheus metrics at `GET /metrics` on the **admin
+HappyDomain exposes Prometheus metrics at `GET /metrics` on the **admin
 socket only** (Unix socket or loopback). The public HTTP API does **not**
 serve `/metrics`.
 
@@ -52,7 +52,7 @@ intentionally only mounted on the admin socket (`internal/app/admin.go`), and
 is gated by the admin auth middleware so it cannot be scraped anonymously on a
 password-protected bind. Prefer binding that socket to a Unix path or
 `127.0.0.1`; exposing it on a network interface without a configured admin
-password would leak this information to anyone who can reach it, so happyDomain
+password would leak this information to anyone who can reach it, so HappyDomain
 refuses to start the admin listener in that case (the public API keeps running).
 A loopback bind without a password still starts, with a warning.
 

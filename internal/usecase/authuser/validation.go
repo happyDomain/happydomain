@@ -116,9 +116,9 @@ func (uc *EmailValidationUsecase) SendLink(user *happydns.UserAuth) error {
 	toName := helpers.GenUsername(user.Email)
 	return uc.mailer.SendMail(
 		&mail.Address{Name: toName, Address: user.Email},
-		"Your new account on happyDomain",
+		"Your new account on HappyDomain",
 		fmt.Sprintf(`
-Welcome to happyDomain!
+Welcome to HappyDomain!
 -----------------------
 
 Hi %s,

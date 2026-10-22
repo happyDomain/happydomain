@@ -54,7 +54,7 @@ var bindProviderRegistered bool
 var errBindDirectoryNotAllowed = errors.New("this directory is not among those allowed by the administrator of this instance")
 
 type BindServer struct {
-	Directory  string `json:"directory,omitempty" happydomain:"label=Directory,placeholder=/etc/named/zones/,required,description=Local directory on the same host running happyDomain containing your zones. It has to be inside one of the directories allowed by the administrator of this instance."`
+	Directory  string `json:"directory,omitempty" happydomain:"label=Directory,placeholder=/etc/named/zones/,required,description=Local directory on the same host running HappyDomain containing your zones. It has to be inside one of the directories allowed by the administrator of this instance."`
 	Fileformat string `json:"fileformat,omitempty" happydomain:"label=File format,placeholder=%U.zone,description=See format at https://docs.dnscontrol.org/service-providers/providers/bind#filenameformat"`
 }
 

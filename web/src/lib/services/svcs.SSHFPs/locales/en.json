@@ -55,7 +55,7 @@
             "added": "{{count}} fingerprint(s) added.",
             "nothing-new": "Every fingerprint the server offers is already published here.",
             "status": {
-                "blocked": "This happyDomain instance is not allowed to reach that address.",
+                "blocked": "This HappyDomain instance is not allowed to reach that address.",
                 "connect-error": "The SSH server could not be reached.",
                 "handshake-error": "The server answered, but not as an SSH server.",
                 "timeout": "The SSH server did not answer in time."

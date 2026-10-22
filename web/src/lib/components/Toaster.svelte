@@ -52,7 +52,7 @@
     {#each $toasts as toast}
         <Toast onmouseenter={() => toast.pause()} onmouseleave={() => toast.resume()}>
             <ToastHeader toggle={() => toast.dismiss()} icon={toast.getColor()}>
-                {#if toast.title}{toast.title}{:else}happyDomain{/if}
+                {#if toast.title}{toast.title}{:else}HappyDomain{/if}
             </ToastHeader>
             {#if toast.timeout}
                 <div

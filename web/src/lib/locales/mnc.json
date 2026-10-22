@@ -7,7 +7,7 @@
             "deleted": "Šangga Mayambuha",
             "description": "Šangga be teni mayambume",
             "confirm": "Šangga be mayambuki serengge, ere be gidame:",
-            "confirm-twice": "Mayambure be temgetulerengge, šangga be teni mayambumbi, happyDomain de dosire be nakambi.",
+            "confirm-twice": "Mayambure be temgetulerengge, šangga be teni mayambumbi, HappyDomain de dosire be nakambi.",
             "confirm-password": "Si sini šangga be temgetuleme, 通过密码验证:",
             "consequence": "Sini 域名 enculeme waka, kemuni necin i baitalambi.",
             "remain-data": "Teknik i šajin, šangga be mayambumbi, damu 备份数据 kemuni bi.",
@@ -86,7 +86,7 @@
             "others": "{{domain}} i encu baitan"
         },
         "alert": {
-            "remove": "Ere baitan {{domain}} be happyDomain i kadalara 域名 i dorgici mayambumbi. Sini 域名 kemuni 提供商 de bi. Mayambume temgetulerengge?",
+            "remove": "Ere baitan {{domain}} be HappyDomain i kadalara 域名 i dorgici mayambumbi. Sini 域名 kemuni 提供商 de bi. Mayambume temgetulerengge?",
             "unable-retrieve": {
                 "description": "{{domain}} i 域名 be ejehe de, nimeku bi:",
                 "title": "域名 be ejehe de, nimeku bi"
@@ -123,7 +123,7 @@
             "confirm": "Temgetuleme Isebume",
             "back": "Amasi"
         },
-        "attached-new": "Acingga 域名 be happyDomain de nongtiha!",
+        "attached-new": "Acingga 域名 be HappyDomain de nongtiha!",
         "commit-msg": "Ai šangname?",
         "create-new-key": "Acingga {{id}} 钥匙 be arame",
         "discard": "Waliyame",
@@ -142,7 +142,7 @@
         "stop": "Ere 域名 be kadalame nakame",
         "view": {
             "abstract": "抽象 区域",
-            "cancel-title": "域名 be happyDomain de erembume",
+            "cancel-title": "域名 be HappyDomain de erembume",
             "description": "{{domain}} de isebure šangname be tuwame",
             "live": "Te i 记录",
             "monitoring": "监控",
@@ -198,7 +198,7 @@
         "address": "邮箱 地址 be ebu",
         "address-valid": "Valid 邮箱 地址 be ebu",
         "domain-access": "域名 ton be ejehe de nimeku bi.",
-        "domain-attach": "域名 be happyDomain de nongtire de nimeku bi",
+        "domain-attach": "域名 be HappyDomain de nongtire de nimeku bi",
         "domain-have": "Ere 提供商 de sini 域名 akū.",
         "domain-import": "域名 be 同步 de nimeku bi:",
         "domain-list": "Ere 提供商 域名 ton be tuwaburakū. Form be baitalame.",
@@ -222,7 +222,7 @@
             "content": "Session valid waka, si 登出 oho: {{err}}. Amasi 登录."
         },
         "settings-change": "设置 be halame ojorakū",
-        "account-no-auth": "Si happyDomain be 验证 akū i baitalambi. 账户 be kadalame ojorakū.",
+        "account-no-auth": "Si HappyDomain be 验证 akū i baitalambi. 账户 be kadalame ojorakū.",
         "domain-all-imported": "{{provider}} de encu 引入 域名 akū.",
         "too-high": "数字 amba, max: {{max}}",
         "too-low": "数字 ajige, min: {{min}}",
@@ -274,12 +274,12 @@
         "welcome": {
             "beta": {
                 "intro": "Ere beta 软件! 🏗️",
-                "part1": "happyDomain kemuni baitalame ombi, damu šangname bi. Nimeku bihe,",
+                "part1": "HappyDomain kemuni baitalame ombi, damu šangname bi. Nimeku bihe,",
                 "report": "muse de alame",
                 "part2": ". Muse erin i 回复, nimeku be alangge tusa. Baime 😊"
             },
-            "purpose": "{{happyDomain}} 域名 管理 be 简单 直观 i arame. Emu 域名 eici 域名 bi, musei platforma de emu bade kadalame.",
-            "use": "{{happyDomain}} be sini 提供商 i 接口 be 代用. 提供商 i 基础设施 be 依赖, damu 简单 接口 be baitalame.",
+            "purpose": "HappyDomain 域名 管理 be 简单 直观 i arame. Emu 域名 eici 域名 bi, musei platforma de emu bade kadalame.",
+            "use": "HappyDomain be sini 提供商 i 接口 be 代用. 提供商 i 基础设施 be 依赖, damu 简单 接口 be baitalame.",
             "unified": {
                 "title": "统一 管理",
                 "description": "域名 be emu bade kadalame, 注册地 be 不问."
@@ -306,15 +306,15 @@
         },
         "import": {
             "title": "域名 be 引入",
-            "intro": "happyDomain de kadalare 域名 be sonjome.",
+            "intro": "HappyDomain de kadalare 域名 be sonjome.",
             "imported": "引入 oho"
         },
         "explore": {
             "understood": "Saha!",
             "done": "Wajiha!",
             "bravo": "{{count:eq; 1:Sini 域名; default:Sini 域名}} te 配置 oho, 用法 de 预备.",
-            "title": "happyDomain 功能 be 探索",
-            "intro": "域名 配置 wajiha, happyDomain i 功能 be 发现:",
+            "title": "HappyDomain 功能 be 探索",
+            "intro": "域名 配置 wajiha, HappyDomain i 功能 be 发现:",
             "history": {
                 "title": "记录 历史",
                 "description": "DNS 记录 i šangname be 追踪, 版本 历史 jai 回滚 选项.",
@@ -336,8 +336,8 @@
             "soon": "ere inenggi"
         },
         "no-sale": {
-            "title": "happyDomain be 用法 de 域名 be 拥有.",
-            "description": "{{happyDomain}} 域名 be 卖 akū. Musei 接口 be 用法 de, 支持 提供商 i 域名 be 购买.",
+            "title": "HappyDomain be 用法 de 域名 be 拥有.",
+            "description": "HappyDomain 域名 be 卖 akū. Musei 接口 be 用法 de, 支持 提供商 i 域名 be 购买.",
             "buy-advice": "Muse 域名 购买 指南 be ere inenggi 发布. 关注 jai muse de 联系."
         }
     },
@@ -408,7 +408,7 @@
         "select": "提供商 be sonjome",
         "select-special": "Acingga 提供商 be sonjome",
         "resell": "域名 be 转售",
-        "resell-description": "Sini 客户 de 域名 be 转售, happyDomain i 接口 be 用法.",
+        "resell-description": "Sini 客户 de 域名 be 转售, HappyDomain i 接口 be 用法.",
         "hosting": "Hosting 提供商",
         "hosting-description": "Sini 网站 eici 应用 be 托管, 域名 be 管理.",
         "title-special": "Acingga 提供商 be 增加",

@@ -1,6 +1,6 @@
 # Checker quotas and scheduling policy
 
-happyDomain's checker subsystem runs scheduled DNS health checks on behalf of
+HappyDomain's checker subsystem runs scheduled DNS health checks on behalf of
 each user. To keep resource usage predictable on shared instances, the
 scheduler consults a per-user policy before every job and can throttle or
 skip executions based on the user's activity, explicit pause, or daily
@@ -114,7 +114,7 @@ happyDomain \
 ```
 
 Values set via the CLI are read at startup. Changing them requires a
-restart of the happyDomain process.
+restart of the HappyDomain process.
 
 ## Per-user overrides
 

@@ -31,7 +31,7 @@
 </script>
 
 <svelte:head>
-    <title>{$t("onboarding.steps.welcome")} - happyDomain</title>
+    <title>{$t("onboarding.steps.welcome")} - HappyDomain</title>
 </svelte:head>
 
 <Container class="my-auto py-4">

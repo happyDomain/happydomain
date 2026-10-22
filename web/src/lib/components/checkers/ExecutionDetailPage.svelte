@@ -195,7 +195,7 @@
 </script>
 
 <svelte:head>
-    <title>{$t("checkers.execution.title")} - {checkerName || checkerId} - happyDomain</title>
+    <title>{$t("checkers.execution.title")} - {checkerName || checkerId} - HappyDomain</title>
 </svelte:head>
 
 {#if loading}

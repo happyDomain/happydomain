@@ -52,7 +52,7 @@ func ConsolidateConfig() (opts *happydns.Options, err error) {
 		DefaultNameServer: "127.0.0.1:53",
 		ExternalURL:       *u,
 		JWTSigningMethod:  "HS512",
-		MailFrom:          mail.Address{Name: "happyDomain", Address: "happydomain@localhost"},
+		MailFrom:          mail.Address{Name: "HappyDomain", Address: "happydomain@localhost"},
 		MailSMTPPort:      587,
 		StorageEngine:     "leveldb",
 	}
@@ -145,7 +145,7 @@ func ConsolidateConfig() (opts *happydns.Options, err error) {
 	if len(opts.TrustedProxies) > 0 {
 		log.Printf("Trusting client IP headers from: %s\n", strings.Join(opts.TrustedProxies, ", "))
 	} else {
-		log.Println("No trusted proxy configured: X-Forwarded-For and X-Real-IP headers are ignored, clients are identified by their socket address. If happyDomain runs behind a reverse proxy, declare it with -trusted-proxy (see docs/reverse-proxy.md).")
+		log.Println("No trusted proxy configured: X-Forwarded-For and X-Real-IP headers are ignored, clients are identified by their socket address. If HappyDomain runs behind a reverse proxy, declare it with -trusted-proxy (see docs/reverse-proxy.md).")
 	}
 
 	// Unlike the trusted proxies, silence here means the safe default, so only

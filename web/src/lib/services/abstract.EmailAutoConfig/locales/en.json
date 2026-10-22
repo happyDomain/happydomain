@@ -14,7 +14,7 @@
             "incoming-hostname-desc": "FQDN of your IMAP/POP3 server.",
             "outgoing-hostname-desc": "FQDN of your SMTP submission server.",
             "publish-http": "Publish HTTP discovery (autoconfig./autodiscover. CNAMEs)",
-            "publish-http-desc": "When enabled, happyDomain creates CNAMEs for autoconfig.<your-domain> and autodiscover.<your-domain> pointing to this happyDomain instance, which serves the corresponding XML over HTTPS so Thunderbird and Outlook can self-configure.",
+            "publish-http-desc": "When enabled, HappyDomain creates CNAMEs for autoconfig.<your-domain> and autodiscover.<your-domain> pointing to this HappyDomain instance, which serves the corresponding XML over HTTPS so Thunderbird and Outlook can self-configure.",
             "exchange": "Exchange Server (optional)",
             "exchange-desc": "Hostname of an on-premises Microsoft Exchange server. Enables MAPI/EWS in the Autodiscover response.",
             "display-name": "Provider Display Name",

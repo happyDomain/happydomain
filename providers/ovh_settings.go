@@ -78,7 +78,7 @@ func ovh_settingsAskCredentials(fu happydns.FormUsecase, recallid string) (*happ
 
 	// Return some explanation to the user
 	return &happydns.CustomForm{
-			BeforeText:          "In order allows happyDomain to get and update yours domains, you have to let us access them. To avoid storing your credentials, we will store a unique token that will be associated with your account. For this purpose, you will be redirected to an OVH login screen. The registration will automatically continue",
+			BeforeText:          "In order allows HappyDomain to get and update yours domains, you have to let us access them. To avoid storing your credentials, we will store a unique token that will be associated with your account. For this purpose, you will be redirected to an OVH login screen. The registration will automatically continue",
 			NextButtonText:      "Go to OVH",
 			PreviousButtonText:  "common.previous",
 			NextButtonLink:      response.ValidationURL,

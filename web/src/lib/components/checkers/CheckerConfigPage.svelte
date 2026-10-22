@@ -161,7 +161,7 @@
 </script>
 
 <svelte:head>
-    <title>{resolvedStatus?.name ?? checkerId} - {domainName} - happyDomain</title>
+    <title>{resolvedStatus?.name ?? checkerId} - {domainName} - HappyDomain</title>
 </svelte:head>
 
 <div class="flex-fill mt-1 mb-5">

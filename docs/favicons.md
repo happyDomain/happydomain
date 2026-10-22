@@ -1,6 +1,6 @@
 # Favicons
 
-happyDomain shows an icon next to each domain and next to each DNS provider.
+HappyDomain shows an icon next to each domain and next to each DNS provider.
 Those icons are not shipped with the application: they are the favicon of the
 site the domain or the provider belongs to, fetched at runtime and cached.
 
@@ -15,7 +15,7 @@ GET /api/favicon/:domain
 ```
 
 It is unauthenticated and rate limited per client. It answers with the icon
-bytes, served from happyDomain's own origin, with a one-day cache and a
+bytes, served from HappyDomain's own origin, with a one-day cache and a
 restrictive `Content-Security-Policy`.
 
 The icon is never a redirect. Redirecting the browser to wherever the icon lives
@@ -84,7 +84,7 @@ Only the host name is substituted, never a path or a query from the requested
 URL. If the service lives on your own network, its address also has to be
 allowed with `-outbound-allowed-target` (see [Outbound
 destinations](outbound-targets.md)): the icon fetcher uses the same guard as
-every other request happyDomain makes on a user's behalf.
+every other request HappyDomain makes on a user's behalf.
 
 ## When no icon is found
 
@@ -100,7 +100,7 @@ still tell an icon that was found from one that was not.
 
 ## What is accepted from a remote host
 
-The bytes come from a host the caller named but are served from happyDomain's
+The bytes come from a host the caller named but are served from HappyDomain's
 origin, so they are filtered:
 
 - only image media types are served, anything else is refused rather than

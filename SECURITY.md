@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Only the latest version of happyDomain is supported with security fixes.
+Only the latest version of HappyDomain is supported with security fixes.
 
 | Version | Supported |
 | ------- | --------- |
@@ -14,19 +14,19 @@ Only the latest version of happyDomain is supported with security fixes.
 
 ### In scope
 
-- happyDomain application code (API/backend and web frontend)
-- Other websites directly operated by the happyDomain team: documentation, main website, blog, git redirection, downloads website, demo instance, insights
+- HappyDomain application code (API/backend and web frontend)
+- Other websites directly operated by the HappyDomain team: documentation, main website, blog, git redirection, downloads website, demo instance, insights
 
 ### Out of scope
 
-- Vulnerabilities in third-party dependencies that are not directly exploitable in happyDomain
+- Vulnerabilities in third-party dependencies that are not directly exploitable in HappyDomain
 - Social engineering attacks
 - Denial-of-service attacks requiring significant resources
 
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in happyDomain, please report it privately.
+If you discover a security vulnerability in HappyDomain, please report it privately.
 
 By email: security@happydomain.org
 On GitHub: https://github.com/happydomain/happydomain/security/advisories

@@ -33,7 +33,7 @@
 </script>
 
 <svelte:head>
-    <title>{$t("settings.notifications.title")} - happyDomain</title>
+    <title>{$t("settings.notifications.title")} - HappyDomain</title>
 </svelte:head>
 
 <Container class="flex-fill my-4 pb-5">

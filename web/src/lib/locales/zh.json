@@ -86,7 +86,7 @@
             "others": "更多操作（{{domain}}）"
         },
         "alert": {
-            "remove": "此操作仅将 {{domain}} 移出 happyDomain 管理，历史记录和变更日志将全部清除。域名在提供商处安然无恙。确定继续？",
+            "remove": "此操作仅将 {{domain}} 移出 HappyDomain 管理，历史记录和变更日志将全部清除。域名在提供商处安然无恙。确定继续？",
             "unable-retrieve": {
                 "description": "抱歉，无法获取 {{domain}} 的信息：",
                 "title": "获取信息失败"
@@ -122,7 +122,7 @@
             "confirm": "确认并应用",
             "back": "返回"
         },
-        "attached-new": "新域名已接入 happyDomain！",
+        "attached-new": "新域名已接入 HappyDomain！",
         "commit-msg": "说下改了什么",
         "create-new-key": "新建 {{id}} 密钥",
         "discard": "丢弃",
@@ -233,7 +233,7 @@
         "address": "邮箱地址不能为空",
         "address-valid": "请输入有效的邮箱地址",
         "domain-access": "访问域名列表时出错。",
-        "domain-attach": "接入域名到 happyDomain 时出错。",
+        "domain-attach": "接入域名到 HappyDomain 时出错。",
         "domain-have": "此提供商下暂无域名。请检查您购买的域名是否已完成解析授权。",
         "domain-import": "同步域名时出错：",
         "domain-list": "该提供商不支持列出域名，请使用上方表单手动添加。",
@@ -257,7 +257,7 @@
             "content": "登录状态已失效：{{err}}。请重新登录。"
         },
         "settings-change": "无法更改设置",
-        "account-no-auth": "您尚未登录 happyDomain，无法修改账号属性。",
+        "account-no-auth": "您尚未登录 HappyDomain，无法修改账号属性。",
         "domain-all-imported": "{{provider}} 下没有可导入的域名了。",
         "too-high": "数值过大，最大值为 {{max}}",
         "too-low": "数值过小，最小值为 {{min}}",
@@ -310,12 +310,12 @@
         "welcome": {
             "beta": {
                 "intro": "这是测试版软件！🏗️",
-                "part1": "happyDomain 功能完备但仍在积极开发中。如果遇到问题，请",
+                "part1": "HappyDomain 功能完备但仍在积极开发中。如果遇到问题，请",
                 "report": "告诉我们",
                 "part2": "。我们响应迅速，每个反馈的 bug 都能帮助我们改进工具。提前感谢 🙏"
             },
-            "purpose": "{{happyDomain}} 让域名管理变得简单直观。无论您有一个域名还是上百个，我们的平台都能让您集中管理。",
-            "use": "使用 {{happyDomain}} 作为您域名提供商的替代界面。它仍将依赖您提供商的基础设施，只是通过我们简洁的界面进行管理。",
+            "purpose": "HappyDomain 让域名管理变得简单直观。无论您有一个域名还是上百个，我们的平台都能让您集中管理。",
+            "use": "使用 HappyDomain 作为您域名提供商的替代界面。它仍将依赖您提供商的基础设施，只是通过我们简洁的界面进行管理。",
             "unified": {
                 "title": "统一管理",
                 "description": "在一个地方管理所有域名，无论它们在何处注册。"
@@ -342,15 +342,15 @@
         },
         "import": {
             "title": "导入您的域名",
-            "intro": "选择您想用 happyDomain 管理的域名。",
+            "intro": "选择您想用 HappyDomain 管理的域名。",
             "imported": "已导入"
         },
         "explore": {
             "understood": "明白了！",
             "done": "一切就绪！",
             "bravo": "{{count:eq; 1:您的域名已正确配置，可以使用了; default:您的域名已正确配置，可以使用了}}。",
-            "title": "探索 happyDomain 功能",
-            "intro": "域名设置完成，来发现 happyDomain 提供的强大功能：",
+            "title": "探索 HappyDomain 功能",
+            "intro": "域名设置完成，来发现 HappyDomain 提供的强大功能：",
             "history": {
                 "title": "记录历史",
                 "description": "通过版本历史和一键回滚，追踪 DNS 记录的所有变更。",
@@ -372,8 +372,8 @@
             "soon": "即将推出"
         },
         "no-sale": {
-            "title": "使用 happyDomain 需要先拥有一个域名。",
-            "description": "{{happyDomain}} 暂不销售域名。要使用我们的界面，您需要从我们支持的提供商处购买一个域名。",
+            "title": "使用 HappyDomain 需要先拥有一个域名。",
+            "description": "HappyDomain 暂不销售域名。要使用我们的界面，您需要从我们支持的提供商处购买一个域名。",
             "buy-advice": "我们将在不久的将来提供购买域名的指南。敬请期待！如果您愿意帮助我们完善指南，欢迎联系我们。"
         }
     },
@@ -451,7 +451,7 @@
     },
     "upgrade": {
         "title": "有可用更新！",
-        "content": "happyDomain 的新版本已经可用。点击此处刷新页面以启用。"
+        "content": "HappyDomain 的新版本已经可用。点击此处刷新页面以启用。"
     },
     "wait": {
         "asking-domains": "正在向提供商查询现有域名...",
@@ -472,7 +472,7 @@
         "propagation": "正在发布您的更改…"
     },
     "settings": {
-        "subtitle": "根据您的需求定制 happyDomain 体验",
+        "subtitle": "根据您的需求定制 HappyDomain 体验",
         "fieldhint": {
             "title": "字段提示",
             "description": "选择如何显示表单字段的帮助文本",
@@ -502,7 +502,7 @@
         },
         "sessions": "会话",
         "showrrtypes": "显示与服务关联的资源类型（适用于熟悉 DNS 的用户）",
-        "success": "继续享用 happyDomain。",
+        "success": "继续享用 HappyDomain。",
         "success-change": "您的设置已保存。",
         "title": "设置",
         "zoneview": {

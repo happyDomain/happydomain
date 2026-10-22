@@ -93,7 +93,7 @@
 </script>
 
 <svelte:head>
-    <title>{$t("checkers.list.title")}{domainName} - happyDomain</title>
+    <title>{$t("checkers.list.title")}{domainName} - HappyDomain</title>
 </svelte:head>
 
 <div class="flex-fill mt-1 mb-5">

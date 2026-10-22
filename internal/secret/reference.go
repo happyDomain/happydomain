@@ -32,7 +32,7 @@ import (
 var (
 	// ErrReferencesOnly is returned when a secret would move into a
 	// keystore keeping references: the secret would be taken for one.
-	ErrReferencesOnly = errors.New("this keystore keeps references to secrets kept outside happyDomain, not secrets: enter a reference")
+	ErrReferencesOnly = errors.New("this keystore keeps references to secrets kept outside HappyDomain, not secrets: enter a reference")
 
 	// ErrReferenceAsSecret is returned when the reference a keystore keeps
 	// would be sealed, sent back as shown, into one keeping secrets.

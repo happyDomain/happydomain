@@ -114,7 +114,7 @@
 </script>
 
 <svelte:head>
-    <title>{$t("domains.title")} - happyDomain</title>
+    <title>{$t("domains.title")} - HappyDomain</title>
 </svelte:head>
 
 <NewDomainModal />
