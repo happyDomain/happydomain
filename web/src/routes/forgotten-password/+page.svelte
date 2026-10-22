@@ -34,7 +34,7 @@
 </script>
 
 <svelte:head>
-    <title>{$t("password.forgotten")} - happyDomain</title>
+    <title>{$t("password.forgotten")} - HappyDomain</title>
 </svelte:head>
 
 <Container class="my-auto py-4">

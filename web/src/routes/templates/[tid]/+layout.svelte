@@ -48,7 +48,7 @@
 </script>
 
 <svelte:head>
-    <title>{data.template.name} - happyDomain</title>
+    <title>{data.template.name} - HappyDomain</title>
 </svelte:head>
 
 <TemplateEditorLayout

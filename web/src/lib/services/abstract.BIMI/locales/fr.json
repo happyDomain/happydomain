@@ -3,11 +3,11 @@
         "bimi": {
             "hosted-no-host": {
                 "title": "Les fichiers ne sont publiés nulle part",
-                "detail": "L'enregistrement BIMI pointe vers bimi.<domaine>, qui a besoin d'un CNAME vers cette instance de happyDomain pour servir le logo et le certificat."
+                "detail": "L'enregistrement BIMI pointe vers bimi.<domaine>, qui a besoin d'un CNAME vers cette instance de HappyDomain pour servir le logo et le certificat."
             },
             "hosted-no-logo": {
                 "title": "Aucun logo envoyé",
-                "detail": "happyDomain n'a aucun logo à servir pour cet enregistrement. C'est le cas après l'import d'une zone : les fichiers ne peuvent pas être retrouvés depuis le DNS, envoyez-les à nouveau."
+                "detail": "HappyDomain n'a aucun logo à servir pour cet enregistrement. C'est le cas après l'import d'une zone : les fichiers ne peuvent pas être retrouvés depuis le DNS, envoyez-les à nouveau."
             },
             "hosted-logo-no-title": {
                 "title": "Le logo n'a pas de <title>",
@@ -18,7 +18,7 @@
     "services": {
         "bimi-hosted": {
             "title": "Brand Indicators for Message Identification",
-            "intro": "Affiche le logo de votre marque à côté de vos e-mails dans les clients de messagerie qui le prennent en charge. happyDomain héberge le logo et son certificat, et génère l'enregistrement BIMI qui pointe vers eux.",
+            "intro": "Affiche le logo de votre marque à côté de vos e-mails dans les clients de messagerie qui le prennent en charge. HappyDomain héberge le logo et son certificat, et génère l'enregistrement BIMI qui pointe vers eux.",
             "requirements": "La plupart des fournisseurs de messagerie (Gmail, Yahoo, Apple Mail) n'affichent le logo qu'avec un Verified Mark Certificate ou un Common Mark Certificate, et pour le courrier passant une politique DMARC en quarantine ou reject.",
             "selector": "Sélecteur",
             "selector-desc": "Nom de l'enregistrement BIMI. Utilisez « default » sauf si vous publiez plusieurs logos.",
@@ -33,7 +33,7 @@
             "certificate-loaded": "{{count}} certificat(s) dans la chaîne.",
             "certificate-remove": "Retirer le certificat",
             "hosting": "Hébergement",
-            "hosting-desc": "happyDomain sert les fichiers sur bimi.{{domain}}, grâce à un CNAME pointant vers cette instance.",
+            "hosting-desc": "HappyDomain sert les fichiers sur bimi.{{domain}}, grâce à un CNAME pointant vers cette instance.",
             "preview": "Enregistrement généré",
             "preview-unavailable": "L'enregistrement est généré à l'enregistrement de la zone.",
             "logo-too-large": "Le logo dépasse 32 Kio.",
@@ -50,7 +50,7 @@
         "abstract": {
             "BIMI": {
                 "name": "BIMI (logo hébergé)",
-                "description": "Affichez le logo de votre marque à côté de vos e-mails, le logo et son certificat étant servis par happyDomain."
+                "description": "Affichez le logo de votre marque à côté de vos e-mails, le logo et son certificat étant servis par HappyDomain."
             }
         }
     }

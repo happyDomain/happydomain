@@ -1,15 +1,15 @@
 # The BIND provider
 
 The BIND provider edits zone files on the local file system of the server
-running happyDomain. Every other provider talks to a remote API; this one reads
-and writes files, with the rights of the happyDomain process.
+running HappyDomain. Every other provider talks to a remote API; this one reads
+and writes files, with the rights of the HappyDomain process.
 
 The directory is picked by the user, in the provider form. Left unchecked, any
 account on the instance could therefore name any directory the process can write
 to, and the file name is derived from the zone name and the file name format,
 which the same form supplies.
 
-happyDomain therefore keeps the provider disabled unless the administrator names
+HappyDomain therefore keeps the provider disabled unless the administrator names
 the directories it may use, and refuses anything outside them.
 
 > **Upgrading?** `-with-bind-provider` is no longer a boolean. An instance that
@@ -74,7 +74,7 @@ the file system.
 
 The allowed paths are resolved when a zone is read or written, not when the
 option is parsed, so a zone directory that is a volume mounted after the process
-starts is fine: happyDomain logs a warning at startup that it cannot see the
+starts is fine: HappyDomain logs a warning at startup that it cannot see the
 directory yet, and the provider starts working as soon as it appears, with no
 restart.
 

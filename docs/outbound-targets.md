@@ -1,6 +1,6 @@
 # Outbound destinations
 
-happyDomain connects to addresses its users choose. A DNS provider is configured
+HappyDomain connects to addresses its users choose. A DNS provider is configured
 with an API endpoint, the TLSA editor probes a TLS port, the resolver tool
 queries a name server, the MTA-STS checker fetches a policy file, and a
 notification channel posts to a webhook.
@@ -11,7 +11,7 @@ loopback, or the cloud metadata endpoint at `169.254.169.254`. The provider form
 is the sharpest of them, because the API key configured on the provider is sent
 to whatever address the endpoint field names.
 
-happyDomain therefore refuses any destination that is not publicly routable.
+HappyDomain therefore refuses any destination that is not publicly routable.
 Two options re-open the ranges a deployment genuinely needs.
 
 > **Upgrading?** This is a behaviour change. If you run PowerDNS, BIND, AdGuard
@@ -106,7 +106,7 @@ inherited from a lower-precedence source could only ever be widened:
 happyDomain -outbound-allowed-target none,127.0.0.1
 ```
 
-An invalid value stops happyDomain at startup rather than silently changing what
+An invalid value stops HappyDomain at startup rather than silently changing what
 is allowed. Two forms are refused rather than reinterpreted:
 
 - a block with host bits set (`192.168.1.5/24`), which reads like one host but
@@ -173,5 +173,5 @@ tenants, and neither one is account-gated end to end: keep both as narrow as
 possible, and prefer leaving `-resolver-allowed-target` empty, since the
 resolver tool it backs is entirely callable without an account.
 
-happyDomain logs the resulting posture at startup whenever either list is not
+HappyDomain logs the resulting posture at startup whenever either list is not
 empty. Nothing is logged when they are, because that is the safe default.

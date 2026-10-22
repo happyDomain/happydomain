@@ -31,10 +31,10 @@ const forge = (name: string) => {
 
 describe("reportMarkdown", () => {
     it("keeps the diagnostics in a foldable block", () => {
-        const md = reportMarkdown("the page stayed empty", "happyDomain: 1.0.0");
+        const md = reportMarkdown("the page stayed empty", "HappyDomain: 1.0.0");
         expect(md).toContain("the page stayed empty");
         expect(md).toContain("<details><summary>Diagnostics</summary>");
-        expect(md).toContain("happyDomain: 1.0.0");
+        expect(md).toContain("HappyDomain: 1.0.0");
     });
 
     it("omits the block when the user cleared the diagnostics", () => {
@@ -44,40 +44,40 @@ describe("reportMarkdown", () => {
 
 describe("issueURL", () => {
     it("fills the fields of the GitHub issue form", () => {
-        const url = new URL(issueURL(forge("GitHub"), "it broke", "happyDomain: 1.0.0"));
+        const url = new URL(issueURL(forge("GitHub"), "it broke", "HappyDomain: 1.0.0"));
         expect(url.pathname).toBe("/happyDomain/happydomain/issues/new");
         expect(url.searchParams.get("labels")).toBe("bug");
         expect(url.searchParams.get("title")).toBe("it broke");
         expect(url.searchParams.get("body")).toContain("it broke");
-        expect(url.searchParams.get("body")).toContain("happyDomain: 1.0.0");
+        expect(url.searchParams.get("body")).toContain("HappyDomain: 1.0.0");
     });
 
     it("fills the description of the GitLab issue", () => {
-        const url = new URL(issueURL(forge("Framagit"), "it broke", "happyDomain: 1.0.0"));
+        const url = new URL(issueURL(forge("Framagit"), "it broke", "HappyDomain: 1.0.0"));
         expect(url.searchParams.get("issuable_template")).toBe("Bug");
         expect(url.searchParams.get("issue[description]")).toContain("it broke");
-        expect(url.searchParams.get("issue[description]")).toContain("happyDomain: 1.0.0");
+        expect(url.searchParams.get("issue[description]")).toContain("HappyDomain: 1.0.0");
     });
 
     it("fills the body of the Forgejo issue", () => {
-        const url = new URL(issueURL(forge("Codeberg"), "it broke", "happyDomain: 1.0.0"));
+        const url = new URL(issueURL(forge("Codeberg"), "it broke", "HappyDomain: 1.0.0"));
         expect(url.searchParams.get("body")).toContain("it broke");
-        expect(url.searchParams.get("body")).toContain("happyDomain: 1.0.0");
+        expect(url.searchParams.get("body")).toContain("HappyDomain: 1.0.0");
     });
 });
 
 describe("mailtoURL", () => {
     it("addresses us, with the report as subject and body", () => {
-        const url = new URL(mailtoURL("the page stayed empty", "happyDomain: 1.0.0"));
+        const url = new URL(mailtoURL("the page stayed empty", "HappyDomain: 1.0.0"));
         expect(url.pathname).toBe(REPORT_EMAIL);
-        expect(url.searchParams.get("subject")).toBe("happyDomain: the page stayed empty");
+        expect(url.searchParams.get("subject")).toBe("HappyDomain: the page stayed empty");
         expect(url.searchParams.get("body")).toContain("the page stayed empty");
-        expect(url.searchParams.get("body")).toContain("happyDomain: 1.0.0");
+        expect(url.searchParams.get("body")).toContain("HappyDomain: 1.0.0");
     });
 
     it("keeps a subject when the user described nothing", () => {
-        const url = new URL(mailtoURL("", "happyDomain: 1.0.0"));
-        expect(url.searchParams.get("subject")).toBe("happyDomain: problem report");
+        const url = new URL(mailtoURL("", "HappyDomain: 1.0.0"));
+        expect(url.searchParams.get("subject")).toBe("HappyDomain: problem report");
     });
 
     it("encodes spaces so mail clients don't show plus signs", () => {

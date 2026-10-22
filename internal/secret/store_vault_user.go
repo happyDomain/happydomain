@@ -112,7 +112,7 @@ func (s *vaultUserStore) CreateForm() []happydns.Field {
 			Id:          vaultTokenParam,
 			Type:        "string",
 			Label:       "Token",
-			Description: "A token reading the secrets, best limited to them by its policies, and periodic: happyDomain renews it when it uses it, and a periodic token does not expire for being unused a while.",
+			Description: "A token reading the secrets, best limited to them by its policies, and periodic: HappyDomain renews it when it uses it, and a periodic token does not expire for being unused a while.",
 			Secret:      true,
 			Required:    true,
 		},

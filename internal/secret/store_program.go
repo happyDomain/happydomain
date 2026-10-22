@@ -64,7 +64,7 @@ const (
 var programDir string
 
 func init() {
-	flag.StringVar(&programDir, "secret-program-dir", "", "Directory holding, for the \"program\" secret store, a directory per user named after their identifier, with the programs answering their credentials; these programs run with the rights of happyDomain: enable this store only on an instance whose users are trusted as its administrator")
+	flag.StringVar(&programDir, "secret-program-dir", "", "Directory holding, for the \"program\" secret store, a directory per user named after their identifier, with the programs answering their credentials; these programs run with the rights of HappyDomain: enable this store only on an instance whose users are trusted as its administrator")
 }
 
 // programStore resolves references through programs of their owner: the

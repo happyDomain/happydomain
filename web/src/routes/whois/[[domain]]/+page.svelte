@@ -99,7 +99,7 @@
     <title>
         {$t("domaininfo.page-title")}
         {domain ? domain : ""}
-        - happyDomain
+        - HappyDomain
     </title>
 </svelte:head>
 

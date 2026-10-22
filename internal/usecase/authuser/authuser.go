@@ -269,10 +269,10 @@ func (s *Service) sendDuplicateRegistrationNotice(email string) {
 	toName := helpers.GenUsername(email)
 	err := s.mailer.SendMail(
 		&mail.Address{Name: toName, Address: email},
-		"Registration attempt on happyDomain",
+		"Registration attempt on HappyDomain",
 		fmt.Sprintf(`Hi %s,
 
-Someone (possibly you) attempted to create a new account on happyDomain
+Someone (possibly you) attempted to create a new account on HappyDomain
 using your email address.
 
 If this was you, you already have an account. You can log in or use the

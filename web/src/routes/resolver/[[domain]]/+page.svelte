@@ -158,7 +158,7 @@
     <title>
         {$t("menu.dns-resolver")}
         {domain ? domain : ""}
-        - happyDomain
+        - HappyDomain
     </title>
 </svelte:head>
 

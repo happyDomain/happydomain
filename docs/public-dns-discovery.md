@@ -1,7 +1,7 @@
 # Public DNS discovery
 
 The "Public DNS discovery" provider lets users monitor a domain hosted where
-happyDomain has no access. It never changes the zone: it recomposes it from what
+HappyDomain has no access. It never changes the zone: it recomposes it from what
 the authoritative servers of the domain publicly answer, then hands the records
 to the regular import pipeline, which analyses them into services that the
 checkers look after like those of any other zone.

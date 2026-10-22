@@ -78,7 +78,7 @@ func (s *KVStorage) MigrateSchema() (err error) {
 	}
 
 	if version.Version > len(migrations) {
-		return fmt.Errorf("Your database has revision %d, which is newer than the revision this happyDomain version can handle (max DB revision %d). Please update happyDomain", version.Version, len(migrations))
+		return fmt.Errorf("Your database has revision %d, which is newer than the revision this HappyDomain version can handle (max DB revision %d). Please update HappyDomain", version.Version, len(migrations))
 	}
 
 	for v, migration := range migrations[version.Version:] {

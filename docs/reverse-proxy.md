@@ -1,14 +1,14 @@
-# Running happyDomain behind a reverse proxy
+# Running HappyDomain behind a reverse proxy
 
-happyDomain identifies callers by their IP address to enforce the per-source
+HappyDomain identifies callers by their IP address to enforce the per-source
 rate limits (`/api/domaininfo/:domain`, the mail auto-configuration endpoints,
 notification channel tests) and the login lockout that requires a captcha after
 repeated failures.
 
-When happyDomain is fronted by a reverse proxy, every request reaches it from
+When HappyDomain is fronted by a reverse proxy, every request reaches it from
 the proxy address, and the real caller is only known through the
 `X-Forwarded-For` (or `X-Real-IP`) header the proxy adds. That header is trivial
-to forge, so happyDomain only honours it when the request comes from a peer the
+to forge, so HappyDomain only honours it when the request comes from a peer the
 operator declared as a proxy.
 
 ## `-trusted-proxy`
@@ -48,7 +48,7 @@ inherited from a lower-precedence source could only ever be widened:
 happyDomain -trusted-proxy none,192.0.2.10
 ```
 
-An invalid value stops happyDomain at startup rather than silently disabling
+An invalid value stops HappyDomain at startup rather than silently disabling
 the check. Two forms are refused rather than reinterpreted, because both would
 trust something other than what they look like:
 
@@ -59,7 +59,7 @@ trust something other than what they look like:
 
 ## Choosing a value
 
-- **No proxy** (happyDomain exposed directly): leave the option unset. This is
+- **No proxy** (HappyDomain exposed directly): leave the option unset. This is
   the default: forwarded headers are ignored and callers are identified by their
   socket address.
 - **Proxy on the same host**: the address it connects from, usually
@@ -87,7 +87,7 @@ Two failure modes to keep in mind:
 
 ## Making sure the proxy sets the header
 
-happyDomain reads `X-Forwarded-For`, then `X-Real-IP`. Your proxy must set them
+HappyDomain reads `X-Forwarded-For`, then `X-Real-IP`. Your proxy must set them
 from the connection it received, and must not pass through a client supplied
 value.
 
@@ -113,11 +113,11 @@ Traefik adds `X-Forwarded-For` by default; make sure the entrypoint declares
 `forwardedHeaders.trustedIPs` for its own upstreams if there is one.
 
 When a request carrying a forwarded header arrives from a peer that is not in
-the trusted list, happyDomain logs a warning (at most once every 15 minutes)
+the trusted list, HappyDomain logs a warning (at most once every 15 minutes)
 with the peer address. Seeing your proxy address there means `-trusted-proxy`
 is missing; seeing a client address there means someone is trying to spoof its
 identity. A declared proxy never triggers the warning, including when it
-forwards a header happyDomain cannot parse.
+forwards a header HappyDomain cannot parse.
 
 Because a single warning covers each 15 minute window, a noisy spoofing source
 can delay the report of a second one: check the whole window before concluding

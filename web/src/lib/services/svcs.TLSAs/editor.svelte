@@ -425,7 +425,7 @@
                         class:disabled={!canHash && rec.MatchingType !== 0}
                         title={canHash || rec.MatchingType === 0
                             ? undefined
-                            : "Hashing a certificate in your browser requires a secure connection: access happyDomain over HTTPS (or from localhost) to enable it. Matching type 'Full' works without it."}
+                            : "Hashing a certificate in your browser requires a secure connection: access HappyDomain over HTTPS (or from localhost) to enable it. Matching type 'Full' works without it."}
                     >
                         <input
                             type="file"

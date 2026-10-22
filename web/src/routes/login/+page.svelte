@@ -8,7 +8,7 @@
 </script>
 
 <svelte:head>
-    <title>{$t("onboarding.steps.welcome")} - happyDomain</title>
+    <title>{$t("onboarding.steps.welcome")} - HappyDomain</title>
 </svelte:head>
 
 <AuthCard

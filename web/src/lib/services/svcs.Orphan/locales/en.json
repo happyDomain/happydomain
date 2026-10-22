@@ -3,7 +3,7 @@
         "svcs": {
             "Orphan": {
                 "name": "Orphan Record",
-                "description": "A record not yet handled by happyDomain. Ask us to support it."
+                "description": "A record not yet handled by HappyDomain. Ask us to support it."
             }
         }
     }

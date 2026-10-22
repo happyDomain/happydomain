@@ -24,7 +24,7 @@ for contributors.
   notification channel is notified at the email address of their account.
 - **Stay small.** The watchlist is a standalone entity with its own background
   worker. It does not go through the checker engine: a watched domain is not a
-  happyDomain domain, and has no checker plan, quota, nor execution history.
+  HappyDomain domain, and has no checker plan, quota, nor execution history.
 
 ## Life cycle
 

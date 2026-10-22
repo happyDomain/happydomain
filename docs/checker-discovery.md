@@ -2,7 +2,7 @@
 
 This document describes the contract between the SDK types (`DiscoveryEntry`,
 `DiscoveryPublisher`, `RelatedObservation`, `ObservationGetter.GetRelated`,
-`ReportContext`) and the happyDomain host that implements the scheduler and
+`ReportContext`) and the HappyDomain host that implements the scheduler and
 storage behind them.
 
 It exists because the SDK alone does not answer the interesting questions:

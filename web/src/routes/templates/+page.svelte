@@ -127,7 +127,7 @@
 </script>
 
 <svelte:head>
-    <title>{$t("zone-templates.title")} - happyDomain</title>
+    <title>{$t("zone-templates.title")} - HappyDomain</title>
 </svelte:head>
 
 <Container class="flex-fill my-5">

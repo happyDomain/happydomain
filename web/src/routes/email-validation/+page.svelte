@@ -63,7 +63,7 @@
 </script>
 
 <svelte:head>
-    <title>happyDomain</title>
+    <title>HappyDomain</title>
 </svelte:head>
 
 <Container class="my-auto py-4">

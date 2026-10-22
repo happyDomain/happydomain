@@ -210,11 +210,11 @@ func eventFor(w *happydns.DomainWatch, from happydns.DomainWatchPhase, now time.
 	switch {
 	case isPastExpiration(from) && isHeld(w.Phase):
 		ev.Title = fmt.Sprintf("%s was renewed", name)
-		ev.Body = fmt.Sprintf("The owner of %s renewed it%s. happyDomain keeps watching it and will tell you if it expires again.", lit, expiresOn(w))
+		ev.Body = fmt.Sprintf("The owner of %s renewed it%s. HappyDomain keeps watching it and will tell you if it expires again.", lit, expiresOn(w))
 
 	case from == happydns.DomainWatchAvailable:
 		ev.Title = fmt.Sprintf("%s was registered", name)
-		ev.Body = fmt.Sprintf("%s has been registered%s%s. happyDomain keeps watching it and will tell you if it expires.", lit, byRegistrar(w), expiresOn(w))
+		ev.Body = fmt.Sprintf("%s has been registered%s%s. HappyDomain keeps watching it and will tell you if it expires.", lit, byRegistrar(w), expiresOn(w))
 
 	case w.Phase == happydns.DomainWatchExpiring:
 		days := 0
@@ -224,15 +224,15 @@ func eventFor(w *happydns.DomainWatch, from happydns.DomainWatchPhase, now time.
 			days = int(math.Round(w.ExpirationDate.Sub(now).Hours() / 24))
 		}
 		ev.Title = fmt.Sprintf("%s expires in %d days", name, days)
-		ev.Body = fmt.Sprintf("The registration of %s ends on %s. If its owner does not renew it, it will go through a grace period and a redemption period before being released. happyDomain will tell you at each step.", lit, formatDate(w.ExpirationDate))
+		ev.Body = fmt.Sprintf("The registration of %s ends on %s. If its owner does not renew it, it will go through a grace period and a redemption period before being released. HappyDomain will tell you at each step.", lit, formatDate(w.ExpirationDate))
 
 	case w.Phase == happydns.DomainWatchRegistered:
 		ev.Title = fmt.Sprintf("%s was renewed", name)
-		ev.Body = fmt.Sprintf("The owner of %s renewed it%s. happyDomain keeps watching it.", lit, expiresOn(w))
+		ev.Body = fmt.Sprintf("The owner of %s renewed it%s. HappyDomain keeps watching it.", lit, expiresOn(w))
 
 	case w.Phase == happydns.DomainWatchGrace:
 		ev.Title = fmt.Sprintf("%s has expired", name)
-		ev.Body = fmt.Sprintf("%s has reached its expiration date. During the grace period, which usually lasts up to 45 days, its owner can still renew it as usual. happyDomain now checks it twice a day.", lit)
+		ev.Body = fmt.Sprintf("%s has reached its expiration date. During the grace period, which usually lasts up to 45 days, its owner can still renew it as usual. HappyDomain now checks it twice a day.", lit)
 
 	case w.Phase == happydns.DomainWatchRedemption:
 		ev.Title = fmt.Sprintf("%s entered its redemption period", name)

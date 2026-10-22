@@ -22,7 +22,7 @@
     "services": {
         "mta-sts": {
             "title": "MTA Strict Transport Security",
-            "intro": "Tells other mail servers to only deliver to your domain over authenticated TLS. Beyond the DNS record, the standard needs a policy file served over HTTPS: happyDomain can host it for you.",
+            "intro": "Tells other mail servers to only deliver to your domain over authenticated TLS. Beyond the DNS record, the standard needs a policy file served over HTTPS: HappyDomain can host it for you.",
             "policy": "Policy",
             "mode": "Mode",
             "mode-testing": "Testing: report failures, still deliver",
@@ -34,8 +34,8 @@
             "mx-desc": "Host names allowed to receive mail for this domain, as found in your MX records. A leading *. matches exactly one label.",
             "add-mx": "Add an MX host",
             "hosting": "Policy hosting",
-            "host-policy": "Let happyDomain serve the policy file (mta-sts. CNAME)",
-            "host-policy-desc": "When enabled, happyDomain creates a CNAME for mta-sts.<your-domain> pointing to this happyDomain instance, which serves the policy below over HTTPS. Leave it off if you serve the file from your own web server.",
+            "host-policy": "Let HappyDomain serve the policy file (mta-sts. CNAME)",
+            "host-policy-desc": "When enabled, HappyDomain creates a CNAME for mta-sts.<your-domain> pointing to this HappyDomain instance, which serves the policy below over HTTPS. Leave it off if you serve the file from your own web server.",
             "preview": "Policy file",
             "preview-empty": "Nothing will be served yet: testing and enforce policies need at least one authorized MX."
         }
@@ -44,7 +44,7 @@
         "abstract": {
             "MTASTS": {
                 "name": "MTA-STS (hosted policy)",
-                "description": "Require authenticated TLS for incoming mail, with the RFC 8461 policy file served by happyDomain."
+                "description": "Require authenticated TLS for incoming mail, with the RFC 8461 policy file served by HappyDomain."
             }
         }
     }

@@ -3,11 +3,11 @@
         "bimi": {
             "hosted-no-host": {
                 "title": "The files are not published anywhere",
-                "detail": "The BIMI record points to bimi.<domain>, which needs a CNAME toward this happyDomain instance to serve the logo and the certificate."
+                "detail": "The BIMI record points to bimi.<domain>, which needs a CNAME toward this HappyDomain instance to serve the logo and the certificate."
             },
             "hosted-no-logo": {
                 "title": "No logo uploaded",
-                "detail": "happyDomain has no logo to serve for this record. This happens after importing a zone: the files cannot be recovered from DNS, upload them again."
+                "detail": "HappyDomain has no logo to serve for this record. This happens after importing a zone: the files cannot be recovered from DNS, upload them again."
             },
             "hosted-logo-no-title": {
                 "title": "The logo has no <title>",
@@ -18,7 +18,7 @@
     "services": {
         "bimi-hosted": {
             "title": "Brand Indicators for Message Identification",
-            "intro": "Displays your brand logo next to your emails in the mail clients that support it. happyDomain hosts the logo and its certificate, and generates the BIMI record pointing to them.",
+            "intro": "Displays your brand logo next to your emails in the mail clients that support it. HappyDomain hosts the logo and its certificate, and generates the BIMI record pointing to them.",
             "requirements": "Most mail providers (Gmail, Yahoo, Apple Mail) only display the logo with a Verified Mark Certificate or a Common Mark Certificate, and for mail passing a DMARC policy at quarantine or reject.",
             "selector": "Selector",
             "selector-desc": "Name of the BIMI record. Use \"default\" unless you publish multiple logos.",
@@ -33,7 +33,7 @@
             "certificate-loaded": "{{count}} certificate(s) in the chain.",
             "certificate-remove": "Remove the certificate",
             "hosting": "Hosting",
-            "hosting-desc": "happyDomain serves the files at bimi.{{domain}}, through a CNAME pointing to this instance.",
+            "hosting-desc": "HappyDomain serves the files at bimi.{{domain}}, through a CNAME pointing to this instance.",
             "preview": "Generated record",
             "preview-unavailable": "The record is generated when the zone is saved.",
             "logo-too-large": "The logo is over 32 KiB.",
@@ -50,7 +50,7 @@
         "abstract": {
             "BIMI": {
                 "name": "BIMI (hosted logo)",
-                "description": "Display your brand logo next to your emails, with the logo and its certificate served by happyDomain."
+                "description": "Display your brand logo next to your emails, with the logo and its certificate served by HappyDomain."
             }
         }
     }

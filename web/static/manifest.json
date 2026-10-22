@@ -20,8 +20,8 @@
             "type": "image/png"
         }
     ],
-    "name": "happyDomain",
-    "short_name": "happyDomain",
+    "name": "HappyDomain",
+    "short_name": "HappyDomain",
     "start_url": "/",
     "id": "/"
 }

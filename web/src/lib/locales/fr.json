@@ -3,7 +3,7 @@
         "ask-have": "Vous n'avez pas encore de compte sur notre sympathique plateforme ?",
         "export": {
             "title": "Exporter mes données",
-            "description": "Téléchargez une archive complète de toutes vos données stockées dans happyDomain.",
+            "description": "Téléchargez une archive complète de toutes vos données stockées dans HappyDomain.",
             "button": "Télécharger mes données",
             "warning": "Le fichier exporté contient des données sensibles : des jetons de session actifs (utilisables pour se connecter à votre place) et des identifiants d'API de fournisseurs. Conservez-le en lieu sûr et ne le partagez pas.",
             "partial": "L'export s'est terminé avec des erreurs, certaines données peuvent être manquantes :"
@@ -89,7 +89,7 @@
         },
         "monitor-elsewhere": {
             "button": "Surveiller un domaine hébergé ailleurs",
-            "hint": "Votre domaine est hébergé là où happyDomain ne peut pas se connecter ? happyDomain peut tout de même le surveiller : sa zone est recomposée, en lecture seule, à partir de ce que ses serveurs de noms répondent publiquement.",
+            "hint": "Votre domaine est hébergé là où HappyDomain ne peut pas se connecter ? HappyDomain peut tout de même le surveiller : sa zone est recomposée, en lecture seule, à partir de ce que ses serveurs de noms répondent publiquement.",
             "provider-name": "DNS public"
         },
         "kind": "un domaine",
@@ -112,14 +112,14 @@
             "apply-template": "Appliquer un modèle"
         },
         "alert": {
-            "remove": "Cette action retirera définitivement le domaine {{domain}} de votre liste. L'historique et les zones abstraites seront supprimés. Cela ne supprimera ni n'affectera votre domaine auprès de votre fournisseur, ni ne modifiera ce qui est actuellement diffusé. Cela ne concerne seulement que ce que vous voyez dans happyDomain. Êtes-vous certain de vouloir continuer ?",
+            "remove": "Cette action retirera définitivement le domaine {{domain}} de votre liste. L'historique et les zones abstraites seront supprimés. Cela ne supprimera ni n'affectera votre domaine auprès de votre fournisseur, ni ne modifiera ce qui est actuellement diffusé. Cela ne concerne seulement que ce que vous voyez dans HappyDomain. Êtes-vous certain de vouloir continuer ?",
             "unable-retrieve": {
                 "description": "Malheureusement, nous ne parvenons pas à obtenir les informations du domaine {{domain}} :",
                 "title": "Impossible de récupérer les informations du domaine"
             }
         },
         "add-a-subdomain": "Ajouter un sous-domaine",
-        "read-only-edit": "Cet hébergeur est en lecture seule : happyDomain ne peut pas modifier cette zone.",
+        "read-only-edit": "Cet hébergeur est en lecture seule : HappyDomain ne peut pas modifier cette zone.",
         "add-a-service": "Ajouter un service",
         "add-alias": "Ajout d'alias",
         "add-an-alias": "Ajouter un alias vers {{domain}}",
@@ -144,11 +144,11 @@
             "others": "{{count:eq; 0:pas d'autres changements; 1:{{count}} autre changement; default:{{count}} autres changements}}",
             "prepare-info": "Le fournisseur exécutera {{nbDiffs}} correction(s) pour vos {{nbSelected}} modification(s) sélectionnée(s) :",
             "prepare-warning": "Le nombre de corrections diffère de votre sélection. Veuillez vérifier avant de confirmer.",
-            "read-only": "Cet hébergeur est en lecture seule : happyDomain lit la zone publiée mais ne peut pas la modifier. Appliquez vous-même ces différences sur votre serveur.",
+            "read-only": "Cet hébergeur est en lecture seule : HappyDomain lit la zone publiée mais ne peut pas la modifier. Appliquez vous-même ces différences sur votre serveur.",
             "confirm": "Confirmer et appliquer",
             "back": "Retour"
         },
-        "attached-new": "Nouveau domaine lié à happyDomain!",
+        "attached-new": "Nouveau domaine lié à HappyDomain!",
         "commit-msg": "Qu'est-ce qui a changé ?",
         "create-new-key": "Créer une nouvelle clé {{id}}",
         "discard": "Supprimer",
@@ -164,7 +164,7 @@
         "stop": "Arrêter de gérer ce domaine",
         "view": {
             "abstract": "Zone abstraite",
-            "cancel-title": "Conserver mon domaine dans happyDomain",
+            "cancel-title": "Conserver mon domaine dans HappyDomain",
             "description": "Valider les modifications qui seront appliquées à {{domain}}",
             "live": "Enregistrements actifs",
             "monitoring": "Suivi",
@@ -273,7 +273,7 @@
     },
     "watchlist": {
         "title": "Domaines surveillés",
-        "description": "Gardez un œil sur les noms de domaine que vous aimeriez posséder : happyDomain vous prévient lorsqu'ils sont sur le point d'être libérés, et lorsque vous pouvez les enregistrer.",
+        "description": "Gardez un œil sur les noms de domaine que vous aimeriez posséder : HappyDomain vous prévient lorsqu'ils sont sur le point d'être libérés, et lorsque vous pouvez les enregistrer.",
         "lifecycle": "Cycle de vie du domaine",
         "loading": "Chargement de vos domaines surveillés…",
         "retry": "Réessayer",
@@ -355,17 +355,17 @@
         },
         "added": {
             "title": "Domaine surveillé",
-            "message": "happyDomain vous préviendra lorsque {{domain}} sera sur le point d'être libéré."
+            "message": "HappyDomain vous préviendra lorsque {{domain}} sera sur le point d'être libéré."
         },
         "empty": {
             "title": "Vous convoitez un nom de domaine déjà pris ?",
-            "intro": "De nombreux domaines ne sont pas renouvelés par leur titulaire. Ajoutez ceux que vous aimeriez posséder, et happyDomain les suit tout au long de leur cycle de vie.",
+            "intro": "De nombreux domaines ne sont pas renouvelés par leur titulaire. Ajoutez ceux que vous aimeriez posséder, et HappyDomain les suit tout au long de leur cycle de vie.",
             "add": {
                 "title": "Ajoutez un domaine",
                 "text": "Saisissez ci-dessus le domaine que vous convoitez, avec éventuellement une note pour vous rappeler pourquoi."
             },
             "follow": {
-                "title": "happyDomain le surveille",
+                "title": "HappyDomain le surveille",
                 "text": "Une fois par semaine tant qu'il est enregistré, puis deux fois par jour dès son expiration : période de grâce, rédemption, suppression."
             },
             "notify": {
@@ -468,7 +468,7 @@
         "address": "L'adresse électronique est obligatoire",
         "address-valid": "Une adresse électronique valide est obligatoire",
         "domain-access": "Une erreur s'est produite en essayant d'accéder à la liste des domaines.",
-        "domain-attach": "Une erreur s'est produite lors de l'attachement du domaine à happyDomain",
+        "domain-attach": "Une erreur s'est produite lors de l'attachement du domaine à HappyDomain",
         "domain-have": "Il semble que vous n'ayez pas de nom de domaine enregistré chez ce fournisseur.",
         "domain-import": "Une erreur s'est produite lors de la synchronisation de ce domaine :",
         "domain-list": "Ce fournisseur ne permet pas de répertorier les domaines existants. Utilisez le formulaire ci-dessus pour en ajouter un.",
@@ -491,7 +491,7 @@
             "content": "Session invalide, vous avez été déconnecté : {{err}}. Veuillez vous connecter à nouveau."
         },
         "settings-change": "Impossible de changer vos paramètres",
-        "account-no-auth": "Vous utilisez happyDomain sans authentification. Vous ne pouvez pas changer d'autre paramètre de votre compte.",
+        "account-no-auth": "Vous utilisez HappyDomain sans authentification. Vous ne pouvez pas changer d'autre paramètre de votre compte.",
         "domain-all-imported": "Ce compte sur {{provider}} ne contient plus aucun domaine à importer.",
         "provider-delete": "Une erreur s'est produite lors de la suppression de la référence au fournisseur d'hébergement",
         "duration": "Durée invalide : utilisez par exemple 3600, 30m, 1h30m ou 1w2d.",
@@ -570,7 +570,7 @@
         "what-happened": "Que s'est-il passé ?",
         "placeholder": "J'ai essayé d'ajouter mon domaine et la page est restée vide…",
         "attached-details": "Détails joints à votre signalement",
-        "attached-details-desc": "Votre version, votre navigateur et les erreurs enregistrées par happyDomain. Aucun mot de passe, aucune clé d'API, aucun nom de domaine : vous pouvez les relire et les modifier.",
+        "attached-details-desc": "Votre version, votre navigateur et les erreurs enregistrées par HappyDomain. Aucun mot de passe, aucune clé d'API, aucun nom de domaine : vous pouvez les relire et les modifier.",
         "collecting": "Collecte en cours…",
         "copy": "Copier le signalement",
         "copied": "Signalement copié !",
@@ -591,12 +591,12 @@
         "welcome": {
             "beta": {
                 "intro": "C'est une version βéta! 🏗️",
-                "part1": "happyDomain est fonctionnel mais comporte encore de nombreux bugs. Si quelque chose ne fonctionne pas comme vous l'attendez, s'il vous plaît",
+                "part1": "HappyDomain est fonctionnel mais comporte encore de nombreux bugs. Si quelque chose ne fonctionne pas comme vous l'attendez, s'il vous plaît",
                 "report": "dites-le nous",
                 "part2": ". Nous sommes super réactifs et chaque bug signalé permet d'améliorer l'outil pour tous. Un grand merci par avance 🙏"
             },
-            "purpose": "{{happyDomain}} rend la gestion des domaines simple et intuitive. Que vous ayez un seul domaine ou des centaines, notre plateforme vous offre un moyen centralisé de les gérer tous.",
-            "use": "Utilisez {{happyDomain}} comme interface de remplacement de votre fournisseur de noms de domaine habituel. Il continuera à s'appuyer sur l'infrastructure de votre fournisseur, vous n'aurez qu'à profiter de notre interface simple.",
+            "purpose": "HappyDomain rend la gestion des domaines simple et intuitive. Que vous ayez un seul domaine ou des centaines, notre plateforme vous offre un moyen centralisé de les gérer tous.",
+            "use": "Utilisez HappyDomain comme interface de remplacement de votre fournisseur de noms de domaine habituel. Il continuera à s'appuyer sur l'infrastructure de votre fournisseur, vous n'aurez qu'à profiter de notre interface simple.",
             "unified": {
                 "title": "Une gestion unifiée",
                 "description": "Gérez tous vos domaines en un seul endroit, quel que soit leur lieu d'enregistrement."
@@ -623,15 +623,15 @@
         },
         "import": {
             "title": "Importer vos domaines",
-            "intro": "Sélectionnez les domaines que vous voulez gérer dans happyDomain.",
+            "intro": "Sélectionnez les domaines que vous voulez gérer dans HappyDomain.",
             "imported": "Importé"
         },
         "explore": {
             "understood": "Compris !",
             "done": "Tout est prêt !",
             "bravo": "{{count:eq; 1:Votre domaine est bien configuré et prêt à être utilisé; default:Vos domaines sont bien configurés et prêts à être utilisés}}.",
-            "title": "Explorons les fonctionnalités d'happyDomain",
-            "intro": "Maintenant que votre domaine est configuré, découvrez les puissantes fonctionnalités qu'offre happyDomain :",
+            "title": "Explorons les fonctionnalités d'HappyDomain",
+            "intro": "Maintenant que votre domaine est configuré, découvrez les puissantes fonctionnalités qu'offre HappyDomain :",
             "history": {
                 "title": "Historique des enregistrements",
                 "description": "Suivez toutes les modifications apportées à vos enregistrements grâce à l'historique des versions. Revenez en arrière en un clic.",
@@ -653,8 +653,8 @@
             "soon": "bientôt"
         },
         "no-sale": {
-            "title": "Vous devez déjà posséder un nom de domaine pour utiliser happyDomain.",
-            "description": "{{happyDomain}} ne fournit pas encore de domaine. Pour commencer à utiliser notre interface, vous devez vous procurer un domaine auprès de l'un des fournisseurs répertoriés",
+            "title": "Vous devez déjà posséder un nom de domaine pour utiliser HappyDomain.",
+            "description": "HappyDomain ne fournit pas encore de domaine. Pour commencer à utiliser notre interface, vous devez vous procurer un domaine auprès de l'un des fournisseurs répertoriés",
             "buy-advice": "Nous vous donnerons prochainement des conseils sur la manière de se procurer facilement un nom de domaine. Restez donc à l'écoute et contactez-nous si vous souhaitez nous aider à élaborer un guide complet."
         }
     },
@@ -699,7 +699,7 @@
     },
     "upgrade": {
         "title": "Une mise à jour est disponible !",
-        "content": "Une nouvelle version d'happyDomain est disponible. Pour l'activer, vous pouvez cliquer ici pour rafraîchir la page."
+        "content": "Une nouvelle version d'HappyDomain est disponible. Pour l'activer, vous pouvez cliquer ici pour rafraîchir la page."
     },
     "wait": {
         "asking-domains": "Demande en cours chez l'hébergeur des domaines existants ...",
@@ -721,7 +721,7 @@
     },
     "settings": {
         "description": "Personnalisez vos préférences",
-        "subtitle": "Adaptez votre expérience happyDomain à vos besoins",
+        "subtitle": "Adaptez votre expérience HappyDomain à vos besoins",
         "fieldhint": {
             "title": "Indices des champs",
             "description": "Choisissez comment afficher le texte d'aide pour les champs de formulaire",
@@ -747,7 +747,7 @@
         },
         "sessions": "Sessions",
         "showrrtypes": "Afficher les types d'enregistrement associés aux services (pour les utilisateurs familiers de la terminologie DNS)",
-        "success": "Vous pouvez continuer d'apprécier happyDomain.",
+        "success": "Vous pouvez continuer d'apprécier HappyDomain.",
         "success-change": "Vos paramètres ont été sauvegardés.",
         "title": "Paramètres",
         "applyconfirm": {
@@ -818,7 +818,7 @@
         "name-your": "Nommer cet hébergeur de domaines",
         "provider": "Domaines existant sur {{provider}}",
         "read-only": "Lecture seule",
-        "read-only-title": "happyDomain lit la zone par cet hébergeur mais ne la modifie jamais",
+        "read-only-title": "HappyDomain lit la zone par cet hébergeur mais ne la modifie jamais",
         "kind": "un hébergeur de domaines",
         "select-provider": "Sélectionnez d'abord l'hébergeur de votre domaine :",
         "provider-name": "Nom de l'hébergeur",
@@ -888,7 +888,7 @@
     },
     "keystores": {
         "title": "Coffres des identifiants",
-        "description": "Choisissez où sont scellés les identifiants que vous confiez à happyDomain, comme les clés d'API des hébergeurs.",
+        "description": "Choisissez où sont scellés les identifiants que vous confiez à HappyDomain, comme les clés d'API des hébergeurs.",
         "instance": "Coffre de l'instance ({{kind}})",
         "scope-instance": "Géré par l'instance",
         "scope-personal": "Personnel",
@@ -929,8 +929,8 @@
         "unlock-description": "Ce coffre ne s'ouvre qu'avec ce que vous fournissez. Il reste déverrouillé jusqu'à votre déconnexion.",
         "still-locked": "Le coffre est resté verrouillé : l'action n'a pas été faite.",
         "references": "Références",
-        "reference": "Référence à un secret conservé hors de happyDomain",
-        "references-help": "Les coffres de ce type ne conservent aucun identifiant : à la place de chacun, vous saisissez une référence vers lui ({{hint}}), que happyDomain résout quand il l'utilise. Les identifiants déjà enregistrés ailleurs ne peuvent pas y être migrés.",
+        "reference": "Référence à un secret conservé hors de HappyDomain",
+        "references-help": "Les coffres de ce type ne conservent aucun identifiant : à la place de chacun, vous saisissez une référence vers lui ({{hint}}), que HappyDomain résout quand il l'utilise. Les identifiants déjà enregistrés ailleurs ne peuvent pas y être migrés.",
         "reentry-title": "Identifiants à saisir à nouveau",
         "reentry-references": "Ce coffre conserve des références, pas des identifiants : saisissez une référence dans chaque champ d'identifiant.",
         "reentry-secrets": "Ce coffre conserve des identifiants, pas des références : saisissez chaque identifiant lui-même."

@@ -1,6 +1,6 @@
 # Checker scheduling and execution
 
-happyDomain's checker subsystem runs small health checks against DNS zones,
+HappyDomain's checker subsystem runs small health checks against DNS zones,
 domains, and services. Each check can be triggered in two ways (on a
 recurring schedule, or manually from the UI/API), and both paths share the
 same execution pipeline (observation → rule evaluation → aggregated status).

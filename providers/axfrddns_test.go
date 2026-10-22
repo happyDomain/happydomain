@@ -119,7 +119,7 @@ func TestDDNSServerIsReadOnly(t *testing.T) {
 func TestDDNSTransferOnlyField(t *testing.T) {
 	sf, _ := reflect.TypeOf(DDNSServer{}).FieldByName("TransferOnly")
 	f := forms.GenField(sf)
-	if f.Label != "Zone transfer only" || !strings.HasSuffix(f.Description, "to the address of happyDomain.") {
+	if f.Label != "Zone transfer only" || !strings.HasSuffix(f.Description, "to the address of HappyDomain.") {
 		t.Errorf("label %q, description %q: want the label and the whole description", f.Label, f.Description)
 	}
 }

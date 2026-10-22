@@ -40,7 +40,7 @@
 </script>
 
 <svelte:head>
-    <title>{data.provider._comment} - happyDomain</title>
+    <title>{data.provider._comment} - HappyDomain</title>
 </svelte:head>
 
 <Container fluid class="d-flex flex-column flex-fill">

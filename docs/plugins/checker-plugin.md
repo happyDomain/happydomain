@@ -1,23 +1,23 @@
-# Building a happyDomain Checker Plugin
+# Building a HappyDomain Checker Plugin
 
 This page documents how to ship a **checker** as an in-process Go plugin
-that happyDomain loads at startup. Checker plugins extend happyDomain with
+that HappyDomain loads at startup. Checker plugins extend HappyDomain with
 automated diagnostics on zones, domains, services or users.
 
-If you've never built a happyDomain plugin before, read
+If you've never built a HappyDomain plugin before, read
 [`checker-dummy`](https://git.happydns.org/checker-dummy) first; it is the
 reference implementation that this page mirrors.
 
-> ⚠️ **Security note.** A `.so` plugin is loaded into the happyDomain process
-> and runs with the same privileges. happyDomain refuses to load plugins from
+> ⚠️ **Security note.** A `.so` plugin is loaded into the HappyDomain process
+> and runs with the same privileges. HappyDomain refuses to load plugins from
 > a directory that is group- or world-writable; keep your plugin directory
-> owned and writable only by the happyDomain user.
+> owned and writable only by the HappyDomain user.
 
 ---
 
 ## What a checker plugin must export
 
-happyDomain's loader looks for a single exported symbol named
+HappyDomain's loader looks for a single exported symbol named
 `NewCheckerPlugin` with this exact signature:
 
 ```go
@@ -39,7 +39,7 @@ where `checker` is `git.happydns.org/checker-sdk-go/checker` (see
 - `ObservationProvider` is the data-collection half of the checker. It
   exposes a `Key()` (the observation key the rules will look up) and a
   `Collect(ctx, opts)` method that returns the raw observation payload.
-  happyDomain serialises the result to JSON and caches it per
+  HappyDomain serialises the result to JSON and caches it per
   `ObservationContext`.
 - Return a non-nil `error` if your plugin cannot initialise (missing
   environment variable, broken cgo dependency, …); the host will log it and
@@ -103,7 +103,7 @@ sudo install -m 0644 -o happydomain checker-dummy.so /var/lib/happydomain/plugin
 sudo systemctl restart happydomain
 ```
 
-`-trimpath` and `-tags netgo` are **mandatory**: official happyDomain binaries
+`-trimpath` and `-tags netgo` are **mandatory**: official HappyDomain binaries
 are built with both, and Go refuses to load a plugin whose packages were not
 built with the exact same flags. Omitting them fails at startup with:
 
@@ -114,7 +114,7 @@ plugin was built with a different version of package net               (missing 
 
 See [Build constraints and platform support](#build-constraints-and-platform-support).
 
-happyDomain will log:
+HappyDomain will log:
 
 ```
 Plugin com.example.dummy (.../checker-dummy.so) loaded
@@ -126,10 +126,10 @@ Plugin com.example.dummy (.../checker-dummy.so) loaded
 
 Go's `plugin` package is unforgiving:
 
-- The plugin **must be built with the same Go version** as happyDomain
+- The plugin **must be built with the same Go version** as HappyDomain
   itself, including the same toolchain patch level.
 - It **must use the same versions of every shared dependency**. Vendor the
-  exact module versions happyDomain ships, or pin them in your `go.mod`
+  exact module versions HappyDomain ships, or pin them in your `go.mod`
   with `replace` directives.
 - It **must be built with the same build flags as the host**, currently
   `-trimpath -tags netgo`. These are part of the package build IDs Go
@@ -145,7 +145,7 @@ cryptic) error like *"plugin was built with a different version of package
 …"*. The host will log it and skip the file.
 
 Go's `plugin` package only works on **linux**, **darwin** and **freebsd**.
-On other platforms (Windows, plan9, …) happyDomain is built without plugin
+On other platforms (Windows, plan9, …) HappyDomain is built without plugin
 support and `--plugins-directory` is silently ignored apart from a warning
 log line at startup.
 
@@ -156,7 +156,7 @@ log line at startup.
 Checker plugins import only `git.happydns.org/checker-sdk-go/checker`,
 which is licensed under **Apache-2.0**. This is intentional: the
 checker SDK is a small, stable public API for third-party checkers,
-deliberately split out of the AGPL-3.0 happyDomain core so that
+deliberately split out of the AGPL-3.0 HappyDomain core so that
 permissively-licensed checker plugins are possible.
 
 You may therefore distribute your checker `.so` under any license compatible

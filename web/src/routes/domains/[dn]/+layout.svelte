@@ -125,7 +125,7 @@
 </script>
 
 <svelte:head>
-    <title>{data.domain.domain} - happyDomain</title>
+    <title>{data.domain.domain} - HappyDomain</title>
 </svelte:head>
 
 <Container fluid class="d-flex flex-column flex-fill">

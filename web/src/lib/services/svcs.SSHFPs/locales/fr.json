@@ -55,7 +55,7 @@
             "added": "{{count}} empreinte(s) ajoutée(s).",
             "nothing-new": "Toutes les empreintes proposées par le serveur sont déjà publiées ici.",
             "status": {
-                "blocked": "Cette instance happyDomain n'a pas le droit de joindre cette adresse.",
+                "blocked": "Cette instance HappyDomain n'a pas le droit de joindre cette adresse.",
                 "connect-error": "Le serveur SSH n'a pas pu être joint.",
                 "handshake-error": "Le serveur a répondu, mais pas comme un serveur SSH.",
                 "timeout": "Le serveur SSH n'a pas répondu à temps."

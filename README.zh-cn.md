@@ -1,4 +1,4 @@
-happyDomain
+HappyDomain
 ===========
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](./LICENSE)
@@ -10,13 +10,13 @@ happyDomain
 
 > **中文译者：** [exyone](https://www.exyone.me/) · [exyone.dev@icloud.com](mailto:exyone.dev@icloud.com)
 
-happyDomain 是一款免费的 Web 应用，可集中管理来自不同注册商和托管商的域名。
+HappyDomain 是一款免费的 Web 应用，可集中管理来自不同注册商和托管商的域名。
 
-![happyDomain 截图](./docs/header.webp)
+![HappyDomain 截图](./docs/header.webp)
 
 **官网：** [happydomain.org](https://www.happydomain.org/) | **演示：** [try.happydomain.org](https://try.happydomain.org/)
 
-由于软件架构限制，当前 happyDomain 仅支持简体中文，繁体中文用户请安装浏览器扩展进行简繁转换。造成困扰，敬请谅解。
+由于软件架构限制，当前 HappyDomain 仅支持简体中文，繁体中文用户请安装浏览器扩展进行简繁转换。造成困扰，敬请谅解。
 
 它由 Golang 编写的 HTTP REST API（主要基于 [DNSControl](https://dnscontrol.org/) 和 [CoreDNS 库](https://github.com/miekg/dns)）与 [Svelte](https://svelte.dev/) 构建的精美 Web 界面组成。作为单一无状态的 Linux 二进制文件运行，支持多种数据库后端。
 
@@ -47,7 +47,7 @@ happyDomain 是一款免费的 Web 应用，可集中管理来自不同注册商
 * 支持多用户认证或单用户无认证模式
 * 兼容外部认证（OpenID Connect 或 JWT 令牌：Auth0 等）
 
-**happyDomain 已可投入使用，但仍需不断完善：这是一个精心打造的概念验证版本，您的反馈将助力其不断进化！**
+**HappyDomain 已可投入使用，但仍需不断完善：这是一个精心打造的概念验证版本，您的反馈将助力其不断进化！**
 
 鉴于 DNS 配置和用户需求的多样性，我们尚未发现所有潜在问题。**若遇问题，请勿离去：[向我们反馈问题所在](https://github.com/happyDomain/happydomain/issues)。** 我们响应迅速，每个报告的 bug 都能帮助改进工具，惠及众人。
 
@@ -59,7 +59,7 @@ happyDomain 是一款免费的 Web 应用，可集中管理来自不同注册商
 
 我们是由 Docker 赞助的开源项目！因此您可以轻松使用 Docker/Podman/Kubernetes 等容器平台来试用或部署应用。
 
-使用 `docker compose` 启动 happyDomain：
+使用 `docker compose` 启动 HappyDomain：
 
 ```bash
 git clone https://framagit.org/happyDomain/happyDomain.git
@@ -73,9 +73,9 @@ docker compose up
 docker run -e HAPPYDOMAIN_NO_AUTH=1 -p 8081:8081 happydomain/happydomain
 ```
 
-此命令将在数秒内启动 happyDomain，用于评估测试（无认证、临时存储等）。使用浏览器访问 <http://localhost:8081> 即可体验！
+此命令将在数秒内启动 HappyDomain，用于评估测试（无认证、临时存储等）。使用浏览器访问 <http://localhost:8081> 即可体验！
 
-部署 happyDomain，请查阅 [Docker 镜像文档](https://hub.docker.com/r/happydomain/happydomain)。
+部署 HappyDomain，请查阅 [Docker 镜像文档](https://hub.docker.com/r/happydomain/happydomain)。
 
 
 从二进制文件安装
@@ -86,7 +86,7 @@ docker run -e HAPPYDOMAIN_NO_AUTH=1 -p 8081:8081 happydomain/happydomain
 选择目录（最新版本或 `master` 分支），然后选择与您的操作系统和 CPU 架构对应的二进制文件。
 
 
-使用 happyDomain
+使用 HappyDomain
 ----------------
 
 二进制文件附带合理的默认配置，可直接启动。在终端中运行以下命令即可：
@@ -100,7 +100,7 @@ docker run -e HAPPYDOMAIN_NO_AUTH=1 -p 8081:8081 happydomain/happydomain
     Admin listening on ./happydomain.sock
     Ready, listening on :8081
 
-访问 http://localhost:8081/ 开始使用 happyDomain。
+访问 http://localhost:8081/ 开始使用 HappyDomain。
 
 
 ### 数据库配置
@@ -133,7 +133,7 @@ LevelDB 是轻量级嵌入式键值存储（类似 SQLite，无需额外守护�
 
 PostgreSQL 支持主要面向已部署 PostgreSQL 数据库基础设施的环境。这允许您利用现有数据库设置、备份流程和运维工具，无需部署额外数据库系统。
 
-happyDomain 以键值存储模式使用 PostgreSQL，将所有数据存储在包含 `key` 和 `value` 列的单张表中。虽然可行，但请注意，与专用键值存储相比，PostgreSQL 并非键值工作负载的最佳选择。若从头部署且需超出 LevelDB 的可扩展性，请考虑使用专为键值操作设计的存储后端。
+HappyDomain 以键值存储模式使用 PostgreSQL，将所有数据存储在包含 `key` 和 `value` 列的单张表中。虽然可行，但请注意，与专用键值存储相比，PostgreSQL 并非键值工作负载的最佳选择。若从头部署且需超出 LevelDB 的可扩展性，请考虑使用专为键值操作设计的存储后端。
 
 ```
     -postgres-database string
@@ -154,11 +154,11 @@ happyDomain 以键值存储模式使用 PostgreSQL，将所有数据存储在包
 
 #### Oracle NoSQL Database
 
-Oracle NoSQL Database 是来自 Oracle Cloud Infrastructure (OCI) 的全托管云服务，提供按需吞吐量和高可用的存储配置。happyDomain 可将其作为可扩展的云端存储后端用于生产部署。
+Oracle NoSQL Database 是来自 Oracle Cloud Infrastructure (OCI) 的全托管云服务，提供按需吞吐量和高可用的存储配置。HappyDomain 可将其作为可扩展的云端存储后端用于生产部署。
 
 使用 Oracle NoSQL Database 需拥有 OCI 账户并创建 NoSQL 表。表需包含主键字段 `key`（字符串类型）和 `value` 字段（JSON 类型）存储数据。认证使用 OCI 的 IAM 和 API 签名密钥。
 
-配置以下选项连接 happyDomain 至 Oracle NoSQL Database：
+配置以下选项连接 HappyDomain 至 Oracle NoSQL Database：
 
 ```
     -oci-compartment string
@@ -228,7 +228,7 @@ HAPPYDOMAIN_LEVELDB_PATH=/var/lib/happydomain/db/
 
 OVH 没有简单的 API 密钥或凭据，需通过 Web 流程获取密钥。
 
-启动认证流程，happyDomain 实例需配备专用应用程序密钥。
+启动认证流程，HappyDomain 实例需配备专用应用程序密钥。
 
 [连接 OVH，请按以下说明操作](https://help.happydomain.org/en/introduction/deploy/ovh)。
 
@@ -238,7 +238,7 @@ OVH 没有简单的 API 密钥或凭据，需通过 Web 流程获取密钥。
 
 ### 依赖项
 
-构建 happyDomain 项目需具备以下依赖项：
+构建 HappyDomain 项目需具备以下依赖项：
 
 * `go`；
 * `nodejs`，已测试版本 22；
@@ -331,6 +331,6 @@ AI 不用于：
 许可证
 ------
 
-happyDomain 采用 [GNU Affero General Public License v3.0](./LICENSE) (AGPL-3.0) 许可证。
+HappyDomain 采用 [GNU Affero General Public License v3.0](./LICENSE) (AGPL-3.0) 许可证。
 
 同时提供商业许可证，如有需要请联系我们。

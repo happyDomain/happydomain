@@ -75,14 +75,14 @@
 
 <svelte:head>
     {#if svcSpec}
-        <title>{$t("generator.svctype.title", { name: $serviceName(svcSpec) })} - happyDomain</title
+        <title>{$t("generator.svctype.title", { name: $serviceName(svcSpec) })} - HappyDomain</title
         >
         <meta
             name="description"
             content={$t("generator.svctype.description", { name: $serviceName(svcSpec) })}
         />
     {:else}
-        <title>{$t("generator.svctype.page-title")} - happyDomain</title>
+        <title>{$t("generator.svctype.page-title")} - HappyDomain</title>
     {/if}
 </svelte:head>
 

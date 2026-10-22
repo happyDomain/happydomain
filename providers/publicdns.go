@@ -135,6 +135,6 @@ func init() {
 		return &PublicDNSDiscovery{}
 	}, happydns.ProviderInfos{
 		Name:        "Public DNS discovery",
-		Description: "For domains hosted elsewhere: happyDomain recomposes the zone from what its name servers publicly answer, to monitor it. The zone is read-only, and may miss the names that nothing points to.",
+		Description: "For domains hosted elsewhere: HappyDomain recomposes the zone from what its name servers publicly answer, to monitor it. The zone is read-only, and may miss the names that nothing points to.",
 	})
 }

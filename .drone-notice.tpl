@@ -1,4 +1,4 @@
-happyDomain
+HappyDomain
 ===========
 
 This product bundles third-party components under the following licenses.

@@ -59,7 +59,7 @@ func TestEmailSenderEvent(t *testing.T) {
 	if m.to.Address != "alice@example.com" {
 		t.Errorf("to = %v", m.to)
 	}
-	if m.subject != "[happyDomain] example.com is availableBcc: mallory@example.com" {
+	if m.subject != "[HappyDomain] example.com is availableBcc: mallory@example.com" {
 		t.Errorf("subject = %q", m.subject)
 	}
 	if !strings.Contains(m.content, "Register it now.") || !strings.Contains(m.content, "(https://happydomain.example/watchlist/)") {

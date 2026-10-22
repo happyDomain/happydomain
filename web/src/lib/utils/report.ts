@@ -103,7 +103,7 @@ export function issueURL(forge: Forge, description: string, diagnostics: string)
  */
 export function mailtoURL(description: string, diagnostics: string): string {
     const firstLine = description.trim().split("\n")[0];
-    const subject = firstLine ? `happyDomain: ${firstLine}` : "happyDomain: problem report";
+    const subject = firstLine ? `HappyDomain: ${firstLine}` : "HappyDomain: problem report";
 
     const params = new URLSearchParams({
         subject,

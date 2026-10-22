@@ -255,9 +255,9 @@ func init() {
 	flag.StringVar(&instanceVault.caFile, "secret-vault-ca-file", "", "PEM file of the certificate authorities trusted for -secret-vault-addr, besides those of the system")
 	flag.StringVar(&instanceVault.mount, "secret-vault-mount", "secret", "Mount of the KV v2 engine the \"vault\" secret store reads")
 	flag.StringVar(&instanceVault.prefix, "secret-vault-prefix", "happydomain", "Path, in -secret-vault-mount, holding a path per user named after their identifier, below which they keep their credentials")
-	flag.StringVar(&instanceVault.appRoleMount, "secret-vault-approle-mount", "approle", "Mount of the AppRole auth method happyDomain logs in to Vault with")
-	flag.StringVar(&instanceVault.roleID, "secret-vault-role-id", "", "Role ID of the AppRole happyDomain logs in to Vault with")
-	flag.StringVar(&instanceVault.secretIDFile, "secret-vault-secret-id-file", "", "File holding the secret ID of the AppRole happyDomain logs in to Vault with")
+	flag.StringVar(&instanceVault.appRoleMount, "secret-vault-approle-mount", "approle", "Mount of the AppRole auth method HappyDomain logs in to Vault with")
+	flag.StringVar(&instanceVault.roleID, "secret-vault-role-id", "", "Role ID of the AppRole HappyDomain logs in to Vault with")
+	flag.StringVar(&instanceVault.secretIDFile, "secret-vault-secret-id-file", "", "File holding the secret ID of the AppRole HappyDomain logs in to Vault with")
 }
 
 // vaultStore resolves references through the Vault of the instance, logged

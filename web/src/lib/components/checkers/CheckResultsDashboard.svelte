@@ -133,7 +133,7 @@
 </script>
 
 <svelte:head>
-    <title>{title} - happyDomain</title>
+    <title>{title} - HappyDomain</title>
 </svelte:head>
 
 <div class="flex-fill mt-1 mb-5">

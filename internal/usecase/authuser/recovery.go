@@ -126,7 +126,7 @@ func (uc *RecoverAccountUsecase) SendLink(user *happydns.UserAuth) error {
 
 	return uc.mailer.SendMail(
 		&mail.Address{Name: toName, Address: user.Email},
-		"Recover your happyDomain account",
+		"Recover your HappyDomain account",
 		fmt.Sprintf(`Hi %s,
 
 You've just ask on our platform to recover your account.
@@ -150,10 +150,10 @@ func (uc *RecoverAccountUsecase) SendInvitation(user *happydns.UserAuth) error {
 
 	return uc.mailer.SendMail(
 		&mail.Address{Name: toName, Address: user.Email},
-		"You're invited to try happyDomain",
+		"You're invited to try HappyDomain",
 		fmt.Sprintf(`Hi %s,
 
-You've been invited to try happyDomain, our domain name management platform!
+You've been invited to try HappyDomain, our domain name management platform!
 
 To get started, please set your password by following this link now:
 

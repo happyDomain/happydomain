@@ -52,7 +52,7 @@ import (
 
 // ErrBlocked is the sentinel every refusal wraps. Its own message names
 // nothing: no host, no address, no port. Callers may surface it as is.
-var ErrBlocked = errors.New("the requested address is not allowed by this happyDomain instance")
+var ErrBlocked = errors.New("the requested address is not allowed by this HappyDomain instance")
 
 // ErrTemporary marks a check that could not be carried out, as opposed to one
 // that was carried out and refused: a resolver timeout, a SERVFAIL, a cancelled
@@ -184,14 +184,14 @@ func (g *Guard) Flag() string {
 // blocked range, a name that does not resolve and a refused connection have to
 // be indistinguishable from outside.
 func (g *Guard) Refusal(subject string) string {
-	return fmt.Sprintf("%s does not resolve to an address this happyDomain instance is allowed to reach. Only public addresses are reachable; ask your administrator to allow it with %s.", subject, g.Flag())
+	return fmt.Sprintf("%s does not resolve to an address this HappyDomain instance is allowed to reach. Only public addresses are reachable; ask your administrator to allow it with %s.", subject, g.Flag())
 }
 
 // Unavailable is the message shown when the check could not be completed. It
 // says nothing about the destination, only that we failed to look it up, and
 // invites a retry: the value the user typed may be fine.
 func (g *Guard) Unavailable(subject string) string {
-	return fmt.Sprintf("%s could not be checked: this happyDomain instance failed to resolve it in time. Please try again in a moment.", subject)
+	return fmt.Sprintf("%s could not be checked: this HappyDomain instance failed to resolve it in time. Please try again in a moment.", subject)
 }
 
 // isTemporaryLookupFailure tells a resolver that did not answer from one that

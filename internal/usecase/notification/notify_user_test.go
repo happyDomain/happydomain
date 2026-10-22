@@ -117,7 +117,7 @@ func notifyUserOf(t *testing.T, user *happydns.User, payload *notifPkg.Notificat
 func TestNotifyUserFallsBackToTheAccountEmail(t *testing.T) {
 	sent, records := notifyUser(t, nil)
 
-	if len(sent) != 1 || sent[0].to != "alice@example.com" || sent[0].subject != "[happyDomain] example.com is available" {
+	if len(sent) != 1 || sent[0].to != "alice@example.com" || sent[0].subject != "[HappyDomain] example.com is available" {
 		t.Fatalf("sent = %+v", sent)
 	}
 	if len(records) != 1 || !records[0].Success || records[0].CheckerID != "domain_watch" {

@@ -171,7 +171,7 @@
     <p class="text-muted small mb-1">
         {$t("services.bimi-hosted.intro", {
             default:
-                "Displays your brand logo next to your emails in the mail clients that support it. happyDomain hosts the logo and its certificate, and generates the BIMI record pointing to them.",
+                "Displays your brand logo next to your emails in the mail clients that support it. HappyDomain hosts the logo and its certificate, and generates the BIMI record pointing to them.",
         })}
     </p>
     <p class="text-muted small">

@@ -50,7 +50,7 @@
 </script>
 
 <svelte:head>
-    <title>{$t("generator.title")} - happyDomain</title>
+    <title>{$t("generator.title")} - HappyDomain</title>
     <meta name="description" content={$t("generator.description")} />
 </svelte:head>
 

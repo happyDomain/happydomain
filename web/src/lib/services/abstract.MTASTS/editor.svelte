@@ -127,7 +127,7 @@
     <p class="text-muted small">
         {$t("services.mta-sts.intro", {
             default:
-                "Tells other mail servers to only deliver to your domain over authenticated TLS. Beyond the DNS record, the standard needs a policy file served over HTTPS: happyDomain can host it for you.",
+                "Tells other mail servers to only deliver to your domain over authenticated TLS. Beyond the DNS record, the standard needs a policy file served over HTTPS: HappyDomain can host it for you.",
         })}
     </p>
 
@@ -211,7 +211,7 @@
         <Input
             type="checkbox"
             label={$t("services.mta-sts.host-policy", {
-                default: "Let happyDomain serve the policy file (mta-sts. CNAME)",
+                default: "Let HappyDomain serve the policy file (mta-sts. CNAME)",
             })}
             checked={hostPolicy}
             on:change={(e) => toggleHostPolicy(e.currentTarget.checked)}
@@ -219,7 +219,7 @@
         <p class="small text-muted mt-1 mb-0">
             {$t("services.mta-sts.host-policy-desc", {
                 default:
-                    "When enabled, happyDomain creates a CNAME for mta-sts.<your-domain> pointing to this happyDomain instance, which serves the policy below over HTTPS. Leave it off if you serve the file from your own web server.",
+                    "When enabled, HappyDomain creates a CNAME for mta-sts.<your-domain> pointing to this HappyDomain instance, which serves the policy below over HTTPS. Leave it off if you serve the file from your own web server.",
             })}
         </p>
     </FormGroup>

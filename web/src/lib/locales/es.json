@@ -81,7 +81,7 @@
             "view": "Ver mi zona"
         },
         "alert": {
-            "remove": "Esta acción solo elimina {{domain}} de tus dominios gestionados por happyDomain. Todo el historial y zonas abstractas serán descartados. El dominio {{domain}} permanece completamente intacto en el proveedor. ¿Estás seguro de que deseas continuar?",
+            "remove": "Esta acción solo elimina {{domain}} de tus dominios gestionados por HappyDomain. Todo el historial y zonas abstractas serán descartados. El dominio {{domain}} permanece completamente intacto en el proveedor. ¿Estás seguro de que deseas continuar?",
             "unable-retrieve": {
                 "description": "Desafortunadamente, no pudimos recuperar información para el dominio {{domain}}:",
                 "title": "No se pudo recuperar información del dominio"
@@ -111,7 +111,7 @@
             "rollback-uptodate-title": "Nada que restaurar",
             "others": "{{count:eq; 0:ningún otro cambio; 1:{{count}} otro cambio; default:{{count}} otros cambios}}"
         },
-        "attached-new": "¡Nuevo dominio conectado a happyDomain!",
+        "attached-new": "¡Nuevo dominio conectado a HappyDomain!",
         "commit-msg": "¿Qué ha cambiado?",
         "create-new-key": "Crear nueva clave {{id}}",
         "discard": "Descartar",
@@ -126,7 +126,7 @@
         "stop": "Dejar de gestionar este dominio",
         "view": {
             "abstract": "Zona abstracta",
-            "cancel-title": "Mantener mi dominio en happyDomain",
+            "cancel-title": "Mantener mi dominio en HappyDomain",
             "description": "Revisa las modificaciones que se aplicarán a {{domain}}",
             "live": "Registros en vivo",
             "monitoring": "Monitoreo",
@@ -209,7 +209,7 @@
         "address": "Se requiere dirección de correo electrónico",
         "address-valid": "Se requiere una dirección de correo electrónico válida",
         "domain-access": "Ocurrió un error al intentar acceder a la lista de dominios.",
-        "domain-attach": "Ocurrió un error al conectar el dominio a happyDomain",
+        "domain-attach": "Ocurrió un error al conectar el dominio a HappyDomain",
         "domain-have": "Parece que no tienes ningún nombre de dominio registrado en este proveedor.",
         "domain-import": "Ocurrió un error al intentar sincronizar este dominio:",
         "domain-list": "Este proveedor no permite listar los dominios existentes. Usa el formulario a continuación para añadir uno.",
@@ -233,7 +233,7 @@
             "content": "Sesión inválida, has sido desconectado: {{err}}. Por favor, inicia sesión de nuevo."
         },
         "settings-change": "No se pueden cambiar tus ajustes",
-        "account-no-auth": "Estás usando happyDomain sin autenticación. No puedes gestionar otras propiedades de la cuenta.",
+        "account-no-auth": "Estás usando HappyDomain sin autenticación. No puedes gestionar otras propiedades de la cuenta.",
         "domain-all-imported": "Esta cuenta en {{provider}} no tiene más dominios para importar.",
         "too-high": "Número demasiado alto, máximo: {{max}}",
         "too-low": "Número demasiado bajo, mínimo: {{min}}",
@@ -285,8 +285,8 @@
         },
         "intro": "Configuremos tu cuenta y comencemos a gestionar tus dominios. Sigue estos simples pasos para empezar.",
         "welcome": {
-            "purpose": "{{happyDomain}} hace que la gestión de dominios sea simple e intuitiva. Ya sea que tengas un dominio o cientos, nuestra plataforma te da una forma centralizada de gestionarlos todos.",
-            "use": "Usa {{happyDomain}} como interfaz de reemplazo para tu proveedor habitual de nombres de dominio. Seguirá dependiendo de la infraestructura de tu proveedor, a través de nuestra interfaz simple.",
+            "purpose": "HappyDomain hace que la gestión de dominios sea simple e intuitiva. Ya sea que tengas un dominio o cientos, nuestra plataforma te da una forma centralizada de gestionarlos todos.",
+            "use": "Usa HappyDomain como interfaz de reemplazo para tu proveedor habitual de nombres de dominio. Seguirá dependiendo de la infraestructura de tu proveedor, a través de nuestra interfaz simple.",
             "unified": {
                 "title": "Gestión Unificada",
                 "description": "Gestiona todos tus dominios en un solo lugar, independientemente de dónde estén registrados."
@@ -313,15 +313,15 @@
         },
         "import": {
             "title": "Importa Tus Dominios",
-            "intro": "Selecciona los dominios que deseas gestionar con happyDomain.",
+            "intro": "Selecciona los dominios que deseas gestionar con HappyDomain.",
             "imported": "Importado"
         },
         "explore": {
             "understood": "¡Entendido!",
             "done": "¡Ya está todo listo!",
             "bravo": "{{count:eq; 1:Tu dominio está; default:Tus dominios están}} ahora correctamente configurado y listo para usar.",
-            "title": "Explora las Características de happyDomain",
-            "intro": "Ahora que tu dominio está configurado, descubre todas las potentes características que happyDomain tiene para ofrecer:",
+            "title": "Explora las Características de HappyDomain",
+            "intro": "Ahora que tu dominio está configurado, descubre todas las potentes características que HappyDomain tiene para ofrecer:",
             "history": {
                 "title": "Historial de Registros",
                 "description": "Rastrea todos los cambios realizados en tus registros DNS con historial de versiones y opciones de reversión.",
@@ -343,8 +343,8 @@
             "soon": "próximamente"
         },
         "no-sale": {
-            "title": "Necesitas poseer un dominio para usar happyDomain.",
-            "description": "{{happyDomain}} aún no vende dominios. Para comenzar a usar nuestra interfaz, necesitas comprar un dominio de uno de nuestros proveedores compatibles.",
+            "title": "Necesitas poseer un dominio para usar HappyDomain.",
+            "description": "HappyDomain aún no vende dominios. Para comenzar a usar nuestra interfaz, necesitas comprar un dominio de uno de nuestros proveedores compatibles.",
             "buy-advice": "Próximamente proporcionaremos orientación sobre cómo comprar fácilmente un nombre de dominio. Así que mantente atento y ponte en contacto con nosotros si puedes ayudarnos a crear una guía completa."
         }
     },
@@ -416,7 +416,7 @@
     },
     "upgrade": {
         "title": "¡Hay una actualización disponible!",
-        "content": "Ya está disponible una nueva versión de happyDomain. Para habilitarla, haz clic aquí para actualizar la página."
+        "content": "Ya está disponible una nueva versión de HappyDomain. Para habilitarla, haz clic aquí para actualizar la página."
     },
     "wait": {
         "asking-domains": "Solicitando dominios existentes al proveedor...",
@@ -437,7 +437,7 @@
         "propagation": "Publicando tus cambios…"
     },
     "settings": {
-        "subtitle": "Personaliza tu experiencia de happyDomain según tus necesidades",
+        "subtitle": "Personaliza tu experiencia de HappyDomain según tus necesidades",
         "fieldhint": {
             "title": "Sugerencias de campos",
             "description": "Elige cómo mostrar el texto de ayuda para los campos del formulario",
@@ -467,7 +467,7 @@
         },
         "sessions": "Sesiones",
         "showrrtypes": "Mostrar tipo de recurso asociado con servicios (para usuarios familiarizados con DNS)",
-        "success": "Continúa disfrutando de happyDomain.",
+        "success": "Continúa disfrutando de HappyDomain.",
         "success-change": "Tu configuración ha sido guardada.",
         "title": "Configuración",
         "zoneview": {

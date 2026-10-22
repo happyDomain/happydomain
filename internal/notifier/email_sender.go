@@ -79,9 +79,9 @@ func (s *EmailSender) Send(_ context.Context, c EmailConfig, payload *Notificati
 		var body strings.Builder
 		fmt.Fprintf(&body, "%s\n\n", ev.Body)
 		if link := eventURL(s.baseURL, ev); link != "" {
-			fmt.Fprintf(&body, "[View in happyDomain](%s)\n", link)
+			fmt.Fprintf(&body, "[View in HappyDomain](%s)\n", link)
 		}
-		return s.mailer.SendMail(to, "[happyDomain] "+stripCRLF(ev.Title), body.String())
+		return s.mailer.SendMail(to, "[HappyDomain] "+stripCRLF(ev.Title), body.String())
 	}
 
 	// Strip CR/LF to prevent RFC 5322 header injection.
@@ -91,7 +91,7 @@ func (s *EmailSender) Send(_ context.Context, c EmailConfig, payload *Notificati
 	}
 	safeDomain := stripCRLF(displayDomain)
 	safeChecker := stripCRLF(payload.CheckerID)
-	subject := fmt.Sprintf("[happyDomain] %s (%s) %s: %s", safeDomain, safeChecker, statusDirection(payload.OldStatus, payload.NewStatus), payload.NewStatus)
+	subject := fmt.Sprintf("[HappyDomain] %s (%s) %s: %s", safeDomain, safeChecker, statusDirection(payload.OldStatus, payload.NewStatus), payload.NewStatus)
 
 	// Wrap third-party-sourced fields as Markdown code spans to neutralize injected link syntax in DKIM-signed mail; Annotation is user-authored, no boundary.
 	var body strings.Builder
@@ -112,7 +112,7 @@ func (s *EmailSender) Send(_ context.Context, c EmailConfig, payload *Notificati
 	}
 
 	if s.baseURL != "" {
-		fmt.Fprintf(&body, "[View in happyDomain](%s)\n", s.baseURL)
+		fmt.Fprintf(&body, "[View in HappyDomain](%s)\n", s.baseURL)
 	}
 
 	return s.mailer.SendMail(to, subject, body.String())

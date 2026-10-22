@@ -153,7 +153,7 @@
 <svelte:head>
     <title>
         {$t("checkers.executions.title", { count: executions.length })} - {resolvedName ||
-            checkerId} - happyDomain
+            checkerId} - HappyDomain
     </title>
 </svelte:head>
 

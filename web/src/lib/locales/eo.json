@@ -88,7 +88,7 @@
             "others": "Pliaj agoj pri {{domain}}"
         },
         "alert": {
-            "remove": "Ĉi tiu ago nur forigas {{domain}} de viaj happyDomain-administritaj domajnoj. Tuta historio kaj abstraktaj zonoj estos forĵetitaj. La domajno {{domain}} restas plene sendifekta ĉe la provizanto. Ĉu vi certas ke vi volas daŭrigi?",
+            "remove": "Ĉi tiu ago nur forigas {{domain}} de viaj HappyDomain-administritaj domajnoj. Tuta historio kaj abstraktaj zonoj estos forĵetitaj. La domajno {{domain}} restas plene sendifekta ĉe la provizanto. Ĉu vi certas ke vi volas daŭrigi?",
             "unable-retrieve": {
                 "description": "Bedaŭrinde, ni ne povis ricevi informojn por la domajno {{domain}}:",
                 "title": "Ne eblas ricevi domajnajn informojn"
@@ -125,7 +125,7 @@
             "confirm": "Konfirmi kaj Apliki",
             "back": "Reen"
         },
-        "attached-new": "Nova domajno alkroĉita al happyDomain!",
+        "attached-new": "Nova domajno alkroĉita al HappyDomain!",
         "commit-msg": "Kio ŝanĝiĝis?",
         "create-new-key": "Krei novan {{id}} ŝlosilon",
         "discard": "Forĵeti",
@@ -141,7 +141,7 @@
         "stop": "Ĉesi administri ĉi tiun domajnon",
         "view": {
             "abstract": "Abstrakta zono",
-            "cancel-title": "Teni mian domajnon en happyDomain",
+            "cancel-title": "Teni mian domajnon en HappyDomain",
             "description": "Revizii la modifojn kiuj estos aplikita al {{domain}}",
             "live": "Vivaj rikordoj",
             "monitoring": "Monitorado",
@@ -197,7 +197,7 @@
         "address": "Retpoŝta adreso estas bezonata",
         "address-valid": "Valida retpoŝta adreso estas bezonata",
         "domain-access": "Eraro okazas dum provo aliri domajnan liston.",
-        "domain-attach": "Eraro okazas dum alkroĉado de la domajno al happyDomain",
+        "domain-attach": "Eraro okazas dum alkroĉado de la domajno al HappyDomain",
         "domain-have": "Ŝajnas ke vi ne havas iun domajnon registritan ĉe ĉi tiu provizanto.",
         "domain-import": "Eraro okazas dum provo sinkronigi ĉi tiun domajnon:",
         "domain-list": "Ĉi tiu provizanto ne permesas listigi ekzistantajn domajnojn. Uzu la supran formularon por aldoni unu.",
@@ -221,7 +221,7 @@
             "content": "Nevalida sesio, vi estis elsalutita: {{err}}. Bonvolu ensaluti denove."
         },
         "settings-change": "Ne eblas ŝanĝi viajn agordojn",
-        "account-no-auth": "Vi uzas happyDomain sen aŭtentikigo. Vi ne povas administri aliajn kontajn ecojn.",
+        "account-no-auth": "Vi uzas HappyDomain sen aŭtentikigo. Vi ne povas administri aliajn kontajn ecojn.",
         "domain-all-imported": "Ĉi tiu konto ĉe {{provider}} ne havas plian domajnon por importi.",
         "too-high": "Nombro tro alta, maks: {{max}}",
         "too-low": "Nombro tro malalta, min: {{min}}",
@@ -274,12 +274,12 @@
         "welcome": {
             "beta": {
                 "intro": "Ĝi estas beta-programaro! 🏗️",
-                "part1": "happyDomain estas funkcia sed ankoraŭ tre multe laborata. Se io ne funkcias, bonvolu",
+                "part1": "HappyDomain estas funkcia sed ankoraŭ tre multe laborata. Se io ne funkcias, bonvolu",
                 "report": "diri al ni kio misas",
                 "part2": ". Ni estas tre respondemaj kaj ĉiu raportita cimo helpas nin plibonigi la ilon por ĉiuj. Dankon anticipe 🙏"
             },
-            "purpose": "{{happyDomain}} faras domajnan administradon simpla kaj intuicia. Ĉu vi havas unu domajnon aŭ centojn, nia platformo donas al vi centralizitan manieron administri ilin ĉiujn.",
-            "use": "Uzu {{happyDomain}} kiel anstataŭan interfacon al via kutima domajna provizanto. Ĝi daŭre dependos de la infrastrukturo de via provizanto, per nia simpla interfaco.",
+            "purpose": "HappyDomain faras domajnan administradon simpla kaj intuicia. Ĉu vi havas unu domajnon aŭ centojn, nia platformo donas al vi centralizitan manieron administri ilin ĉiujn.",
+            "use": "Uzu HappyDomain kiel anstataŭan interfacon al via kutima domajna provizanto. Ĝi daŭre dependos de la infrastrukturo de via provizanto, per nia simpla interfaco.",
             "unified": {
                 "title": "Unuigita Administrado",
                 "description": "Administru ĉiujn viajn domajnojn en unu loko, sendepende de kie ili estas registritaj."
@@ -306,15 +306,15 @@
         },
         "import": {
             "title": "Importu Viajn Domajnojn",
-            "intro": "Elektu la domajnojn kiujn vi volas administri per happyDomain.",
+            "intro": "Elektu la domajnojn kiujn vi volas administri per HappyDomain.",
             "imported": "Importita"
         },
         "explore": {
             "understood": "Komprenita!",
             "done": "Vi estas preta!",
             "bravo": "{{count:eq; 1:Via domajno estas; default:Viaj domajnoj estas}} nun ĝuste agordita kaj preta por uzo.",
-            "title": "Esploru happyDomain-Funkciojn",
-            "intro": "Nun ke via domajno estas agordita, malkovru ĉiujn potencajn funkciojn kiujn happyDomain ofertas:",
+            "title": "Esploru HappyDomain-Funkciojn",
+            "intro": "Nun ke via domajno estas agordita, malkovru ĉiujn potencajn funkciojn kiujn HappyDomain ofertas:",
             "history": {
                 "title": "Rikorda Historio",
                 "description": "Spuru ĉiujn ŝanĝojn faritajn al viaj DNS-rikordoj kun versia historio kaj revenaj opcioj.",
@@ -336,8 +336,8 @@
             "soon": "baldaŭ"
         },
         "no-sale": {
-            "title": "Vi bezonas posedi domajnon por uzi happyDomain.",
-            "description": "{{happyDomain}} ne vendas domajnojn ankoraŭ. Por komenci uzi nian interfacon, vi bezonas aĉeti domajnon de unu el niaj subtenataj provizantoj.",
+            "title": "Vi bezonas posedi domajnon por uzi HappyDomain.",
+            "description": "HappyDomain ne vendas domajnojn ankoraŭ. Por komenci uzi nian interfacon, vi bezonas aĉeti domajnon de unu el niaj subtenataj provizantoj.",
             "buy-advice": "Ni donos iom da gvidado en la proksima estonteco pri kiel facile aĉeti domajnan nomon. Do restu ĝisdatigita kaj kontaktu nin se vi povas helpi nin konstrui ampleksan gvidilon."
         }
     },
@@ -415,7 +415,7 @@
     },
     "upgrade": {
         "title": "Ĝisdatigo havebla!",
-        "content": "Nova versio de happyDomain estas havebla. Klaku ĉi tie por refreŝigi la paĝon."
+        "content": "Nova versio de HappyDomain estas havebla. Klaku ĉi tie por refreŝigi la paĝon."
     },
     "wait": {
         "asking-domains": "Demandante provizanton por la listo de domajnoj...",
@@ -436,7 +436,7 @@
         "propagation": "Disvastigante viajn ŝanĝojn…"
     },
     "settings": {
-        "subtitle": "Adapta vian happyDomain-sperton",
+        "subtitle": "Adapta vian HappyDomain-sperton",
         "fieldhint": {
             "title": "Kampaj sugestoj",
             "description": "Elektu kiel montri helpajn tekstojn por formularaj kampoj",
@@ -466,7 +466,7 @@
         },
         "sessions": "Sesioj",
         "showrrtypes": "Montri resursajn tipojn asociitajn kun servo (por spertuloj)",
-        "success": "Ĝuu happyDomain plu.",
+        "success": "Ĝuu HappyDomain plu.",
         "success-change": "Viaj agordoj estis konservitaj.",
         "title": "Agordoj",
         "zoneview": {

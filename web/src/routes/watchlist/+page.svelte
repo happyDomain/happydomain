@@ -136,7 +136,7 @@
 </script>
 
 <svelte:head>
-    <title>{$t("watchlist.title")} - happyDomain</title>
+    <title>{$t("watchlist.title")} - HappyDomain</title>
 </svelte:head>
 
 <Container class="flex-fill my-5">

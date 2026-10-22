@@ -32,7 +32,7 @@
 </script>
 
 <svelte:head>
-    <title>{$t("common.add-new-thing", { thing: $t("provider.kind") })} - happyDomain</title>
+    <title>{$t("common.add-new-thing", { thing: $t("provider.kind") })} - HappyDomain</title>
 </svelte:head>
 
 {@render children?.()}

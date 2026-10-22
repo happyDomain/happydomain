@@ -7,7 +7,7 @@
 </script>
 
 <svelte:head>
-    <title>{$t("account.join")} - happyDomain</title>
+    <title>{$t("account.join")} - HappyDomain</title>
 </svelte:head>
 
 <AuthCard

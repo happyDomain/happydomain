@@ -134,6 +134,6 @@ func testPayload(rcpt Recipient) *NotificationPayload {
 		DomainName: "example.com",
 		OldStatus:  happydns.StatusOK,
 		NewStatus:  happydns.StatusWarn,
-		Annotation: "This is a test notification from happyDomain.",
+		Annotation: "This is a test notification from HappyDomain.",
 	}
 }

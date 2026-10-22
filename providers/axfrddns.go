@@ -48,7 +48,7 @@ type DDNSServer struct {
 	// TransferOnly keeps happyDomain to zone transfers: the key, if any, is
 	// never given as update key, so a key the server grants transfers only is
 	// enough, and a leak of such a key gives no write access.
-	TransferOnly bool `json:"transfer_only,omitempty" happydomain:"label=Zone transfer only,description=happyDomain reads the zone through a transfer (AXFR) and never changes it: enough to monitor your domain. The key may then grant transfers only or be left empty if the server allows transfers to the address of happyDomain."`
+	TransferOnly bool `json:"transfer_only,omitempty" happydomain:"label=Zone transfer only,description=HappyDomain reads the zone through a transfer (AXFR) and never changes it: enough to monitor your domain. The key may then grant transfers only or be left empty if the server allows transfers to the address of HappyDomain."`
 }
 
 func (s *DDNSServer) DNSControlName() string {

@@ -3,7 +3,7 @@
         "ask-have": "Don't already have an account on our beautiful platform?",
         "export": {
             "title": "Export my data",
-            "description": "Download a complete archive of all your data stored in happyDomain.",
+            "description": "Download a complete archive of all your data stored in HappyDomain.",
             "button": "Download my data",
             "warning": "The exported file contains sensitive data: active session tokens (usable to log in as you) and provider API credentials. Keep it secure and do not share it.",
             "partial": "The export completed with errors, some data may be missing:"
@@ -84,7 +84,7 @@
         },
         "monitor-elsewhere": {
             "button": "Monitor a domain hosted elsewhere",
-            "hint": "Your domain is hosted where happyDomain cannot connect? happyDomain can still monitor it: its zone is recomposed, read-only, from what its name servers publicly answer.",
+            "hint": "Your domain is hosted where HappyDomain cannot connect? HappyDomain can still monitor it: its zone is recomposed, read-only, from what its name servers publicly answer.",
             "provider-name": "Public DNS"
         },
         "title": "Your domains",
@@ -110,11 +110,11 @@
             "apply-template": "Apply a template"
         },
         "alert": {
-            "remove": "This action only removes {{domain}} from your happyDomain managed domains. All history and abstracted zones will be discarded. The domain {{domain}} remains fully intact at the provider. Are you sure you want to continue?"
+            "remove": "This action only removes {{domain}} from your HappyDomain managed domains. All history and abstracted zones will be discarded. The domain {{domain}} remains fully intact at the provider. Are you sure you want to continue?"
         },
         "and-more-filtered": "{{count:eq; 0:no more filtered domain; 1:1 more filtered domain; default:{{count}} more filtered domains}}",
         "add-a-subdomain": "Add a subdomain",
-        "read-only-edit": "This provider is read-only: happyDomain cannot change this zone.",
+        "read-only-edit": "This provider is read-only: HappyDomain cannot change this zone.",
         "add-a-service": "Add a service",
         "add-alias": "Add alias",
         "add-an-alias": "Add an alias to {{domain}}",
@@ -145,11 +145,11 @@
             "others": "{{count:eq; 0:no other change; 1:{{count}} other change; default:{{count}} others changes}}",
             "prepare-info": "The provider will execute {{nbDiffs}} correction(s) for your {{nbSelected}} selected change(s):",
             "prepare-warning": "The number of corrections differs from your selection. Please review before confirming.",
-            "read-only": "This provider is read-only: happyDomain reads the published zone but cannot change it. Apply these differences on your server yourself.",
+            "read-only": "This provider is read-only: HappyDomain reads the published zone but cannot change it. Apply these differences on your server yourself.",
             "confirm": "Confirm & Apply",
             "back": "Back"
         },
-        "attached-new": "New domain attached to happyDomain!",
+        "attached-new": "New domain attached to HappyDomain!",
         "commit-msg": "What's changed?",
         "create-new-key": "Create new {{id}} key",
         "discard": "Discard",
@@ -163,7 +163,7 @@
         "save-modifications": "Save those modifications",
         "stop": "Stop managing this domain",
         "view": {
-            "cancel-title": "Keep my domain in happyDomain",
+            "cancel-title": "Keep my domain in HappyDomain",
             "description": "Review the modifications that will be applied to {{domain}}",
             "provider": "Zone hosted on",
             "title": "View zone",
@@ -280,7 +280,7 @@
     },
     "watchlist": {
         "title": "Domain watchlist",
-        "description": "Keep an eye on domain names you would like to own: happyDomain tells you when they are about to be released, and when you can register them.",
+        "description": "Keep an eye on domain names you would like to own: HappyDomain tells you when they are about to be released, and when you can register them.",
         "lifecycle": "Life cycle of the domain",
         "loading": "Loading your watchlist…",
         "retry": "Try again",
@@ -362,17 +362,17 @@
         },
         "added": {
             "title": "Domain watched",
-            "message": "happyDomain will tell you when {{domain}} is about to be released."
+            "message": "HappyDomain will tell you when {{domain}} is about to be released."
         },
         "empty": {
             "title": "Covet a domain name already taken?",
-            "intro": "Many domains are not renewed by their owner. Add the ones you would like to own, and happyDomain follows them through their whole life cycle.",
+            "intro": "Many domains are not renewed by their owner. Add the ones you would like to own, and HappyDomain follows them through their whole life cycle.",
             "add": {
                 "title": "Add a domain",
                 "text": "Type the domain you covet above, optionally with a note to remember why."
             },
             "follow": {
-                "title": "happyDomain keeps an eye on it",
+                "title": "HappyDomain keeps an eye on it",
                 "text": "Once a week while it is registered, then twice a day from its expiration on: grace period, redemption, pending deletion."
             },
             "notify": {
@@ -492,7 +492,7 @@
             "content": "Invalid session, you have been logged out: {{err}}. Please login again."
         },
         "settings-change": "Unable to change your settings",
-        "account-no-auth": "You're using happyDomain without authentication. You cannot manage other account properties.",
+        "account-no-auth": "You're using HappyDomain without authentication. You cannot manage other account properties.",
         "domain-all-imported": "This account on {{provider}} doesn't have any more domain to import.",
         "duration": "Invalid duration: use for example 3600, 30m, 1h30m or 1w2d.",
         "mbox": "Invalid e-mail address: type for example dnsmaster, or hostmaster@example.org.",
@@ -571,7 +571,7 @@
         "what-happened": "What went wrong?",
         "placeholder": "I tried to add my domain and the page stayed empty…",
         "attached-details": "Details attached to your report",
-        "attached-details-desc": "Your version, your browser and the errors happyDomain recorded. No password, no API key, no domain name: you can review and edit them.",
+        "attached-details-desc": "Your version, your browser and the errors HappyDomain recorded. No password, no API key, no domain name: you can review and edit them.",
         "collecting": "Collecting…",
         "copy": "Copy the report",
         "copied": "Report copied!",
@@ -592,12 +592,12 @@
         "welcome": {
             "beta": {
                 "intro": "It's beta software! 🏗️",
-                "part1": "happyDomain is functional but still very much a work in progress.  If something doesn't work, please",
+                "part1": "HappyDomain is functional but still very much a work in progress.  If something doesn't work, please",
                 "report": "tell us what's wrong",
                 "part2": ". We're highly responsive and each reported bug helps us improve the tool for everyone. Thanks in advance 🙏"
             },
-            "purpose": "{{happyDomain}} makes domain management simple and intuitive. Whether you have one domain or hundreds, our platform gives you a centralized way to manage them all.",
-            "use": "Use {{happyDomain}} as a replacement interface to your usual domain name provider. It'll still rely on your provider's infrastructure, via our simple interface.",
+            "purpose": "HappyDomain makes domain management simple and intuitive. Whether you have one domain or hundreds, our platform gives you a centralized way to manage them all.",
+            "use": "Use HappyDomain as a replacement interface to your usual domain name provider. It'll still rely on your provider's infrastructure, via our simple interface.",
             "unified": {
                 "title": "Unified Management",
                 "description": "Manage all your domains in one place, regardless of where they're registered."
@@ -612,15 +612,15 @@
         },
         "import": {
             "title": "Import Your Domains",
-            "intro": "Select the domains you want to manage with happyDomain.",
+            "intro": "Select the domains you want to manage with HappyDomain.",
             "imported": "Imported"
         },
         "explore": {
             "understood": "Understood!",
             "done": "You're all set!",
             "bravo": "{{count:eq; 1:Your domain is; default:Your domains are}} now properly configured and ready to use.",
-            "title": "Explore happyDomain Features",
-            "intro": "Now that your domain is set up, discover all the powerful features happyDomain has to offer:",
+            "title": "Explore HappyDomain Features",
+            "intro": "Now that your domain is set up, discover all the powerful features HappyDomain has to offer:",
             "history": {
                 "title": "Record History",
                 "description": "Track all changes made to your DNS records with version history and rollback options.",
@@ -642,8 +642,8 @@
             "soon": "soon"
         },
         "no-sale": {
-            "title": "You need to own a domain to use happyDomain.",
-            "description": "{{happyDomain}} does not sell domains yet. To start using our interface, you need to buy a domain from one of our supported providers.",
+            "title": "You need to own a domain to use HappyDomain.",
+            "description": "HappyDomain does not sell domains yet. To start using our interface, you need to buy a domain from one of our supported providers.",
             "buy-advice": "We'll provide some guidance in the near future on how to easily buy a domain name. So stay tuned and get in touch with us if you can help us build a comprehensive guide."
         }
     },
@@ -717,7 +717,7 @@
         "no-name": "No name",
         "provider": "Domains living on {{provider}}",
         "read-only": "Read-only",
-        "read-only-title": "happyDomain reads the zone through this provider but never changes it",
+        "read-only-title": "HappyDomain reads the zone through this provider but never changes it",
         "kind": "domain provider",
         "select-provider": "Select the DNS provider hosting your zone:",
         "provider-name": "Host's name",
@@ -731,7 +731,7 @@
     },
     "upgrade": {
         "title": "An update is available!",
-        "content": "A new version of happyDomain is already available. To enable it, please click here to refresh the page."
+        "content": "A new version of HappyDomain is already available. To enable it, please click here to refresh the page."
     },
     "wait": {
         "asking-domains": "Asking provider for the existing domains...",
@@ -749,7 +749,7 @@
         "propagation": "Publishing your changes…"
     },
     "settings": {
-        "subtitle": "Tailor your happyDomain experience to your needs",
+        "subtitle": "Tailor your HappyDomain experience to your needs",
         "fieldhint": {
             "title": "Field hints",
             "description": "Choose how to display help text for form fields",
@@ -768,7 +768,7 @@
         },
         "notifications": {
             "title": "Notifications",
-            "subtitle": "Configure how and when happyDomain notifies you about issues",
+            "subtitle": "Configure how and when HappyDomain notifies you about issues",
             "description": "Manage notification channels, preferences and history",
             "manage": "Manage notifications",
             "channels": {
@@ -888,7 +888,7 @@
             }
         },
         "showrrtypes": "Show resource type associated with services (for users familiar with DNS)",
-        "success": "Continue to enjoy happyDomain.",
+        "success": "Continue to enjoy HappyDomain.",
         "success-change": "Your settings has been saved.",
         "title": "Settings",
         "applyconfirm": {
@@ -975,8 +975,8 @@
             "fill-form": "Fill in the form above to generate records.",
             "generating": "Generating…",
             "no-records": "No records generated.",
-            "cta-title": "Handle DNS complexity with happyDomain",
-            "cta-text": "happyDomain lets you manage all your DNS records through a visual interface — no zone file editing required.",
+            "cta-title": "Handle DNS complexity with HappyDomain",
+            "cta-text": "HappyDomain lets you manage all your DNS records through a visual interface — no zone file editing required.",
             "cta-button": "Create a free account"
         }
     },
@@ -1055,7 +1055,7 @@
             "prometheus-metrics-copy-failed": "Failed to copy Prometheus metrics URL: {{error}}",
             "prometheus-metrics-modal": {
                 "title": "Prometheus Metrics Endpoint",
-                "description": "Point your Prometheus instance at the URL above to scrape metrics from happyDomain's checks. The endpoint exposes standard Prometheus exposition format and authenticates with your existing happyDomain session or API token.",
+                "description": "Point your Prometheus instance at the URL above to scrape metrics from HappyDomain's checks. The endpoint exposes standard Prometheus exposition format and authenticates with your existing HappyDomain session or API token.",
                 "example": "scrape_configs:\n  - job_name: 'happydomain'\n    metrics_path: '{{path}}'\n    static_configs:\n      - targets: ['{{host}}']",
                 "copy": "Copy URL",
                 "copied": "Copied!",
@@ -1235,7 +1235,7 @@
     },
     "keystores": {
         "title": "Credential keystores",
-        "description": "Choose where the credentials you give happyDomain, such as provider API keys, are sealed.",
+        "description": "Choose where the credentials you give HappyDomain, such as provider API keys, are sealed.",
         "instance": "Instance keystore ({{kind}})",
         "scope-instance": "Managed by the instance",
         "scope-personal": "Personal",
@@ -1276,8 +1276,8 @@
         "unlock-description": "This keystore opens only with what you give. It stays unlocked until you log out.",
         "still-locked": "The keystore stayed locked: the action was not done.",
         "references": "References",
-        "reference": "Reference to a secret kept outside happyDomain",
-        "references-help": "Keystores of this kind keep no credential: in place of each, you enter a reference to it ({{hint}}), which happyDomain resolves when it uses it. Credentials already stored elsewhere cannot be migrated into it.",
+        "reference": "Reference to a secret kept outside HappyDomain",
+        "references-help": "Keystores of this kind keep no credential: in place of each, you enter a reference to it ({{hint}}), which HappyDomain resolves when it uses it. Credentials already stored elsewhere cannot be migrated into it.",
         "reentry-title": "Credentials to enter again",
         "reentry-references": "This keystore keeps references, not credentials: enter a reference in each credential field.",
         "reentry-secrets": "This keystore keeps credentials, not references: enter each credential itself."
