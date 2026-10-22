@@ -26,7 +26,6 @@
     import { resolve } from "$app/paths";
     import { Alert, Col, Container, Icon, Row, Spinner } from "@sveltestrap/sveltestrap";
 
-    import Logo from "$lib/components/Logo.svelte";
     import { validateEmail } from "$lib/api/user";
     import { appConfig } from "$lib/stores/config";
     import { toasts } from "$lib/stores/toasts";
@@ -77,9 +76,7 @@
         </Col>
         <Col sm="10" md="7" lg="5">
             <div class="validation-card">
-                <div class="text-center mb-4 d-md-none">
-                    <Logo height="32" />
-                </div>
+                <div class="text-center mb-4 d-md-none">HappyDomain</div>
                 {#if $appConfig.no_mail}
                     <Alert color="warning" class="mb-0">
                         <h6 class="alert-heading fw-bold">
@@ -125,7 +122,7 @@
         height: 100%;
         border-radius: 1rem 0 0 1rem;
         overflow: hidden;
-        background: linear-gradient(135deg, #edf7f4 0%, #e0f0ed 100%);
+        background: var(--bs-primary-bg-subtle);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -134,15 +131,15 @@
 
     .validation-visual :global(.validation-icon) {
         font-size: 5rem;
-        color: #1cb487;
+        color: var(--bs-primary);
         opacity: 0.6;
     }
 
     .validation-card {
-        background: #fff;
+        background: var(--bs-body-bg);
         border-radius: 0 1rem 1rem 0;
         padding: 2.5rem 2rem;
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 4px 24px rgba(var(--bs-black-rgb), 0.08);
         height: 100%;
         display: flex;
         flex-direction: column;

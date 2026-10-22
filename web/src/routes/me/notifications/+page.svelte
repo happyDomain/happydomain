@@ -36,8 +36,9 @@
     <title>{$t("settings.notifications.title")} - happyDomain</title>
 </svelte:head>
 
-<Container class="flex-fill my-4 pb-5">
+<Container class="flex-fill my-5 pb-5">
     <PageTitle
+        class="border-0"
         title={$t("settings.notifications.title")}
         subtitle={$t("settings.notifications.subtitle")}
     />

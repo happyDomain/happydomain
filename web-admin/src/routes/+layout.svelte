@@ -24,6 +24,10 @@
 <script lang="ts">
     import "../app.scss";
     import "bootstrap-icons/font/bootstrap-icons.css";
+    import "@fontsource-variable/lexend";
+    import "@fontsource-variable/roboto";
+    import "@fontsource-variable/jetbrains-mono";
+    import "@fontsource-variable/jetbrains-mono/wght-italic.css";
 
     import { page } from "$app/state";
 
@@ -38,15 +42,15 @@
         NavLink,
     } from "@sveltestrap/sveltestrap";
 
-    import Logo from "$lib/components/Logo.svelte";
     import ReportProblem from "$lib/components/modals/ReportProblem.svelte";
     import Toaster from "$lib/components/Toaster.svelte";
     import { registerReportModal } from "$lib/stores/report";
     import { toasts } from "$lib/stores/toasts";
 
-
-    let { children }: {
-        children?: import('svelte').Snippet;
+    let {
+        children,
+    }: {
+        children?: import("svelte").Snippet;
     } = $props();
 
     window.onunhandledrejection = (e) => {
@@ -72,58 +76,72 @@
     }
 </script>
 
-<Navbar
-    style="z-index: 100"
-    container="md"
-    expand="md"
-    color="light"
->
-    <NavbarBrand
-        href="/"
-        style="padding: 0; margin: -.5rem 1rem -.5rem 0;"
-        target="_self"
-    >
-        <Logo />
+<Navbar style="z-index: 100" container="md" expand="md">
+    <NavbarBrand href="/" style="padding: 0; margin: -.5rem 1rem -.5rem 0;" target="_self">
+        <img src="/img/happyDomain-mark.svg" alt="HappyDomain" height="26" class="d-sm-none" />
+        <img src="/img/happyDomain.svg" alt="HappyDomain" height="25" class="d-none d-sm-inline" />
         <Badge color="danger" class="d-none d-sm-inline">ADMIN</Badge>
     </NavbarBrand>
     <NavbarToggler on:click={() => (isOpen = !isOpen)} />
     <Collapse {isOpen} navbar expand="md" on:update={handleUpdate}>
         <Nav class="ms-auto align-items-center" navbar>
             <NavItem>
-                <NavLink href="/" active={page && page.url.pathname == '/'}>Dashboard</NavLink>
+                <NavLink href="/" active={page && page.url.pathname == "/"}>Dashboard</NavLink>
             </NavItem>
             <NavItem>
-                <NavLink href="/auth_users" active={page && page.url.pathname.startsWith('/auth_users')}>Auth</NavLink>
+                <NavLink
+                    href="/auth_users"
+                    active={page && page.url.pathname.startsWith("/auth_users")}>Auth</NavLink
+                >
             </NavItem>
             <NavItem>
-                <NavLink href="/users" active={page && page.url.pathname.startsWith('/users')}>Users</NavLink>
+                <NavLink href="/users" active={page && page.url.pathname.startsWith("/users")}
+                    >Users</NavLink
+                >
             </NavItem>
             <NavItem>
-                <NavLink href="/domains" active={page && page.url.pathname.startsWith('/domains')}>Domains</NavLink>
+                <NavLink href="/domains" active={page && page.url.pathname.startsWith("/domains")}
+                    >Domains</NavLink
+                >
             </NavItem>
             <NavItem>
-                <NavLink href="/providers" active={page && page.url.pathname.startsWith('/providers')}>Providers</NavLink>
+                <NavLink
+                    href="/providers"
+                    active={page && page.url.pathname.startsWith("/providers")}>Providers</NavLink
+                >
             </NavItem>
             <NavItem>
-                <NavLink href="/secrets" active={page && page.url.pathname.startsWith('/secrets')}>Secrets</NavLink>
+                <NavLink href="/secrets" active={page && page.url.pathname.startsWith("/secrets")}
+                    >Secrets</NavLink
+                >
             </NavItem>
             <NavItem>
-                <NavLink href="/sessions" active={page && page.url.pathname.startsWith('/sessions')}>Sessions</NavLink>
+                <NavLink href="/sessions" active={page && page.url.pathname.startsWith("/sessions")}
+                    >Sessions</NavLink
+                >
             </NavItem>
             <NavItem>
-                <NavLink href="/templates" active={page && page.url.pathname.startsWith('/templates')}>Templates</NavLink>
+                <NavLink
+                    href="/templates"
+                    active={page && page.url.pathname.startsWith("/templates")}>Templates</NavLink
+                >
             </NavItem>
             <NavItem>
-                <NavLink href="/checkers" active={page && page.url.pathname.startsWith('/checkers')}>Checkers</NavLink>
+                <NavLink href="/checkers" active={page && page.url.pathname.startsWith("/checkers")}
+                    >Checkers</NavLink
+                >
             </NavItem>
             <NavItem>
-                <NavLink href="/scheduler" active={page && page.url.pathname.startsWith('/scheduler')}>Scheduler</NavLink>
+                <NavLink
+                    href="/scheduler"
+                    active={page && page.url.pathname.startsWith("/scheduler")}>Scheduler</NavLink
+                >
             </NavItem>
         </Nav>
     </Collapse>
 </Navbar>
 
-<main class="flex-fill d-flex flex-column justify-content-center bg-light">
+<main class="flex-fill d-flex flex-column justify-content-center bg-body">
     {@render children?.()}
 </main>
 

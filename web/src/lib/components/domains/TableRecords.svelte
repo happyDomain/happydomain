@@ -40,7 +40,7 @@
         {#each Object.keys(service) as i}
             {@const record = service[i]}
             {#if record && record.Hdr}
-                <div class="bg-light p-1 border-1 border-bottom" style="border-color: darkgray">
+                <div class="bg-light p-1 border-1 border-bottom" style="border-color: var(--bs-border-color)">
                     <Record
                         class="mx-1"
                         {record}
@@ -49,7 +49,7 @@
                 </div>
             {:else if record && record.length}
                 {#each record as r}
-                    <div class="bg-light p-1 border-1 border-bottom" style="border-color: darkgray">
+                    <div class="bg-light p-1 border-1 border-bottom" style="border-color: var(--bs-border-color)">
                         <Record
                             class="mx-1"
                             record={r}

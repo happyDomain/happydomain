@@ -56,7 +56,7 @@
     </thead>
     <tbody>
         {#each items as template (template.id)}
-            <tr style="cursor: pointer" onclick={() => open(template)}>
+            <tr style="cursor: pointer; vertical-align: middle" onclick={() => open(template)}>
                 <td class="text-nowrap">
                     <a
                         href={templateLinks().template(encodeURIComponent(template.id))}

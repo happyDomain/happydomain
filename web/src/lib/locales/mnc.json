@@ -63,10 +63,7 @@
         "survey": "Gisuren bihenio? Muse de alame!",
         "update": "Šangname",
         "update-what": "{{what}} be šangname",
-        "welcome": {
-            "start": "Okdome ",
-            "end": "!"
-        },
+        "welcome": "Okdome HappyDomain!",
         "help": "Tusa!",
         "records": "{{count:eq; 0:{{type}} 记录 akū; 1:{{type}} 记录 emke; default:{{type}} 记录}}"
     },
@@ -255,6 +252,7 @@
         "my-domains": "Mini 域名",
         "my-providers": "Mini 域名 提供商",
         "dns-resolver": "DNS 解析器",
+        "help": "帮助",
         "my-account": "Mini 账户",
         "logout": "登出",
         "provider-features": "支持的 提供商",

@@ -104,7 +104,7 @@
 
 <style>
     .toast-container :global(.toast) {
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        box-shadow: 0 4px 16px rgba(var(--bs-black-rgb), 0.12);
         border: none;
         border-radius: 0.5rem;
         overflow: hidden;

@@ -22,12 +22,12 @@
 -->
 
 <script lang="ts">
-    import { preventDefault } from 'svelte/legacy';
+    import { preventDefault } from "svelte/legacy";
 
     import { createEventDispatcher } from "svelte";
     import type { ClassValue } from "svelte/elements";
 
-    import { Button, Collapse, FormGroup, Input, Spinner } from "@sveltestrap/sveltestrap";
+    import { Button, Collapse, FormGroup, Input, Label, Spinner } from "@sveltestrap/sveltestrap";
 
     import SelectType from "./SelectType.svelte";
     import SelectResolver from "./SelectResolver.svelte";
@@ -50,33 +50,39 @@
         value = $bindable({ domain: "", type: "ANY", resolver: "local" }),
         showDNSSEC = $bindable(false),
         sortedDomains = [],
-        request_pending = $bindable(false)
+        request_pending = $bindable(false),
     }: Props = $props();
 
     function submitRequest(): void {
         request_pending = true;
-        dispatch("submit", { value: $state.snapshot(value), showDNSSEC: $state.snapshot(showDNSSEC) });
+        dispatch("submit", {
+            value: $state.snapshot(value),
+            showDNSSEC: $state.snapshot(showDNSSEC),
+        });
     }
 </script>
 
 <form class={className} onsubmit={preventDefault(submitRequest)}>
-    <FormGroup floating label={$t("common.domain")}>
+    <FormGroup>
+        <Label for="domain">
+            {$t("common.domain")}
+        </Label>
         <Input
             aria-describedby="domainHelpBlock"
             id="domain"
             class="font-monospace"
             list="my-domains"
             required
-            placeholder={$t("common.domain")}
+            placeholder="example.com"
             bind:value={value.domain}
         />
+        <div id="domainHelpBlock" class="form-text">
+            <!-- eslint-disable-next-line svelte/no-at-html-tags -- Translations ship with the app; interpolated values are literals or escaped -->
+            {@html $t("resolver.domain-description", {
+                domain: `<a href="/resolver/wikipedia.org" class="font-monospace">wikipedia.org</a>`,
+            })}
+        </div>
     </FormGroup>
-    <div id="domainHelpBlock" class="form-text mb-3 mt-n2">
-        <!-- eslint-disable-next-line svelte/no-at-html-tags -- Translations ship with the app; interpolated values are literals or escaped -->
-        {@html $t("resolver.domain-description", {
-            domain: `<a href="/resolver/wikipedia.org" class="font-monospace">wikipedia.org</a>`,
-        })}
-    </div>
     <datalist id="my-domains">
         {#each sortedDomains as dn (dn.id)}
             <option>

@@ -135,7 +135,9 @@
                 <Button
                     type="button"
                     color="secondary"
-                    outline={settings.zoneview !== 0}
+                    outline
+                    active={settings.zoneview === 0}
+                    aria-pressed={settings.zoneview === 0}
                     on:click={() => (settings.zoneview = 0)}
                 >
                     <Icon name="grid-fill" aria-hidden="true" /><br />
@@ -144,7 +146,9 @@
                 <Button
                     type="button"
                     color="secondary"
-                    outline={settings.zoneview !== 1}
+                    outline
+                    active={settings.zoneview === 1}
+                    aria-pressed={settings.zoneview === 1}
                     on:click={() => (settings.zoneview = 1)}
                 >
                     <Icon name="list-ul" aria-hidden="true" /><br />
@@ -153,7 +157,9 @@
                 <Button
                     type="button"
                     color="secondary"
-                    outline={settings.zoneview !== 2}
+                    outline
+                    active={settings.zoneview === 2}
+                    aria-pressed={settings.zoneview === 2}
                     on:click={() => (settings.zoneview = 2)}
                 >
                     <Icon name="menu-button-wide-fill" aria-hidden="true" /><br />
@@ -205,5 +211,12 @@
         .settings-input {
             width: 200px;
         }
+    }
+
+    /* The chosen view reads as a selected row: a green tint, not a fill. */
+    #zoneview :global(.btn.active) {
+        --bs-btn-active-bg: var(--hd-bg-tint);
+        --bs-btn-active-border-color: var(--hd-accent-line);
+        --bs-btn-active-color: var(--hd-accent-text);
     }
 </style>

@@ -28,7 +28,7 @@
     import { fly, fade } from "svelte/transition";
     import { cubicOut } from "svelte/easing";
 
-    import { Col, Container, Row, Spinner } from "@sveltestrap/sveltestrap";
+    import { Spinner } from "@sveltestrap/sveltestrap";
 
     import {
         type DomainInfoState,
@@ -38,7 +38,7 @@
     import DomainInfoDisplay from "$lib/components/DomainInfoDisplay.svelte";
     import DomainInfoLookupForm from "$lib/components/DomainInfoLookupForm.svelte";
     import { t } from "$lib/translations";
-    import PageTitle from "$lib/components/PageTitle.svelte";
+    import LookupLayout, { MORPH_DURATION } from "$lib/components/LookupLayout.svelte";
     import WatchCard from "$lib/components/watchlist/WatchCard.svelte";
     import { ensureWatchlist, watchlist } from "$lib/stores/watchlist";
     import { userSession } from "$lib/stores/usersession";
@@ -104,97 +104,89 @@
     </title>
 </svelte:head>
 
-{#if domain}
-    <Container fluid class="flex-fill d-flex flex-column">
-        <Row class="flex-grow-1">
-            <Col md={{ offset: 0, size: 4 }} class="bg-light pt-3 pb-5">
-                <div
-                    class="sticky-top"
-                    style="top: 1rem"
-                    in:fly={{ x: -40, duration: 400, easing: cubicOut }}
-                >
-                    <PageTitle title={$t("domaininfo.page-title")} {domain} />
-                    <DomainInfoLookupForm
-                        bind:inputDomain
-                        requestPending={lookup.pending}
-                        id="domain-input"
-                        onsubmit={submit}
-                    />
-                </div>
-            </Col>
+<LookupLayout
+    expanded={!!domain}
+    title={$t("domaininfo.page-title")}
+    {domain}
+    subtitle={$t("domaininfo.page-description")}
+    guide={{
+        title: $t("domaininfo.guide.title"),
+        intro: $t("domaininfo.guide.intro"),
+        icon: "card-text",
+        uses: [
+            {
+                icon: "calendar-event",
+                title: $t("domaininfo.guide.expiration.title"),
+                text: $t("domaininfo.guide.expiration.text"),
+            },
+            {
+                icon: "building",
+                title: $t("domaininfo.guide.registrar.title"),
+                text: $t("domaininfo.guide.registrar.text"),
+            },
+            {
+                icon: "diagram-3",
+                title: $t("domaininfo.guide.delegation.title"),
+                text: $t("domaininfo.guide.delegation.text"),
+            },
+        ],
+    }}
+>
+    {#snippet search()}
+        <DomainInfoLookupForm
+            bind:inputDomain
+            requestPending={lookup.pending}
+            id="domain-input"
+            onsubmit={submit}
+        />
+    {/snippet}
 
-            {#if lookup.pending}
-                <div
-                    class="col-md-8 pt-5 pb-5 d-flex align-items-center justify-content-center"
-                    in:fade={{ duration: 200 }}
-                >
-                    <div class="text-center text-muted">
-                        <Spinner />
-                        <p class="mt-3">{$t("wait.wait")}…</p>
-                    </div>
-                </div>
-            {:else if lookup.notFound}
-                <div class="col-md-8 pt-3 pb-5" in:fly={{ y: 20, duration: 350, easing: cubicOut }}>
-                    {#if watch}
-                        <div class="mt-3">
-                            <WatchCard {watch} showDetails={false} />
-                        </div>
-                    {/if}
-                </div>
-            {:else if lookup.error !== null}
-                <div class="col-md-8 pt-3 pb-5" in:fly={{ y: 20, duration: 350, easing: cubicOut }}>
-                    {#if watch}
-                        <div class="mt-3">
-                            <WatchCard {watch} showDetails={false} />
-                        </div>
-                    {/if}
-                    <h2 class="display-7 fw-bold mt-3">
-                        <i class="bi bi-exclamation-triangle"></i>
-                        {$t("domaininfo.error")}
-                    </h2>
-                    <div class="card border-danger mt-3">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <i class="bi bi-x-circle text-danger fs-3 me-3"></i>
-                                <p class="card-text mb-0">{lookup.error}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {:else if lookup.info !== null}
-                <div
-                    class="col-md-8 pt-3 pb-5"
-                    in:fly={{ y: 20, duration: 400, delay: 100, easing: cubicOut }}
-                >
-                    {#if watch}
-                        <div class="mt-3 mb-4">
-                            <WatchCard {watch} showDetails={false} />
-                        </div>
-                    {/if}
-                    <DomainInfoDisplay info={lookup.info} {domain} summary={false} />
+    {#if lookup.pending}
+        <div
+            class="pt-5 d-flex align-items-center justify-content-center"
+            in:fade={{ duration: 200 }}
+        >
+            <div class="text-center text-muted">
+                <Spinner />
+                <p class="mt-3">{$t("wait.wait")}…</p>
+            </div>
+        </div>
+    {:else if lookup.notFound}
+        <div in:fly={{ y: 20, duration: 350, easing: cubicOut }}>
+            {#if watch}
+                <div class="mt-3">
+                    <WatchCard {watch} showDetails={false} />
                 </div>
             {/if}
-        </Row>
-    </Container>
-{:else}
-    <div class="my-5 container flex-fill" in:fade={{ duration: 300 }}>
-        <PageTitle
-            title={$t("domaininfo.page-title")}
-            subtitle={$t("domaininfo.page-description")}
-        />
-        <Row class="justify-content-center mt-4">
-            <Col md="10" lg="8">
-                <div class="card rounded-4 p-2">
-                    <div class="card-body">
-                        <DomainInfoLookupForm
-                            bind:inputDomain
-                            requestPending={lookup.pending}
-                            id="domain-input-landing"
-                            onsubmit={submit}
-                        />
+        </div>
+    {:else if lookup.error !== null}
+        <div in:fly={{ y: 20, duration: 350, easing: cubicOut }}>
+            {#if watch}
+                <div class="mt-3">
+                    <WatchCard {watch} showDetails={false} />
+                </div>
+            {/if}
+            <h2 class="display-7 fw-bold mt-3">
+                <i class="bi bi-exclamation-triangle"></i>
+                {$t("domaininfo.error")}
+            </h2>
+            <div class="card border-danger mt-3">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-x-circle text-danger fs-3 me-3"></i>
+                        <p class="card-text mb-0">{lookup.error}</p>
                     </div>
                 </div>
-            </Col>
-        </Row>
-    </div>
-{/if}
+            </div>
+        </div>
+    {:else if lookup.info !== null}
+        <div in:fly={{ y: 20, duration: 400, delay: MORPH_DURATION * 0.6, easing: cubicOut }}>
+            {#if watch}
+                <div class="mt-3 mb-4">
+                    <WatchCard {watch} showDetails={false} />
+                </div>
+            {/if}
+            <DomainInfoDisplay info={lookup.info} {domain} summary={false} />
+        </div>
+    {/if}
+</LookupLayout>

@@ -76,7 +76,7 @@
         <PageTitle title={$t("zones.viewer")} subtitle={$t("zones.viewer-subtitle")} domain={data.domain.domain}>
             <ChecksSummaryBadge status={data.domain.last_check_status} href={checksHref} />
             {#if isHistorical}
-                <span class="badge bg-warning text-dark">
+                <span class="badge text-bg-warning">
                     <Icon name="clock-history" />
                     {$t("history.title")}
                 </span>

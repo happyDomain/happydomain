@@ -28,7 +28,7 @@
     import { Col, Container, Row } from "@sveltestrap/sveltestrap";
 
     import DomainListSection from "$lib/components/pages/home/DomainListSection.svelte";
-    import Logo from "$lib/components/Logo.svelte";
+    import PageTitle from "$lib/components/PageTitle.svelte";
     import Sidebar from "$lib/components/pages/home/Sidebar.svelte";
     import { domains, refreshDomains } from "$lib/stores/domains";
     import { filteredGroup, filteredName, filteredProvider } from "$lib/stores/home";
@@ -107,12 +107,8 @@
     });
 </script>
 
-<Container class="flex-fill pt-4 pb-5">
-    <div class="text-center mb-4">
-        <h1 class="welcome-title">
-            {$t("common.welcome.start")}<Logo height="40" />{$t("common.welcome.end")}
-        </h1>
-    </div>
+<Container class="flex-fill pb-5 my-5">
+    <PageTitle class="border-0 mb-0" title={$t("common.welcome")}></PageTitle>
 
     <Row class="g-4">
         <Col lg="8" class="order-1 order-lg-0">

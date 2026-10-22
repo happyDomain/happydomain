@@ -34,12 +34,12 @@
         Row,
     } from "@sveltestrap/sveltestrap";
 
-    import { getUsers, deleteUsersByUid } from '$lib/api-admin';
-    import { toasts } from '$lib/stores/toasts';
+    import { getUsers, deleteUsersByUid } from "$lib/api-admin";
+    import { toasts } from "$lib/stores/toasts";
 
     let usersQ = $state(getUsers());
 
-    let searchQuery = $state('');
+    let searchQuery = $state("");
 
     async function handleDeleteUser(userId: string, userEmail: string) {
         if (confirm(`Are you sure you want to delete user "${userEmail}"?`)) {
@@ -50,12 +50,12 @@
                 usersQ = getUsers();
                 toasts.addToast({
                     message: `User "${userEmail}" has been deleted successfully`,
-                    type: 'success',
+                    type: "success",
                     timeout: 5000,
                 });
             } catch (error) {
                 toasts.addErrorToast({
-                    message: 'Failed to delete user: ' + error,
+                    message: "Failed to delete user: " + error,
                     timeout: 10000,
                 });
             }
@@ -71,9 +71,7 @@
                 User Management
             </h1>
             <p class="d-flex gap-3 align-items-center text-muted">
-                <span class="lead">
-                    Manage all user accounts
-                </span>
+                <span class="lead"> Manage all user accounts </span>
                 {#await usersQ then usersR}
                     <span>Total: {usersR.data?.length ?? 0} users</span>
                 {/await}
@@ -97,11 +95,7 @@
                 <InputGroupText>
                     <Icon name="search"></Icon>
                 </InputGroupText>
-                <Input
-                    type="text"
-                    placeholder="Search users..."
-                    bind:value={searchQuery}
-                />
+                <Input type="text" placeholder="Search users..." bind:value={searchQuery} />
             </InputGroup>
         </Col>
     </Row>
@@ -110,12 +104,15 @@
         Please wait...
     {:then usersR}
         {@const users = usersR.data || []}
-        {@const filteredUsers = users.filter(i => {
+        {@const filteredUsers = users.filter((i) => {
             const query = searchQuery.toLowerCase();
-            return (i.id && i.id.toLowerCase().indexOf(query) > -1) || (i.email && i.email.toLowerCase().indexOf(query) > -1);
+            return (
+                (i.id && i.id.toLowerCase().indexOf(query) > -1) ||
+                (i.email && i.email.toLowerCase().indexOf(query) > -1)
+            );
         })}
         <div class="table-responsive">
-            <Table hover bordered>
+            <Table hover striped>
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -130,13 +127,18 @@
                         <tr>
                             <td>{user.id}</td>
                             <td>{user.email}</td>
-                            <td>{user.created_at?.replace(/\.[0-9]+/, "") || ''}</td>
-                            <td>{user.last_seen?.replace(/\.[0-9]+/, "") || ''}</td>
+                            <td>{user.created_at?.replace(/\.[0-9]+/, "") || ""}</td>
+                            <td>{user.last_seen?.replace(/\.[0-9]+/, "") || ""}</td>
                             <td class="d-flex flex-nowrap gap-1">
                                 <Button color="primary" outline size="sm" href="/users/{user.id}">
                                     <Icon name="pencil"></Icon>
                                 </Button>
-                                <Button color="primary" outline size="sm" onclick={() => handleDeleteUser(user.id!, user.email!)}>
+                                <Button
+                                    color="primary"
+                                    outline
+                                    size="sm"
+                                    onclick={() => handleDeleteUser(user.id!, user.email!)}
+                                >
                                     <Icon name="trash"></Icon>
                                 </Button>
                             </td>

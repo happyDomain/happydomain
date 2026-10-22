@@ -14,11 +14,14 @@
             "success": "Tu cuenta ha sido eliminada con éxito. Esperamos verte de nuevo pronto."
         },
         "join": "¡Únete ahora!",
+        "login-call": "Inicia sesión para gestionar tus dominios.",
         "no-password-change": "Te identificas a través de un servicio externo, si necesitas cambiar tu contraseña, cámbiala en la interfaz dedicada de {{provider}}.",
         "oidc-login": "Iniciar sesión con {{provider}}",
         "ready-login": "¡Listo para iniciar sesión!",
+        "welcome": "¡Bienvenido!",
         "signup": {
             "already": "¿Ya eres miembro?",
+            "title": "Crea tu cuenta",
             "join-call": "¡Únete a nuestra bonita plataforma en menos de 2 minutos!",
             "address-why": "Usaremos tu dirección para {{identify}} en esta plataforma, y para contactarte por {{security-operations}}.",
             "identify": "identificarte",
@@ -60,10 +63,7 @@
         "run": "¡Ejecutar la consulta!",
         "survey": "¿Una observación? ¿Un comentario para compartir? ¡No dudes en escribirnos!",
         "update": "Actualizar",
-        "welcome": {
-            "start": "¡Bienvenido a ",
-            "end": "!"
-        },
+        "welcome": "¡Bienvenido a HappyDomain!",
         "help": "¡Ayuda!",
         "records": "{{count:eq; 0:ningún registro {{type}}; 1:registro {{type}}; default:registros {{type}}}}"
     },
@@ -267,6 +267,7 @@
         "my-domains": "Mis dominios",
         "my-providers": "Mis proveedores de dominios",
         "dns-resolver": "Resolvedor DNS",
+        "help": "Ayuda",
         "whois": "Consulta de datos de registro",
         "my-account": "Mi cuenta",
         "logout": "Cerrar sesión",

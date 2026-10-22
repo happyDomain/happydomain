@@ -20,11 +20,14 @@
             "success": "Votre compte a été supprimé avec succès. Nous espérons vous revoir bientôt."
         },
         "join": "Inscrivez-vous maintenant !",
+        "login-call": "Connectez-vous pour gérer vos domaines.",
         "oidc-login": "Se connecter par {{provider}}",
         "no-password-change": "Vous vous êtes identifié par un service externe, si vous devez changer de mot de passe, rendez-vous sur l'interface dédiée de {{provider}}.",
         "ready-login": "Prêt à entrer !",
+        "welcome": "Bienvenue !",
         "signup": {
             "already": "Déjà inscrit ?",
+            "title": "Créez votre compte",
             "join-call": "Rejoignez notre sympathique service en moins de deux minutes !",
             "address-why": "Nous utiliserons votre adresse pour vous {{identify}} et pour vous contacter en cas d'{{security-operations}}.",
             "identify": "identifier",
@@ -67,10 +70,7 @@
         "no-content": "Aucun contenu",
         "no-thing": "Aucun {{thing}}",
         "new-row": "Nouvelle ligne",
-        "welcome": {
-            "start": "Bienvenue sur ",
-            "end": " !"
-        }
+        "welcome": "Bienvenue sur HappyDomain !"
     },
     "domains": {
         "input": {
@@ -253,6 +253,22 @@
             "transferPeriod": "Le domaine a été transféré à son bureau d'enregistrement actuel il y a quelques jours.",
             "transferProhibited": "Le transfert vers un autre bureau d'enregistrement est interdit.",
             "updateProhibited": "Les modifications du domaine sont interdites."
+        },
+        "guide": {
+            "title": "Que disent les données d'enregistrement ?",
+            "intro": "Le registre de chaque extension conserve des informations publiques sur chaque nom de domaine : son bureau d'enregistrement, ses dates, son statut et ses serveurs de noms.",
+            "expiration": {
+                "title": "Ne ratez aucune expiration",
+                "text": "Voyez quand un domaine expire, le vôtre ou celui que vous attendez, et suivez-le depuis votre liste de surveillance."
+            },
+            "registrar": {
+                "title": "Trouvez le bureau d'enregistrement",
+                "text": "Sachez quel bureau d'enregistrement gère un domaine : la première étape pour le renouveler, le transférer ou signaler un abus."
+            },
+            "delegation": {
+                "title": "Vérifiez la délégation",
+                "text": "Comparez les serveurs de noms déclarés au registre avec ceux de votre zone, et repérez un verrou ou un domaine suspendu."
+            }
         }
     },
     "watchlist": {
@@ -487,7 +503,28 @@
         "base64-unfinished": "La chaîne est incomplète.",
         "suggestion": "Voulez-vous dire: {{suggestion}}",
         "email-identifier": "Impossible de calculer l'empreinte du nom depuis l'identifiant : {{error}}. Vous pouvez la renseigner manuellement ci-dessous.",
-        "clipboard": "Copie impossible : sélectionnez le texte et copiez-le manuellement."
+        "clipboard": "Copie impossible : sélectionnez le texte et copiez-le manuellement.",
+        "page": {
+            "not-found": {
+                "title": "Page introuvable",
+                "content": "La page que vous cherchez n'existe pas, ou a été déplacée."
+            },
+            "forbidden": {
+                "title": "Accès refusé",
+                "content": "Vous n'êtes pas autorisé à voir cette page. Peut-être êtes-vous connecté avec un autre compte ?"
+            },
+            "unexpected": {
+                "title": "Quelque chose s'est mal passé",
+                "content": "HappyDomain a rencontré une erreur inattendue. Ce n'est pas de votre faute : signalez-la-nous, et nous la corrigerons."
+            },
+            "home": "Retour à l'accueil",
+            "back": "Page précédente",
+            "technical": "Détails techniques",
+            "status": "Statut",
+            "route": "Route",
+            "message": "Message",
+            "time": "Heure"
+        }
     },
     "history": {
         "committed-on": "Enregistrée le",
@@ -514,6 +551,7 @@
     "menu": {
         "my-domains": "Mes domaines",
         "dns-resolver": "Résolveur DNS",
+        "help": "Aide",
         "whois": "Infos d'enregistrement d'un domaine",
         "watchlist": "Domaines surveillés",
         "my-account": "Mon compte",
@@ -754,7 +792,23 @@
         "field-description-more-info": "Plus d'information ici",
         "resolver-description": "Il s'agit du serveur à qui nous allons demander les informations.",
         "ttl": "Temps de cache restant",
-        "showDNSSEC": "Afficher les enregistrements DNSSEC dans la réponse (s'il y en a)"
+        "showDNSSEC": "Afficher les enregistrements DNSSEC dans la réponse (s'il y en a)",
+        "guide": {
+            "title": "À quoi sert le résolveur DNS ?",
+            "intro": "Demandez à un serveur DNS ce qu'il répond pour un domaine, exactement comme le recevrait n'importe quel visiteur sur Internet. Pratique pour contrôler une zone avant ou après une modification.",
+            "propagation": {
+                "title": "Vérifiez qu'un changement est en ligne",
+                "text": "Après avoir publié une zone, interrogez plusieurs résolveurs pour voir s'ils servent déjà les nouveaux enregistrements ou gardent encore les anciens en cache."
+            },
+            "mail": {
+                "title": "Diagnostiquez vos e-mails",
+                "text": "Consultez les enregistrements MX et TXT (SPF, DKIM, DMARC) pour comprendre pourquoi des messages sont rejetés ou finissent en spam."
+            },
+            "dnssec": {
+                "title": "Inspectez DNSSEC",
+                "text": "Dans les paramètres personnalisés, affichez les enregistrements DNSSEC pour contrôler les signatures d'une zone."
+            }
+        }
     },
     "provider": {
         "all": "Tous les fournisseurs",

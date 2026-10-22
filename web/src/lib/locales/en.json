@@ -21,11 +21,14 @@
             "success": "Your account have been successfully deleted. We hope to see you back soon."
         },
         "join": "Join now!",
+        "login-call": "Sign in to manage your domains.",
         "no-password-change": "You are identified through an external service, if you need to change your password, change it on the dedicated interface of {{provider}}.",
         "oidc-login": "Sign in with {{provider}}",
         "ready-login": "Ready to login!",
+        "welcome": "Welcome!",
         "signup": {
             "already": "Already a member?",
+            "title": "Create your account",
             "join-call": "Join our nice platform in less than 2 minutes!",
             "address-why": "We'll use your address to {{identify}} you on this platform, and to contact you for {{security-operations}}.",
             "identify": "identify",
@@ -67,10 +70,7 @@
         "survey": "A remark? A comment to share? Don't hesitate to write to us!",
         "update": "Update",
         "update-what": "Update {{what}}",
-        "welcome": {
-            "start": "Welcome to ",
-            "end": "!"
-        },
+        "welcome": "Welcome to HappyDomain!",
         "help": "Help!",
         "records": "{{count:eq; 0:no {{type}} record; 1:{{type}} record; default:{{type}} records}}"
     },
@@ -260,6 +260,22 @@
             "transferPeriod": "The domain was transferred to its current registrar a few days ago.",
             "transferProhibited": "Transfer to another registrar is prohibited.",
             "updateProhibited": "Domain updates are prohibited."
+        },
+        "guide": {
+            "title": "What does the registration data tell?",
+            "intro": "The registry of each extension keeps public information about every domain name: its registrar, its dates, its status and its name servers.",
+            "expiration": {
+                "title": "Never miss an expiration",
+                "text": "See when a domain expires, yours or one you are waiting for, and follow it from your watchlist."
+            },
+            "registrar": {
+                "title": "Find the registrar",
+                "text": "Know which registrar manages a domain: the first step to renew it, transfer it or report an abuse."
+            },
+            "delegation": {
+                "title": "Check the delegation",
+                "text": "Compare the name servers declared at the registry with those of your zone, and spot a lock or a domain on hold."
+            }
         }
     },
     "watchlist": {
@@ -487,7 +503,28 @@
         "base64-unfinished": "Unfinished string.",
         "suggestion": "Did you mean: {{suggestion}}",
         "email-identifier": "Unable to compute the name hash from the username: {{error}}. You can fill it in manually below.",
-        "clipboard": "Unable to copy: select the text and copy it manually."
+        "clipboard": "Unable to copy: select the text and copy it manually.",
+        "page": {
+            "not-found": {
+                "title": "Page not found",
+                "content": "The page you are looking for doesn't exist, or has moved."
+            },
+            "forbidden": {
+                "title": "Access denied",
+                "content": "You are not allowed to see this page. Maybe you are logged in with another account?"
+            },
+            "unexpected": {
+                "title": "Something went wrong",
+                "content": "HappyDomain hit an unexpected error. It's not your fault: tell us about it, and we'll fix it."
+            },
+            "home": "Back to home",
+            "back": "Previous page",
+            "technical": "Technical details",
+            "status": "Status",
+            "route": "Route",
+            "message": "Message",
+            "time": "Time"
+        }
     },
     "history": {
         "committed-on": "Committed on",
@@ -515,6 +552,7 @@
         "my-domains": "My domains",
         "my-providers": "My domain providers",
         "dns-resolver": "DNS resolver",
+        "help": "Help",
         "whois": "Registration Data Lookup",
         "watchlist": "Domain watchlist",
         "checkers": "Configure Checkers",
@@ -902,7 +940,23 @@
         "results-description": "DNS records found for {{domain}} ({{type}} records)",
         "results-description-default": "DNS records found for your query",
         "ttl": "Remaining time in cache",
-        "showDNSSEC": "Show DNSSEC records in answer (if any)"
+        "showDNSSEC": "Show DNSSEC records in answer (if any)",
+        "guide": {
+            "title": "What is the DNS resolver for?",
+            "intro": "Ask a DNS server what it answers for a domain, just as any visitor on the Internet would get it. Handy to check a zone before or after a change.",
+            "propagation": {
+                "title": "Check that a change is live",
+                "text": "After publishing a zone, query several resolvers to see whether they already serve the new records or still keep the old ones in cache."
+            },
+            "mail": {
+                "title": "Troubleshoot email",
+                "text": "Look up the MX and TXT records (SPF, DKIM, DMARC) to understand why messages are rejected or end up in spam."
+            },
+            "dnssec": {
+                "title": "Inspect DNSSEC",
+                "text": "In the custom settings, show the DNSSEC records to check the signatures of a zone."
+            }
+        }
     },
     "generator": {
         "title": "DNS Record Generators",

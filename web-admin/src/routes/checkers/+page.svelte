@@ -76,7 +76,7 @@
     {:then checkersR}
         {@const checkers = checkersR.data}
         <div class="table-responsive">
-            <Table hover bordered>
+            <Table hover striped>
                 <thead>
                     <tr>
                         <th>Plugin Name</th>
@@ -100,7 +100,9 @@
                                 <td>
                                     {#if availabilityBadges(checkerInfo.availability).length > 0}
                                         {#each availabilityBadges(checkerInfo.availability) as badge}
-                                            <Badge color={badge.color} class="me-1">{badge.label}</Badge>
+                                            <Badge color={badge.color} class="me-1"
+                                                >{badge.label}</Badge
+                                            >
                                         {/each}
                                     {:else}
                                         <Badge color="secondary">General</Badge>

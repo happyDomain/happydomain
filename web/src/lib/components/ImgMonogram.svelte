@@ -90,7 +90,7 @@
             y="17"
             text-anchor="middle"
             dominant-baseline="central"
-            fill="#fff"
+            style="fill: var(--bs-white)"
             font-family="system-ui, -apple-system, 'Segoe UI', sans-serif"
             font-size="17"
             font-weight="600">{initial}</text

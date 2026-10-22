@@ -75,7 +75,8 @@
 
 <svelte:head>
     {#if svcSpec}
-        <title>{$t("generator.svctype.title", { name: $serviceName(svcSpec) })} - happyDomain</title>
+        <title>{$t("generator.svctype.title", { name: $serviceName(svcSpec) })} - happyDomain</title
+        >
         <meta
             name="description"
             content={$t("generator.svctype.description", { name: $serviceName(svcSpec) })}
@@ -85,11 +86,14 @@
     {/if}
 </svelte:head>
 
-<Container fluid class="my-4 flex-fill">
+<Container fluid class="my-5 flex-fill">
     <Row class="justify-content-center">
         <Col lg="8" xl="7">
             <div class="mb-3">
-                <a href={resolve("/generator")} class="text-body-secondary text-decoration-none small">
+                <a
+                    href={resolve("/generator")}
+                    class="text-body-secondary text-decoration-none small"
+                >
                     <i class="bi bi-arrow-left me-1"></i>
                     {$t("common.back")}
                 </a>
@@ -164,7 +168,9 @@
             </div>
 
             <div class="cta-card mb-4">
-                <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-3">
+                <div
+                    class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-3"
+                >
                     <div class="flex-grow-1">
                         <h5 class="fw-bold mb-1">{$t("generator.svctype.cta-title")}</h5>
                         <p class="text-body-secondary small mb-0">
@@ -182,11 +188,11 @@
 
 <style>
     .step-card {
-        background: #fff;
-        border: 1px solid rgba(0, 0, 0, 0.08);
+        background: var(--bs-body-bg);
+        border: 1px solid var(--bs-border-color-translucent);
         border-radius: 0.75rem;
         overflow: hidden;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+        box-shadow: 0 1px 4px rgba(var(--bs-black-rgb), 0.04);
     }
 
     .step-header {
@@ -194,8 +200,8 @@
         align-items: center;
         gap: 0.75rem;
         padding: 1rem 1.25rem;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-        background: rgba(0, 0, 0, 0.015);
+        border-bottom: 1px solid var(--bs-border-color-translucent);
+        background: rgba(var(--bs-emphasis-color-rgb), 0.015);
     }
 
     .step-number {
@@ -206,7 +212,7 @@
         height: 1.75rem;
         border-radius: 50%;
         background: var(--bs-primary);
-        color: #fff;
+        color: var(--bs-black);
         font-size: 0.8rem;
         font-weight: 700;
         flex-shrink: 0;
@@ -226,14 +232,16 @@
         margin: 0;
         padding: 1rem 1.25rem;
         font-size: 0.8rem;
-        background: #f8f9fa;
-        border-top: 1px solid rgba(0, 0, 0, 0.04);
+        background: var(--hd-bg-chrome);
+        border: 0;
+        border-top: 1px solid var(--bs-border-color-translucent);
+        border-radius: 0;
         overflow-x: auto;
     }
 
     .cta-card {
-        background: linear-gradient(135deg, #f0faf7 0%, #e8f4f8 100%);
-        border: 1px solid rgba(28, 180, 135, 0.2);
+        background: var(--bs-primary-bg-subtle);
+        border: 1px solid var(--bs-primary-border-subtle);
         border-radius: 0.75rem;
         padding: 1.5rem;
     }

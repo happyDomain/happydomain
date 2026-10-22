@@ -132,7 +132,7 @@
     </div>
 {:else}
     {#if !$filteredName || filtered_family}
-        <ul class="nav nav-tabs sticky-top" style="background: white">
+        <ul class="nav nav-tabs sticky-top" style="background: var(--bs-body-bg)">
             <NavItem>
                 <NavLink active={filtered_family == null} on:click={() => (filtered_family = null)}>
                     {$t("service.all")}

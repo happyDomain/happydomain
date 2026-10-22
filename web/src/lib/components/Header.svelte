@@ -41,7 +41,6 @@
 
     import { logout as APILogout, cleanUserSession } from "$lib/api/user";
     import HelpButton from "$lib/components/Help.svelte";
-    import Logo from "$lib/components/Logo.svelte";
     import { appConfig } from "$lib/stores/config";
     import { openReportModal } from "$lib/stores/report";
     import { userSession, refreshUserSession } from "$lib/stores/usersession";
@@ -76,20 +75,23 @@
     }
 </script>
 
-<Navbar class={[className, "py-1"]} id="nav" container expand="xs" light style="z-index: 100">
+<Navbar class={[className, "py-2"]} id="nav" container expand="xs" style="z-index: 100">
     <NavbarBrand
         href="/"
         class="me-3"
         style="padding: 0;"
         target={$userSession.id ? undefined : "_self"}
     >
-        <Logo />
+        <img src="/img/happyDomain-mark.svg" alt="HappyDomain" height="26" class="d-sm-none" />
+        <img src="/img/happyDomain.svg" alt="HappyDomain" height="25" class="d-none d-sm-block" />
     </NavbarBrand>
-    <Nav class="ms-auto align-items-center gap-1" navbar>
-        <HelpButton size="sm" class="btn-icon" />
+    <Nav class="ms-auto align-items-center gap-2" navbar>
+        <HelpButton size="sm" color="link" class="btn-nav-tool" title={$t("common.help")}>
+            <span class="d-none d-sm-inline ms-1">{$t("menu.help")}</span>
+        </HelpButton>
         {#if $userSession.id}
             <Dropdown nav inNavbar>
-                <DropdownToggle nav caret class="user-toggle">
+                <DropdownToggle color="link" size="sm" caret class="btn-nav-tool py-1">
                     <Icon name="person-circle" />
                     {#if $userSession.email !== "_no_auth"}
                         <span class="d-inline d-sm-none">
@@ -183,7 +185,7 @@
                 </DropdownMenu>
             </Dropdown>
         {:else}
-            <Button class="btn-sm" color="info" outline href="/resolver">
+            <Button class="btn-sm btn-nav-tool me-md-2" color="link" href="/resolver">
                 <Icon name="search" aria-hidden="true" />
                 <span class="d-none d-sm-inline ms-1">{$t("menu.dns-resolver")}</span>
             </Button>
@@ -209,7 +211,9 @@
                 <span class="ms-1">{$t("menu.signin")}</span>
             </Button>
             <Dropdown nav inNavbar>
-                <DropdownToggle nav caret class="text-uppercase small">{$locale}</DropdownToggle>
+                <DropdownToggle color="link" size="sm" caret class="btn-nav-tool text-uppercase">
+                    {$locale}
+                </DropdownToggle>
                 <DropdownMenu end>
                     {#each $locales as lang}
                         <DropdownItem active={$locale == lang} on:click={() => ($locale = lang)}>
@@ -221,3 +225,24 @@
         {/if}
     </Nav>
 </Navbar>
+
+<style>
+    /* Keep btn-sm height so the navbar does not grow, but give labels room. */
+    :global(#nav .btn-sm:not(.btn-icon)) {
+        padding-inline: 0.75rem;
+    }
+    :global(#nav .btn-link) {
+        text-decoration: none;
+    }
+    /* Utility links (resolver) read like nav items, not like hyperlinks. */
+    :global(#nav .btn-nav-tool) {
+        color: var(--hd-fg-2);
+        font-weight: 600;
+    }
+    :global(#nav .btn-nav-tool:hover),
+    :global(#nav .btn-nav-tool:focus-visible),
+    :global(#nav .btn-nav-tool.show) {
+        color: var(--bs-body-color);
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+</style>

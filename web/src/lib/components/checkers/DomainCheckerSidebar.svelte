@@ -120,7 +120,7 @@
     }
 
     .checker-item:hover {
-        background-color: rgba(0, 0, 0, 0.06);
+        background-color: var(--hd-bg-hover);
     }
 
     .checker-action {

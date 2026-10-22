@@ -218,9 +218,9 @@
                                         {#each availabilityBadges(status.availability, $t) as badge}
                                             <Badge color={badge.color}>{badge.label}</Badge>
                                         {:else}
-                                            <Badge color="secondary">
+                                            <span class="text-muted small">
                                                 {$t("checkers.availability.general")}
-                                            </Badge>
+                                            </span>
                                         {/each}
                                     </dd>
                                 </dl>

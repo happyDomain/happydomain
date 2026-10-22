@@ -125,7 +125,7 @@
             {/each}
         {/if}
         <span
-            class="badge bg-primary"
+            class="badge text-bg-primary"
             role="button"
             tabindex="0"
             onclick={addParameter}

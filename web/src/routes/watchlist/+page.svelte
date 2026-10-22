@@ -139,7 +139,7 @@
     <title>{$t("watchlist.title")} - happyDomain</title>
 </svelte:head>
 
-<Container class="flex-fill mt-4 mb-5">
+<Container class="flex-fill my-5">
     <PageTitle title={$t("watchlist.title")} subtitle={$t("watchlist.description")}>
         <p class="small text-muted mb-0">
             <i class="bi bi-bell me-1"></i>

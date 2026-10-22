@@ -35,7 +35,7 @@
     <Row class="mb-4">
         <Col>
             <div class="d-flex align-items-center gap-1">
-                <Button color="link" href="/users/{userId}" class="text-black">
+                <Button color="link" href="/users/{userId}" class="text-body-emphasis">
                     <Icon name="chevron-left"></Icon>
                 </Button>
                 <h1 class="display-5 mb-0">User Domains</h1>

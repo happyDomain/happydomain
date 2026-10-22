@@ -63,10 +63,7 @@
         "survey": "བསམ་འཆར་ཡོད་དམ། ང་ཚོར་འབྲེལ་གཏུག་བྱེད་རོགས།",
         "update": "གསར་སྒྱུར།",
         "update-what": "{{what}} གསར་སྒྱུར།",
-        "welcome": {
-            "start": "ཕེབས་པར་དགའ་བསུ། ",
-            "end": "།"
-        },
+        "welcome": "ཕེབས་པར་དགའ་བསུ། HappyDomain།",
         "help": "རོགས་རམ།",
         "records": "{{count:eq; 0:{{type}} 记录 མེད; 1:{{type}} 记录 གཅིག; default:{{type}} 记录}}"
     },
@@ -255,6 +252,7 @@
         "my-domains": "ངའི 域名",
         "my-providers": "ངའི 域名 提供商",
         "dns-resolver": "DNS 解析器",
+        "help": "帮助",
         "my-account": "ངའི 账户",
         "logout": "登出",
         "provider-features": "རྒྱབ་སྐྱོར་བྱེད་པའི་ 提供商",

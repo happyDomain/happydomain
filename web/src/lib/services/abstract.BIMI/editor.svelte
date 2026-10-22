@@ -294,7 +294,7 @@
         {$t("services.bimi-hosted.preview", { default: "Generated record" })}
     </h5>
     {#if preview}
-        <pre class="bg-body-secondary border rounded p-2 small mb-0 text-wrap text-break"><code
+        <pre class="p-2 small mb-0 text-wrap text-break"><code
                 >{selector}._bimi.{domain}. IN TXT "{preview}"</code
             ></pre>
     {:else}

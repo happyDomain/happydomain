@@ -34,15 +34,15 @@
         Row,
     } from "@sveltestrap/sveltestrap";
 
-    import { getAuth, deleteAuthByUid, postAuthInvite } from '$lib/api-admin';
-    import { toasts } from '$lib/stores/toasts';
+    import { getAuth, deleteAuthByUid, postAuthInvite } from "$lib/api-admin";
+    import { toasts } from "$lib/stores/toasts";
 
     let authUsersQ = $state(getAuth());
 
-    let searchQuery = $state('');
+    let searchQuery = $state("");
 
     async function sendInvitation() {
-        const email = prompt('Enter the email address to invite:');
+        const email = prompt("Enter the email address to invite:");
         if (!email) {
             return;
         }
@@ -58,12 +58,12 @@
             authUsersQ = getAuth();
             toasts.addToast({
                 message: `Invitation sent to "${email}" successfully`,
-                type: 'success',
+                type: "success",
                 timeout: 5000,
             });
         } catch (error) {
             toasts.addErrorToast({
-                message: 'Failed to send invitation: ' + error,
+                message: "Failed to send invitation: " + error,
                 timeout: 10000,
             });
         }
@@ -78,9 +78,7 @@
                 Auth User Management
             </h1>
             <p class="d-flex gap-3 align-items-center text-muted">
-                <span class="lead">
-                    Manage all authentication accounts
-                </span>
+                <span class="lead"> Manage all authentication accounts </span>
                 {#await authUsersQ then authUsersR}
                     <span>Total: {authUsersR.data?.length ?? 0} auth users</span>
                 {/await}
@@ -104,11 +102,7 @@
                 <InputGroupText>
                     <Icon name="search"></Icon>
                 </InputGroupText>
-                <Input
-                    type="text"
-                    placeholder="Search auth users..."
-                    bind:value={searchQuery}
-                />
+                <Input type="text" placeholder="Search auth users..." bind:value={searchQuery} />
             </InputGroup>
         </Col>
     </Row>
@@ -118,7 +112,7 @@
     {:then authUsersR}
         {@const authUsers = authUsersR.data}
         <div class="table-responsive">
-            <Table hover bordered>
+            <Table hover striped>
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -129,36 +123,55 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {#each (authUsers ?? []).filter(i => (i.id?.toLowerCase() ?? '').indexOf(searchQuery.toLowerCase()) > -1 || (i.email?.toLowerCase() ?? '').indexOf(searchQuery.toLowerCase()) > -1) as authUser}
+                    {#each (authUsers ?? []).filter((i) => (i.id?.toLowerCase() ?? "").indexOf(searchQuery.toLowerCase()) > -1 || (i.email?.toLowerCase() ?? "").indexOf(searchQuery.toLowerCase()) > -1) as authUser}
                         <tr>
                             <td>{authUser.id}</td>
                             <td>{authUser.email}</td>
-                            <td>{authUser.createdAt?.replace(/\.[0-9]+/, "") ?? ''}</td>
+                            <td>{authUser.createdAt?.replace(/\.[0-9]+/, "") ?? ""}</td>
                             <td>{authUser.lastLoggedIn?.replace(/\.[0-9]+/, "")}</td>
                             <td class="d-flex flex-nowrap gap-1">
-                                <Button color="primary" outline size="sm" href="/auth_users/{authUser.id}">
+                                <Button
+                                    color="primary"
+                                    outline
+                                    size="sm"
+                                    href="/auth_users/{authUser.id}"
+                                >
                                     <Icon name="pencil"></Icon>
                                 </Button>
-                                <Button color="primary" outline size="sm" onclick={async () => {
-                                    if (confirm(`Are you sure you want to delete auth user "${authUser.email}"?`)) {
-                                        try {
-                                            const { error: err } = await deleteAuthByUid({ path: { uid: authUser.id ?? '' } });
-                                            if (err) throw new Error((err as any)?.errmsg || String(err));
-                                            // Refresh the auth users list
-                                            authUsersQ = getAuth();
-                                            toasts.addToast({
-                                                message: `Auth user "${authUser.email}" has been deleted successfully`,
-                                                type: 'success',
-                                                timeout: 5000,
-                                            });
-                                        } catch (error) {
-                                            toasts.addErrorToast({
-                                                message: 'Failed to delete auth user: ' + error,
-                                                timeout: 10000,
-                                            });
+                                <Button
+                                    color="primary"
+                                    outline
+                                    size="sm"
+                                    onclick={async () => {
+                                        if (
+                                            confirm(
+                                                `Are you sure you want to delete auth user "${authUser.email}"?`,
+                                            )
+                                        ) {
+                                            try {
+                                                const { error: err } = await deleteAuthByUid({
+                                                    path: { uid: authUser.id ?? "" },
+                                                });
+                                                if (err)
+                                                    throw new Error(
+                                                        (err as any)?.errmsg || String(err),
+                                                    );
+                                                // Refresh the auth users list
+                                                authUsersQ = getAuth();
+                                                toasts.addToast({
+                                                    message: `Auth user "${authUser.email}" has been deleted successfully`,
+                                                    type: "success",
+                                                    timeout: 5000,
+                                                });
+                                            } catch (error) {
+                                                toasts.addErrorToast({
+                                                    message: "Failed to delete auth user: " + error,
+                                                    timeout: 10000,
+                                                });
+                                            }
                                         }
-                                    }
-                                }}>
+                                    }}
+                                >
                                     <Icon name="trash"></Icon>
                                 </Button>
                             </td>

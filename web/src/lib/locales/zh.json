@@ -14,11 +14,14 @@
             "success": "账号已注销。江湖路远，有缘再见！"
         },
         "join": "立刻加入！",
+        "login-call": "登录以管理您的域名。",
         "no-password-change": "您通过第三方服务登录，如需改密，请前往 {{provider}} 官网操作。",
         "oidc-login": "使用 {{provider}} 登录",
         "ready-login": "万事俱备！",
+        "welcome": "欢迎！",
         "signup": {
             "already": "已有账号？",
+            "title": "创建您的账户",
             "join-call": "两分钟，玩转 HappyDomain！",
             "address-why": "我们用您的邮箱{{identify}}您在平台上的身份，有{{security-operations}}时会联系您。",
             "identify": "识别",
@@ -63,10 +66,7 @@
         "survey": "有话说？尽管告诉我们！",
         "update": "更新",
         "update-what": "更新{{what}}",
-        "welcome": {
-            "start": "欢迎来到 ",
-            "end": "！"
-        },
+        "welcome": "欢迎来到 HappyDomain！",
         "help": "求助",
         "records": "{{count:eq; 0:暂无 {{type}} 记录; 1:1 条 {{type}} 记录; default:{{type}} 记录}}"
     },
@@ -289,6 +289,7 @@
         "my-domains": "我的域名",
         "my-providers": "我的提供商",
         "dns-resolver": "DNS 解析器",
+        "help": "帮助",
         "whois": "域名注册信息查询",
         "my-account": "我的账号",
         "logout": "退出登录",

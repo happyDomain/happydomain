@@ -23,6 +23,7 @@
 
 <script lang="ts">
     import { page } from "$app/state";
+    import type { Snippet } from "svelte";
     import { Button, Icon, type Color } from "@sveltestrap/sveltestrap";
 
     import { helpLinkOverride } from "$lib/stores/help";
@@ -34,9 +35,10 @@
         color?: Color | "link" | string;
         size?: "sm" | "lg" | string;
         title?: string;
+        children?: Snippet;
     }
 
-    let { class: className, color = "primary", size = "", title }: Props = $props();
+    let { class: className, color = "primary", size = "", title, children }: Props = $props();
 
     function getHelpPathFromProvider(ptype: string): string {
         if ($providersSpecs && $providersSpecs[ptype]) {
@@ -157,5 +159,6 @@
     data-umami-event="help"
     data-umami-event-href={href.substring(href.lastIndexOf("/") - 2)}
 >
-    <Icon name="question-circle-fill" title={$t("common.help")} />
+    <Icon name="question-circle-fill" title={children ? undefined : $t("common.help")} />
+    {@render children?.()}
 </Button>

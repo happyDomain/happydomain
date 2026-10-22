@@ -126,7 +126,7 @@
 
 <style>
     .vox-backdrop {
-        background-color: rgba(0, 0, 0, 0.3);
+        background-color: rgba(var(--bs-black-rgb), 0.3);
         backdrop-filter: blur(2px);
         position: fixed;
         inset: 0;
@@ -142,7 +142,7 @@
         width: calc(100vw - 3rem);
         border: none;
         border-radius: 1rem;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 8px 32px rgba(var(--bs-black-rgb), 0.15);
         transform-origin: bottom right;
     }
 
@@ -173,7 +173,7 @@
         background: var(--bs-primary-bg-subtle);
         color: var(--bs-primary-text-emphasis);
         border: 1px solid var(--bs-primary-border-subtle);
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 2px 10px rgba(var(--bs-black-rgb), 0.08);
         font-size: 1.1rem;
         transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
     }
@@ -181,7 +181,7 @@
     #voxpeople:hover {
         transform: scale(1.08);
         filter: brightness(0.95);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        box-shadow: 0 4px 16px rgba(var(--bs-black-rgb), 0.12);
     }
 
     .vox-open {

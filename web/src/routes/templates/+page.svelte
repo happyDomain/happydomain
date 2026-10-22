@@ -130,7 +130,7 @@
     <title>{$t("zone-templates.title")} - happyDomain</title>
 </svelte:head>
 
-<Container class="flex-fill mt-4 mb-5">
+<Container class="flex-fill my-5">
     <PageTitle title={$t("zone-templates.title")} subtitle={$t("zone-templates.description")}>
         <div class="d-flex flex-wrap gap-2">
             <Button color="primary" on:click={() => ctrlNewTemplate.Open()}>

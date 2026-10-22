@@ -37,9 +37,9 @@
 </script>
 
 {#if isPropagating}
-    <div class="border rounded p-2 mt-3 bg-white">
+    <div class="border rounded p-2 mt-3 bg-body">
         <div class="d-flex align-items-center gap-2 mb-1">
-            <Icon name="broadcast-pin" class="text-warning" />
+            <Icon name="broadcast-pin" class="text-info" />
             <strong class="small">{$t("service.propagation-in-progress")}</strong>
         </div>
         <p class="small text-muted mb-2">

@@ -130,3 +130,27 @@
 {:else if provider}
     <div bind:this={container} class="my-2"></div>
 {/if}
+
+<style>
+    /* Altcha draws its own box: dress it like the form fields around it. */
+    altcha-widget {
+        --altcha-max-width: 100%;
+        --altcha-border-radius: var(--bs-border-radius);
+        --altcha-color-base: var(--hd-input-bg);
+        --altcha-color-border: var(--hd-input-border);
+        --altcha-color-border-focus: var(--hd-input-border-focus);
+        --altcha-color-text: var(--hd-input-fg);
+        --altcha-color-active: var(--hd-accent);
+    }
+
+    /* The widget is a flex container: without this its box only takes the
+       width of its label. */
+    altcha-widget :global(.altcha) {
+        flex: 1 1 auto;
+    }
+
+    /* A native checkbox, which no altcha variable colors. */
+    altcha-widget :global(.altcha-checkbox input) {
+        accent-color: var(--hd-accent);
+    }
+</style>

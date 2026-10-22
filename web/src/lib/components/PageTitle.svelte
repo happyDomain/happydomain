@@ -25,6 +25,8 @@
     import type { Snippet } from "svelte";
 
     interface Props {
+        class?: string;
+
         /** Main section title (e.g. "Zone Editor", "History") */
         title: string;
         /** Domain name displayed in monospace above the title */
@@ -35,10 +37,10 @@
         children?: Snippet;
     }
 
-    let { title, domain, subtitle, children }: Props = $props();
+    let { class: className = "mb-4", title, domain, subtitle, children }: Props = $props();
 </script>
 
-<header class="page-title mb-4">
+<header class="page-title {className}">
     <div class="d-flex align-items-end justify-content-between gap-3 flex-wrap pb-1">
         <div class="page-title-text">
             {#if domain}
@@ -60,7 +62,7 @@
 <style>
     .page-title {
         padding: 0.75rem 0 1rem 0;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+        border-bottom: 1px solid var(--bs-border-color-translucent);
     }
 
     .page-title-text::before {
@@ -85,7 +87,7 @@
 
     .page-title-heading {
         margin: 0;
-        color: #1a1a2e;
+        color: var(--bs-emphasis-color);
     }
 
     .page-title-subtitle {

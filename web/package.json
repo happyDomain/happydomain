@@ -43,6 +43,9 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@fontsource-variable/jetbrains-mono": "^5.3.0",
+		"@fontsource-variable/lexend": "^5.3.0",
+		"@fontsource-variable/roboto": "^5.3.0",
 		"@hey-api/openapi-ts": "^0.95.0",
 		"@sveltestrap/sveltestrap": "^7.0.0",
 		"bootstrap": "^5.3.0",

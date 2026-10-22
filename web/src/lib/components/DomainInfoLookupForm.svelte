@@ -24,12 +24,7 @@
 <script lang="ts">
     import { preventDefault } from "svelte/legacy";
 
-    import {
-        Button,
-        FormGroup,
-        Input,
-        Spinner,
-    } from "@sveltestrap/sveltestrap";
+    import { Button, FormGroup, Input, Label, Spinner } from "@sveltestrap/sveltestrap";
 
     import { domains } from "$lib/stores/domains";
     import { t } from "$lib/translations";
@@ -48,9 +43,9 @@
 
 <form onsubmit={preventDefault(handleSubmit)}>
     <FormGroup>
-        <label for={id}>
+        <Label for={id}>
             {$t("common.domain")}
-        </label>
+        </Label>
         <Input
             {id}
             class="font-monospace"
@@ -73,7 +68,7 @@
             {/if}
         </datalist>
     </FormGroup>
-    <div class="d-flex justify-content-end">
+    <div class="d-grid">
         <Button type="submit" color="primary" disabled={requestPending}>
             {#if requestPending}
                 <Spinner size="sm" />

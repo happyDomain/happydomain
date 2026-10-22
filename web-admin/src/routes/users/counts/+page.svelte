@@ -82,7 +82,7 @@
         {@const rows = countsR.data ?? []}
         {@const sorted = [...rows].sort((a, b) => (sortAsc ? 1 : -1) * comparators[sortBy](a, b))}
         <div class="table-responsive">
-            <Table hover bordered>
+            <Table hover striped>
                 <thead>
                     <tr>
                         {#each columns as col}
@@ -108,7 +108,9 @@
                     {#each sorted as row}
                         <tr>
                             <td>
-                                <a href={resolve("/users/[uid]", { uid: row.user?.id ?? "" })}>{row.user?.email}</a>
+                                <a href={resolve("/users/[uid]", { uid: row.user?.id ?? "" })}
+                                    >{row.user?.email}</a
+                                >
                             </td>
                             <td>
                                 {new Intl.DateTimeFormat(undefined, {

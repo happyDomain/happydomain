@@ -34,12 +34,12 @@
         Row,
     } from "@sveltestrap/sveltestrap";
 
-    import { getDomains, deleteDomainsByDomain } from '$lib/api-admin';
-    import { toasts } from '$lib/stores/toasts';
+    import { getDomains, deleteDomainsByDomain } from "$lib/api-admin";
+    import { toasts } from "$lib/stores/toasts";
 
     let domainsQ = $state(getDomains());
 
-    let searchQuery = $state('');
+    let searchQuery = $state("");
 
     async function handleDeleteDomain(domainId: string, domainName: string) {
         if (confirm(`Are you sure you want to delete domain "${domainName}"?`)) {
@@ -50,12 +50,12 @@
                 domainsQ = getDomains();
                 toasts.addToast({
                     message: `Domain "${domainName}" has been deleted successfully`,
-                    type: 'success',
+                    type: "success",
                     timeout: 5000,
                 });
             } catch (error) {
                 toasts.addErrorToast({
-                    message: 'Failed to delete domain: ' + error,
+                    message: "Failed to delete domain: " + error,
                     timeout: 10000,
                 });
             }
@@ -71,9 +71,7 @@
                 Domain Management
             </h1>
             <p class="d-flex gap-3 align-items-center text-muted">
-                <span class="lead">
-                    Manage all domains
-                </span>
+                <span class="lead"> Manage all domains </span>
                 {#await domainsQ then domainsR}
                     <span>Total: {domainsR.data?.length ?? 0} domains</span>
                 {/await}
@@ -87,11 +85,7 @@
                 <InputGroupText>
                     <Icon name="search"></Icon>
                 </InputGroupText>
-                <Input
-                    type="text"
-                    placeholder="Search domains..."
-                    bind:value={searchQuery}
-                />
+                <Input type="text" placeholder="Search domains..." bind:value={searchQuery} />
             </InputGroup>
         </Col>
     </Row>
@@ -101,7 +95,7 @@
     {:then domainsR}
         {@const domains = domainsR.data ?? []}
         <div class="table-responsive">
-            <Table hover bordered>
+            <Table hover striped>
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -113,22 +107,35 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {#each domains.filter(d =>
-                        (d.id && d.id.toLowerCase().indexOf(searchQuery.toLowerCase()) > -1) ||
-                        (d.domain && d.domain.toLowerCase().indexOf(searchQuery.toLowerCase()) > -1) ||
-                        (d.group && d.group.toLowerCase().indexOf(searchQuery.toLowerCase()) > -1)
-                    ) as domain}
+                    {#each domains.filter((d) => (d.id && d.id
+                                    .toLowerCase()
+                                    .indexOf(searchQuery.toLowerCase()) > -1) || (d.domain && d.domain
+                                    .toLowerCase()
+                                    .indexOf(searchQuery.toLowerCase()) > -1) || (d.group && d.group
+                                    .toLowerCase()
+                                    .indexOf(searchQuery.toLowerCase()) > -1)) as domain}
                         <tr>
                             <td>{domain.id}</td>
                             <td>{domain.domain}</td>
-                            <td>{domain.group || '-'}</td>
-                            <td>{domain.id_owner || '-'}</td>
-                            <td>{domain.id_provider || '-'}</td>
+                            <td>{domain.group || "-"}</td>
+                            <td>{domain.id_owner || "-"}</td>
+                            <td>{domain.id_provider || "-"}</td>
                             <td class="d-flex flex-nowrap gap-1">
-                                <Button color="primary" outline size="sm" href="/users/{domain.id_owner}/domains/{domain.id}">
+                                <Button
+                                    color="primary"
+                                    outline
+                                    size="sm"
+                                    href="/users/{domain.id_owner}/domains/{domain.id}"
+                                >
                                     <Icon name="pencil"></Icon>
                                 </Button>
-                                <Button color="primary" outline size="sm" onclick={() => handleDeleteDomain(domain.id || '', domain.domain || '')}>
+                                <Button
+                                    color="primary"
+                                    outline
+                                    size="sm"
+                                    onclick={() =>
+                                        handleDeleteDomain(domain.id || "", domain.domain || "")}
+                                >
                                     <Icon name="trash"></Icon>
                                 </Button>
                             </td>

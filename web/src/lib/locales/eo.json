@@ -14,11 +14,14 @@
             "success": "Via konto estis sukcese forigita. Ni esperas vidi vin baldaŭ denove."
         },
         "join": "Aliĝi nun!",
+        "login-call": "Ensalutu por administri viajn domajnojn.",
         "no-password-change": "Vi estas identigita per ekstera servo, se vi bezonas ŝanĝi vian pasvorton, ŝanĝu ĝin en la dediĉita interfaco de {{provider}}.",
         "oidc-login": "Ensaluti per {{provider}}",
         "ready-login": "Preta ensaluti!",
+        "welcome": "Bonvenon!",
         "signup": {
             "already": "Ĉu jam membro?",
+            "title": "Kreu vian konton",
             "join-call": "Aliĝu al nia bela platformo en malpli ol 2 minutoj!",
             "address-why": "Ni uzos vian adreson por {{identify}} vin en ĉi tiu platformo, kaj por kontakti vin pro {{security-operations}}.",
             "identify": "identigi",
@@ -63,10 +66,7 @@
         "survey": "Rimarko? Komento por kunhavigi? Ne hezitu skribi al ni!",
         "update": "Ĝisdatigi",
         "update-what": "Ĝisdatigi {{what}}",
-        "welcome": {
-            "start": "Bonvenon al ",
-            "end": "!"
-        },
+        "welcome": "Bonvenon al HappyDomain!",
         "help": "Helpo!",
         "records": "{{count:eq; 0:neniu {{type}} rikordo; 1:{{type}} rikordo; default:{{type}} rikordoj}}"
     },
@@ -255,6 +255,7 @@
         "my-domains": "Miaj domajnoj",
         "my-providers": "Miaj domajnaj provizantoj",
         "dns-resolver": "DNS-solvililo",
+        "help": "Helpo",
         "my-account": "Mia konto",
         "logout": "Elsaluti",
         "provider-features": "Subtenataj provizantoj",

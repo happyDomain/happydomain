@@ -310,11 +310,7 @@
             </select>
         </div>
         <div class="col-sm-6 text-muted">
-            <small
-                >TLSA owner: <code class="bg-light px-1 rounded"
-                    >{fullDn}.{dn || origin.domain}</code
-                ></small
-            >
+            <small>TLSA owner: <code class="px-1">{fullDn}.{dn || origin.domain}</code></small>
         </div>
     </div>
 

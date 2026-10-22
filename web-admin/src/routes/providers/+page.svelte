@@ -34,12 +34,12 @@
         Row,
     } from "@sveltestrap/sveltestrap";
 
-    import { getProviders, deleteProvidersByPid } from '$lib/api-admin';
-    import { toasts } from '$lib/stores/toasts';
+    import { getProviders, deleteProvidersByPid } from "$lib/api-admin";
+    import { toasts } from "$lib/stores/toasts";
 
     let providersQ = $state(getProviders());
 
-    let searchQuery = $state('');
+    let searchQuery = $state("");
 
     async function handleDeleteProvider(providerId: string, providerName: string) {
         if (confirm(`Are you sure you want to delete provider "${providerName}"?`)) {
@@ -50,12 +50,12 @@
                 providersQ = getProviders();
                 toasts.addToast({
                     message: `Provider "${providerName}" has been deleted successfully`,
-                    type: 'success',
+                    type: "success",
                     timeout: 5000,
                 });
             } catch (error) {
                 toasts.addErrorToast({
-                    message: 'Failed to delete provider: ' + error,
+                    message: "Failed to delete provider: " + error,
                     timeout: 10000,
                 });
             }
@@ -71,9 +71,7 @@
                 Provider Management
             </h1>
             <p class="d-flex gap-3 align-items-center text-muted">
-                <span class="lead">
-                    Manage all DNS providers
-                </span>
+                <span class="lead"> Manage all DNS providers </span>
                 {#await providersQ then providersR}
                     <span>Total: {providersR.data?.length || 0} providers</span>
                 {/await}
@@ -87,11 +85,7 @@
                 <InputGroupText>
                     <Icon name="search"></Icon>
                 </InputGroupText>
-                <Input
-                    type="text"
-                    placeholder="Search providers..."
-                    bind:value={searchQuery}
-                />
+                <Input type="text" placeholder="Search providers..." bind:value={searchQuery} />
             </InputGroup>
         </Col>
     </Row>
@@ -101,7 +95,7 @@
     {:then providersR}
         {@const providers = providersR.data || []}
         <div class="table-responsive">
-            <Table hover bordered>
+            <Table hover striped>
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -112,22 +106,39 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {#each providers.filter(p =>
-                        (p._id && p._id.toLowerCase().indexOf(searchQuery.toLowerCase()) > -1) ||
-                        (p._comment && p._comment.toLowerCase().indexOf(searchQuery.toLowerCase()) > -1) ||
-                        (p._srctype && p._srctype.toLowerCase().indexOf(searchQuery.toLowerCase()) > -1) ||
-                        (p._ownerid && p._ownerid.toLowerCase().indexOf(searchQuery.toLowerCase()) > -1)
-                    ) as provider}
+                    {#each providers.filter((p) => (p._id && p._id
+                                    .toLowerCase()
+                                    .indexOf(searchQuery.toLowerCase()) > -1) || (p._comment && p._comment
+                                    .toLowerCase()
+                                    .indexOf(searchQuery.toLowerCase()) > -1) || (p._srctype && p._srctype
+                                    .toLowerCase()
+                                    .indexOf(searchQuery.toLowerCase()) > -1) || (p._ownerid && p._ownerid
+                                    .toLowerCase()
+                                    .indexOf(searchQuery.toLowerCase()) > -1)) as provider}
                         <tr>
                             <td>{provider._id}</td>
-                            <td>{provider._comment || '-'}</td>
-                            <td>{provider._srctype || '-'}</td>
-                            <td>{provider._ownerid || '-'}</td>
+                            <td>{provider._comment || "-"}</td>
+                            <td>{provider._srctype || "-"}</td>
+                            <td>{provider._ownerid || "-"}</td>
                             <td class="d-flex flex-nowrap gap-1">
-                                <Button color="primary" outline size="sm" href="/users/{provider._ownerid}/providers/{provider._id}">
+                                <Button
+                                    color="primary"
+                                    outline
+                                    size="sm"
+                                    href="/users/{provider._ownerid}/providers/{provider._id}"
+                                >
                                     <Icon name="pencil"></Icon>
                                 </Button>
-                                <Button color="primary" outline size="sm" onclick={() => handleDeleteProvider(provider._id || '', provider._comment || provider._id || '')}>
+                                <Button
+                                    color="primary"
+                                    outline
+                                    size="sm"
+                                    onclick={() =>
+                                        handleDeleteProvider(
+                                            provider._id || "",
+                                            provider._comment || provider._id || "",
+                                        )}
+                                >
                                     <Icon name="trash"></Icon>
                                 </Button>
                             </td>

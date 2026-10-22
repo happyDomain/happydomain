@@ -45,8 +45,8 @@
     <title>{$t("settings.title")} - happyDomain</title>
 </svelte:head>
 
-<Container class="my-4 pb-5">
-    <PageTitle title={$t("settings.title")} subtitle={$t("settings.subtitle")} />
+<Container class="my-5 pb-5">
+    <PageTitle class="border-0" title={$t("settings.title")} subtitle={$t("settings.subtitle")} />
     {#if !$userSession.settings}
         <div class="d-flex justify-content-center">
             <Spinner color="primary" />
