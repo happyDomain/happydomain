@@ -23,9 +23,12 @@ package mailer
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"maps"
 	"net/mail"
+	"regexp"
+	"strings"
 	"text/template"
 
 	"git.happydns.org/happyDomain/web"
@@ -92,20 +95,8 @@ func (r *Mailer) SendMail(to *mail.Address, subject, content string) (err error)
 	txtData := tplData
 	m.SetBodyWriter(gomail.TypeTextPlain, templateWriteFunc(txtTpl, txtData))
 
-	// Convert text from Markdown to HTML
-	md := goldmark.New(
-		goldmark.WithExtensions(extension.GFM),
-		goldmark.WithParserOptions(
-			parser.WithAutoHeadingID(),
-		),
-		goldmark.WithRendererOptions(
-			html.WithHardWraps(),
-			html.WithXHTML(),
-		),
-	)
-
-	var buf bytes.Buffer
-	if err = md.Convert([]byte(content), &buf); err != nil {
+	htmlContent, err := renderMailContent(content)
+	if err != nil {
 		return
 	}
 
@@ -120,7 +111,7 @@ func (r *Mailer) SendMail(to *mail.Address, subject, content string) (err error)
 		return err
 	}
 	htmlData := maps.Clone(tplData)
-	htmlData["Content"] = buf.String()
+	htmlData["Content"] = htmlContent
 	m.AddAlternativeWriter(gomail.TypeTextHTML, templateWriteFunc(htmlTpl, htmlData))
 
 	if err = r.SendMethod.PrepareAndSend(m); err != nil {
@@ -128,4 +119,46 @@ func (r *Mailer) SendMail(to *mail.Address, subject, content string) (err error)
 	}
 
 	return
+}
+
+var (
+	mailMarkdown = goldmark.New(
+		goldmark.WithExtensions(extension.GFM),
+		goldmark.WithParserOptions(
+			parser.WithAutoHeadingID(),
+		),
+		goldmark.WithRendererOptions(
+			html.WithXHTML(),
+		),
+	)
+
+	// mailLoneLinkRe matches a paragraph made of a single link, as rendered by
+	// goldmark before any style is added.
+	mailLoneLinkRe = regexp.MustCompile(`(?m)^<p><a href="([^"]*)">([^<]*)</a></p>$`)
+
+	// mailTagRe matches the opening of the HTML elements to style. Raw HTML
+	// is not rendered from Markdown, so every "<" in the output opens a tag.
+	mailTagRe = regexp.MustCompile(`<(h[1-4]|p|ul|ol|li|a|code|pre|blockquote|hr)\b( style=)?`)
+)
+
+// renderMailContent converts Markdown content to HTML suited for mail
+// clients: each element carries its style inline, and a paragraph holding
+// only a link becomes a call to action button.
+func renderMailContent(content string) (string, error) {
+	var buf bytes.Buffer
+	if err := mailMarkdown.Convert([]byte(content), &buf); err != nil {
+		return "", err
+	}
+
+	out := mailLoneLinkRe.ReplaceAllStringFunc(buf.String(), func(m string) string {
+		sub := mailLoneLinkRe.FindStringSubmatch(m)
+		return fmt.Sprintf(mailButtonTpl, sub[1], sub[2])
+	})
+
+	return mailTagRe.ReplaceAllStringFunc(out, func(m string) string {
+		if strings.HasSuffix(m, " style=") {
+			return m
+		}
+		return m + ` style="` + mailContentStyles[m[1:]] + `"`
+	}), nil
 }

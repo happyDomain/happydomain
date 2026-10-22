@@ -28,7 +28,6 @@
     import { Col, Container, Row } from "@sveltestrap/sveltestrap";
 
     import DomainListSection from "$lib/components/pages/home/DomainListSection.svelte";
-    import Logo from "$lib/components/Logo.svelte";
     import Sidebar from "$lib/components/pages/home/Sidebar.svelte";
     import { domains, refreshDomains } from "$lib/stores/domains";
     import { filteredGroup, filteredName, filteredProvider } from "$lib/stores/home";
@@ -101,7 +100,7 @@
 <Container class="flex-fill pt-4 pb-5">
     <div class="text-center mb-4">
         <h1 class="welcome-title">
-            {$t("common.welcome.start")}<Logo height="40" />{$t("common.welcome.end")}
+            {$t("common.welcome")}
         </h1>
     </div>
 

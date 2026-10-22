@@ -73,10 +73,10 @@
     }
 
     .checker-item:hover {
-        background-color: rgba(0, 0, 0, 0.06);
+        background-color: var(--hd-bg-hover);
     }
 
     .checker-item.active {
-        background-color: rgba(var(--bs-primary-rgb), 0.1);
+        background-color: var(--hd-bg-tint);
     }
 </style>

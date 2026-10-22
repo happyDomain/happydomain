@@ -51,16 +51,16 @@
 {:else}
     {#each zoneDiff as line (line.id)}
         <div
-            class="font-monospace"
+            class="font-monospace py-1"
             class:col={selectable}
             class:form-check={selectable}
-            class:text-success={line.kind == 1}
-            class:text-warning={line.kind == 2}
-            class:text-danger={line.kind == 3}
-            class:text-info={line.kind == 99}
+            class:hd-diff-add={line.kind == 1}
+            class:hd-diff-mod={line.kind == 2}
+            class:hd-diff-del={line.kind == 3}
+            class:hd-diff-info={line.kind == 99}
             style={selectable
                 ? "white-space: pre-line;"
-                : "white-space: pre-line; text-indent: -1em; margin-left: 1em"}
+                : "white-space: pre-line; text-indent: -1em; padding-left: 1.5em; padding-right: 0.5em"}
         >
             {#if selectable}
                 <input

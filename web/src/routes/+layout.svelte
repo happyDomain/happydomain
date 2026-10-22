@@ -26,6 +26,10 @@
     import { resolve } from "$app/paths";
     import { onMount } from "svelte";
     import "bootstrap-icons/font/bootstrap-icons.css";
+    import "@fontsource-variable/lexend";
+    import "@fontsource-variable/roboto";
+    import "@fontsource-variable/jetbrains-mono";
+    import "@fontsource-variable/jetbrains-mono/wght-italic.css";
     import "../app.scss";
 
     import Header from "$lib/components/Header.svelte";
@@ -93,8 +97,10 @@
 
 {#if $appConfig.msg_header}
     <div
-        class={"text-light text-center fw-semibold py-1 " +
-            ($appConfig.msg_header.color ? "bg-" + $appConfig.msg_header.color : "bg-danger")}
+        class={"text-center fw-semibold py-1 " +
+            ($appConfig.msg_header.color
+                ? "text-bg-" + $appConfig.msg_header.color
+                : "text-bg-danger")}
         id="msg_header"
         style="z-index: 101"
     >
@@ -106,7 +112,7 @@
 <NavigationProgress />
 <Header />
 
-<main class="flex-fill d-flex flex-column justify-content-center bg-light">
+<main class="flex-fill d-flex flex-column justify-content-center bg-body">
     {@render children?.()}
 </main>
 

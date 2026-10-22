@@ -92,7 +92,7 @@
 
 <Container class="flex-fill my-5">
     <div class="d-flex align-items-center gap-1 mb-4">
-        <Button color="link" href="/users/{uid}/domains/{domainId}" class="text-black">
+        <Button color="link" href="/users/{uid}/domains/{domainId}" class="text-body-emphasis">
             <Icon name="chevron-left"></Icon>
         </Button>
         <h1 class="display-5 mb-0">

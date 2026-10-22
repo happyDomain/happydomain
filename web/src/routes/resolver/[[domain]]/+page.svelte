@@ -24,7 +24,7 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
     import { resolve as resolveRoute } from "$app/paths";
-        import { page } from "$app/state";
+    import { page } from "$app/state";
     import { untrack } from "svelte";
     import { fly, fade } from "svelte/transition";
     import { cubicOut } from "svelte/easing";
@@ -142,10 +142,13 @@
         if (form.domain === domain) {
             resolve(form);
         } else if (form.domain) {
-            goto(resolveRoute("/resolver/[[domain]]", { domain: encodeURIComponent(form.domain) }), {
-                state: { form, showDNSSEC },
-                noScroll: true,
-            });
+            goto(
+                resolveRoute("/resolver/[[domain]]", { domain: encodeURIComponent(form.domain) }),
+                {
+                    state: { form, showDNSSEC },
+                    noScroll: true,
+                },
+            );
         }
     }
 </script>
@@ -192,24 +195,19 @@
                         </div>
                     {:else if error_response !== null}
                         <div in:fly={{ y: 20, duration: 350, easing: cubicOut }}>
-                            <div class="card border-0 shadow-sm overflow-hidden">
-                                <div class="card-error-bar"></div>
-                                <div class="card-body p-4">
-                                    <div class="d-flex align-items-start gap-3">
-                                        <div class="error-icon-wrapper">
-                                            <i class="bi bi-x-circle-fill"></i>
-                                        </div>
-                                        <div>
-                                            <h5 class="fw-bold mb-1">
-                                                {$t("resolver.query-failed")}
-                                            </h5>
-                                            <p class="text-body-secondary mb-2">
-                                                {$t("resolver.error-description")}
-                                            </p>
-                                            <code class="d-block bg-body-tertiary rounded p-2 small"
-                                                >{error_response}</code
-                                            >
-                                        </div>
+                            <div class="alert alert-danger p-4">
+                                <div class="d-flex align-items-start gap-3">
+                                    <div class="error-icon-wrapper">
+                                        <i class="bi bi-x-circle-fill"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold mb-1">
+                                            {$t("resolver.query-failed")}
+                                        </h5>
+                                        <p class="text-body-secondary mb-2">
+                                            {$t("resolver.error-description")}
+                                        </p>
+                                        <code class="d-block p-2 small">{error_response}</code>
                                     </div>
                                 </div>
                             </div>
@@ -245,7 +243,7 @@
                                 <h4 class="fw-bold mb-0">
                                     {$t("resolver.query-results")}
                                 </h4>
-                                <span class="badge bg-primary-subtle text-primary rounded-pill">
+                                <span class="badge bg-primary-subtle text-primary">
                                     {Object.keys(resByType).length}
                                     {Object.keys(resByType).length === 1 ? "type" : "types"}
                                 </span>
@@ -274,7 +272,7 @@
                                     <div
                                         class="card-header border-0 bg-body-tertiary d-flex align-items-center gap-2 py-3"
                                     >
-                                        <span class="badge bg-primary rounded-pill"
+                                        <span class="badge text-bg-primary"
                                             >{nsrrtype(type)}</span
                                         >
                                         <span class="fw-semibold">
@@ -356,31 +354,31 @@
     }
 
     .hero-search-card {
-        background: #fff;
+        background: var(--bs-body-bg);
         border-radius: 1rem;
         padding: 2rem;
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 4px 24px rgba(var(--bs-black-rgb), 0.08);
     }
 
     .resolver-layout :global(.resolver-sidebar) {
-        background: var(--bs-body-bg);
-        border-right: 1px solid rgba(0, 0, 0, 0.06);
+        background: var(--bs-secondary-bg);
+        border-right: 1px solid var(--bs-border-color-translucent);
     }
 
     .sidebar-header {
         padding-bottom: 1rem;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        border-bottom: 1px solid var(--bs-border-color-translucent);
     }
 
     .resolver-layout :global(.results-col) {
-        background: var(--bs-tertiary-bg, #f8f9fa);
+        background: var(--bs-body-bg);
         min-height: 60vh;
     }
 
     .resolver-loader {
         width: 2.5rem;
         height: 2.5rem;
-        border: 3px solid rgba(28, 180, 135, 0.15);
+        border: 3px solid rgba(var(--bs-primary-rgb), 0.15);
         border-top-color: var(--bs-primary);
         border-radius: 50%;
         animation: resolver-spin 0.8s linear infinite;
@@ -390,11 +388,6 @@
         to {
             transform: rotate(360deg);
         }
-    }
-
-    .card-error-bar {
-        height: 3px;
-        background: linear-gradient(90deg, var(--bs-danger), transparent);
     }
 
     .error-icon-wrapper {
@@ -411,12 +404,12 @@
         width: 4rem;
         height: 4rem;
         border-radius: 50%;
-        background: var(--bs-tertiary-bg, #f0f0f0);
+        background: var(--bs-tertiary-bg);
         font-size: 1.75rem;
         color: var(--bs-secondary-color);
     }
 
     .result-card {
-        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 1px 6px rgba(var(--bs-black-rgb), 0.08);
     }
 </style>

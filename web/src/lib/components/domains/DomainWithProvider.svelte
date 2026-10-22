@@ -90,9 +90,9 @@
         height: 20px;
         padding: 1.5px;
         overflow: hidden;
-        background: #fff;
+        background: var(--bs-body-bg);
         border-radius: 50%;
-        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 0 0 1px rgba(var(--bs-black-rgb), 0.08);
         cursor: pointer;
     }
 </style>

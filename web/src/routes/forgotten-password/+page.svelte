@@ -25,7 +25,6 @@
     import { resolve } from "$app/paths";
     import { Alert, Col, Container, Icon, Row } from "@sveltestrap/sveltestrap";
 
-    import Logo from "$lib/components/Logo.svelte";
     import { appConfig } from "$lib/stores/config";
     import { t } from "$lib/translations";
     import ForgottenPasswordForm from "./ForgottenPasswordForm.svelte";
@@ -49,9 +48,7 @@
         </Col>
         <Col sm="10" md="7" lg="5">
             <div class="recover-card">
-                <div class="text-center mb-4 d-md-none">
-                    <Logo height="32" />
-                </div>
+                <div class="text-center mb-4 d-md-none">HappyDomain</div>
                 {#if $appConfig.no_mail}
                     <Alert color="warning" class="mb-0">
                         <h6 class="alert-heading fw-bold">{$t("password.recovery-unavailable.title")}</h6>
@@ -84,7 +81,7 @@
         height: 100%;
         border-radius: 1rem 0 0 1rem;
         overflow: hidden;
-        background: linear-gradient(135deg, #f5f0f8 0%, #ede4f3 100%);
+        background: var(--bs-info-bg-subtle);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -93,15 +90,15 @@
 
     .recover-visual :global(.recover-icon) {
         font-size: 5rem;
-        color: #9332bb;
+        color: var(--bs-info);
         opacity: 0.6;
     }
 
     .recover-card {
-        background: #fff;
+        background: var(--bs-body-bg);
         border-radius: 0 1rem 1rem 0;
         padding: 2.5rem 2rem;
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 4px 24px rgba(var(--bs-black-rgb), 0.08);
         height: 100%;
         display: flex;
         flex-direction: column;

@@ -288,9 +288,9 @@ export function availabilityBadges(
 ): { label: string; color: string }[] {
     if (!availability) return [];
     const badges = [];
-    if (availability.applyToDomain) badges.push({ label: t ? t("checkers.availability.domain-level") : "Domain", color: "success" });
+    if (availability.applyToDomain) badges.push({ label: t ? t("checkers.availability.domain-level") : "Domain", color: "primary" });
     if (availability.applyToZone) badges.push({ label: t ? t("checkers.availability.zone-level") : "Zone", color: "info" });
-    if (availability.applyToService) badges.push({ label: t ? t("checkers.availability.service-level") : "Service", color: "primary" });
+    if (availability.applyToService) badges.push({ label: t ? t("checkers.availability.service-level") : "Service", color: "secondary" });
     return badges;
 }
 

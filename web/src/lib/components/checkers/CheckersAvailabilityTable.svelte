@@ -61,7 +61,7 @@
                                 {/each}
                             </div>
                         {:else}
-                            <Badge color="secondary">{$t("checkers.availability.general")}</Badge>
+                            <span class="text-muted small">{$t("checkers.availability.general")}</span>
                         {/if}
                     </td>
                     <td>

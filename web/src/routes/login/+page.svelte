@@ -25,7 +25,6 @@
     import { resolve } from "$app/paths";
     import { Col, Container, Row } from "@sveltestrap/sveltestrap";
 
-    import Logo from "$lib/components/Logo.svelte";
     import { appConfig } from "$lib/stores/config";
     import { t } from "$lib/translations";
     import LoginForm from "./LoginForm.svelte";
@@ -42,9 +41,7 @@
         </Col>
         <Col sm="10" md="7" lg="5">
             <div class="login-card">
-                <div class="text-center mb-4 d-md-none">
-                    <Logo height="32" />
-                </div>
+                <div class="text-center mb-4 d-md-none">HappyDomain</div>
                 <h5 class="fw-bold mb-4">{$t("account.signup.join-call")}</h5>
                 <LoginForm />
                 {#if !$appConfig.disable_registration}
@@ -65,7 +62,7 @@
         height: 100%;
         border-radius: 1rem 0 0 1rem;
         overflow: hidden;
-        background: url(/img/login.webp), linear-gradient(135deg, #f0faf7 0%, #e8f4f8 100%);
+        background: url(/img/login.webp), var(--bs-primary-bg-subtle);
         background-size: cover;
         background-position: center;
         min-height: 560px;
@@ -75,10 +72,10 @@
     }
 
     .login-card {
-        background: #fff;
+        background: var(--bs-body-bg);
         border-radius: 0 1rem 1rem 0;
         padding: 2.5rem 2rem;
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 4px 24px rgba(var(--bs-black-rgb), 0.08);
         height: 100%;
         display: flex;
         flex-direction: column;

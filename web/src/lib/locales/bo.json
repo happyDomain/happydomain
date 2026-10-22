@@ -64,10 +64,7 @@
         "spinning": "བསྐོར་བཞིན་པ།",
         "update": "གསར་སྒྱུར།",
         "update-what": "{{what}} གསར་སྒྱུར།",
-        "welcome": {
-            "start": "ཕེབས་པར་དགའ་བསུ། ",
-            "end": "།"
-        },
+        "welcome": "ཕེབས་པར་དགའ་བསུ། HappyDomain།",
         "help": "རོགས་རམ།",
         "records": "{{n:eq; 0:{{type}} 记录 མེད; 1:{{type}} 记录 གཅིག; default:{{type}} 记录}}"
     },

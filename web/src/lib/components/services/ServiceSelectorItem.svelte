@@ -54,7 +54,7 @@
         </div>
     {/if}
     <div class="flex-fill">
-        <strong class="text-dark">{$serviceName(svc)}</strong>
+        <strong class="text-body-emphasis">{$serviceName(svc)}</strong>
         {#if reason}
             <small class="font-italic text-danger">{reason}</small>
         {:else}

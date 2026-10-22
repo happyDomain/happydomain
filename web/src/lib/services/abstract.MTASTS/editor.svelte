@@ -232,7 +232,7 @@
         <code>{policyUrl}</code>
     </p>
     {#if preview}
-        <pre class="bg-body-secondary border rounded p-2 small mb-0"><code>{preview}</code></pre>
+        <pre class="p-2 small mb-0"><code>{preview}</code></pre>
     {:else}
         <p class="small text-muted fst-italic mb-0">
             {$t("services.mta-sts.preview-empty", {

@@ -28,7 +28,7 @@
 
     import ProviderLink from "$lib/components/providers/ProviderLink.svelte";
     import type { HappydnsDomainWithCheckStatus } from "$lib/api-base/types.gen";
-        import { t } from "$lib/translations";
+    import { t } from "$lib/translations";
     import { getStatusColor, getStatusIcon } from "$lib/utils/checkers";
 
     interface Props {
@@ -43,7 +43,7 @@
     style="cursor: pointer"
     onclick={() => goto(domainLinks().zone(encodeURIComponent(domain.domain)))}
 >
-    <td class="fw-semibold">{domain.domain}</td>
+    <td class="fw-semibold font-monospace">{domain.domain}</td>
     <td>{domain.group || ""}</td>
     <td>
         <ProviderLink id_provider={domain.id_provider} onclick={(e) => e.stopPropagation()} />

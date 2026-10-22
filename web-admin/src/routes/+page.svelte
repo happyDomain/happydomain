@@ -142,7 +142,7 @@
 
 {#snippet tile(label: string, value: string, sub: string | null, icon: string, color: string)}
     <Col>
-        <Card body class="h-100 border-0 shadow-sm">
+        <Card body class="h-100 border-0 shadow-sm bg-light">
             <div class="d-flex justify-content-between align-items-start mb-2">
                 <h6 class="text-muted text-uppercase small mb-0">{label}</h6>
                 <i class="bi bi-{icon} text-{color}" style="font-size: 1.25rem;"></i>
@@ -158,7 +158,7 @@
         <span class="text-muted small">{label}</span>
         <span class="font-monospace">
             {value}
-            {#if badge}<Badge color="warning" class="text-dark ms-2">{badge}</Badge>{/if}
+            {#if badge}<Badge color="warning" class="text-bg-warning ms-2">{badge}</Badge>{/if}
         </span>
     </ListGroupItem>
 {/snippet}

@@ -109,11 +109,11 @@
         letter-spacing: 0.03em;
         margin-bottom: 1rem;
         padding-bottom: 0.5rem;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        border-bottom: 1px solid var(--bs-border-color-translucent);
     }
 
     .generator-card {
-        border: 1px solid rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--bs-border-color-translucent);
         border-radius: 0.75rem;
         transition:
             box-shadow 0.2s ease,
@@ -122,7 +122,7 @@
     }
 
     .generator-card:hover {
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 16px rgba(var(--bs-black-rgb), 0.1);
         border-color: var(--bs-primary);
         transform: translateY(-2px);
     }
@@ -140,7 +140,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: rgba(0, 0, 0, 0.04);
+        background: rgba(var(--bs-emphasis-color-rgb), 0.04);
         border-radius: 0.375rem;
         color: var(--bs-secondary);
         font-size: 1rem;

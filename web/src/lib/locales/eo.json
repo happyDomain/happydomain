@@ -64,10 +64,7 @@
         "spinning": "Ŝarĝante",
         "update": "Ĝisdatigi",
         "update-what": "Ĝisdatigi {{what}}",
-        "welcome": {
-            "start": "Bonvenon al ",
-            "end": "!"
-        },
+        "welcome": "Bonvenon al HappyDomain!",
         "help": "Helpo!",
         "records": "{{n:eq; 0:neniu {{type}} rikordo; 1:{{type}} rikordo; default:{{type}} rikordoj}}"
     },

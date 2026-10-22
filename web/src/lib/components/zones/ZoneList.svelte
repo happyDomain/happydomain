@@ -243,7 +243,7 @@
                             >
                                 {#if links}
                                     <a
-                                        class="list-group-item list-group-item-action d-flex justify-content-between align-items-center text-dark"
+                                        class="list-group-item list-group-item-action d-flex justify-content-between align-items-center text-body-emphasis"
                                         class:draggable-item={display_by_groups}
                                         {href}
                                         draggable={display_by_groups || undefined}
@@ -264,7 +264,7 @@
                                     </a>
                                 {:else}
                                     <button
-                                        class="list-group-item list-group-item-action d-flex justify-content-between align-items-center text-dark"
+                                        class="list-group-item list-group-item-action d-flex justify-content-between align-items-center text-body-emphasis"
                                         class:draggable-item={display_by_groups}
                                         type="button"
                                         draggable={display_by_groups || undefined}
@@ -333,9 +333,9 @@
     }
 
     .drag-over {
-        background-color: var(--bs-primary-bg-subtle, #cfe2ff);
+        background-color: var(--bs-primary-bg-subtle);
         border-radius: 0.5rem;
-        outline: 2px dashed var(--bs-primary, #0d6efd);
+        outline: 2px dashed var(--bs-primary);
         transition:
             background-color 0.2s ease,
             outline-color 0.2s ease;
@@ -360,6 +360,6 @@
     .draggable-item:active {
         cursor: grabbing;
         opacity: 0.7;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 4px 12px rgba(var(--bs-black-rgb), 0.15);
     }
 </style>

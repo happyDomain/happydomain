@@ -64,10 +64,7 @@
         "spinning": "Šaršame",
         "update": "Šangname",
         "update-what": "{{what}} be šangname",
-        "welcome": {
-            "start": "Okdome ",
-            "end": "!"
-        },
+        "welcome": "Okdome HappyDomain!",
         "help": "Tusa!",
         "records": "{{n:eq; 0:{{type}} 记录 akū; 1:{{type}} 记录 emke; default:{{type}} 记录}}"
     },

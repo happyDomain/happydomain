@@ -57,16 +57,23 @@
     let canvas: HTMLCanvasElement;
     let chart: Chart | null = null;
 
-    const COLORS = [
-        "#0d6efd",
-        "#dc3545",
-        "#198754",
-        "#ffc107",
-        "#6610f2",
-        "#0dcaf0",
-        "#fd7e14",
-        "#d63384",
+    // Series colours come from the theme; Chart.js needs resolved values, so
+    // the Bootstrap variables are read when the chart is built.
+    const COLOR_VARS = [
+        "--bs-primary",
+        "--bs-danger",
+        "--bs-blue",
+        "--bs-warning",
+        "--bs-info",
+        "--bs-cyan",
+        "--bs-orange",
+        "--bs-pink",
     ];
+
+    function themeColors(): string[] {
+        const style = getComputedStyle(document.documentElement);
+        return COLOR_VARS.map((v) => style.getPropertyValue(v).trim());
+    }
 
     function buildChart() {
         if (chart) {
@@ -74,6 +81,7 @@
             chart = null;
         }
         if (!canvas || !metrics?.length) return;
+        const COLORS = themeColors();
 
         // Group metrics into series by (name, labels)
         type SeriesKey = string;
@@ -90,7 +98,12 @@
         const seriesOrder: SeriesKey[] = [];
 
         for (const m of metrics) {
-            const labelStr = m.labels ? Object.entries(m.labels).sort().map(([k, v]) => `${k}=${v}`).join(",") : "";
+            const labelStr = m.labels
+                ? Object.entries(m.labels)
+                      .sort()
+                      .map(([k, v]) => `${k}=${v}`)
+                      .join(",")
+                : "";
             const key = `${m.name}{${labelStr}}`;
             if (!seriesMap.has(key)) {
                 seriesMap.set(key, {
@@ -120,9 +133,8 @@
         const datasets = seriesOrder.map((key, i) => {
             const series = seriesMap.get(key)!;
             const labelParts = Object.entries(series.labels).map(([k, v]) => `${k}=${v}`);
-            const displayLabel = labelParts.length > 0
-                ? `${series.name} (${labelParts.join(", ")})`
-                : series.name;
+            const displayLabel =
+                labelParts.length > 0 ? `${series.name} (${labelParts.join(", ")})` : series.name;
 
             return {
                 label: displayLabel,
@@ -160,6 +172,10 @@
                 grid: { drawOnChartArea: false },
             };
         }
+
+        const style = getComputedStyle(document.documentElement);
+        Chart.defaults.color = style.getPropertyValue("--bs-secondary-color").trim();
+        Chart.defaults.borderColor = style.getPropertyValue("--bs-border-color").trim();
 
         chart = new Chart(canvas, {
             type: "line",

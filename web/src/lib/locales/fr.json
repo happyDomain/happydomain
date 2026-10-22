@@ -68,10 +68,7 @@
         "no-content": "Aucun contenu",
         "no-thing": "Aucun {{thing}}",
         "new-row": "Nouvelle ligne",
-        "welcome": {
-            "start": "Bienvenue sur ",
-            "end": " !"
-        }
+        "welcome": "Bienvenue sur HappyDomain !"
     },
     "domains": {
         "kind": "un domaine",

@@ -96,7 +96,7 @@
             {$t("checkers.list.prometheus-metrics-modal.description")}
         </p>
 
-        <pre class="bg-body-secondary p-2 rounded small mb-0"><code>{$t(
+        <pre class="p-2 small mb-0"><code>{$t(
                 "checkers.list.prometheus-metrics-modal.example",
                 { host: exampleHost, path: examplePath },
             )}</code></pre>

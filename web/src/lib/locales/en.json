@@ -67,10 +67,7 @@
         "survey": "A remark? A comment to share? Don't hesitate to write to us!",
         "update": "Update",
         "update-what": "Update {{what}}",
-        "welcome": {
-            "start": "Welcome to ",
-            "end": "!"
-        },
+        "welcome": "Welcome to HappyDomain!",
         "help": "Help!",
         "records": "{{n:eq; 0:no {{type}} record; 1:{{type}} record; default:{{type}} records}}"
     },
