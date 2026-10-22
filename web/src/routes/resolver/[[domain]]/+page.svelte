@@ -29,7 +29,7 @@
     import { fly, fade } from "svelte/transition";
     import { cubicOut } from "svelte/easing";
 
-    import { Spinner, Table } from "@sveltestrap/sveltestrap";
+    import { Table } from "@sveltestrap/sveltestrap";
 
     import { resolve as APIResolve } from "$lib/api/resolver";
     import { nsrrtype, nsttl } from "$lib/dns";
@@ -39,6 +39,7 @@
     import { toasts } from "$lib/stores/toasts";
     import { t } from "$lib/translations";
     import LookupLayout, { MORPH_DURATION } from "$lib/components/LookupLayout.svelte";
+    import TileLoader from "$lib/components/TileLoader.svelte";
     import ResolverForm from "./Form.svelte";
 
     interface Props {
@@ -199,7 +200,7 @@
             in:fade={{ duration: 200 }}
         >
             <div class="text-center text-muted">
-                <Spinner />
+                <TileLoader class="mb-2" />
                 <p class="mt-3">{$t("wait.wait")}…</p>
             </div>
         </div>

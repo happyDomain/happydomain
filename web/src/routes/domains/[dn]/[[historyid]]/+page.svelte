@@ -23,7 +23,7 @@
 
 <script lang="ts">
     import { resolve } from "$app/paths";
-    import { Alert, Icon, Spinner } from "@sveltestrap/sveltestrap";
+    import { Alert, Icon } from "@sveltestrap/sveltestrap";
 
     import AliasModal from "$lib/components/modals/Alias.svelte";
     import ChecksSummaryBadge from "$lib/components/checkers/ChecksSummaryBadge.svelte";
@@ -31,6 +31,7 @@
     import SubdomainItem from "$lib/components/zones/SubdomainItem.svelte";
     import SubdomainList from "$lib/components/zones/SubdomainList.svelte";
     import UserResource from "$lib/components/zones/UserResource.svelte";
+    import TileLoader from "$lib/components/TileLoader.svelte";
     import type { HappydnsDomainWithCheckStatus } from "$lib/api-base/types.gen";
     import { domainLink } from "$lib/stores/domains";
     import { sortedDomains, sortedDomainsWithIntermediate, thisZone } from "$lib/stores/thiszone";
@@ -58,17 +59,17 @@
 
 {#if !data.domain}
     <div class="mt-5 text-center flex-fill">
-        <Spinner />
+        <TileLoader class="mb-2" />
         <p>{$t("wait.loading")}</p>
     </div>
 {:else if !data.domain.zone_history || data.domain.zone_history.length == 0}
     <div class="mt-4 text-center flex-fill">
-        <Spinner />
+        <TileLoader class="mb-2" />
         <p>{$t("wait.importing")}</p>
     </div>
 {:else if !$thisZone || !$sortedDomains}
     <div class="mt-4 text-center flex-fill">
-        <Spinner />
+        <TileLoader class="mb-2" />
         <p>{$t("wait.loading")}</p>
     </div>
 {:else}

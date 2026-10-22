@@ -27,7 +27,7 @@
     import { goto } from "$app/navigation";
     import { templateLinks } from "$links";
 
-    import { Col, Container, Row, Spinner } from "@sveltestrap/sveltestrap";
+    import { Col, Container, Row } from "@sveltestrap/sveltestrap";
 
     import AliasModal from "$lib/components/modals/Alias.svelte";
     import RecordModal from "$lib/components/modals/Record.svelte";
@@ -35,6 +35,7 @@
     import { provideZoneEditor } from "$lib/components/zones/editor";
     import NewSubdomainPath from "$lib/components/zones/NewSubdomainPath.svelte";
     import ServiceDetailsOffcanvas from "$lib/components/zones/ServiceDetailsOffcanvas.svelte";
+    import TileLoader from "$lib/components/TileLoader.svelte";
     import {
         templateAsZone,
         templateOrigin,
@@ -160,7 +161,7 @@
                 {@render children?.()}
             {:else}
                 <div class="mt-4 text-center flex-fill">
-                    <Spinner />
+                    <TileLoader class="mb-2" />
                     <p>{$t("wait.loading")}</p>
                 </div>
             {/if}

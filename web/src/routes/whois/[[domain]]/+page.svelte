@@ -28,8 +28,6 @@
     import { fly, fade } from "svelte/transition";
     import { cubicOut } from "svelte/easing";
 
-    import { Spinner } from "@sveltestrap/sveltestrap";
-
     import {
         type DomainInfoState,
         createDomainInfoState,
@@ -40,6 +38,7 @@
     import { t } from "$lib/translations";
     import LookupLayout, { MORPH_DURATION } from "$lib/components/LookupLayout.svelte";
     import WatchCard from "$lib/components/watchlist/WatchCard.svelte";
+    import TileLoader from "$lib/components/TileLoader.svelte";
     import { ensureWatchlist, watchlist } from "$lib/stores/watchlist";
     import { userSession } from "$lib/stores/usersession";
     import { findWatch, updatedWatch, watchOfDomainInfo } from "$lib/utils/watchlist";
@@ -147,7 +146,7 @@
             in:fade={{ duration: 200 }}
         >
             <div class="text-center text-muted">
-                <Spinner />
+                <TileLoader class="mb-2" />
                 <p class="mt-3">{$t("wait.wait")}…</p>
             </div>
         </div>

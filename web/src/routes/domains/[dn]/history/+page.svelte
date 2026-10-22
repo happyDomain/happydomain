@@ -22,11 +22,12 @@
 -->
 
 <script lang="ts">
-    import { Accordion, AccordionItem, Button, Icon, Spinner } from "@sveltestrap/sveltestrap";
+    import { Accordion, AccordionItem, Button, Icon } from "@sveltestrap/sveltestrap";
 
     import { getDomain } from "$lib/api/domains";
     import DiffZone from "$lib/components/zones/DiffZone.svelte";
     import PageTitle from "$lib/components/PageTitle.svelte";
+    import TileLoader from "$lib/components/TileLoader.svelte";
     import type { Domain } from "$lib/model/domain";
     import { getUser } from "$lib/stores/users";
     import { t } from "$lib/translations";
@@ -56,7 +57,7 @@
     <PageTitle title={$t("history.title")} domain={data.domain.domain} subtitle={$t("history.subtitle")} />
     {#await getDomain(data.domain.id)}
         <div class="mt-5 text-center flex-fill">
-            <Spinner />
+            <TileLoader class="mb-2" />
             <p>{$t("wait.loading")}</p>
         </div>
     {:then domain}

@@ -22,11 +22,12 @@
 -->
 
 <script lang="ts">
-    import { Container, Icon, Spinner, Table } from "@sveltestrap/sveltestrap";
+    import { Container, Icon, Table } from "@sveltestrap/sveltestrap";
 
     import { listProviders } from "$lib/api/provider_specs";
     import PageTitle from "$lib/components/PageTitle.svelte";
     import ImgProvider from "$lib/components/providers/ImgProvider.svelte";
+    import TileLoader from "$lib/components/TileLoader.svelte";
     import { t } from "$lib/translations";
 
     const capabilities = [
@@ -50,7 +51,7 @@
 
     {#await listProviders()}
         <div class="flex-fill d-flex justify-content-center align-items-center">
-            <Spinner size="lg" />
+            <TileLoader />
         </div>
     {:then providers}
         <div class="features-wrapper">

@@ -22,10 +22,11 @@
 -->
 
 <script lang="ts">
-    import { Badge, Table, Spinner } from "@sveltestrap/sveltestrap";
+    import { Badge, Table } from "@sveltestrap/sveltestrap";
 
     import { getDomainLogs } from "$lib/api/domains";
     import PageTitle from "$lib/components/PageTitle.svelte";
+    import TileLoader from "$lib/components/TileLoader.svelte";
     import type { Domain } from "$lib/model/domain";
     import { getUser } from "$lib/stores/users";
     import { t } from "$lib/translations";
@@ -44,7 +45,7 @@
     <PageTitle title={$t("logs.title")} domain={data.domain.domain} subtitle={$t("logs.subtitle")} />
     {#await getDomainLogs(data.domain.id)}
         <div class="mt-5 text-center flex-fill">
-            <Spinner />
+            <TileLoader class="mb-2" />
             <p>{$t("wait.loading")}</p>
         </div>
     {:then logs}

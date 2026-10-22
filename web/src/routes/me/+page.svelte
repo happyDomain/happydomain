@@ -26,6 +26,7 @@
     import { Container, ListGroup, Spinner } from "@sveltestrap/sveltestrap";
 
     import PageTitle from "$lib/components/PageTitle.svelte";
+    import TileLoader from "$lib/components/TileLoader.svelte";
     import { getOidcProvider } from "$lib/api/auth";
     import { isAuthUser } from "$lib/api/user";
     import { userSession } from "$lib/stores/usersession";
@@ -49,7 +50,7 @@
     <PageTitle class="border-0" title={$t("settings.title")} subtitle={$t("settings.subtitle")} />
     {#if !$userSession.settings}
         <div class="d-flex justify-content-center">
-            <Spinner color="primary" />
+            <TileLoader />
         </div>
     {:else}
         <h2 id="preferences" class="display-7 fw-bold mt-5">

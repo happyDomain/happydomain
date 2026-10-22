@@ -27,9 +27,10 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
 
-    import { Alert, Progress, Spinner } from "@sveltestrap/sveltestrap";
+    import { Alert, Progress } from "@sveltestrap/sveltestrap";
 
     import PageTitle from "$lib/components/PageTitle.svelte";
+    import TileLoader from "$lib/components/TileLoader.svelte";
     import { getRetrieveZoneProgress, type RetrieveZoneProgress } from "$lib/api/zone";
     import type { Domain } from "$lib/model/domain";
     import { retrieveZone } from "$lib/stores/thiszone";
@@ -181,7 +182,7 @@
         </div>
     {:else if finished}
         <div class="mt-4 text-center flex-fill">
-            <Spinner />
+            <TileLoader class="mb-2" />
             <p>{$t("wait.wait")}</p>
         </div>
     {:else}
@@ -205,7 +206,7 @@
                 </p>
             {:else}
                 <div class="text-center">
-                    <Spinner />
+                    <TileLoader class="mb-2" />
                     <p>{$t("wait.importing")}</p>
                 </div>
             {/if}

@@ -25,12 +25,12 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import type { ClassValue } from "svelte/elements";
-    import { Spinner } from "@sveltestrap/sveltestrap";
 
     import PageTitle from "$lib/components/PageTitle.svelte";
     import ImgProvider from "$lib/components/providers/ImgProvider.svelte";
     import PForm from "$lib/components/forms/Provider.svelte";
     import SettingsStateButtons from "$lib/components/providers/SettingsStateButtons.svelte";
+    import TileLoader from "$lib/components/TileLoader.svelte";
     import { ProviderForm } from "$lib/model/provider_form.svelte";
     import type { ProviderSettingsState } from "$lib/model/provider_settings";
         import { providersSpecs, refreshProviders, refreshProvidersSpecs } from "$lib/stores/providers";
@@ -83,13 +83,13 @@
 </PageTitle>
 {#if $providersSpecs == null}
     <div class={["mt-5 d-flex justify-content-center align-items-center gap-2", className]}>
-        <Spinner color="primary" />
+        <TileLoader />
         {$t("wait.retrieving-setting")}
     </div>
 {:else}
     {#if form.form == null}
         <div class={["d-flex flex-fill justify-content-center align-items-center gap-2", className]}>
-            <Spinner color="primary" />
+            <TileLoader />
             {$t("wait.retrieving-setting")}
         </div>
     {:else}

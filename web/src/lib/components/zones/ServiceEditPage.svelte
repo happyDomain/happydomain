@@ -33,6 +33,7 @@
     import { newServiceIdIn, notifyServiceChange, zoneWasForked } from "$lib/stores/zonefeedback";
     import PageTitle from "$lib/components/PageTitle.svelte";
     import ServiceEditor from "$lib/components/services/ServiceEditor.svelte";
+    import TileLoader from "$lib/components/TileLoader.svelte";
     import { useZoneEditor } from "./editor";
     import { fqdn } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
@@ -178,7 +179,7 @@
 
 {#if serviceLoading || (serviceid !== "new" && !$thisZone)}
     <div class="d-flex justify-content-center mt-4">
-        <Spinner />
+        <TileLoader />
     </div>
 {:else if service}
     <div class="flex-fill pb-5 mb-5">

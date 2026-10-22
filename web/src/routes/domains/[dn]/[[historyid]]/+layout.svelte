@@ -29,6 +29,7 @@
 
     import NewServicePath from "$lib/components/services/NewServicePath.svelte";
     import RecordModal from "$lib/components/modals/Record.svelte";
+    import TileLoader from "$lib/components/TileLoader.svelte";
     import type { Domain } from "$lib/model/domain";
     import { domains_idx } from "$lib/stores/domains";
     import { thisZone } from "$lib/stores/thiszone";
@@ -88,7 +89,7 @@
         </h2>
 
         <div class="mt-4 text-center flex-fill">
-            <Spinner />
+            <TileLoader class="mb-2" />
             <p>{$t("wait.loading")}</p>
         </div>
     </div>

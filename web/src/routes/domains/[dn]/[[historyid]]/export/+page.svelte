@@ -22,13 +22,14 @@
 -->
 
 <script lang="ts">
-    import { Button, Spinner } from "@sveltestrap/sveltestrap";
+    import { Button } from "@sveltestrap/sveltestrap";
     import hljs from "highlight.js/lib/core";
     import dns from "highlight.js/lib/languages/dns";
     import "highlight.js/styles/github.css";
 
     import { viewZone as APIViewZone } from "$lib/api/zone";
     import PageTitle from "$lib/components/PageTitle.svelte";
+    import TileLoader from "$lib/components/TileLoader.svelte";
     import type { Domain } from "$lib/model/domain";
     import { t } from "$lib/translations";
 
@@ -87,7 +88,7 @@
     </PageTitle>
     {#if zoneContent === null}
         <div class="mt-5 text-center">
-            <Spinner />
+            <TileLoader class="mb-2" />
             <p>{$t("wait.formating")}</p>
         </div>
     {:else}

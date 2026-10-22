@@ -24,11 +24,12 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
-    import { Alert, Col, Container, Icon, Row, Spinner } from "@sveltestrap/sveltestrap";
+    import { Alert, Col, Container, Icon, Row } from "@sveltestrap/sveltestrap";
 
     import { validateEmail } from "$lib/api/user";
     import { appConfig } from "$lib/stores/config";
     import { toasts } from "$lib/stores/toasts";
+    import TileLoader from "$lib/components/TileLoader.svelte";
     import { t } from "$lib/translations";
     import EmailConfirmationForm from "./EmailConfirmationForm.svelte";
 
@@ -93,7 +94,7 @@
                     </Alert>
                 {:else if data.user}
                     <div class="d-flex flex-column align-items-center py-4">
-                        <Spinner color="primary" class="mb-3" />
+                        <TileLoader class="mb-2" />
                         <p class="text-body-secondary mb-0">{$t("wait.wait")}</p>
                     </div>
                 {:else}
