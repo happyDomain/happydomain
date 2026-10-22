@@ -43,33 +43,83 @@
         background-color: #fffff7;
         animation: app-splash-appear 0.25s ease 0.3s both;
       }
-      #app-splash img {
+      /* The loader is the logo mark itself: its five tiles light up one after
+         the other, tracing a loop around the mark. --i is the tile's rank in
+         that loop; the inline script below rotates the ranks so the tour
+         starts on a different tile at each load. */
+      #app-splash-loader {
+        /* The mark barely breathes: it rests at its true size, so the
+           splash matches the static logo, and peaks just over it, the colour
+           carrying most of the signal. Tiles sit 13.7 units apart, and a
+           peak of 1.1 eats 5.1 units on each side, so even two neighbours at
+           full swell stay clear of one another. */
+        --rest: 1;
+        --peak: 1.1;
+        --cycle: 1.5s;
+        /* Tiles rest on a pale green and flash to the brand green. */
+        --tile-rest: #b5e8d3;
+        --tile-peak: #00aa7d;
         display: block;
-        width: 220px;
-        max-width: 60vw;
+        width: 300px;
+        max-width: 80vw;
         height: auto;
-        aspect-ratio: 562 / 68;
+        /* Tiles at full swell overhang the viewBox on its left and top. */
+        overflow: visible;
       }
-      #app-splash .app-splash-spinner {
-        width: 32px;
-        height: 32px;
-        border: 3px solid rgba(0, 170, 125, 0.25);
-        border-top-color: #00aa7d;
-        border-radius: 50%;
-        animation: app-splash-spin 0.8s linear infinite;
+      #app-splash-loader rect {
+        fill: var(--tile-rest);
+        transform-box: fill-box;
+        transform-origin: center;
+        transform: scale(var(--rest));
+        animation: app-splash-pulse var(--cycle) linear infinite;
+        animation-delay: calc(var(--i, 0) * var(--cycle) / 5);
       }
+      #app-splash-loader rect:nth-of-type(1) { --i: 0; }
+      #app-splash-loader rect:nth-of-type(2) { --i: 1; }
+      #app-splash-loader rect:nth-of-type(3) { --i: 2; }
+      #app-splash-loader rect:nth-of-type(4) { --i: 3; }
+      #app-splash-loader rect:nth-of-type(5) { --i: 4; }
       @media (prefers-color-scheme: dark) {
         #app-splash { background-color: #282828; }
+        /* On the dark canvas the pale green glares: rest on a deep green
+           instead (green-800, the dark theme's accent border), so only the
+           lit tile stands out. */
+        #app-splash-loader { --tile-rest: #00543a; }
       }
       @keyframes app-splash-appear {
         from { opacity: 0; }
         to { opacity: 1; }
       }
-      @keyframes app-splash-spin {
-        to { transform: rotate(360deg); }
+      /* Grows and saturates fast, then eases back while the next tile is
+         already on its way up, the two overlap, so the tour never stalls. */
+      @keyframes app-splash-pulse {
+        0% {
+          transform: scale(var(--rest));
+          fill: var(--tile-rest);
+          animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        10% {
+          transform: scale(var(--peak));
+          fill: var(--tile-peak);
+          animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1);
+        }
+        34%, 100% {
+          transform: scale(var(--rest));
+          fill: var(--tile-rest);
+        }
       }
       @media (prefers-reduced-motion: reduce) {
-        #app-splash .app-splash-spinner { animation-duration: 2.4s; }
+        /* Same relay, colour only: nothing moves or resizes. */
+        #app-splash-loader rect {
+          --cycle: 3s;
+          transform: none;
+          animation-name: app-splash-relay;
+        }
+        @keyframes app-splash-relay {
+          0%, 100% { fill: var(--tile-rest); }
+          10% { fill: var(--tile-peak); }
+          34% { fill: var(--tile-rest); }
+        }
       }
     </style>
     %sveltekit.head%
@@ -79,9 +129,30 @@
       <strong>We're sorry but happyDomain doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
     </noscript>
     <div id="app-splash">
-      <img src="%sveltekit.assets%/img/happyDomain.svg" alt="happyDomain" />
-      <div class="app-splash-spinner"></div>
+      <!-- One drawing in the coordinates of the full logo (882 x 221): the
+           wordmark sits where it does in the original, and the tiles are the
+           original mark. Tiles are ordered along the tour, not by position:
+           bottom-left, top-right, top-left, bottom-right, centre, then round
+           again. -->
+      <svg id="app-splash-loader" viewBox="0 0 882 221" role="status" aria-label="Loading">
+        <image href="%sveltekit.assets%/img/happyDomain-text-stacked.svg" x="409" y="0" width="473" height="221" />
+        <rect x="0" y="116.73" width="102.765" height="102.988" rx="38.2391" ry="38.3217" />
+        <rect x="232.91" y="0" width="102.765" height="102.988" rx="38.2391" ry="38.3217" />
+        <rect x="0" y="0" width="102.765" height="102.988" rx="38.2391" ry="38.3217" />
+        <rect x="232.91" y="116.73" width="102.765" height="102.988" rx="38.2391" ry="38.3217" />
+        <rect x="116.478" y="58.3945" width="102.765" height="102.988" rx="38.2391" ry="38.3217" />
+      </svg>
     </div>
+    <script>
+      // Rotate the tour so it does not always start on the same tile.
+      (function () {
+        var tiles = document.querySelectorAll("#app-splash-loader rect");
+        var start = Math.floor(Math.random() * tiles.length);
+        for (var i = 0; i < tiles.length; i++) {
+          tiles[i].style.setProperty("--i", (i - start + tiles.length) % tiles.length);
+        }
+      })();
+    </script>
     <div class="d-flex flex-column flex-fill">%sveltekit.body%</div>
   </body>
 </html>
