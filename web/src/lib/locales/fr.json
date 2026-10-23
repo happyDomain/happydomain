@@ -99,6 +99,7 @@
             }
         },
         "add-a-subdomain": "Ajouter un sous-domaine",
+        "read-only-edit": "Cet hébergeur est en lecture seule : happyDomain ne peut pas modifier cette zone.",
         "add-a-service": "Ajouter un service",
         "add-alias": "Ajout d'alias",
         "add-an-alias": "Ajouter un alias vers {{domain}}",

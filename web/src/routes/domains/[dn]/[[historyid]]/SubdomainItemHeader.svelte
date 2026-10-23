@@ -36,6 +36,7 @@
     import type { HappydnsService } from "$lib/api-base/types.gen";
     import { ZoneViewGrid, ZoneViewRecords } from "$lib/model/usersettings";
         import { serviceName } from "$lib/services/infos";
+    import { isReadOnlyProvider, providers_idx } from "$lib/stores/providers";
     import { servicesSpecs } from "$lib/stores/services";
     import { thisAliases, thisZone } from "$lib/stores/thiszone";
     import { userSession } from "$lib/stores/usersession";
@@ -62,6 +63,8 @@
             showResources = !showResources;
         },
     }: Props = $props();
+
+    let readOnly = $derived(isReadOnlyProvider($providers_idx, origin.id_provider));
 
     function isCNAME(services: Array<HappydnsService>) {
         return services.length === 1 && services[0]._svctype === "svcs.Alias";
@@ -189,75 +192,82 @@
         </Popover>
     {/if}
     <div class="flex-fill"></div>
-    {#if isCNAME(services) || isPTR(services)}
-        <Button
-            type="button"
-            color="info"
-            outline
-            size="sm"
-            title={$t("domains.edit-target")}
-            on:click={() => {
-                const subdomainParam = dn === "" ? "@" : dn;
-                goto(
-                    resolve("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]", {
-                        dn: encodeURIComponent(origin.domain),
-                        historyid: encodeURIComponent(zoneId),
-                        subdomain: encodeURIComponent(subdomainParam),
-                        serviceid: encodeURIComponent(services[0]._id!),
-                    }),
-                );
-            }}
-        >
-            <Icon name="pencil" />
-        </Button>
-        <Button
-            type="button"
-            color="danger"
-            disabled={deleteServiceInProgress}
-            outline
-            size="sm"
-            title={isPTR(services) ? $t("domains.drop-pointer") : $t("domains.drop-alias")}
-            on:click={deleteCNAME}
-        >
-            {#if deleteServiceInProgress}
-                <Spinner size="sm" />
-            {:else}
-                <Icon name="x-circle" />
-            {/if}
-        </Button>
-    {:else if showResources && services.length}
-        <Button
-            type="button"
-            color="primary"
-            outline
-            size="sm"
-            title={$t("domains.add-an-alias")}
-            on:click={() => ctrlNewAlias.Open(dn)}
-        >
-            <Icon name="link" />
-        </Button>
-    {/if}
-    {#if !showResources || ($userSession.settings && $userSession.settings.zoneview !== ZoneViewGrid)}
-        {#if $userSession.settings && $userSession.settings.zoneview === ZoneViewRecords}
+    <!-- A disabled button gets no pointer events: their wrapper carries the tooltip. -->
+    <span class="d-flex gap-2" title={readOnly ? $t("domains.read-only-edit") : undefined}>
+        {#if isCNAME(services) || isPTR(services)}
             <Button
                 type="button"
-                color="primary"
+                color="info"
+                outline
                 size="sm"
-                title={$t("domains.add-a-record")}
-                on:click={() => ctrlRecord.Open(null, dn)}
+                title={$t("domains.edit-target")}
+                disabled={readOnly}
+                on:click={() => {
+                    const subdomainParam = dn === "" ? "@" : dn;
+                    goto(
+                        resolve("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]", {
+                            dn: encodeURIComponent(origin.domain),
+                            historyid: encodeURIComponent(zoneId),
+                            subdomain: encodeURIComponent(subdomainParam),
+                            serviceid: encodeURIComponent(services[0]._id!),
+                        }),
+                    );
+                }}
             >
-                <Icon name="plus" />
+                <Icon name="pencil" />
             </Button>
-        {:else}
+            <Button
+                type="button"
+                color="danger"
+                disabled={deleteServiceInProgress || readOnly}
+                outline
+                size="sm"
+                title={isPTR(services) ? $t("domains.drop-pointer") : $t("domains.drop-alias")}
+                on:click={deleteCNAME}
+            >
+                {#if deleteServiceInProgress}
+                    <Spinner size="sm" />
+                {:else}
+                    <Icon name="x-circle" />
+                {/if}
+            </Button>
+        {:else if showResources && services.length}
             <Button
                 type="button"
                 color="primary"
+                outline
                 size="sm"
-                title={$t("domains.add-a-service")}
-                on:click={() => ctrlNewService.Open(dn)}
+                title={$t("domains.add-an-alias")}
+                disabled={readOnly}
+                on:click={() => ctrlNewAlias.Open(dn)}
             >
-                <Icon name="plus" />
+                <Icon name="link" />
             </Button>
         {/if}
-    {/if}
+        {#if !showResources || ($userSession.settings && $userSession.settings.zoneview !== ZoneViewGrid)}
+            {#if $userSession.settings && $userSession.settings.zoneview === ZoneViewRecords}
+                <Button
+                    type="button"
+                    color="primary"
+                    size="sm"
+                    title={$t("domains.add-a-record")}
+                    disabled={readOnly}
+                    on:click={() => ctrlRecord.Open(null, dn)}
+                >
+                    <Icon name="plus" />
+                </Button>
+            {:else}
+                <Button
+                    type="button"
+                    color="primary"
+                    size="sm"
+                    title={$t("domains.add-a-service")}
+                    disabled={readOnly}
+                    on:click={() => ctrlNewService.Open(dn)}
+                >
+                    <Icon name="plus" />
+                </Button>
+            {/if}
+        {/if}
+    </span>
 </div>

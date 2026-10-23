@@ -54,7 +54,7 @@
     import DiffZone from "$lib/components/zones/DiffZone.svelte";
     import DiffZoneView from "$lib/components/zones/DiffZoneView.svelte";
     import { domains_idx } from "$lib/stores/domains";
-    import { providers_idx } from "$lib/stores/providers";
+    import { isReadOnlyProvider, providers_idx } from "$lib/stores/providers";
     import { invalidateZoneDiff } from "$lib/stores/zonediff";
     import { userSession } from "$lib/stores/usersession";
     import { getZone, thisZone } from "$lib/stores/thiszone";
@@ -99,7 +99,7 @@
 
     // A read-only provider only shows the differences: the server refuses to
     // apply them.
-    let readOnly = $derived(Boolean($providers_idx[domain?.id_provider]?._readonly));
+    let readOnly = $derived(isReadOnlyProvider($providers_idx, domain?.id_provider));
 
     function Open(): void {
         zoneDiffLength = 0;

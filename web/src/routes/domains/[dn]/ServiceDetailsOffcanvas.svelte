@@ -56,6 +56,7 @@
     import type { Domain } from "$lib/model/domain";
         import { checkers } from "$lib/stores/checkers";
     import { domainLink, refreshDomains } from "$lib/stores/domains";
+    import { isReadOnlyProvider, providers_idx } from "$lib/stores/providers";
     import { serviceDescription, serviceName } from "$lib/services/infos";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
     import { thisZone } from "$lib/stores/thiszone";
@@ -113,8 +114,11 @@
         );
     }
 
+    let readOnly = $derived(isReadOnlyProvider($providers_idx, domain.id_provider));
+
     let canDelete = $derived(
-        !!service?._id &&
+        !readOnly &&
+            !!service?._id &&
             service._svctype !== "abstract.Origin" &&
             service._svctype !== "abstract.NSOnlyOrigin",
     );
@@ -270,7 +274,8 @@
                     min="0"
                     type="number"
                     style="width: 8em"
-                    title={$t("service.ttl-tip")}
+                    title={readOnly ? $t("domains.read-only-edit") : $t("service.ttl-tip")}
+                    disabled={readOnly}
                     bind:value={service._ttl}
                     on:change={(e: Event) => {
                         service._ttl = parseInt((e.target as HTMLInputElement).value, 10) || 0;

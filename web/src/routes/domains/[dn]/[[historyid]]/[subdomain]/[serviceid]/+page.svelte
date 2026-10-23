@@ -44,6 +44,7 @@
     import { ServiceCombined } from "$lib/model/service.svelte";
     import { domainLink } from "$lib/stores/domains";
     import { helpLinkOverride } from "$lib/stores/help";
+    import { isReadOnlyProvider, providers_idx } from "$lib/stores/providers";
     import { serviceDescription, serviceName } from "$lib/services/infos";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
     import { thisZone } from "$lib/stores/thiszone";
@@ -66,6 +67,8 @@
     let { data }: Props = $props();
 
     let svcType: string = $derived(page.url.searchParams.get("type") ?? "");
+
+    let readOnly = $derived(isReadOnlyProvider($providers_idx, data.domain.id_provider));
 
     let service: ServiceWithValue | undefined = $state();
     let serviceLoading = $state(false);
@@ -117,7 +120,7 @@
 
     function submitServiceForm(e: SubmitEvent) {
         e.preventDefault();
-        if (!service || !$thisZone || addServiceInProgress) return;
+        if (!service || !$thisZone || addServiceInProgress || readOnly) return;
 
         addServiceInProgress = true;
         const isNew = !service._id;
@@ -220,6 +223,10 @@
                     <Icon name="shield-check" />
                     {$t("checkers.title")}
                 </Button>
+            {/if}
+            {#if readOnly}
+                <!-- Nothing can be saved to the zone of a read-only provider. -->
+            {:else if service._id}
                 <Button
                     disabled={addServiceInProgress}
                     form="addSvcForm"

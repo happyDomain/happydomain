@@ -100,6 +100,7 @@
         },
         "and-more-filtered": "{{count:eq; 0:no more filtered domain; 1:1 more filtered domain; default:{{count}} more filtered domains}}",
         "add-a-subdomain": "Add a subdomain",
+        "read-only-edit": "This provider is read-only: happyDomain cannot change this zone.",
         "add-a-service": "Add a service",
         "add-alias": "Add alias",
         "add-an-alias": "Add an alias to {{domain}}",
