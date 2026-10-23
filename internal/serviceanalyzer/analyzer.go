@@ -41,10 +41,18 @@ type ServiceAnalyzer func(*Analyzer) error
 type recordPool struct {
 	zone    []happydns.Record
 	claimed []bool
+	// handed tells, for each copy SearchRR handed, the index of its record
+	// in zone.
+	handed map[happydns.Record]int
 }
 
-// SearchRR returns all unclaimed records that match at least one of the given
-// filters. Each record appears at most once in the result.
+// SearchRR returns a copy of each unclaimed record that matches at least one
+// of the given filters. Each record appears at most once in the result.
+//
+// Analyzers change the records they are handed, such as making them
+// relative to their subdomain before telling whether they are their own:
+// handing copies keeps the records they leave intact, for the analyzers
+// coming next and the orphans.
 func (p *recordPool) SearchRR(arrs ...AnalyzerRecordFilter) (rrs []happydns.Record) {
 	for i, record := range p.zone {
 		if p.claimed[i] {
@@ -61,7 +69,12 @@ func (p *recordPool) SearchRR(arrs ...AnalyzerRecordFilter) (rrs []happydns.Reco
 				(arr.Type == 0 || rdtype == arr.Type) &&
 				(arr.Ttl == 0 || rhdr.Ttl == arr.Ttl) &&
 				(arr.Contains == "" || strings.Contains(record.String(), arr.Contains)) {
-				rrs = append(rrs, record)
+				handed := helpers.CopyRecord(record)
+				if p.handed == nil {
+					p.handed = map[happydns.Record]int{}
+				}
+				p.handed[handed] = i
+				rrs = append(rrs, handed)
 				break
 			}
 		}
@@ -70,19 +83,19 @@ func (p *recordPool) SearchRR(arrs ...AnalyzerRecordFilter) (rrs []happydns.Reco
 	return
 }
 
-// markClaimed marks a record as claimed. Returns an error if the record is not
-// found or was already claimed.
+// markClaimed marks the record a copy handed by SearchRR stands for as
+// claimed. Returns an error if the copy was not handed by SearchRR or the
+// record was already claimed.
 func (p *recordPool) markClaimed(rr happydns.Record) error {
-	for k, record := range p.zone {
-		if record == rr {
-			if p.claimed[k] {
-				return errors.New("Record already claimed.")
-			}
-			p.claimed[k] = true
-			return nil
-		}
+	k, ok := p.handed[rr]
+	if !ok {
+		return errors.New("Record not found.")
 	}
-	return errors.New("Record not found.")
+	if p.claimed[k] {
+		return errors.New("Record already claimed.")
+	}
+	p.claimed[k] = true
+	return nil
 }
 
 // serviceAccumulator collects services discovered during zone analysis,
@@ -286,7 +299,10 @@ func AnalyzeZone(origin string, records []happydns.Record) (svcs map[happydns.Su
 			continue
 		}
 
-		if err = service.Analyzer(&a); err != nil {
+		err = service.Analyzer(&a)
+		// The copies handed are only claimed during the run.
+		a.handed = nil
+		if err != nil {
 			return
 		}
 	}
