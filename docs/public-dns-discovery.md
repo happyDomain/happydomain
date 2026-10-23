@@ -8,8 +8,8 @@ checkers look after like those of any other zone.
 
 The user documentation is on the help center, under *Monitor a domain hosted
 elsewhere*. This document is for administrators, who need to know what the
-discovery sends where. Contributors find how to add an enumeration technique in
-the comments of the code.
+discovery sends where. Contributors find how to add an enumeration technique or a
+certificate transparency service in the comments of the code.
 
 ## How a zone is recomposed
 
