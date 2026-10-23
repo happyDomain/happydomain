@@ -28,6 +28,7 @@ package discovery
 // no settings at all explores fully.
 type Settings struct {
 	AXFRSettings
+	NSECSettings
 	WellKnownSettings
 	WordlistSettings
 }

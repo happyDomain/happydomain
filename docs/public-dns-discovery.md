@@ -25,7 +25,9 @@ A zone cannot be listed over plain DNS: names can only be asked about one by one
    implements `happydns.DiscoveryZoneGetter`, which receives them), so a name
    found once keeps being looked after and the diff view does not report it as
    removed;
-5. explores the names yielded by each technique, in priority order;
+5. explores the names yielded by each technique, in priority order, stopping
+   after a technique that found every name of the zone, such as a complete NSEC
+   walk;
 6. follows the in-zone targets of the answers (`CNAME`, `MX`, `SRV`...), up to
    a bounded number of hops (`Options.MaxDepth`).
 
@@ -42,6 +44,7 @@ answer now.
 | ID | Priority | What it yields | Setting disabling it |
 |----|----------|----------------|----------------------|
 | `axfr` | 10 | The whole zone, when a server allows a zone transfer. | `disable_axfr` |
+| `nsec` | 20 | Every name of a zone signed with NSEC, and the types at each. Not NSEC3, nor zones signed on the fly. | `disable_nsec_walk` |
 | `wellknown` | 100 | Where usual services are published: `_dmarc`, DKIM selectors, SRV and TLSA names... | none (`extra_names` adds names) |
 | `wordlist` | 900 | The 5,000 host names most often found in zones (SecLists). | `disable_wordlist` |
 
@@ -94,7 +97,8 @@ changes: the provider embeds `Settings`, so their fields show in its form, and
 builds its sources from the registry. The rules:
 
 - The source implements `NameSource`, yielding names within `Target.Domain`.
-  Implement `RecordSource` instead to hand the whole zone.
+  Implement `RecordSource` instead to hand the whole zone, or `ExhaustiveSource`
+  to tell when every name was found.
 - The priority orders the exploration, see `SourceFactory.Priority`: below 100
   for sources handing the whole zone, 100 to 499 for sources yielding few names,
   most of them real, 500 and above for long lists of guesses. The query budget
@@ -105,5 +109,6 @@ builds its sources from the registry. The rules:
   embedded in a single struct.
 - The `happydomain` tag uses commas as separators: labels and descriptions
   cannot contain any.
-- The authoritative servers of `Target.Authoritative` are already vetted by the
-  outbound guard.
+- DNS questions go through `Target.Query`, which asks the authoritative servers,
+  already vetted by the outbound guard, within the budget and the pace of the
+  exploration.

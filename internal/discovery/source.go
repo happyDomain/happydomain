@@ -51,8 +51,10 @@ type Name struct {
 	Sources []string
 
 	// Types, when set, are the only record types asked for, for sources
-	// that know which types exist at the name. Empty asks for a default
-	// set chosen after the shape of the name.
+	// that know which types exist at the name. Such a source also vouches
+	// for the existence of the name, so its answers are kept even when a
+	// wildcard would answer the same. Empty asks for a default set chosen
+	// after the shape of the name.
 	Types []uint16
 }
 
@@ -68,6 +70,10 @@ type Target struct {
 	// Known are the subdomains, relative to Domain, found by previous
 	// explorations, so a name seen once keeps being looked after.
 	Known []string
+
+	// Query asks the authoritative servers about name, within the query
+	// budget and the pace of the exploration.
+	Query func(ctx context.Context, name string, qtype uint16) (*dns.Msg, error)
 }
 
 // NameSource is one technique yielding names to explore.
@@ -90,6 +96,17 @@ type RecordSource interface {
 	// Records returns the records of the zone, or none when the technique
 	// does not work on this zone.
 	Records(ctx context.Context, t Target) ([]dns.RR, error)
+}
+
+// ExhaustiveSource is implemented by sources that may find every name of
+// the zone, such as a walk of its NSEC chain. When one of them does, the
+// sources coming after it, mere guesses, are not asked.
+type ExhaustiveSource interface {
+	NameSource
+
+	// DiscoverAll is Discover, also telling whether the names returned are
+	// all the names of the zone.
+	DiscoverAll(ctx context.Context, t Target) (names []Name, complete bool, err error)
 }
 
 // KnownSource yields the subdomains found by previous explorations.
