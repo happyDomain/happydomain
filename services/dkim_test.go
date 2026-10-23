@@ -146,3 +146,30 @@ func TestDKIMRedirection(t *testing.T) {
 		t.Errorf("Expected FQDN target, got %q", r.Target)
 	}
 }
+
+func TestDKIMIgnoresNonDKIM(t *testing.T) {
+	// An ADSP policy (RFC 5617) lives under _domainkey too, but is no
+	// DKIM key: it is left as a plain TXT record, not failing the analysis.
+	rr, err := dns.NewRR("_adsp._domainkey.example.com. 3600 IN TXT \"dkim=all;\"")
+	if err != nil {
+		t.Fatalf("dns.NewRR failed: %v", err)
+	}
+
+	s, _, err := svc.AnalyzeZone("example.com.", []happydns.Record{rr})
+	if err != nil {
+		t.Fatalf("AnalyzeZone failed: %v", err)
+	}
+
+	found := false
+	for _, services := range s {
+		for _, service := range services {
+			if _, ok := service.Service.(*svcs.DKIMRecord); ok {
+				t.Errorf("non-DKIM TXT was registered as a DKIM service")
+			}
+			found = true
+		}
+	}
+	if !found {
+		t.Error("the non-DKIM TXT record was lost")
+	}
+}

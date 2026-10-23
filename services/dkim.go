@@ -24,6 +24,7 @@ package svcs
 import (
 	"encoding/base64"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 
@@ -165,19 +166,22 @@ func (s *DKIMRedirection) GetRecords(domain string, ttl uint32, origin string) (
 
 func dkim_analyze(a *svc.Analyzer) (err error) {
 	for _, record := range a.SearchRR(svc.AnalyzerRecordFilter{Type: dns.TypeTXT, DomainContains: "._domainkey."}) {
-		dkidx := strings.Index(record.Header().Name, "._domainkey.")
+		name := record.Header().Name
+		dkidx := strings.Index(name, "._domainkey.")
 		if dkidx <= 0 {
 			continue
 		}
-		domain := record.Header().Name[dkidx+12:]
+		domain := name[dkidx+12:]
 
 		service := &DKIMRecord{
 			Record: helpers.RRRelativeSubdomain(record, a.GetOrigin(), domain).(*happydns.TXT),
 		}
 
-		_, err = service.Analyze()
-		if err != nil {
-			return
+		// Other records live under _domainkey, such as ADSP policies
+		// (RFC 5617): they are left to the other analyzers.
+		if _, err := service.Analyze(); err != nil {
+			log.Printf("analyzing %s: %s is no DKIM key, left to the other analyzers: %s", a.GetOrigin(), name, err)
+			continue
 		}
 
 		err = a.UseRR(record, domain, service)
