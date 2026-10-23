@@ -80,9 +80,16 @@ search the certificate transparency logs. Certificates are public, but those
 services learn which domains the instance looks after. Users can disable the
 technique in the provider settings.
 
-The names found are cached in memory for six hours per service and domain; a
-failing service is asked again the next time, while the names of the others are
-used.
+Without an API key, Cert Spotter only answers a few queries an hour. Give the
+instance one with:
+
+```
+happyDomain -certspotter-api-key <key>
+```
+
+or `HAPPYDOMAIN_CERTSPOTTER_API_KEY`. The names found are cached in memory for six
+hours per service and domain; a failing service is asked again the next time,
+while the names of the others are used.
 
 ## For contributors
 
@@ -148,3 +155,6 @@ then a line in `internal/ct/backends.go`. Use `Config.get` for the requests: it
 sets the User-Agent, caps the size of the answer and turns statuses into
 `ErrRateLimited` and `ErrUnavailable`. Test against `httptest`, with
 `Config.BaseURL` pointing to it and recorded answers in `internal/ct/testdata`.
+
+`TakesAPIKey` makes the discovery offer a `<id>-api-key` option for the instance,
+handed to the service in `Config.APIKey`.
