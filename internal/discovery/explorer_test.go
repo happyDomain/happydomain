@@ -28,6 +28,7 @@ import (
 	"net"
 	"slices"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -51,6 +52,13 @@ type testZone struct {
 
 	// questions counts the questions answered.
 	questions atomic.Int32
+
+	// dnssec tunes how the zone denies existence, see source_nsec_test.go.
+	dnssec testDNSSEC
+
+	mu sync.Mutex
+	// asked are the names questions were asked about.
+	asked map[string]bool
 }
 
 func newTestZone(t *testing.T, origin string, records ...string) *testZone {
@@ -96,6 +104,20 @@ func (z *testZone) ServeDNS(w dns.ResponseWriter, req *dns.Msg) {
 		return
 	}
 
+	z.mu.Lock()
+	if z.asked == nil {
+		z.asked = map[string]bool{}
+	}
+	z.asked[name] = true
+	z.mu.Unlock()
+
+	// Deferred after the deferred w.WriteMsg, so it runs before it and the
+	// reply carries the denial proofs.
+	defer z.proveDenial(m, name)
+	if z.answerNSEC(m, name, qtype) {
+		return
+	}
+
 	if qtype == dns.TypeAXFR {
 		if !z.allowAXFR || name != z.origin {
 			m.Rcode = dns.RcodeRefused
@@ -120,6 +142,10 @@ func (z *testZone) ServeDNS(w dns.ResponseWriter, req *dns.Msg) {
 				if ns, ok := rr.(*dns.NS); ok {
 					m.Extra = append(m.Extra, z.at(ns.Ns)...)
 				}
+			}
+			// The referral to an unsigned child proves there is no DS.
+			if z.dnssec.nsec && !slices.ContainsFunc(m.Ns, func(rr dns.RR) bool { return rr.Header().Rrtype == dns.TypeDS }) {
+				m.Ns = append(m.Ns, z.nsecFor(cut))
 			}
 			return
 		}
@@ -189,6 +215,13 @@ func (s staticSource) Discover(ctx context.Context, t Target) (names []Name, err
 		names = append(names, Name{FQDN: name, Sources: []string{"static"}})
 	}
 	return
+}
+
+// wasAsked tells whether a question was asked about name.
+func (z *testZone) wasAsked(name string) bool {
+	z.mu.Lock()
+	defer z.mu.Unlock()
+	return z.asked[name]
 }
 
 func recordStrings(records []happydns.Record) (ret []string) {

@@ -25,7 +25,9 @@ A zone cannot be listed over plain DNS: names can only be asked about one by one
    implements `happydns.DiscoveryZoneGetter`, which receives them), so a name
    found once keeps being looked after and the diff view does not report it as
    removed;
-5. explores the names yielded by each technique, in priority order;
+5. explores the names yielded by each technique, in priority order, stopping
+   after a technique that found every name of the zone, such as a complete NSEC
+   walk;
 6. follows the in-zone targets of the answers (`CNAME`, `MX`, `SRV`...), up to
    a bounded number of hops (`Options.MaxDepth`).
 
@@ -42,6 +44,7 @@ answer now.
 | ID | Priority | What it yields | Setting disabling it |
 |----|----------|----------------|----------------------|
 | `axfr` | 10 | The whole zone, when a server allows a zone transfer. | `disable_axfr` |
+| `nsec` | 20 | Every name of a zone signed with NSEC, and the types at each. Not NSEC3, nor zones signed on the fly. | `disable_nsec_walk` |
 | `wellknown` | 100 | Where usual services are published: `_dmarc`, DKIM selectors, SRV and TLSA names... | none (`extra_names` adds names) |
 | `wordlist` | 900 | The 5,000 host names most often found in zones (SecLists). | `disable_wordlist` |
 

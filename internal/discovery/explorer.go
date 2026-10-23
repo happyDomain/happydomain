@@ -108,6 +108,7 @@ func Explore(ctx context.Context, domain string, known []string, sources []NameS
 		Domain:        domain,
 		Authoritative: e.servers,
 		Known:         known,
+		Query:         e.query,
 	}
 
 	// A source handing the whole zone spares the exploration.
@@ -123,6 +124,8 @@ func Explore(ctx context.Context, domain string, known []string, sources []NameS
 	names = append(names, e.probeWildcard(ctx)...)
 
 	names = append(names, e.collectNames(ctx, target, sources)...)
+
+	names = append(names, e.exploreApexTypes(ctx, names)...)
 
 	round := e.unseen(names)
 	for depth := 0; len(round) > 0 && depth <= opts.MaxDepth && ctx.Err() == nil; depth++ {
@@ -207,14 +210,29 @@ func (e *explorer) transferZone(ctx context.Context, target Target, sources []Na
 }
 
 // collectNames asks the name sources, the known names first, for the
-// names of the zone.
+// names of the zone. A source listing every name spares the sources after
+// it.
 func (e *explorer) collectNames(ctx context.Context, target Target, sources []NameSource) (names []Name) {
 	for _, source := range append([]NameSource{KnownSource{}}, sources...) {
-		found, err := source.Discover(ctx, target)
+		var (
+			found    []Name
+			complete bool
+			err      error
+		)
+		if es, ok := source.(ExhaustiveSource); ok {
+			found, complete, err = es.DiscoverAll(ctx, target)
+		} else {
+			found, err = source.Discover(ctx, target)
+		}
 		if err != nil {
 			log.Printf("discovery: %s: source %s: %s", e.domain, source.ID(), err)
 		}
 		names = append(names, found...)
+
+		// Every name is known: the remaining sources would only guess.
+		if complete {
+			break
+		}
 	}
 	return
 }
@@ -234,6 +252,11 @@ func (e *explorer) unseen(names []Name) (ret []Name) {
 
 		if i, ok := index[fqdn]; ok {
 			ret[i].Sources = append(ret[i].Sources, name.Sources...)
+			// A source knowing the types present at the name beats
+			// asking for the default ones.
+			if len(ret[i].Types) == 0 {
+				ret[i].Types = name.Types
+			}
 			continue
 		}
 		if e.seen[fqdn] {
@@ -292,7 +315,8 @@ func (e *explorer) explore(ctx context.Context, name Name) (targets []Name) {
 		types = e.typesFor(name.FQDN)
 	}
 
-	real := name.FQDN == e.domain
+	// A name whose source knows its types exists.
+	real := name.FQDN == e.domain || len(name.Types) > 0
 
 	// The records of the name are kept once all its answers are in: a
 	// later one may tell the name lies in a zone below ours.
@@ -408,6 +432,29 @@ func (e *explorer) exploreDelegation(ctx context.Context, cut string, r *dns.Msg
 		}
 	}
 	return
+}
+
+// exploreApexTypes asks, at the apex, for the types names tell exist there
+// beyond apexTypes. The apex is explored before any source is asked, with
+// the default types only: rarer ones, such as SSHFP, would otherwise be
+// missed. It returns the in-zone targets of the records found.
+func (e *explorer) exploreApexTypes(ctx context.Context, names []Name) []Name {
+	var extra []uint16
+	for _, name := range names {
+		if dns.CanonicalName(name.FQDN) != e.domain {
+			continue
+		}
+		for _, rrtype := range name.Types {
+			if !slices.Contains(apexTypes, rrtype) && !slices.Contains(extra, rrtype) {
+				extra = append(extra, rrtype)
+			}
+		}
+	}
+
+	if len(extra) == 0 {
+		return nil
+	}
+	return e.explore(ctx, Name{FQDN: e.domain, Types: extra})
 }
 
 // typesFor returns the record types to ask for at name.
