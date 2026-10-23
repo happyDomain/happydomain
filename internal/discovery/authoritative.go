@@ -39,6 +39,11 @@ import (
 // errBudget is returned once Options.MaxQueries questions have been asked.
 var errBudget = errors.New("query budget exhausted")
 
+// errOutOfTime is returned when the pace leaves no time before the end of
+// the exploration to ask the question: the context is not done yet, but
+// will be before the question could be asked.
+var errOutOfTime = errors.New("no time left to ask")
+
 // findAuthoritative asks the recursive resolver for the name servers of the
 // domain and returns those of their addresses the guard allows.
 func (e *explorer) findAuthoritative(ctx context.Context) ([]string, error) {
@@ -109,7 +114,10 @@ func (e *explorer) query(ctx context.Context, name string, qtype uint16) (*dns.M
 			return nil, err
 		}
 
-		r, err := helpers.Question(ctx, e.udp, []string{server}, name, qtype, helpers.QueryOptions{})
+		r, err := e.ask(ctx, server, name, qtype)
+		if errors.Is(err, errOutOfTime) {
+			return nil, err
+		}
 		if err == nil && r.Rcode != dns.RcodeSuccess && r.Rcode != dns.RcodeNameError {
 			err = fmt.Errorf("%s answered %s", server, dns.RcodeToString[r.Rcode])
 		}
@@ -136,11 +144,28 @@ func (e *explorer) query(ctx context.Context, name string, qtype uint16) (*dns.M
 }
 
 // serversByHealth returns the servers, those failing the fewest questions
-// in a row first.
+// in a row first. Successive questions start with each of the servers
+// equally healthy in turn: each server is paced on its own, so sharing the
+// questions among them makes the exploration as much faster.
 func (e *explorer) serversByHealth() []string {
-	servers := slices.Clone(e.servers)
+	turn := int(e.next.Add(1)-1) % len(e.servers)
+	servers := append(slices.Clone(e.servers[turn:]), e.servers[:turn]...)
 	slices.SortStableFunc(servers, func(a, b string) int {
 		return cmp.Compare(e.failures[a].Load(), e.failures[b].Load())
 	})
 	return servers
+}
+
+// ask sends one question to an authoritative server, at the pace allowed.
+// Its retry over TCP is not paced: a server limiting the rate of its
+// answers (RRL) truncates them precisely so that they are asked over TCP.
+func (e *explorer) ask(ctx context.Context, server, name string, qtype uint16) (*dns.Msg, error) {
+	if err := e.pace[server].Wait(ctx); err != nil {
+		if ctx.Err() == nil {
+			return nil, errOutOfTime
+		}
+		return nil, err
+	}
+
+	return helpers.Question(ctx, e.udp, []string{server}, name, qtype, helpers.QueryOptions{})
 }

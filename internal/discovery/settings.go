@@ -28,4 +28,5 @@ package discovery
 // no settings at all explores fully.
 type Settings struct {
 	WellKnownSettings
+	WordlistSettings
 }

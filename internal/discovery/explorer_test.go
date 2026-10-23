@@ -23,6 +23,8 @@ package discovery
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net"
 	"slices"
 	"strings"
@@ -31,6 +33,7 @@ import (
 	"time"
 
 	"github.com/miekg/dns"
+	"golang.org/x/time/rate"
 
 	"git.happydns.org/happyDomain/internal/netguard"
 	"git.happydns.org/happyDomain/model"
@@ -151,7 +154,9 @@ func (z *testZone) serve(t *testing.T) Options {
 	return Options{
 		Guard:     guard,
 		Resolvers: []string{addr},
-		authPort:  port,
+		// The local server has no rate to protect.
+		QueriesPerSecond: -1,
+		authPort:         port,
 	}
 }
 
@@ -269,6 +274,7 @@ func TestExploreDelegationGlue(t *testing.T) {
 			}
 		}}, req)
 	})))
+	opts.QueriesPerSecond = -1
 
 	records, err := Explore(context.Background(), "example.com.", []string{"sub"}, nil, opts)
 	if err != nil {
@@ -550,5 +556,70 @@ func TestLocateNoNameServer(t *testing.T) {
 
 	if _, err := Locate(context.Background(), "example.com.", opts); err == nil {
 		t.Error("Locate found name servers where there are none")
+	}
+}
+
+func TestExplorePace(t *testing.T) {
+	zone := newTestZone(t, "example.com.",
+		"example.com. 3600 IN NS ns1.example.com.",
+		"ns1.example.com. 300 IN A 127.0.0.1",
+	)
+	opts := zone.serve(t)
+	opts.QueriesPerSecond = 50
+	opts.Concurrency = 4
+
+	var names staticSource
+	for i := range 60 {
+		names = append(names, fmt.Sprintf("absent%d.example.com.", i))
+	}
+
+	start := time.Now()
+	if _, err := Explore(context.Background(), "example.com.", nil, []NameSource{names}, opts); err != nil {
+		t.Fatalf("Explore: %v", err)
+	}
+
+	// 60 names and the apex are more than 60 questions: past the burst
+	// of 4, they take at least (60-4)/50 seconds.
+	if elapsed := time.Since(start); elapsed < time.Second {
+		t.Errorf("exploration took %s; want the questions paced at 50 per second", elapsed)
+	}
+}
+
+func TestQueriesPerSecondDefault(t *testing.T) {
+	if got := (Options{}).withDefaults().QueriesPerSecond; got != DefaultQueriesPerSecond {
+		t.Errorf("QueriesPerSecond defaults to %d; want %d", got, DefaultQueriesPerSecond)
+	}
+	if got := (Options{QueriesPerSecond: -1}).withDefaults().QueriesPerSecond; got != -1 {
+		t.Errorf("QueriesPerSecond -1 becomes %d; want the cap lifted", got)
+	}
+}
+
+func TestQueryOutOfTime(t *testing.T) {
+	var asked atomic.Int32
+	addr := serveLocal(t, answerWith(dns.RcodeSuccess, &asked))
+
+	opts := loopbackOptions(t, addr).withDefaults()
+	e := &explorer{
+		domain:   "example.com.",
+		opts:     opts,
+		udp:      &dns.Client{Timeout: opts.QueryTimeout},
+		servers:  []string{addr},
+		failures: map[string]*atomic.Int32{addr: new(atomic.Int32)},
+		// Its only question already asked, the next one is a second away.
+		pace: map[string]*rate.Limiter{addr: rate.NewLimiter(1, 1)},
+	}
+	e.pace[addr].Allow()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+	if _, err := e.query(ctx, "www.example.com.", dns.TypeA); !errors.Is(err, errOutOfTime) {
+		t.Errorf("query = %v; want %v", err, errOutOfTime)
+	}
+	if asked.Load() != 0 {
+		t.Error("the server was asked a question the pace left no time for")
+	}
+	// A question the pace leaves no time for is not a server failing.
+	if n := e.failures[addr].Load(); n != 0 {
+		t.Errorf("the server failed %d questions; want none", n)
 	}
 }

@@ -32,6 +32,7 @@ import (
 	"sync/atomic"
 
 	"github.com/miekg/dns"
+	"golang.org/x/time/rate"
 
 	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/model"
@@ -91,8 +92,16 @@ func Explore(ctx context.Context, domain string, known []string, sources []NameS
 		return nil, err
 	}
 	e.failures = map[string]*atomic.Int32{}
+	e.pace = map[string]*rate.Limiter{}
 	for _, server := range e.servers {
 		e.failures[server] = new(atomic.Int32)
+		if opts.QueriesPerSecond > 0 {
+			// A burst of one question per worker lets them all start at
+			// once, the pace only holding them back afterwards.
+			e.pace[server] = rate.NewLimiter(rate.Limit(opts.QueriesPerSecond), opts.Concurrency)
+		} else {
+			e.pace[server] = rate.NewLimiter(rate.Inf, 0)
+		}
 	}
 
 	target := Target{
@@ -145,6 +154,12 @@ type explorer struct {
 	failures map[string]*atomic.Int32
 
 	queries atomic.Int64
+
+	// next is the turn of the questions, spreading them over the servers.
+	next atomic.Uint32
+
+	// pace spaces out the questions asked to each authoritative server.
+	pace map[string]*rate.Limiter
 
 	mu sync.Mutex
 	// seen are the names already explored or scheduled.
@@ -258,7 +273,7 @@ func (e *explorer) explore(ctx context.Context, name Name) (targets []Name) {
 		r, err := e.query(ctx, name.FQDN, qtype)
 		if err != nil {
 			e.fail(err)
-			if errors.Is(err, errBudget) || ctx.Err() != nil {
+			if errors.Is(err, errBudget) || errors.Is(err, errOutOfTime) || ctx.Err() != nil {
 				return
 			}
 			continue
@@ -390,7 +405,7 @@ func (e *explorer) addRecord(rr dns.RR) {
 }
 
 func (e *explorer) fail(err error) {
-	if !errors.Is(err, errBudget) {
+	if !errors.Is(err, errBudget) && !errors.Is(err, errOutOfTime) {
 		log.Printf("discovery: %s: %s", e.domain, err)
 	}
 

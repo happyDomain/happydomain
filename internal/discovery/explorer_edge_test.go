@@ -31,6 +31,7 @@ import (
 	"sync/atomic"
 	"syscall"
 	"testing"
+	"time"
 
 	"github.com/miekg/dns"
 
@@ -629,5 +630,71 @@ func TestExploreServerFailoverDemotes(t *testing.T) {
 	// costs a round trip, or a timeout, to every question.
 	if n := failed.Load(); n != 1 {
 		t.Errorf("the failing name server was asked %d times; want it asked once, then left last", n)
+	}
+}
+
+func TestServersByHealthRotates(t *testing.T) {
+	e := &explorer{
+		servers:  []string{"a", "b", "c"},
+		failures: map[string]*atomic.Int32{"a": {}, "b": {}, "c": {}},
+	}
+
+	// The questions are spread over the healthy servers, each paced on
+	// its own.
+	var firsts []string
+	for range 3 {
+		firsts = append(firsts, e.serversByHealth()[0])
+	}
+	slices.Sort(firsts)
+	if !slices.Equal(firsts, []string{"a", "b", "c"}) {
+		t.Errorf("successive questions start with %v; want each server in turn", firsts)
+	}
+
+	// A failing server stays last, whatever the turn.
+	e.failures["b"].Store(1)
+	for range 3 {
+		if servers := e.serversByHealth(); servers[2] != "b" {
+			t.Errorf("servers = %v; want the failing one last", servers)
+		}
+	}
+}
+
+func TestExplorePacePerServer(t *testing.T) {
+	zone := newTestZone(t, "example.com.",
+		"example.com. 3600 IN NS ns0.example.com.",
+		"example.com. 3600 IN NS ns1.example.com.",
+		"ns0.example.com. 300 IN A 127.0.0.2",
+		"ns1.example.com. 300 IN A 127.0.0.1",
+	)
+	var asked0, asked1 atomic.Int32
+	counting := func(count *atomic.Int32) dns.Handler {
+		return handlerFunc(func(w dns.ResponseWriter, req *dns.Msg) {
+			count.Add(1)
+			zone.ServeDNS(w, req)
+		})
+	}
+	addr := serveLocal(t, counting(&asked1), alsoOn{"127.0.0.2", counting(&asked0)})
+
+	opts := loopbackOptions(t, addr)
+	// A burst of 4 questions, then one a second, with half a second to ask:
+	// each server answers its own burst, and nothing more.
+	opts.QueriesPerSecond = 1
+	opts.Concurrency = 4
+	opts.Timeout = 500 * time.Millisecond
+
+	// The recursive resolver, on 127.0.0.1 too, is not paced.
+	if _, err := Locate(context.Background(), "example.com.", opts); err != nil {
+		t.Fatalf("Locate: %v", err)
+	}
+	located := asked1.Swap(0)
+
+	var names staticSource
+	for i := range 120 {
+		names = append(names, fmt.Sprintf("absent%d.example.com.", i))
+	}
+	Explore(context.Background(), "example.com.", nil, []NameSource{names}, opts)
+
+	if n0, n1 := asked0.Load(), asked1.Load()-located; n0 != 4 || n1 != 4 {
+		t.Errorf("the name servers answered %d and %d questions; want each its own burst of 4", n0, n1)
 	}
 }

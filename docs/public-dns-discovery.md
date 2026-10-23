@@ -40,15 +40,17 @@ answer now.
 | ID | Priority | What it yields | Setting disabling it |
 |----|----------|----------------|----------------------|
 | `wellknown` | 100 | Where usual services are published: `_dmarc`, DKIM selectors, SRV and TLSA names... | none (`extra_names` adds names) |
+| `wordlist` | 900 | The 5,000 host names most often found in zones (SecLists). | `disable_wordlist` |
 
 ## For administrators
 
 ### Load on the authoritative servers
 
-An exploration asks at most 2,000 questions, 16 names at once, and lasts at most
-30 seconds. These limits are the defaults of `discovery.Options`, which no
-setting changes. A domain whose names are not all explored in that budget gets
-a partial zone, and a log line telling the exploration was cut short.
+An exploration asks at most 7,000 questions, 100 a second to each authoritative
+server, 16 names at once, and lasts at most 90 seconds. The questions are shared
+among the servers. These limits are the defaults of `discovery.Options`, which
+no setting changes. A domain whose names are not all explored in that budget
+gets a partial zone, and a log line telling the exploration was cut short.
 
 ### Outbound destinations
 

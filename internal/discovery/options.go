@@ -28,12 +28,16 @@ import (
 )
 
 // Default values of Options.
+//
+// The budget and the timeout leave room to ask about the whole
+// WordlistSource, nearly one question per name, at the default pace.
 const (
-	DefaultConcurrency  = 16
-	DefaultMaxQueries   = 2000
-	DefaultMaxDepth     = 3
-	DefaultTimeout      = 30 * time.Second
-	DefaultQueryTimeout = 3 * time.Second
+	DefaultConcurrency      = 16
+	DefaultMaxQueries       = 7000
+	DefaultMaxDepth         = 3
+	DefaultQueriesPerSecond = 100
+	DefaultTimeout          = 90 * time.Second
+	DefaultQueryTimeout     = 3 * time.Second
 )
 
 // Options tunes an exploration. Zero values take the defaults.
@@ -57,6 +61,11 @@ type Options struct {
 	// servers.
 	MaxQueries int
 
+	// QueriesPerSecond caps the pace of the questions asked to each
+	// authoritative server, which may limit the rate of its answers (RRL)
+	// to whoever asks too fast. A negative value lifts the cap.
+	QueriesPerSecond int
+
 	// MaxDepth caps how many times in-zone targets of answers are
 	// followed, from the names the sources yielded.
 	MaxDepth int
@@ -78,6 +87,9 @@ func (o Options) withDefaults() Options {
 	}
 	if o.MaxQueries <= 0 {
 		o.MaxQueries = DefaultMaxQueries
+	}
+	if o.QueriesPerSecond == 0 {
+		o.QueriesPerSecond = DefaultQueriesPerSecond
 	}
 	if o.MaxDepth <= 0 {
 		o.MaxDepth = DefaultMaxDepth
