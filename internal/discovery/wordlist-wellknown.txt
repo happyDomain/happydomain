@@ -1,0 +1,93 @@
+# Names of services commonly found in zones, relative to the domain: those
+# that a list of host names, such as subdomains-top1million-5000.txt, does
+# not hold. A name can span several labels. Lines starting with # are
+# ignored.
+
+# Hosts serving a protocol
+autodiscover
+autoconfig
+mta-sts
+openpgpkey
+_acme-challenge
+
+# Mail policies and reports
+_dmarc
+_mta-sts
+_smtp._tls
+_domainkey
+_adsp._domainkey
+_bimi
+default._bimi
+
+# Common DKIM selectors
+default._domainkey
+dkim._domainkey
+mail._domainkey
+google._domainkey
+selector1._domainkey
+selector2._domainkey
+k1._domainkey
+k2._domainkey
+k3._domainkey
+s1._domainkey
+s2._domainkey
+mxvault._domainkey
+smtp._domainkey
+mandrill._domainkey
+mailjet._domainkey
+sendgrid._domainkey
+amazonses._domainkey
+protonmail._domainkey
+protonmail2._domainkey
+protonmail3._domainkey
+fm1._domainkey
+fm2._domainkey
+fm3._domainkey
+zoho._domainkey
+key1._domainkey
+dkim1._domainkey
+
+# Services located through SRV records
+_submission._tcp
+_submissions._tcp
+_imap._tcp
+_imaps._tcp
+_pop3._tcp
+_pop3s._tcp
+_autodiscover._tcp
+_caldav._tcp
+_caldavs._tcp
+_carddav._tcp
+_carddavs._tcp
+_sip._tcp
+_sip._udp
+_sips._tcp
+_sipfederationtls._tcp
+_xmpp-client._tcp
+_xmpp-server._tcp
+_xmpps-client._tcp
+_xmpps-server._tcp
+_matrix._tcp
+_kerberos._tcp
+_kerberos._udp
+_kerberos-master._tcp
+_kpasswd._tcp
+_kpasswd._udp
+_ldap._tcp
+_ldaps._tcp
+_minecraft._tcp
+_ts3._udp
+_stun._udp
+_turn._udp
+_turns._tcp
+_http._tcp
+_https._tcp
+
+# TLSA records of usual services
+_443._tcp
+_443._tcp.www
+_25._tcp.mail
+_25._tcp.mx
+_465._tcp.mail
+_587._tcp.mail
+_993._tcp.mail
