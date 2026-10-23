@@ -46,7 +46,7 @@ type ProviderGetter interface {
 
 // ZoneRetriever is an interface for retrieving zones from providers.
 type ZoneRetriever interface {
-	RetrieveZone(ctx context.Context, provider *happydns.Provider, name string) ([]happydns.Record, error)
+	RetrieveZone(ctx context.Context, provider *happydns.Provider, name string, known ...string) ([]happydns.Record, error)
 }
 
 // ZoneCorrector is an interface for getting zone corrections.
@@ -86,7 +86,7 @@ func NewOrchestrator(
 	zoneImporter := NewZoneImporterUsecase(domainUpdater, zoneCreator, zoneGetter)
 	zoneCorrectionLister := NewZoneCorrectionListerUsecase(providerService, listRecords, zoneCorrectorService, zoneRetrieverService)
 	return &Orchestrator{
-		RemoteZoneImporter:    NewRemoteZoneImporterUsecase(appendDomainLog, providerService, zoneImporter, zoneRetrieverService),
+		RemoteZoneImporter:    NewRemoteZoneImporterUsecase(appendDomainLog, providerService, zoneImporter, zoneGetter, zoneRetrieverService),
 		ZoneCorrectionApplier: NewZoneCorrectionApplierUsecase(appendDomainLog, domainUpdater, zoneCorrectionLister, zoneCreator, zoneGetter, zoneRetrieverService, zoneUpdater),
 		ZoneImporter:          zoneImporter,
 	}

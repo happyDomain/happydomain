@@ -25,12 +25,16 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"maps"
 	"runtime/debug"
+	"slices"
 	"time"
 
 	"golang.org/x/sync/singleflight"
 
+	"git.happydns.org/happyDomain/internal/helpers"
 	domainlogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
+	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -41,6 +45,7 @@ type RemoteZoneImporterUsecase struct {
 	appendDomainLog   domainlogUC.DomainLogAppender
 	providerService   ProviderGetter
 	zoneImporter      happydns.ZoneImporterUsecase
+	zoneGetter        *zoneUC.GetZoneUsecase
 	zoneRetriever     ZoneRetriever
 	schedulerNotifier happydns.SchedulerDomainNotifier
 
@@ -53,17 +58,20 @@ type RemoteZoneImporterUsecase struct {
 const remoteImportTimeout = 5 * time.Minute
 
 // NewRemoteZoneImporterUsecase creates a RemoteZoneImporterUsecase wired to
-// the given log appender, provider getter, zone importer, and zone retriever.
+// the given log appender, provider getter, zone importer, zone getter, and
+// zone retriever.
 func NewRemoteZoneImporterUsecase(
 	appendDomainLog domainlogUC.DomainLogAppender,
 	providerService ProviderGetter,
 	zoneImporter happydns.ZoneImporterUsecase,
+	zoneGetter *zoneUC.GetZoneUsecase,
 	zoneRetriever ZoneRetriever,
 ) *RemoteZoneImporterUsecase {
 	return &RemoteZoneImporterUsecase{
 		appendDomainLog: appendDomainLog,
 		providerService: providerService,
 		zoneImporter:    zoneImporter,
+		zoneGetter:      zoneGetter,
 		zoneRetriever:   zoneRetriever,
 	}
 }
@@ -112,7 +120,7 @@ func (uc *RemoteZoneImporterUsecase) importNow(ctx context.Context, user *happyd
 		return nil, err
 	}
 
-	zone, err := uc.zoneRetriever.RetrieveZone(ctx, provider, domain.DomainName)
+	zone, err := uc.zoneRetriever.RetrieveZone(ctx, provider, domain.DomainName, uc.knownSubdomains(domain)...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve the zone from server: %w", err)
 	}
@@ -131,4 +139,40 @@ func (uc *RemoteZoneImporterUsecase) importNow(ctx context.Context, user *happyd
 	}
 
 	return myZone, nil
+}
+
+// knownSubdomains returns the subdomains of the newest zone of domain, for
+// the providers discovering the zone rather than listing it.
+func (uc *RemoteZoneImporterUsecase) knownSubdomains(domain *happydns.Domain) []string {
+	if len(domain.ZoneHistory) == 0 || uc.zoneGetter == nil {
+		return nil
+	}
+
+	zone, err := uc.zoneGetter.Get(domain.ZoneHistory[0])
+	if err != nil {
+		log.Printf("unable to load the zone %s of %s to tell its known subdomains: %s", domain.ZoneHistory[0].String(), domain.DomainName, err)
+		return nil
+	}
+
+	return subdomainsOf(zone)
+}
+
+// subdomainsOf returns the subdomains holding services in zone, and those
+// owning their records: a service hangs from a parent of the names it
+// fills, as a DKIM key or a DMARC policy from the domain they are about.
+func subdomainsOf(zone *happydns.Zone) []string {
+	seen := map[string]bool{}
+	for subdomain, services := range zone.Services {
+		seen[string(subdomain)] = true
+		for _, svc := range services {
+			records, err := svc.Service.GetRecords(string(subdomain), zone.DefaultTTL, "")
+			if err != nil {
+				continue
+			}
+			for _, rr := range records {
+				seen[helpers.DomainJoin(rr.Header().Name, string(subdomain))] = true
+			}
+		}
+	}
+	return slices.Collect(maps.Keys(seen))
 }

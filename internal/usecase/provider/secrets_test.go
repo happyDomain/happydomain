@@ -96,7 +96,7 @@ func plaintextSecrets(t *testing.T) *secret.Manager {
 func newSecretTestService(t *testing.T) (*provider.Service, storage.Storage) {
 	t.Helper()
 	db, _ := inmemory.Instantiate()
-	return provider.NewService(db, &mockValidator{}, nil, plaintextSecrets(t)), db
+	return provider.NewService(db, &mockValidator{}, nil, nil, plaintextSecrets(t)), db
 }
 
 func secretMessage(t *testing.T, providerType, body string) *happydns.ProviderMessage {
@@ -369,7 +369,7 @@ func Test_Secret_ValidatorOpensBeforeInstantiating(t *testing.T) {
 	}
 
 	instantiatedWith = nil
-	err := provider.NewValidator(nil, plaintextSecrets(t)).Validate(ctx, p)
+	err := provider.NewValidator(nil, nil, plaintextSecrets(t)).Validate(ctx, p)
 	if !errors.Is(err, secret.ErrUnknownSafe) {
 		t.Errorf("Validate = %v, want ErrUnknownSafe", err)
 	}
@@ -378,7 +378,7 @@ func Test_Secret_ValidatorOpensBeforeInstantiating(t *testing.T) {
 	}
 
 	p.Provider = &SecretTestProvider{Host: "h", ApiKey: happydns.NewSecret("clear")}
-	if err := provider.NewValidator(nil, plaintextSecrets(t)).Validate(ctx, p); err != nil {
+	if err := provider.NewValidator(nil, nil, plaintextSecrets(t)).Validate(ctx, p); err != nil {
 		t.Fatalf("Validate(clear) = %v", err)
 	}
 	if instantiatedWith == nil || *instantiatedWith != "clear" {
@@ -431,7 +431,7 @@ func instanceSecrets(t *testing.T, db storage.Storage) *secret.Manager {
 
 func Test_Secret_InstancePolicyNeverStoresClear(t *testing.T) {
 	db, _ := inmemory.Instantiate()
-	svc := provider.NewService(db, &mockValidator{}, nil, instanceSecrets(t, db))
+	svc := provider.NewService(db, &mockValidator{}, nil, nil, instanceSecrets(t, db))
 	user := createTestUser(t, db, "instance@example.com")
 
 	p, err := svc.CreateProvider(ctx, user, secretMessage(t, "SecretTestProvider", `{"host":"h","apikey":"my-key"}`))
@@ -461,7 +461,7 @@ func Test_Secret_InstancePolicyNeverStoresClear(t *testing.T) {
 // the next time its provider is written.
 func Test_Secret_LegacyPlaintextSealedOnNextWrite(t *testing.T) {
 	db, _ := inmemory.Instantiate()
-	svc := provider.NewService(db, &mockValidator{}, nil, instanceSecrets(t, db))
+	svc := provider.NewService(db, &mockValidator{}, nil, nil, instanceSecrets(t, db))
 	user := createTestUser(t, db, "lazy@example.com")
 	legacy := storeRaw(t, db, user.Id, `{"host":"h","apikey":"legacy"}`)
 
@@ -490,7 +490,7 @@ func Test_Secret_LegacyPlaintextSealedOnNextWrite(t *testing.T) {
 // credential in clear.
 func Test_Secret_UpdateReturnsTheStoredProvider(t *testing.T) {
 	db, _ := inmemory.Instantiate()
-	svc := provider.NewService(db, &mockValidator{}, nil, instanceSecrets(t, db))
+	svc := provider.NewService(db, &mockValidator{}, nil, nil, instanceSecrets(t, db))
 	user := createTestUser(t, db, "returned@example.com")
 
 	p, err := svc.CreateProvider(ctx, user, secretMessage(t, "SecretTestProvider", `{"host":"h","apikey":"old"}`))
@@ -552,7 +552,7 @@ func Test_Secret_ResealProviders(t *testing.T) {
 	_, ids := seedLegacyProviders(t, db, 3)
 
 	instance := instanceSecrets(t, db)
-	svc := provider.NewService(db, &mockValidator{}, nil, instance)
+	svc := provider.NewService(db, &mockValidator{}, nil, nil, instance)
 
 	counts, err := svc.InspectSecrets(ctx)
 	if err != nil || counts.Clear != 3 {
@@ -589,11 +589,11 @@ func Test_Secret_ResealBackToPlaintext(t *testing.T) {
 	instance, _ := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db})
 	plaintext, _ := secret.NewManager(secret.Config{Policy: secret.PolicyPlaintext, InstanceKey: key, Safes: db})
 
-	if _, err := provider.NewService(db, &mockValidator{}, nil, instance).ResealSecrets(ctx); err != nil {
+	if _, err := provider.NewService(db, &mockValidator{}, nil, nil, instance).ResealSecrets(ctx); err != nil {
 		t.Fatal(err)
 	}
 
-	report, err := provider.NewService(db, &mockValidator{}, nil, plaintext).ResealSecrets(ctx)
+	report, err := provider.NewService(db, &mockValidator{}, nil, nil, plaintext).ResealSecrets(ctx)
 	if err != nil || report.Changed != 2 {
 		t.Fatalf("ResealProviders(plaintext) = %+v, %v", report, err)
 	}
@@ -611,7 +611,7 @@ func Test_Secret_ResealResumesAfterInterruption(t *testing.T) {
 	instance := instanceSecrets(t, db)
 
 	broken := &failingUpdates{Storage: db, failAt: 2}
-	report, err := provider.NewService(broken, &mockValidator{}, nil, instance).ResealSecrets(ctx)
+	report, err := provider.NewService(broken, &mockValidator{}, nil, nil, instance).ResealSecrets(ctx)
 	if err != nil {
 		t.Fatalf("ResealProviders: %v", err)
 	}
@@ -619,7 +619,7 @@ func Test_Secret_ResealResumesAfterInterruption(t *testing.T) {
 		t.Errorf("report = %+v, want one failure reported and the others done", report)
 	}
 
-	report, err = provider.NewService(db, &mockValidator{}, nil, instance).ResealSecrets(ctx)
+	report, err = provider.NewService(db, &mockValidator{}, nil, nil, instance).ResealSecrets(ctx)
 	if err != nil || report.Changed != 1 || report.Failed != 0 {
 		t.Errorf("rerun = %+v, %v; want the remaining one done", report, err)
 	}
@@ -648,10 +648,10 @@ func Test_Secret_ResealDoesNotLoseConcurrentUpdates(t *testing.T) {
 	id := ids[0]
 
 	// The user side stores in clear, so that every reseal has work to do.
-	userSvc := provider.NewService(db, &mockValidator{}, nil, plaintextSecrets(t))
+	userSvc := provider.NewService(db, &mockValidator{}, nil, nil, plaintextSecrets(t))
 	// Slow reads widen the window between the reseal reading a provider and
 	// writing it back.
-	adminSvc := provider.NewService(&slowReads{Storage: db}, &mockValidator{}, nil, instanceSecrets(t, db))
+	adminSvc := provider.NewService(&slowReads{Storage: db}, &mockValidator{}, nil, nil, instanceSecrets(t, db))
 
 	const rounds = 50
 	var wg sync.WaitGroup
@@ -730,7 +730,7 @@ func Test_Secret_OneUndecodableRecordDoesNotStopTheOthers(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	svc := provider.NewService(db, &mockValidator{}, nil, instanceSecrets(t, db))
+	svc := provider.NewService(db, &mockValidator{}, nil, nil, instanceSecrets(t, db))
 
 	counts, err := svc.InspectSecrets(ctx)
 	if err != nil {
@@ -760,8 +760,8 @@ func Test_Secret_ResealDoesNotResurrectDeletedProviders(t *testing.T) {
 	db, _ := inmemory.Instantiate()
 	user, ids := seedLegacyProviders(t, db, 20)
 
-	userSvc := provider.NewService(db, &mockValidator{}, nil, plaintextSecrets(t))
-	adminSvc := provider.NewService(&slowReads{Storage: db}, &mockValidator{}, nil, instanceSecrets(t, db))
+	userSvc := provider.NewService(db, &mockValidator{}, nil, nil, plaintextSecrets(t))
+	adminSvc := provider.NewService(&slowReads{Storage: db}, &mockValidator{}, nil, nil, instanceSecrets(t, db))
 
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -803,7 +803,7 @@ func Test_Secret_ResealSkipsProvidersDeletedSinceListed(t *testing.T) {
 	db, _ := inmemory.Instantiate()
 	_, ids := seedLegacyProviders(t, db, 1)
 
-	report, err := provider.NewService(&vanishing{Storage: db}, &mockValidator{}, nil, instanceSecrets(t, db)).ResealSecrets(ctx)
+	report, err := provider.NewService(&vanishing{Storage: db}, &mockValidator{}, nil, nil, instanceSecrets(t, db)).ResealSecrets(ctx)
 	if err != nil || report.Processed != 1 || report.Changed != 0 || report.Failed != 0 {
 		t.Errorf("ResealSecrets = %+v, %v; want the deleted provider skipped, not failed", report, err)
 	}
@@ -822,7 +822,7 @@ func Test_Secret_KeystoreChosenByRequest(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	svc := provider.NewService(db, &mockValidator{}, nil, m)
+	svc := provider.NewService(db, &mockValidator{}, nil, nil, m)
 	user := createTestUser(t, db, "keystore@example.com")
 
 	p, err := svc.CreateProvider(ctx, user, secretMessage(t, "SecretTestProvider", `{"host":"h","apikey":"my-key"}`))
@@ -873,7 +873,7 @@ func Test_Secret_MoveOwnerSecrets(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	svc := provider.NewService(db, &mockValidator{}, nil, m)
+	svc := provider.NewService(db, &mockValidator{}, nil, nil, m)
 	user := createTestUser(t, db, "mover@example.com")
 	other := createTestUser(t, db, "stayer@example.com")
 
@@ -928,7 +928,7 @@ func Test_Secret_LockedKeystore(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	svc := provider.NewService(db, &mockValidator{}, nil, m)
+	svc := provider.NewService(db, &mockValidator{}, nil, nil, m)
 	user := createTestUser(t, db, "locked@example.com")
 
 	ks, err := m.CreateKeystore(ctx, user.Id, secrettest.PassphraseKind, "Mine", secrettest.Material("passphrase", "p"))
@@ -984,7 +984,7 @@ func Test_Secret_ReplacedCredentialsStayInTheirKeystore(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	svc := provider.NewService(db, &mockValidator{}, nil, m)
+	svc := provider.NewService(db, &mockValidator{}, nil, nil, m)
 	user := createTestUser(t, db, "replace@example.com")
 
 	personal, err := m.CreateKeystore(ctx, user.Id, secrettest.PersonalKind, "Mine", secrettest.PersonalParams())
@@ -1013,7 +1013,7 @@ func Test_Secret_ReferenceKeystore(t *testing.T) {
 		t.Fatal(err)
 	}
 	// The validator for real: it gets what the reference stands for.
-	svc := provider.NewService(db, nil, nil, m)
+	svc := provider.NewService(db, nil, nil, nil, m)
 	user := createTestUser(t, db, "references@example.com")
 
 	refs, err := m.CreateKeystore(ctx, user.Id, secrettest.ReferenceKind, "My file", secrettest.ReferenceParams(map[string]string{"ovh/key": "s3cr3t"}))
@@ -1085,8 +1085,8 @@ func Test_Secret_RefusedAfterSealingStoresNothing(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	accepting := provider.NewService(db, &mockValidator{}, nil, m)
-	refusing := provider.NewService(db, failingValidator{}, nil, m)
+	accepting := provider.NewService(db, &mockValidator{}, nil, nil, m)
+	refusing := provider.NewService(db, failingValidator{}, nil, nil, m)
 	user := createTestUser(t, db, "refused@example.com")
 
 	refs, err := m.CreateKeystore(ctx, user.Id, secrettest.ReferenceKind, "My file", secrettest.ReferenceParams(map[string]string{"ovh/key": "s3cr3t", "ovh/other": "0th3r"}))
@@ -1129,7 +1129,7 @@ func Test_Secret_SecretRefusedByReferenceKeystore(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	svc := provider.NewService(db, &mockValidator{}, nil, m)
+	svc := provider.NewService(db, &mockValidator{}, nil, nil, m)
 	user := createTestUser(t, db, "references-only@example.com")
 
 	refs, err := m.CreateKeystore(ctx, user.Id, secrettest.ReferenceKind, "My file", secrettest.ReferenceParams(map[string]string{"ovh/key": "s3cr3t"}))

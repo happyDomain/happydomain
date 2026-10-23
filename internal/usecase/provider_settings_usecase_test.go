@@ -63,7 +63,7 @@ func TestProviderSettingsRefusesNullBody(t *testing.T) {
 	}
 
 	user := &happydns.User{Id: happydns.Identifier{0x01}, Email: "settings@example.com"}
-	uc := usecase.NewProviderSettingsUsecase(&happydns.Options{}, providerUC.NewService(db, acceptAll{}, nil, secrets))
+	uc := usecase.NewProviderSettingsUsecase(&happydns.Options{}, providerUC.NewService(db, acceptAll{}, nil, nil, secrets))
 
 	state := &happydns.ProviderSettingsState{
 		FormState:    happydns.FormState{Name: "wizard", State: 1},
@@ -95,7 +95,7 @@ func TestProviderSettingsCreatesProviderWithSecret(t *testing.T) {
 	}
 
 	user := &happydns.User{Id: happydns.Identifier{0x01}, Email: "settings@example.com"}
-	uc := usecase.NewProviderSettingsUsecase(&happydns.Options{}, providerUC.NewService(db, acceptAll{}, nil, secrets))
+	uc := usecase.NewProviderSettingsUsecase(&happydns.Options{}, providerUC.NewService(db, acceptAll{}, nil, nil, secrets))
 
 	// What the controller decodes from the wizard's last step.
 	state := &happydns.ProviderSettingsState{

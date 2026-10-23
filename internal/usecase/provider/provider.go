@@ -42,13 +42,14 @@ type Service struct {
 }
 
 // NewService creates a new provider Service. If validator is nil, the
-// DefaultProviderValidator is used, with the same guard and secrets.
-func NewService(store ProviderStorage, validator ProviderValidator, guard *netguard.Guard, secrets *secret.Manager) *Service {
+// DefaultProviderValidator is used, with the same guard, resolvers and
+// secrets.
+func NewService(store ProviderStorage, validator ProviderValidator, guard *netguard.Guard, resolvers []string, secrets *secret.Manager) *Service {
 	if validator == nil {
-		validator = NewValidator(guard, secrets)
+		validator = NewValidator(guard, resolvers, secrets)
 	}
 	return &Service{
-		instantiator: instantiator{guard: guard, secrets: secrets},
+		instantiator: instantiator{guard: guard, resolvers: resolvers, secrets: secrets},
 		store:        store,
 		validator:    validator,
 	}
@@ -309,7 +310,7 @@ type RestrictedService struct {
 // NewRestrictedService creates a RestrictedService backed by the given configuration and storage.
 func NewRestrictedService(cfg *happydns.Options, store ProviderStorage, guard *netguard.Guard, secrets *secret.Manager) *RestrictedService {
 	return &RestrictedService{
-		inner:  NewService(store, nil, guard, secrets),
+		inner:  NewService(store, nil, guard, cfg.DefaultResolvers, secrets),
 		config: cfg,
 	}
 }
@@ -380,8 +381,8 @@ func (s *RestrictedService) ListZoneCorrections(ctx context.Context, provider *h
 	return s.inner.ListZoneCorrections(ctx, provider, domain, records)
 }
 
-func (s *RestrictedService) RetrieveZone(ctx context.Context, provider *happydns.Provider, name string) ([]happydns.Record, error) {
-	return s.inner.RetrieveZone(ctx, provider, name)
+func (s *RestrictedService) RetrieveZone(ctx context.Context, provider *happydns.Provider, name string, known ...string) ([]happydns.Record, error) {
+	return s.inner.RetrieveZone(ctx, provider, name, known...)
 }
 
 func (s *RestrictedService) ShowReferences(ctx context.Context, provider *happydns.Provider) error {

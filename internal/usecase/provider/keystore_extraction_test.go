@@ -72,7 +72,7 @@ func newExtractionWorld(t *testing.T, allowExtraction bool) *extractionWorld {
 	}
 
 	w := &extractionWorld{db: db, manager: m, user: createTestUser(t, db, "extraction@example.com")}
-	w.svc = provider.NewService(db, &mockValidator{}, nil, m)
+	w.svc = provider.NewService(db, &mockValidator{}, nil, nil, m)
 	w.keystore = usecase.NewKeystoreUsecase(m, map[string]usecase.SecretHolder{"provider": w.svc})
 	if allowExtraction {
 		w.keystore.WithExtraction()

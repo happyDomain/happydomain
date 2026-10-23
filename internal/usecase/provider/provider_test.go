@@ -80,7 +80,7 @@ func newTestService(t *testing.T) (*provider.Service, storage.Storage) {
 
 func newTestServiceWithValidator(t *testing.T, validator provider.ProviderValidator) (*provider.Service, storage.Storage) {
 	db, _ := inmemory.Instantiate()
-	return provider.NewService(db, validator, nil, plaintextSecrets(t)), db
+	return provider.NewService(db, validator, nil, nil, plaintextSecrets(t)), db
 }
 
 func Test_CreateProvider(t *testing.T) {
@@ -465,7 +465,7 @@ func Test_RestrictedService_UpdateProvider_Disabled(t *testing.T) {
 	db, _ := inmemory.Instantiate()
 
 	// First create a provider without restrictions
-	unrestricted := provider.NewService(db, &mockValidator{}, nil, plaintextSecrets(t))
+	unrestricted := provider.NewService(db, &mockValidator{}, nil, nil, plaintextSecrets(t))
 	user := createTestUser(t, db, "test@example.com")
 	msg := createTestProviderMessage(t, "DDNSServer", "Test Provider")
 	createdProvider, err := unrestricted.CreateProvider(ctx, user, msg)
@@ -494,7 +494,7 @@ func Test_RestrictedService_DeleteProvider_Disabled(t *testing.T) {
 	db, _ := inmemory.Instantiate()
 
 	// First create a provider without restrictions
-	unrestricted := provider.NewService(db, &mockValidator{}, nil, plaintextSecrets(t))
+	unrestricted := provider.NewService(db, &mockValidator{}, nil, nil, plaintextSecrets(t))
 	user := createTestUser(t, db, "test@example.com")
 	msg := createTestProviderMessage(t, "DDNSServer", "Test Provider")
 	createdProvider, err := unrestricted.CreateProvider(ctx, user, msg)
@@ -710,7 +710,7 @@ func (s *idRecordingStorage) CreateProvider(p *happydns.Provider) error {
 func Test_CreateProviderAssignsIdBeforeStoring(t *testing.T) {
 	db, _ := inmemory.Instantiate()
 	rec := &idRecordingStorage{Storage: db}
-	providerService := provider.NewService(rec, &mockValidator{}, nil, plaintextSecrets(t))
+	providerService := provider.NewService(rec, &mockValidator{}, nil, nil, plaintextSecrets(t))
 
 	user := createTestUser(t, db, "test@example.com")
 	msg := createTestProviderMessage(t, "DDNSServer", "Test DDNS Provider")

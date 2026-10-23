@@ -41,8 +41,8 @@ type DefaultProviderValidator struct {
 
 // NewValidator returns the default validator, refusing providers pointing at a
 // destination guard does not allow.
-func NewValidator(guard *netguard.Guard, secrets *secret.Manager) *DefaultProviderValidator {
-	return &DefaultProviderValidator{instantiator{guard: guard, secrets: secrets}}
+func NewValidator(guard *netguard.Guard, resolvers []string, secrets *secret.Manager) *DefaultProviderValidator {
+	return &DefaultProviderValidator{instantiator{guard: guard, resolvers: resolvers, secrets: secrets}}
 }
 
 // Validate instantiates the provider and, if it supports zone listing, calls

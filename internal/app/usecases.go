@@ -73,7 +73,7 @@ func (app *App) initUsecases() {
 	)
 	domainLogService := domainlogUC.NewService(app.store)
 	providerService := providerUC.NewRestrictedService(app.cfg, app.store, app.guards.Outbound, app.secrets)
-	providerAdminService := providerUC.NewService(app.store, nil, app.guards.Outbound, app.secrets)
+	providerAdminService := providerUC.NewService(app.store, nil, app.guards.Outbound, app.cfg.DefaultResolvers, app.secrets)
 	serviceService := serviceUC.NewServiceUsecases()
 	zoneService := zoneUC.NewZoneUsecases(app.store, serviceService)
 
@@ -249,7 +249,7 @@ func (app *App) initFaviconService() {
 // secretHolders returns the types of object holding secrets, by type.
 func (app *App) secretHolders() map[string]usecase.SecretHolder {
 	return map[string]usecase.SecretHolder{
-		providerUC.SecretObjectType:       providerUC.NewService(app.store, nil, app.guards.Outbound, app.secrets),
+		providerUC.SecretObjectType:       providerUC.NewService(app.store, nil, app.guards.Outbound, app.cfg.DefaultResolvers, app.secrets),
 		notifPkg.SecretObjectType:         notifUC.NewChannelSecrets(app.store, app.usecases.notificationRegistry),
 		checkerUC.OptionsSecretObjectType: checkerUC.NewCheckerOptionsSecrets(app.store, app.secrets),
 	}

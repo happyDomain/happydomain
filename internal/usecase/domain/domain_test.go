@@ -129,7 +129,7 @@ func setupTestService(store storage.Storage) (*domain.Service, *mockDomainLogApp
 	if err != nil {
 		panic(err)
 	}
-	providerService := providerUC.NewService(store, nil, nil, secrets)
+	providerService := providerUC.NewService(store, nil, nil, nil, secrets)
 
 	// Create the zone usecase
 	getZone := zoneUC.NewGetZoneUsecase(store)

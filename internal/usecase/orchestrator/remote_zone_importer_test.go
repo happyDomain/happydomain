@@ -24,14 +24,138 @@ package orchestrator_test
 import (
 	"context"
 	"errors"
+	"slices"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	domainlogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
 	"git.happydns.org/happyDomain/internal/usecase/orchestrator"
+	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
+	"github.com/miekg/dns"
+
 	"git.happydns.org/happyDomain/model"
+	svcs "git.happydns.org/happyDomain/services"
+	"git.happydns.org/happyDomain/services/abstract"
 )
+
+// knownRecorder records the known subdomains it is handed.
+type knownRecorder struct {
+	known  []string
+	called bool
+}
+
+func (r *knownRecorder) RetrieveZone(_ context.Context, _ *happydns.Provider, _ string, known ...string) ([]happydns.Record, error) {
+	r.called = true
+	r.known = known
+	return nil, nil
+}
+
+type stubZoneImporter struct{}
+
+func (stubZoneImporter) Import(_ *happydns.User, _ *happydns.Domain, _ []happydns.Record) (*happydns.Zone, error) {
+	return &happydns.Zone{ZoneMeta: happydns.ZoneMeta{Id: happydns.Identifier([]byte("imported"))}}, nil
+}
+
+// zoneWithServicesAt is a zone holding a service at each subdomain.
+func zoneWithServicesAt(id happydns.Identifier, subdomains ...happydns.Subdomain) *happydns.Zone {
+	zone := &happydns.Zone{
+		ZoneMeta: happydns.ZoneMeta{Id: id},
+		Services: map[happydns.Subdomain][]*happydns.Service{},
+	}
+	for _, subdomain := range subdomains {
+		zone.Services[subdomain] = []*happydns.Service{{
+			ServiceMeta: happydns.ServiceMeta{Type: "abstract.Origin"},
+			Service:     &abstract.Origin{},
+		}}
+	}
+	return zone
+}
+
+// withDKIMSelector adds to zone a DKIM key on the domain itself, which the
+// analyzer stores at the apex while its record is owned by the selector.
+func withDKIMSelector(zone *happydns.Zone, selector string) *happydns.Zone {
+	zone.Services[""] = append(zone.Services[""], &happydns.Service{
+		ServiceMeta: happydns.ServiceMeta{Type: "svcs.DKIMRecord"},
+		Service: &svcs.DKIMRecord{Record: &happydns.TXT{
+			Hdr: dns.RR_Header{Name: selector + "._domainkey", Rrtype: dns.TypeTXT, Class: dns.ClassINET},
+			Txt: "v=DKIM1; p=MIGf",
+		}},
+	})
+	return zone
+}
+
+// brokenService fails to give its records.
+type brokenService struct{}
+
+func (brokenService) GetNbResources() int { return 1 }
+func (brokenService) GenComment() string  { return "" }
+func (brokenService) GetRecords(string, uint32, string) ([]happydns.Record, error) {
+	return nil, errors.New("broken")
+}
+
+func TestRemoteZoneImporter_KnownSubdomains(t *testing.T) {
+	storage := newInMemoryZoneStorage()
+	newest := happydns.Identifier([]byte("newest"))
+	older := happydns.Identifier([]byte("older"))
+	broken := happydns.Identifier([]byte("broken"))
+	storage.zones[newest.String()] = withDKIMSelector(zoneWithServicesAt(newest, "", "www"), "sel")
+	storage.zones[older.String()] = zoneWithServicesAt(older, "gone")
+	storage.zones[broken.String()] = zoneWithServicesAt(broken, "", "mail")
+	storage.zones[broken.String()].Services["mail"][0].Service = brokenService{}
+
+	for name, tc := range map[string]struct {
+		history []happydns.Identifier
+		want    []string
+	}{
+		"newest zone":  {history: []happydns.Identifier{newest, older}, want: []string{"", "sel._domainkey", "www"}},
+		"no zone yet":  {want: nil},
+		"missing zone": {history: []happydns.Identifier{happydns.Identifier([]byte("missing"))}, want: nil},
+		// The subdomain of a service failing to give its records is still known.
+		"broken service": {history: []happydns.Identifier{broken}, want: []string{"", "mail"}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			retriever := &knownRecorder{}
+			uc := orchestrator.NewRemoteZoneImporterUsecase(
+				domainlogUC.NoopDomainLogAppender{},
+				&mockProviderGetter{provider: &happydns.Provider{}},
+				stubZoneImporter{},
+				zoneUC.NewGetZoneUsecase(storage),
+				retriever,
+			)
+
+			domain := &happydns.Domain{DomainName: "example.com.", ZoneHistory: tc.history}
+			if _, err := uc.Import(context.Background(), &happydns.User{}, domain); err != nil {
+				t.Fatalf("Import: %v", err)
+			}
+
+			slices.Sort(retriever.known)
+			if !retriever.called || !slices.Equal(retriever.known, tc.want) {
+				t.Errorf("known subdomains = %v; want %v", retriever.known, tc.want)
+			}
+		})
+	}
+}
+
+func TestZoneCorrectionLister_HandsKnownSubdomains(t *testing.T) {
+	retriever := &knownRecorder{}
+	uc := orchestrator.NewZoneCorrectionListerUsecase(
+		&mockProviderGetter{provider: &happydns.Provider{}},
+		newTestListRecordsUsecase(),
+		&mockZoneCorrector{},
+		retriever,
+	)
+
+	zone := withDKIMSelector(zoneWithServicesAt(happydns.Identifier([]byte("zone")), "www", "mail"), "sel")
+	if _, _, err := uc.List(context.Background(), &happydns.User{}, &happydns.Domain{DomainName: "example.com."}, zone); err != nil {
+		t.Fatalf("List: %v", err)
+	}
+
+	slices.Sort(retriever.known)
+	if !slices.Equal(retriever.known, []string{"", "mail", "sel._domainkey", "www"}) {
+		t.Errorf("known subdomains = %v; want those of the zone compared", retriever.known)
+	}
+}
 
 // blockingRetriever holds every retrieval until release is closed, and
 // tells the context each one saw once released.
@@ -50,7 +174,7 @@ func newBlockingRetriever() *blockingRetriever {
 	}
 }
 
-func (r *blockingRetriever) RetrieveZone(ctx context.Context, _ *happydns.Provider, _ string) ([]happydns.Record, error) {
+func (r *blockingRetriever) RetrieveZone(ctx context.Context, _ *happydns.Provider, _ string, _ ...string) ([]happydns.Record, error) {
 	r.calls.Add(1)
 	r.started <- struct{}{}
 	<-r.release
@@ -73,6 +197,7 @@ func newBlockingImporter(retriever *blockingRetriever, importer *countingZoneImp
 		domainlogUC.NoopDomainLogAppender{},
 		&mockProviderGetter{provider: &happydns.Provider{}},
 		importer,
+		nil,
 		retriever,
 	)
 }
@@ -186,7 +311,7 @@ func TestRemoteZoneImporter_DistinctDomains(t *testing.T) {
 // panickingRetriever panics on every retrieval, as a faulty provider would.
 type panickingRetriever struct{}
 
-func (panickingRetriever) RetrieveZone(context.Context, *happydns.Provider, string) ([]happydns.Record, error) {
+func (panickingRetriever) RetrieveZone(context.Context, *happydns.Provider, string, ...string) ([]happydns.Record, error) {
 	panic("provider bug")
 }
 
@@ -195,6 +320,7 @@ func TestRemoteZoneImporter_RecoversPanic(t *testing.T) {
 		domainlogUC.NoopDomainLogAppender{},
 		&mockProviderGetter{provider: &happydns.Provider{}},
 		&countingZoneImporter{},
+		nil,
 		panickingRetriever{},
 	)
 

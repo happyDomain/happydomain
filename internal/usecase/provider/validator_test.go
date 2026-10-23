@@ -104,7 +104,7 @@ func TestValidatorChecksEndpointBeforeInstantiating(t *testing.T) {
 				Provider:     &spyProviderBody{ApiUrl: tt.apiURL, instantiated: &reached},
 			}
 
-			err = provider.NewValidator(guard, plaintextSecrets(t)).Validate(t.Context(), p)
+			err = provider.NewValidator(guard, nil, plaintextSecrets(t)).Validate(t.Context(), p)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -138,7 +138,7 @@ func TestValidatorAppliesTheEndpointDefault(t *testing.T) {
 		var reached bool
 		p := &happydns.Provider{ProviderMeta: validatedMeta, Provider: &ddnsLikeBody{instantiated: &reached}}
 
-		if err := provider.NewValidator(guard, plaintextSecrets(t)).Validate(t.Context(), p); err == nil {
+		if err := provider.NewValidator(guard, nil, plaintextSecrets(t)).Validate(t.Context(), p); err == nil {
 			t.Fatal("Validate() = nil: an empty field that means 127.0.0.1 must be checked, not skipped")
 		}
 		if reached {
@@ -150,7 +150,7 @@ func TestValidatorAppliesTheEndpointDefault(t *testing.T) {
 		var reached bool
 		p := &happydns.Provider{ProviderMeta: validatedMeta, Provider: &spyProviderBody{instantiated: &reached}}
 
-		if err := provider.NewValidator(guard, plaintextSecrets(t)).Validate(t.Context(), p); err == nil {
+		if err := provider.NewValidator(guard, nil, plaintextSecrets(t)).Validate(t.Context(), p); err == nil {
 			t.Fatal("Validate() = nil, want the spy's instantiation error")
 		}
 		if !reached {

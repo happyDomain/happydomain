@@ -71,7 +71,7 @@ func TestSecretsUsecase(t *testing.T) {
 	seedSecretProvider(t, db, instance, 3, "sealed-3")
 
 	uc := usecase.NewSecretsUsecase(instance, map[string]usecase.SecretHolder{
-		providerUC.SecretObjectType: providerUC.NewService(db, acceptAll{}, nil, instance),
+		providerUC.SecretObjectType: providerUC.NewService(db, acceptAll{}, nil, nil, instance),
 	}, db)
 
 	status, err := uc.Status(ctx)
@@ -126,7 +126,7 @@ func TestSecretsUsecaseDropSafes(t *testing.T) {
 
 	newUsecase := func(m *secret.Manager) *usecase.SecretsUsecase {
 		return usecase.NewSecretsUsecase(m, map[string]usecase.SecretHolder{
-			providerUC.SecretObjectType: providerUC.NewService(db, acceptAll{}, nil, m),
+			providerUC.SecretObjectType: providerUC.NewService(db, acceptAll{}, nil, nil, m),
 		}, db)
 	}
 
@@ -198,7 +198,7 @@ func TestSecretsUsecaseDropSafesRefusedWithUndecodable(t *testing.T) {
 	}
 
 	uc := usecase.NewSecretsUsecase(plaintext, map[string]usecase.SecretHolder{
-		providerUC.SecretObjectType: providerUC.NewService(db, acceptAll{}, nil, plaintext),
+		providerUC.SecretObjectType: providerUC.NewService(db, acceptAll{}, nil, nil, plaintext),
 	}, db)
 	if _, err := uc.DropSafes(ctx); err == nil || !strings.Contains(err.Error(), "could not be looked at") {
 		t.Errorf("DropSafes = %v, want it refused for the undecodable provider", err)
@@ -234,7 +234,7 @@ func TestSecretsUsecaseDropSafesKeepsCheckWithDamagedSafe(t *testing.T) {
 	}
 
 	uc := usecase.NewSecretsUsecase(plaintext, map[string]usecase.SecretHolder{
-		providerUC.SecretObjectType: providerUC.NewService(db, acceptAll{}, nil, plaintext),
+		providerUC.SecretObjectType: providerUC.NewService(db, acceptAll{}, nil, nil, plaintext),
 	}, db)
 	if _, err := uc.Reseal(ctx); err != nil {
 		t.Fatal(err)
@@ -270,7 +270,7 @@ func TestSecretsUsecaseDropSafesRefusedWithUnreadable(t *testing.T) {
 	otherKey, _ := secret.NewInstanceKey(other)
 	plaintext, _ := secret.NewManager(secret.Config{Policy: secret.PolicyPlaintext, InstanceKey: otherKey, Safes: db})
 	uc := usecase.NewSecretsUsecase(plaintext, map[string]usecase.SecretHolder{
-		providerUC.SecretObjectType: providerUC.NewService(db, acceptAll{}, nil, plaintext),
+		providerUC.SecretObjectType: providerUC.NewService(db, acceptAll{}, nil, nil, plaintext),
 	}, db)
 	_, _ = uc.Reseal(ctx)
 
@@ -362,7 +362,7 @@ func TestSecretsUsecaseRewrapGoesPastADamagedSafe(t *testing.T) {
 	newKey, _ := secret.NewInstanceKey(rotated)
 	m, _ := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: newKey, Safes: db})
 	uc := usecase.NewSecretsUsecase(m, map[string]usecase.SecretHolder{
-		providerUC.SecretObjectType: providerUC.NewService(db, acceptAll{}, nil, m),
+		providerUC.SecretObjectType: providerUC.NewService(db, acceptAll{}, nil, nil, m),
 	}, db)
 
 	status, err := uc.Status(ctx)
