@@ -1,0 +1,11 @@
+[
+  {
+    "id": "3906572500",
+    "cert_sha256": "6f5c9e2f8a1b3c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d",
+    "dns_names": ["mail.example.com"],
+    "issuer": {"friendly_name": "Let's Encrypt", "name": "C=US, O=Let's Encrypt, CN=R10"},
+    "not_before": "2026-10-01T00:00:00Z",
+    "not_after": "2026-12-30T00:00:00Z",
+    "revoked": false
+  }
+]

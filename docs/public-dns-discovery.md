@@ -134,4 +134,4 @@ var myService = Backend{
 then a line in `internal/ct/backends.go`. Use `Config.get` for the requests: it
 sets the User-Agent, caps the size of the answer and turns statuses into
 `ErrRateLimited` and `ErrUnavailable`. Test against `httptest`, with
-`Config.BaseURL` pointing to it.
+`Config.BaseURL` pointing to it and recorded answers in `internal/ct/testdata`.
