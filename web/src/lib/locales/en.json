@@ -75,6 +75,11 @@
         "records": "{{count:eq; 0:no {{type}} record; 1:{{type}} record; default:{{type}} records}}"
     },
     "domains": {
+        "monitor-elsewhere": {
+            "button": "Monitor a domain hosted elsewhere",
+            "hint": "Your domain is hosted where happyDomain cannot connect? happyDomain can still monitor it: its zone is recomposed, read-only, from what its name servers publicly answer.",
+            "provider-name": "Public DNS"
+        },
         "title": "Your domains",
         "description": "Browse and manage all your domain names in one place",
         "kind": "domain",
