@@ -30,5 +30,6 @@ type Settings struct {
 	AXFRSettings
 	NSECSettings
 	WellKnownSettings
+	CTSettings
 	WordlistSettings
 }
