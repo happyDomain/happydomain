@@ -34,6 +34,7 @@ package discovery
 
 import (
 	"context"
+	"strings"
 
 	"github.com/miekg/dns"
 
@@ -93,4 +94,50 @@ func (s KnownSource) Discover(ctx context.Context, t Target) (names []Name, err 
 		})
 	}
 	return
+}
+
+// namesFromLists turns lists of names relative to domain, one per line,
+// into Names yielded by source. Empty lines, lines starting with # and
+// lines that are not host-like names are skipped.
+func namesFromLists(source, domain string, lists ...string) (names []Name) {
+	for _, list := range lists {
+		for line := range strings.Lines(list) {
+			label := strings.TrimSpace(line)
+			if label == "" || strings.HasPrefix(label, "#") {
+				continue
+			}
+			if !isHostLikeName(label) {
+				continue
+			}
+
+			names = append(names, Name{
+				FQDN:    dns.CanonicalName(helpers.DomainFQDN(label, domain)),
+				Sources: []string{source},
+			})
+		}
+	}
+
+	return
+}
+
+// isHostLikeName tells whether name is made of letters, digits, hyphens
+// and underscores, in dot-separated labels: what lies in a zone, unlike the
+// mere DNS syntax that dns.IsDomainName checks, which takes nearly anything.
+func isHostLikeName(name string) bool {
+	if _, ok := dns.IsDomainName(name); !ok {
+		return false
+	}
+
+	for _, label := range strings.Split(strings.TrimSuffix(name, "."), ".") {
+		if label == "" {
+			return false
+		}
+		for _, c := range label {
+			if !(c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || c == '-' || c == '_') {
+				return false
+			}
+		}
+	}
+
+	return true
 }

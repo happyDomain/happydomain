@@ -35,6 +35,12 @@ deployed zone: it is not refreshed in the background. Viewing the differences
 runs a full exploration too, to compare the stored zone with what the servers
 answer now.
 
+## Techniques
+
+| ID | Priority | What it yields | Setting disabling it |
+|----|----------|----------------|----------------------|
+| `wellknown` | 100 | Where usual services are published: `_dmarc`, DKIM selectors, SRV and TLSA names... | none (`extra_names` adds names) |
+
 ## For administrators
 
 ### Load on the authoritative servers

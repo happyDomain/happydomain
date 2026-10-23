@@ -22,9 +22,25 @@
 package discovery
 
 import (
+	"encoding/json"
 	"slices"
 	"testing"
 )
+
+// factory returns the factory registered under id, failing the test when
+// there is none.
+func factory(t *testing.T, id string) SourceFactory {
+	t.Helper()
+
+	for _, f := range SourceFactories() {
+		if f.ID == id {
+			return f
+		}
+	}
+
+	t.Fatalf("no technique %q is registered", id)
+	return SourceFactory{}
+}
 
 // isolateSources runs the test against an empty registry of techniques,
 // restoring the real one when it ends.
@@ -41,6 +57,17 @@ func isolateSources(t *testing.T) {
 		sourceFactories = saved
 		sourceFactoriesMu.Unlock()
 	})
+}
+
+// settingsFrom returns the settings of the discovery, as decoded from js.
+func settingsFrom(t *testing.T, js string) *Settings {
+	t.Helper()
+
+	settings := new(Settings)
+	if err := json.Unmarshal([]byte(js), settings); err != nil {
+		t.Fatalf("settings: %v", err)
+	}
+	return settings
 }
 
 func TestSourceFactories(t *testing.T) {
