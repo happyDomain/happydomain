@@ -312,16 +312,28 @@ func checkMapValueType(fieldType string, value any, label string) error {
 }
 
 // GenStructFields generates corresponding SourceFields of the given Source.
-func GenStructFields(data any) (fields []*happydns.Field) {
-	if data != nil {
-		dataMeta := reflect.Indirect(reflect.ValueOf(data)).Type()
+func GenStructFields(data any) []*happydns.Field {
+	if data == nil {
+		return nil
+	}
+	return genTypeFields(reflect.TypeOf(data))
+}
 
-		for i := 0; i < dataMeta.NumField(); i += 1 {
-			if dataMeta.Field(i).Anonymous {
-				fields = append(fields, GenStructFields(reflect.Indirect(reflect.ValueOf(data)).Field(i))...)
-			} else {
-				fields = append(fields, GenField(dataMeta.Field(i)))
-			}
+// genTypeFields generates the fields of the struct t, those of its embedded
+// structs in their place.
+func genTypeFields(t reflect.Type) (fields []*happydns.Field) {
+	for t.Kind() == reflect.Pointer {
+		t = t.Elem()
+	}
+	if t.Kind() != reflect.Struct {
+		return
+	}
+
+	for i := 0; i < t.NumField(); i += 1 {
+		if t.Field(i).Anonymous {
+			fields = append(fields, genTypeFields(t.Field(i).Type)...)
+		} else {
+			fields = append(fields, GenField(t.Field(i)))
 		}
 	}
 	return

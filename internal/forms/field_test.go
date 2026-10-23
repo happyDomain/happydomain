@@ -23,6 +23,7 @@ package forms
 
 import (
 	"reflect"
+	"slices"
 	"testing"
 
 	happydns "git.happydns.org/happyDomain/model"
@@ -296,5 +297,23 @@ func TestEndpointsNoPanic(t *testing.T) {
 	}
 	if got := Endpoints("hello"); got != nil {
 		t.Errorf("Endpoints(non struct) = %v, want nil", got)
+	}
+}
+
+func TestGenStructFields_Embedded(t *testing.T) {
+	type inner struct {
+		B string `json:"b"`
+	}
+	type outer struct {
+		A string `json:"a"`
+		inner
+	}
+
+	var ids []string
+	for _, f := range GenStructFields(&outer{}) {
+		ids = append(ids, f.Id)
+	}
+	if !slices.Equal(ids, []string{"a", "b"}) {
+		t.Errorf("fields = %v; want those of the embedded struct after the others", ids)
 	}
 }
