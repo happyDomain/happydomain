@@ -31,6 +31,7 @@ import (
 	"sync/atomic"
 	"syscall"
 	"testing"
+	"time"
 
 	"github.com/miekg/dns"
 
@@ -425,5 +426,73 @@ func TestResolveServerFailoverDemotes(t *testing.T) {
 	// costs a round trip, or a timeout, to every question.
 	if n := failed.Load(); n != 1 {
 		t.Errorf("the failing name server was asked %d times; want it asked once, then left last", n)
+	}
+}
+
+func TestServersByHealthRotates(t *testing.T) {
+	e := &explorer{
+		servers:  []string{"a", "b", "c"},
+		failures: map[string]*atomic.Int32{"a": {}, "b": {}, "c": {}},
+	}
+
+	// The questions are spread over the healthy servers, each paced on
+	// its own.
+	var firsts []string
+	for range 3 {
+		firsts = append(firsts, e.serversByHealth()[0])
+	}
+	slices.Sort(firsts)
+	if !slices.Equal(firsts, []string{"a", "b", "c"}) {
+		t.Errorf("successive questions start with %v; want each server in turn", firsts)
+	}
+
+	// A failing server stays last, whatever the turn.
+	e.failures["b"].Store(1)
+	for range 3 {
+		if servers := e.serversByHealth(); servers[2] != "b" {
+			t.Errorf("servers = %v; want the failing one last", servers)
+		}
+	}
+}
+
+func TestResolvePacePerServer(t *testing.T) {
+	zone := newTestZone(t, "example.com.",
+		"example.com. 3600 IN NS ns0.example.com.",
+		"example.com. 3600 IN NS ns1.example.com.",
+		"ns0.example.com. 300 IN A 127.0.0.2",
+		"ns1.example.com. 300 IN A 127.0.0.1",
+	)
+	var asked0, asked1 atomic.Int32
+	counting := func(count *atomic.Int32) dns.Handler {
+		return handlerFunc(func(w dns.ResponseWriter, req *dns.Msg) {
+			count.Add(1)
+			zone.ServeDNS(w, req)
+		})
+	}
+	addr := serveLocal(t, counting(&asked1), alsoOn{"127.0.0.2", counting(&asked0)})
+
+	opts := loopbackOptions(t, addr)
+	opts.QueriesPerSecond = 50
+	opts.Concurrency = 4
+
+	var names staticSource
+	for i := range 120 {
+		names = append(names, fmt.Sprintf("absent%d.example.com.", i))
+	}
+
+	start := time.Now()
+	if _, err := Resolve(context.Background(), "example.com.", nil, []NameSource{names}, opts); err != nil {
+		t.Fatalf("Resolve: %v", err)
+	}
+	elapsed := time.Since(start)
+
+	n0, n1 := asked0.Load(), asked1.Load()
+	if total := n0 + n1; n0 < total/3 || n1 < total/3 {
+		t.Errorf("the name servers were asked %d and %d questions; want them shared", n0, n1)
+	}
+	// Over 120 questions at 50 a second in all take at least 2.3 seconds:
+	// each server asked at its own pace takes about half of it.
+	if elapsed > 2*time.Second {
+		t.Errorf("exploration took %s; want each server paced on its own", elapsed)
 	}
 }

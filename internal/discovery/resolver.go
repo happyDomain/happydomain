@@ -39,6 +39,7 @@ import (
 	"time"
 
 	"github.com/miekg/dns"
+	"golang.org/x/time/rate"
 
 	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/internal/netguard"
@@ -46,12 +47,16 @@ import (
 )
 
 // Default values of Options.
+//
+// The budget and the timeout leave room to ask about the whole
+// WordlistSource, nearly one question per name, at the default pace.
 const (
-	DefaultConcurrency  = 16
-	DefaultMaxQueries   = 2000
-	DefaultMaxDepth     = 3
-	DefaultTimeout      = 30 * time.Second
-	DefaultQueryTimeout = 3 * time.Second
+	DefaultConcurrency      = 16
+	DefaultMaxQueries       = 7000
+	DefaultMaxDepth         = 3
+	DefaultQueriesPerSecond = 100
+	DefaultTimeout          = 90 * time.Second
+	DefaultQueryTimeout     = 3 * time.Second
 )
 
 // Record types asked for, after the shape of the name, when its source did
@@ -91,6 +96,11 @@ type Options struct {
 	// servers.
 	MaxQueries int
 
+	// QueriesPerSecond caps the pace of the questions asked to each
+	// authoritative server, which may limit the rate of its answers (RRL)
+	// to whoever asks too fast. A negative value lifts the cap.
+	QueriesPerSecond int
+
 	// MaxDepth caps how many times in-zone targets of answers are
 	// followed, from the names the sources yielded.
 	MaxDepth int
@@ -112,6 +122,9 @@ func (o Options) withDefaults() Options {
 	}
 	if o.MaxQueries <= 0 {
 		o.MaxQueries = DefaultMaxQueries
+	}
+	if o.QueriesPerSecond == 0 {
+		o.QueriesPerSecond = DefaultQueriesPerSecond
 	}
 	if o.MaxDepth <= 0 {
 		o.MaxDepth = DefaultMaxDepth
@@ -183,8 +196,13 @@ func Resolve(ctx context.Context, domain string, known []string, sources []NameS
 		return nil, err
 	}
 	e.failures = map[string]*atomic.Int32{}
+	e.pace = map[string]*rate.Limiter{}
 	for _, server := range e.servers {
 		e.failures[server] = new(atomic.Int32)
+		e.pace[server] = rate.NewLimiter(rate.Inf, 0)
+		if opts.QueriesPerSecond > 0 {
+			e.pace[server] = rate.NewLimiter(rate.Limit(opts.QueriesPerSecond), opts.Concurrency)
+		}
 	}
 
 	target := Target{
@@ -243,6 +261,12 @@ type explorer struct {
 	failures map[string]*atomic.Int32
 
 	queries atomic.Int64
+
+	// next is the turn of the questions, spreading them over the servers.
+	next atomic.Uint32
+
+	// pace spaces out the questions asked to each authoritative server.
+	pace map[string]*rate.Limiter
 
 	mu sync.Mutex
 	// seen are the names already explored or scheduled.
@@ -345,9 +369,9 @@ func (e *explorer) query(ctx context.Context, name string, qtype uint16) (*dns.M
 			return nil, err
 		}
 
-		r, err := helpers.Question(ctx, e.udp, server, name, qtype, helpers.QueryOptions{})
+		r, err := e.ask(ctx, e.udp, server, name, qtype)
 		if err == nil && r.Truncated {
-			r, err = helpers.Question(ctx, e.tcp, server, name, qtype, helpers.QueryOptions{})
+			r, err = e.ask(ctx, e.tcp, server, name, qtype)
 		}
 		if err == nil && r.Rcode != dns.RcodeSuccess && r.Rcode != dns.RcodeNameError {
 			err = fmt.Errorf("%s answered %s", server, dns.RcodeToString[r.Rcode])
@@ -369,13 +393,25 @@ func (e *explorer) query(ctx context.Context, name string, qtype uint16) (*dns.M
 }
 
 // serversByHealth returns the servers, those failing the fewest questions
-// in a row first.
+// in a row first. Successive questions start with each of the servers
+// equally healthy in turn: each server is paced on its own, so sharing the
+// questions among them makes the exploration as much faster.
 func (e *explorer) serversByHealth() []string {
-	servers := slices.Clone(e.servers)
+	turn := int(e.next.Add(1)-1) % len(e.servers)
+	servers := append(slices.Clone(e.servers[turn:]), e.servers[:turn]...)
 	slices.SortStableFunc(servers, func(a, b string) int {
 		return cmp.Compare(e.failures[a].Load(), e.failures[b].Load())
 	})
 	return servers
+}
+
+// ask sends one question to an authoritative server, at the pace allowed.
+func (e *explorer) ask(ctx context.Context, client *dns.Client, server, name string, qtype uint16) (*dns.Msg, error) {
+	if err := e.pace[server].Wait(ctx); err != nil {
+		return nil, err
+	}
+
+	return helpers.Question(ctx, client, server, name, qtype, helpers.QueryOptions{})
 }
 
 // probeWildcard asks about a random name, which only a wildcard can answer

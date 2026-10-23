@@ -23,11 +23,13 @@ package discovery
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"slices"
 	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/miekg/dns"
 
@@ -145,7 +147,9 @@ func (z *testZone) serve(t *testing.T) Options {
 	return Options{
 		Guard:    guard,
 		Resolver: addr,
-		authPort: port,
+		// The local server has no rate to protect.
+		QueriesPerSecond: -1,
+		authPort:         port,
 	}
 }
 
@@ -363,5 +367,31 @@ func TestLocateNoNameServer(t *testing.T) {
 
 	if _, err := Locate(context.Background(), "example.com.", opts); err == nil {
 		t.Error("Locate found name servers where there are none")
+	}
+}
+
+func TestResolvePace(t *testing.T) {
+	zone := newTestZone(t, "example.com.",
+		"example.com. 3600 IN NS ns1.example.com.",
+		"ns1.example.com. 300 IN A 127.0.0.1",
+	)
+	opts := zone.serve(t)
+	opts.QueriesPerSecond = 50
+	opts.Concurrency = 4
+
+	var names staticSource
+	for i := range 60 {
+		names = append(names, fmt.Sprintf("absent%d.example.com.", i))
+	}
+
+	start := time.Now()
+	if _, err := Resolve(context.Background(), "example.com.", nil, []NameSource{names}, opts); err != nil {
+		t.Fatalf("Resolve: %v", err)
+	}
+
+	// 60 names and the apex are more than 60 questions: past the burst
+	// of 4, they take at least (60-4)/50 seconds.
+	if elapsed := time.Since(start); elapsed < time.Second {
+		t.Errorf("exploration took %s; want the questions paced at 50 per second", elapsed)
 	}
 }
