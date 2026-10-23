@@ -8,7 +8,8 @@ checkers look after like those of any other zone.
 
 The user documentation is on the help center, under *Monitor a domain hosted
 elsewhere*. This document is for administrators, who need to know what the
-discovery sends where, and for contributors adding an enumeration technique.
+discovery sends where, and for contributors adding an enumeration technique or a
+certificate transparency service.
 
 ## How a zone is recomposed
 
@@ -112,3 +113,25 @@ builds its sources from the registry. The rules:
 - DNS questions go through `Target.Query`, which asks the authoritative servers,
   already vetted by the outbound guard, within the budget and the pace of the
   exploration.
+
+### Adding a certificate transparency service
+
+The `internal/ct` package depends on nothing but the standard library, so it can
+move out of happyDomain, such as next to a checker watching issuances. Each
+service is a `ct.Backend` in a file of its own:
+
+```go
+var myService = Backend{
+	ID:          "myservice",
+	Name:        "My Service",
+	TakesAPIKey: true,
+	New: func(cfg Config) Searcher {
+		return MyService{cfg}
+	},
+}
+```
+
+then a line in `internal/ct/backends.go`. Use `Config.get` for the requests: it
+sets the User-Agent, caps the size of the answer and turns statuses into
+`ErrRateLimited` and `ErrUnavailable`. Test against `httptest`, with
+`Config.BaseURL` pointing to it.
