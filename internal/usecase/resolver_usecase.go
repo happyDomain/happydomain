@@ -29,6 +29,7 @@ import (
 
 	"github.com/miekg/dns"
 
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/internal/netguard"
 	"git.happydns.org/happyDomain/model"
 )
@@ -59,53 +60,6 @@ func NewResolverUsecase(cfg *happydns.Options, resolverGuard, outboundGuard *net
 	}
 }
 
-func resolverANYQuestion(client dns.Client, resolver string, dn string) (r *dns.Msg, err error) {
-	var response *dns.Msg
-
-	for _, rrType := range RRToAskForANY {
-		m := new(dns.Msg)
-		m.Question = append(m.Question, dns.Question{
-			Name:   dn,
-			Qtype:  rrType,
-			Qclass: dns.ClassINET,
-		})
-		m.RecursionDesired = true
-		m.SetEdns0(4096, true)
-
-		response, _, err = client.Exchange(m, resolver)
-		if err != nil {
-			return
-		}
-
-		if len(response.Answer) > 0 {
-			if r == nil {
-				r = response
-				r.Question[0].Qtype = dns.TypeANY
-			} else {
-				r.Answer = append(r.Answer, response.Answer...)
-			}
-		}
-	}
-
-	if r == nil {
-		r = response
-		r.Question[0].Qtype = dns.TypeANY
-	}
-
-	return
-}
-
-func resolverQuestion(client dns.Client, resolver string, dn string, rrType uint16) (*dns.Msg, error) {
-	m := new(dns.Msg)
-	m.SetQuestion(dn, rrType)
-	m.RecursionDesired = true
-	m.SetEdns0(4096, true)
-
-	r, _, err := client.Exchange(m, resolver)
-
-	return r, err
-}
-
 func (ru *resolverUsecase) ResolveQuestion(request happydns.ResolverRequest) (*dns.Msg, error) {
 	request.DomainName = dns.Fqdn(request.DomainName)
 
@@ -128,9 +82,9 @@ func (ru *resolverUsecase) ResolveQuestion(request happydns.ResolverRequest) (*d
 	}
 
 	if rrType == dns.TypeANY {
-		r, err = resolverANYQuestion(client, resolver, request.DomainName)
+		r, err = helpers.MultiQuestion(context.Background(), &client, resolver, request.DomainName, RRToAskForANY, helpers.QueryOptions{Recursive: true})
 	} else {
-		r, err = resolverQuestion(client, resolver, request.DomainName, rrType)
+		r, err = helpers.Question(context.Background(), &client, resolver, request.DomainName, rrType, helpers.QueryOptions{Recursive: true})
 	}
 	if err != nil {
 		return nil, happydns.ValidationError{Msg: err.Error()}
