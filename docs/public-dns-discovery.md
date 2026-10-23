@@ -46,6 +46,7 @@ answer now.
 | `axfr` | 10 | The whole zone, when a server allows a zone transfer. | `disable_axfr` |
 | `nsec` | 20 | Every name of a zone signed with NSEC, and the types at each. Not NSEC3, nor zones signed on the fly. | `disable_nsec_walk` |
 | `wellknown` | 100 | Where usual services are published: `_dmarc`, DKIM selectors, SRV and TLSA names... | none (`extra_names` adds names) |
+| `ct` | 200 | The names of the valid certificates issued for the domain. | `disable_ct` |
 | `wordlist` | 900 | The 5,000 host names most often found in zones (SecLists). | `disable_wordlist` |
 
 ## For administrators
@@ -53,10 +54,11 @@ answer now.
 ### Load on the authoritative servers
 
 An exploration asks at most 7,000 questions, 100 a second to each authoritative
-server, 16 names at once, and lasts at most 90 seconds. The questions are shared
-among the servers. These limits are the defaults of `discovery.Options`, which
-no setting changes. A domain whose names are not all explored in that budget
-gets a partial zone, and a log line telling the exploration was cut short.
+server, 16 names at once, and lasts at most 90 seconds, the certificate
+transparency search included. The questions are shared among the servers. These
+limits are the defaults of `discovery.Options`, which no setting changes. A
+domain whose names are not all explored in that budget gets a partial zone, and
+a log line telling the exploration was cut short.
 
 ### Outbound destinations
 
@@ -69,3 +71,14 @@ domain whose name servers are on your own network can only be monitored once
 The recursive resolvers asked to find the authoritative servers are those of
 `-default-resolver`: chosen by the operator, they are not vetted by the outbound
 guard.
+
+### Certificate transparency services
+
+The `ct` technique sends the name of the domain to Cert Spotter and crt.sh, which
+search the certificate transparency logs. Certificates are public, but those
+services learn which domains the instance looks after. Users can disable the
+technique in the provider settings.
+
+The names found are cached in memory for six hours per service and domain; a
+failing service is asked again the next time, while the names of the others are
+used.
