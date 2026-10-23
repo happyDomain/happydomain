@@ -22,22 +22,20 @@
 -->
 
 <script lang="ts">
-    import { goto } from "$app/navigation";
-    import { resolve } from "$app/paths";
-    import { Badge, Button, Icon, Popover, Spinner } from "@sveltestrap/sveltestrap";
+    import { Badge, Button, Icon, Popover } from "@sveltestrap/sveltestrap";
 
-    import { deleteZoneService } from "$lib/api/zone";
-    import { notifyServiceChange, zoneWasForked } from "$lib/stores/zonefeedback";
     import { controls as ctrlNewAlias } from "$lib/components/modals/Alias.svelte";
     import { controls as ctrlRecord } from "$lib/components/modals/Record.svelte";
     import { controls as ctrlNewService } from "$lib/components/services/NewServicePath.svelte";
+    import { controls as ctrlServiceDetails } from "../ServiceDetailsOffcanvas.svelte";
     import { fqdn, unreverseDomain } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { HappydnsService } from "$lib/api-base/types.gen";
+    import type { ServiceWithValue } from "$lib/model/service.svelte";
     import { ZoneViewGrid, ZoneViewRecords } from "$lib/model/usersettings";
         import { serviceName } from "$lib/services/infos";
     import { servicesSpecs } from "$lib/stores/services";
-    import { thisAliases, thisZone } from "$lib/stores/thiszone";
+    import { thisAliases } from "$lib/stores/thiszone";
     import { userSession } from "$lib/stores/usersession";
     import { t } from "$lib/translations";
 
@@ -85,28 +83,6 @@
 
         return ((record?.Target ?? record?.Data?.Target) as string) || "";
     }
-
-    let deleteServiceInProgress = $state(false);
-    function deleteCNAME() {
-        deleteServiceInProgress = true;
-        const previousZone = $thisZone;
-        const svctype = services[0]._svctype;
-        deleteZoneService(origin, zoneId, services[0]).then(
-            (z) => {
-                thisZone.set(z);
-                deleteServiceInProgress = false;
-                notifyServiceChange("deleted", {
-                    svctype,
-                    dn,
-                    forked: zoneWasForked(previousZone, z),
-                });
-            },
-            (err) => {
-                deleteServiceInProgress = false;
-                throw err;
-            },
-        );
-    }
 </script>
 
 <div class="sticky-top bg-light d-flex align-items-center mb-3 gap-2" style="z-index: 1">
@@ -143,87 +119,16 @@
         </span>
     </div>
     {#if isCNAME(services) || isPTR(services)}
-        {@const target = aliasTarget(services)}
-        <span class="text-truncate text-muted lead">
-            <Icon name="arrow-right" />
-            <span class="font-monospace">
-                {#if target.endsWith(origin.domain)}
-                    {target.substring(0, target.length - origin.domain.length - 1)}<span
-                        style="opacity: 0.5;">.{origin.domain}</span
-                    >
-                {:else}
-                    {target}
-                {/if}
-            </span>
-        </span>
-    {:else if !showResources && services.length}
-        <Badge color="primary" id={"popoversvc-" + dn.replace(".", "__")} style="cursor: pointer;">
-            {$t("domains.n-services", { count: services.length })}
-        </Badge>
-        <Popover dismissible placement="bottom" target={"popoversvc-" + dn.replace(".", "__")}>
-            {#each services as service}
-                {#if $servicesSpecs[service._svctype]}
-                    <strong>{$serviceName($servicesSpecs[service._svctype], service._svctype)}:</strong>
-                {/if}
-                <span class="text-muted">{service._comment}</span>
-                <br />
-            {/each}
-        </Popover>
-    {/if}
-    {#if $thisAliases[dn] && $thisAliases[dn].length != 0}
-        <Badge id={"popoverbadge-" + dn.replace(".", "__")} style="cursor: pointer;">
-            + {$t("domains.n-aliases", { count: $thisAliases[dn].length })}
-        </Badge>
-        <Popover
-            dismissible
-            placement="bottom"
-            target={"popoverbadge-" + dn.replace(".", "__")}
-            class="font-monospace"
-        >
-            {#each $thisAliases[dn] as alias}
-                <a href={"#" + alias}>
-                    {alias}
-                </a>
-                <br />
-            {/each}
-        </Popover>
-    {/if}
-    <div class="flex-fill"></div>
-    {#if isCNAME(services) || isPTR(services)}
+        <!-- The service has no card of its own here: this opens its details. -->
         <Button
             type="button"
-            color="info"
+            color="secondary"
             outline
             size="sm"
-            title={$t("domains.edit-target")}
-            on:click={() => {
-                const subdomainParam = dn === "" ? "@" : dn;
-                goto(
-                    resolve("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]", {
-                        dn: encodeURIComponent(origin.domain),
-                        historyid: encodeURIComponent(zoneId),
-                        subdomain: encodeURIComponent(subdomainParam),
-                        serviceid: encodeURIComponent(services[0]._id!),
-                    }),
-                );
-            }}
+            title={$t("domains.service-details")}
+            on:click={() => ctrlServiceDetails.Open(services[0] as ServiceWithValue)}
         >
-            <Icon name="pencil" />
-        </Button>
-        <Button
-            type="button"
-            color="danger"
-            disabled={deleteServiceInProgress}
-            outline
-            size="sm"
-            title={isPTR(services) ? $t("domains.drop-pointer") : $t("domains.drop-alias")}
-            on:click={deleteCNAME}
-        >
-            {#if deleteServiceInProgress}
-                <Spinner size="sm" />
-            {:else}
-                <Icon name="x-circle" />
-            {/if}
+            <Icon name="info-circle" />
         </Button>
     {:else if showResources && services.length}
         <Button
