@@ -93,7 +93,8 @@ type Query struct {
 	Domain string
 
 	// IncludeSubdomains also searches the certificates of the subdomains
-	// of Domain.
+	// of Domain. A service may then leave out the certificates naming
+	// Domain alone, as crt.sh does.
 	IncludeSubdomains bool
 
 	// ExcludeExpired leaves out the certificates no longer valid. A
