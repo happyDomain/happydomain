@@ -169,7 +169,10 @@ type ProviderUsecase interface {
 	ListHostedDomains(context.Context, *Provider) ([]string, error)
 	ListUserProviders(context.Context, *User) ([]*ProviderMeta, error)
 	ListZoneCorrections(context.Context, *Provider, *Domain, []Record) ([]*Correction, int, error)
-	RetrieveZone(context.Context, *Provider, string) ([]Record, error)
+	// RetrieveZone retrieves the records of the zone. known are the
+	// subdomains of the current zone, for providers discovering the zone
+	// rather than listing it (see DiscoveryZoneGetter).
+	RetrieveZone(ctx context.Context, provider *Provider, name string, known ...string) ([]Record, error)
 	// ShowReferences replaces, in p, each credential a keystore of
 	// references keeps by that reference, which is not secret. p is changed
 	// in place: only call it on a provider about to be answered, never stored.
@@ -195,4 +198,21 @@ type ProviderActuator interface {
 	GetZoneRecords(domain string) ([]Record, error)
 	GetZoneCorrections(domain string, wantedRecords []Record) ([]*Correction, int, error)
 	ListZones() ([]string, error)
+}
+
+// DiscoveryZoneGetter is implemented by provider actuators that recompose
+// the zone from what they can discover, rather than listing it. They need
+// the subdomains found by previous retrievals, so that a name discovered
+// once keeps being looked after, and a context, as discovering takes time.
+type DiscoveryZoneGetter interface {
+	// GetZoneRecordsWithContext is GetZoneRecords, also looking after the
+	// known subdomains, relative to domain.
+	GetZoneRecordsWithContext(ctx context.Context, domain string, known []string) ([]Record, error)
+}
+
+// DomainExistenceChecker is implemented by provider actuators able to tell a
+// domain exists far more cheaply than by retrieving its zone, such as the
+// ones discovering the zone rather than listing it.
+type DomainExistenceChecker interface {
+	TestDomainExistence(ctx context.Context, domain string) error
 }

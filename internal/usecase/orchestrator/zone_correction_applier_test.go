@@ -141,7 +141,7 @@ type mockZoneRetrieverFailOnNth struct {
 	calls     int
 }
 
-func (m *mockZoneRetrieverFailOnNth) RetrieveZone(_ context.Context, _ *happydns.Provider, _ string) ([]happydns.Record, error) {
+func (m *mockZoneRetrieverFailOnNth) RetrieveZone(_ context.Context, _ *happydns.Provider, _ string, _ ...string) ([]happydns.Record, error) {
 	m.calls++
 	if m.calls >= m.failOnNth {
 		return nil, m.failErr
@@ -151,7 +151,7 @@ func (m *mockZoneRetrieverFailOnNth) RetrieveZone(_ context.Context, _ *happydns
 
 // testZoneRetriever is an interface matching orchestrator.ZoneRetriever.
 type testZoneRetriever interface {
-	RetrieveZone(ctx context.Context, provider *happydns.Provider, name string) ([]happydns.Record, error)
+	RetrieveZone(ctx context.Context, provider *happydns.Provider, name string, known ...string) ([]happydns.Record, error)
 }
 
 // buildTestApplier creates a ZoneCorrectionApplierUsecase with the given overrides.

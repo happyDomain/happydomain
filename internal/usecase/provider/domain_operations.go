@@ -67,6 +67,10 @@ func (s *Service) TestDomainExistence(ctx context.Context, provider *happydns.Pr
 		return err
 	}
 
+	if checker, ok := instance.(happydns.DomainExistenceChecker); ok {
+		return checker.TestDomainExistence(ctx, name)
+	}
+
 	_, err = instance.GetZoneRecords(name)
 	return err
 }

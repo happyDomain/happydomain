@@ -380,8 +380,8 @@ func (s *RestrictedService) ListZoneCorrections(ctx context.Context, provider *h
 	return s.inner.ListZoneCorrections(ctx, provider, domain, records)
 }
 
-func (s *RestrictedService) RetrieveZone(ctx context.Context, provider *happydns.Provider, name string) ([]happydns.Record, error) {
-	return s.inner.RetrieveZone(ctx, provider, name)
+func (s *RestrictedService) RetrieveZone(ctx context.Context, provider *happydns.Provider, name string, known ...string) ([]happydns.Record, error) {
+	return s.inner.RetrieveZone(ctx, provider, name, known...)
 }
 
 func (s *RestrictedService) ShowReferences(ctx context.Context, provider *happydns.Provider) error {

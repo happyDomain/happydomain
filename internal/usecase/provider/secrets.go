@@ -45,6 +45,14 @@ func SecretContext(p *happydns.Provider) secret.SecretContext {
 	}
 }
 
+// GuardedProviderBody is implemented by provider bodies that dial
+// destinations they learn on their own, rather than the endpoints of their
+// settings, which checkEndpoints vets beforehand: they are handed the guard
+// to vet those destinations as they find them.
+type GuardedProviderBody interface {
+	InstantiateGuardedProvider(guard *netguard.Guard) (happydns.ProviderActuator, error)
+}
+
 // instantiator is the only place a provider's secrets are opened: right
 // before happyDomain connects to it on its owner's behalf.
 type instantiator struct {
@@ -76,7 +84,12 @@ func (i instantiator) instantiate(ctx context.Context, p *happydns.Provider) (ha
 		return nil, fmt.Errorf("unable to open provider credentials: unexpected body %T", opened)
 	}
 
-	instance, err := body.InstantiateProvider()
+	var instance happydns.ProviderActuator
+	if guarded, ok := body.(GuardedProviderBody); ok {
+		instance, err = guarded.InstantiateGuardedProvider(i.guard)
+	} else {
+		instance, err = body.InstantiateProvider()
+	}
 	if err != nil {
 		return nil, fmt.Errorf("unable to instantiate provider: %w", err)
 	}
