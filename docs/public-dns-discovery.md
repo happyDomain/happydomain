@@ -79,6 +79,13 @@ search the certificate transparency logs. Certificates are public, but those
 services learn which domains the instance looks after. Users can disable the
 technique in the provider settings.
 
-The names found are cached in memory for six hours per service and domain; a
-failing service is asked again the next time, while the names of the others are
-used.
+Without an API key, Cert Spotter only answers a few queries an hour. Give the
+instance one with:
+
+```
+happyDomain -certspotter-api-key <key>
+```
+
+or `HAPPYDOMAIN_CERTSPOTTER_API_KEY`. The names found are cached in memory for six
+hours per service and domain; a failing service is asked again the next time,
+while the names of the others are used.

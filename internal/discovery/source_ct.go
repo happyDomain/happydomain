@@ -24,6 +24,7 @@ package discovery
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"sync"
 	"time"
@@ -40,7 +41,19 @@ func init() {
 		}
 		return CTSource{}
 	})
+
+	for _, backend := range ct.Backends {
+		if backend.TakesAPIKey {
+			key := new(string)
+			ctAPIKeys[backend.ID] = key
+			flag.StringVar(key, backend.ID+"-api-key", "", "API key for "+backend.Name+", used when searching the certificates issued for the discovered domains")
+		}
+	}
 }
+
+// ctAPIKeys are the API keys of the certificate transparency services, by
+// backend ID, configured once for the instance.
+var ctAPIKeys = map[string]*string{}
 
 // CTSettings are the settings of the certificate transparency technique.
 type CTSettings struct {
@@ -78,7 +91,8 @@ type CTSource struct {
 	// service of ct.Backends.
 	Backends []ct.Backend
 
-	// Config is handed to every service.
+	// Config is handed to every service. An empty APIKey is replaced by
+	// the key the instance configured for that service, if any.
 	Config ct.Config
 
 	// cache keeps the names found, nil uses the cache shared by every
@@ -157,7 +171,12 @@ func (s CTSource) search(ctx context.Context, backend ct.Backend, domain string)
 		return nil, fmt.Errorf("%w, until %s", ct.ErrRateLimited, until.Format(time.TimeOnly))
 	}
 
-	issuances, err := backend.New(s.Config).Search(ctx, ct.Query{
+	cfg := s.Config
+	if key := ctAPIKeys[backend.ID]; cfg.APIKey == "" && key != nil {
+		cfg.APIKey = *key
+	}
+
+	issuances, err := backend.New(cfg).Search(ctx, ct.Query{
 		Domain:            domain,
 		IncludeSubdomains: true,
 		ExcludeExpired:    true,

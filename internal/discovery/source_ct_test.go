@@ -24,8 +24,10 @@ package discovery
 import (
 	"context"
 	"errors"
+	"flag"
 	"net/http"
 	"slices"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -346,5 +348,71 @@ func TestCTSourceTruncated(t *testing.T) {
 	source.Discover(context.Background(), Target{Domain: "example.com."})
 	if n := searches.Load(); n != 1 {
 		t.Errorf("the truncated search was asked %d times; want once, then cached", n)
+	}
+}
+
+func TestCTSourceAPIKey(t *testing.T) {
+	// The backends are built concurrently by Discover.
+	var mu sync.Mutex
+	keys := map[string]string{}
+	backend := func(id string) ct.Backend {
+		return ct.Backend{
+			ID:   id,
+			Name: id,
+			New: func(cfg ct.Config) ct.Searcher {
+				mu.Lock()
+				defer mu.Unlock()
+				keys[id] = cfg.APIKey
+				return fakeSearcher{}
+			},
+		}
+	}
+
+	key := "instance-key"
+	ctAPIKeys["keyed"] = &key
+	defer delete(ctAPIKeys, "keyed")
+
+	source := CTSource{
+		Backends: []ct.Backend{backend("keyed"), backend("unkeyed")},
+		cache:    &ctNamesCache{},
+	}
+	if _, err := source.Discover(context.Background(), Target{Domain: "example.com."}); err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+
+	if keys["keyed"] != "instance-key" || keys["unkeyed"] != "" {
+		t.Errorf("API keys = %v; want the key of the instance to its service only", keys)
+	}
+}
+
+func TestCTAPIKeyFlags(t *testing.T) {
+	for _, backend := range ct.Backends {
+		if f := flag.Lookup(backend.ID + "-api-key"); (f != nil) != backend.TakesAPIKey {
+			t.Errorf("flag for the API key of %s: %v; want one only when it takes a key", backend.ID, f)
+		}
+	}
+}
+
+func TestCTSourceOwnAPIKey(t *testing.T) {
+	var got string
+	backend := ct.Backend{
+		ID:   "keyed",
+		Name: "keyed",
+		New: func(cfg ct.Config) ct.Searcher {
+			got = cfg.APIKey
+			return fakeSearcher{}
+		},
+	}
+
+	key := "instance-key"
+	ctAPIKeys["keyed"] = &key
+	defer delete(ctAPIKeys, "keyed")
+
+	source := CTSource{Backends: []ct.Backend{backend}, Config: ct.Config{APIKey: "own-key"}, cache: &ctNamesCache{}}
+	if _, err := source.Discover(context.Background(), Target{Domain: "example.com."}); err != nil {
+		t.Fatalf("Discover: %v", err)
+	}
+	if got != "own-key" {
+		t.Errorf("API key = %q; want the one of the source over the one of the instance", got)
 	}
 }
