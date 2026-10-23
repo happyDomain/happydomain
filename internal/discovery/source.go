@@ -79,6 +79,18 @@ type NameSource interface {
 	Discover(ctx context.Context, t Target) ([]Name, error)
 }
 
+// RecordSource is implemented by sources obtaining the records of the zone
+// themselves, such as a zone transfer, rather than names to ask about. When
+// one of them succeeds, its records are taken as the whole zone and no name
+// is explored.
+type RecordSource interface {
+	NameSource
+
+	// Records returns the records of the zone, or none when the technique
+	// does not work on this zone.
+	Records(ctx context.Context, t Target) ([]dns.RR, error)
+}
+
 // KnownSource yields the subdomains found by previous explorations.
 type KnownSource struct{}
 

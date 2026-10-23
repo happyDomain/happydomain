@@ -17,14 +17,16 @@ A zone cannot be listed over plain DNS: names can only be asked about one by one
 `discovery.Resolve` (`internal/discovery/resolver.go`) therefore:
 
 1. finds the authoritative servers of the domain;
-2. explores the apex, then asks a random name to learn what a wildcard, if any,
+2. asks the techniques handing the whole zone, such as a zone transfer: when one
+   succeeds, its records are the zone and the exploration stops there;
+3. explores the apex, then asks a random name to learn what a wildcard, if any,
    answers, so that names merely reflecting it are left out;
-3. explores the subdomains found by previous retrievals (the provider actuator
+4. explores the subdomains found by previous retrievals (the provider actuator
    implements `happydns.DiscoveryZoneGetter`, which receives them), so a name
    found once keeps being looked after and the diff view does not report it as
    removed;
-4. explores the names yielded by each technique, in priority order;
-5. follows the in-zone targets of the answers (`CNAME`, `MX`, `SRV`...), up to
+5. explores the names yielded by each technique, in priority order;
+6. follows the in-zone targets of the answers (`CNAME`, `MX`, `SRV`...), up to
    a bounded number of hops (`Options.MaxDepth`).
 
 Each name is asked for a set of types chosen after its shape (apex, host, or
@@ -39,6 +41,7 @@ answer now.
 
 | ID | Priority | What it yields | Setting disabling it |
 |----|----------|----------------|----------------------|
+| `axfr` | 10 | The whole zone, when a server allows a zone transfer. | `disable_axfr` |
 | `wellknown` | 100 | Where usual services are published: `_dmarc`, DKIM selectors, SRV and TLSA names... | none (`extra_names` adds names) |
 | `wordlist` | 900 | The 5,000 host names most often found in zones (SecLists). | `disable_wordlist` |
 

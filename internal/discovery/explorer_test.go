@@ -46,6 +46,8 @@ type testZone struct {
 	rrs    []dns.RR
 	// cuts are the delegation points of the zone.
 	cuts []string
+	// allowAXFR lets anyone transfer the zone.
+	allowAXFR bool
 
 	// questions counts the questions answered.
 	questions atomic.Int32
@@ -91,6 +93,23 @@ func (z *testZone) ServeDNS(w dns.ResponseWriter, req *dns.Msg) {
 
 	if !dns.IsSubDomain(z.origin, name) {
 		m.Rcode = dns.RcodeRefused
+		return
+	}
+
+	if qtype == dns.TypeAXFR {
+		if !z.allowAXFR || name != z.origin {
+			m.Rcode = dns.RcodeRefused
+			return
+		}
+
+		soa := z.at(z.origin)[0]
+		m.Answer = append(m.Answer, soa)
+		for _, rr := range z.rrs {
+			if rr != soa {
+				m.Answer = append(m.Answer, rr)
+			}
+		}
+		m.Answer = append(m.Answer, soa)
 		return
 	}
 

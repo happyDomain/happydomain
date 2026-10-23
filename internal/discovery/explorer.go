@@ -110,6 +110,11 @@ func Explore(ctx context.Context, domain string, known []string, sources []NameS
 		Known:         known,
 	}
 
+	// A source handing the whole zone spares the exploration.
+	if e.transferZone(ctx, target, sources) {
+		return e.result(), nil
+	}
+
 	// The apex comes first, then the known names: should the budget run
 	// out, the names already in the zone are the ones not to lose. A
 	// wildcard never covers the apex, so it is explored before the probe.
@@ -170,6 +175,35 @@ type explorer struct {
 	// wildcard.
 	wildcard map[uint16]string
 	lastErr  error
+}
+
+// transferZone asks the sources handing records for the whole zone, and
+// keeps the records of the first one handing some. It tells whether one
+// did, sparing the exploration.
+func (e *explorer) transferZone(ctx context.Context, target Target, sources []NameSource) bool {
+	for _, source := range sources {
+		rs, ok := source.(RecordSource)
+		if !ok {
+			continue
+		}
+
+		rrs, err := rs.Records(ctx, target)
+		if err != nil {
+			log.Printf("discovery: %s: source %s: %s", e.domain, source.ID(), err)
+		}
+		kept := 0
+		for _, rr := range rrs {
+			// The server of the zone is not trusted for other zones.
+			if dns.IsSubDomain(e.domain, dns.CanonicalName(rr.Header().Name)) {
+				e.addRecord(rr)
+				kept++
+			}
+		}
+		if kept > 0 {
+			return true
+		}
+	}
+	return false
 }
 
 // collectNames asks the name sources, the known names first, for the
