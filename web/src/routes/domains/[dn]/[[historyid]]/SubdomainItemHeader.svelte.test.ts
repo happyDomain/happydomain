@@ -42,8 +42,10 @@ afterEach(() => {
     userSession.set({} as User);
 });
 
-function setup(svctype: string) {
-    providers.set([{ _id: "p1", _srctype: "DDNSServer" } as unknown as Provider]);
+function setup(svctype: string, readonly = false) {
+    providers.set([
+        { _id: "p1", _srctype: "DDNSServer", _readonly: readonly } as unknown as Provider,
+    ]);
     userSession.set({ settings: { zoneview: ZoneViewList } } as unknown as User);
     return {
         dn: "www",
@@ -77,4 +79,15 @@ describe("SubdomainItemHeader", () => {
             expect(open).toHaveBeenCalledWith(props.services[0]);
         },
     );
+
+    it("hides every change of a regular subdomain through a read-only provider", () => {
+        render(SubdomainItemHeader, setup("abstract.Server", true));
+        expect(screen.queryByRole("button", { name: /Add an alias/ })).toBeNull();
+        expect(screen.queryByRole("button", { name: /Add a service/ })).toBeNull();
+    });
+
+    it("still offers the details of an alias through a read-only provider", () => {
+        render(SubdomainItemHeader, setup("svcs.Alias", true));
+        expect(screen.getByRole("button", { name: /Service details/ })).toBeEnabled();
+    });
 });

@@ -56,6 +56,7 @@
     import type { Domain } from "$lib/model/domain";
         import { checkers } from "$lib/stores/checkers";
     import { domainLink, refreshDomains } from "$lib/stores/domains";
+    import { isReadOnlyProvider, providers_idx } from "$lib/stores/providers";
     import { serviceDescription, serviceName } from "$lib/services/infos";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
     import { thisZone } from "$lib/stores/thiszone";
@@ -113,8 +114,11 @@
         );
     }
 
+    let readOnly = $derived(isReadOnlyProvider($providers_idx, domain.id_provider));
+
     let canDelete = $derived(
-        !!service?._id &&
+        !readOnly &&
+            !!service?._id &&
             service._svctype !== "abstract.Origin" &&
             service._svctype !== "abstract.NSOnlyOrigin",
     );
@@ -270,7 +274,8 @@
                     min="0"
                     type="number"
                     style="width: 8em"
-                    title={$t("service.ttl-tip")}
+                    title={readOnly ? $t("domains.read-only-edit") : $t("service.ttl-tip")}
+                    disabled={readOnly}
                     bind:value={service._ttl}
                     on:change={(e: Event) => {
                         service._ttl = parseInt((e.target as HTMLInputElement).value, 10) || 0;
@@ -299,25 +304,32 @@
                     {$t("service.delete")}
                 </Button>
             {/if}
-            <Button
-                size="sm"
-                color="info"
-                outline
-                on:click={() => {
-                    isOpen = false;
-                    goto(
-                        resolve("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]", {
-                            dn: encodeURIComponent(domainLink(domain.id)),
-                            historyid: encodeURIComponent(selectedHistory ?? ""),
-                            subdomain: encodeURIComponent(service._domain ? service._domain : "@"),
-                            serviceid: encodeURIComponent(service._id!),
-                        }),
-                    );
-                }}
+            <!-- A disabled button gets no pointer events: its wrapper carries the tooltip. -->
+            <span
+                class="d-flex flex-column"
+                title={readOnly ? $t("domains.read-only-edit") : undefined}
             >
-                <Icon name="pencil" />
-                {$t("service.edit")}
-            </Button>
+                <Button
+                    size="sm"
+                    color="info"
+                    outline
+                    disabled={readOnly}
+                    on:click={() => {
+                        isOpen = false;
+                        goto(
+                            resolve("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]", {
+                                dn: encodeURIComponent(domainLink(domain.id)),
+                                historyid: encodeURIComponent(selectedHistory ?? ""),
+                                subdomain: encodeURIComponent(service._domain ? service._domain : "@"),
+                                serviceid: encodeURIComponent(service._id!),
+                            }),
+                        );
+                    }}
+                >
+                    <Icon name="pencil" />
+                    {$t("service.edit")}
+                </Button>
+            </span>
         </div>
     </OffcanvasBody>
 </Offcanvas>

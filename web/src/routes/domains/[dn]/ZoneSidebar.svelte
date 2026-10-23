@@ -38,6 +38,7 @@
     import type { Domain } from "$lib/model/domain";
     import type { ZoneMeta } from "$lib/model/zone";
     import { domains_idx, domainLink } from "$lib/stores/domains";
+    import { isReadOnlyProvider, providers_idx } from "$lib/stores/providers";
     import {
         retrieveZone as StoreRetrieveZone,
         sortedDomains,
@@ -60,6 +61,8 @@
 
     let { origin, selectedDomain, selectedHistory, onretrieveZoneDone }: Props = $props();
 
+    let readOnly = $derived(isReadOnlyProvider($providers_idx, origin.id_provider));
+
     let retrievalInProgress = $state(false);
     async function retrieveZone() {
         retrievalInProgress = true;
@@ -75,18 +78,25 @@
 </script>
 
 <div class="d-flex gap-2 pb-2 sticky-top" style="padding-top: 10px">
-    <Button
-        type="button"
-        color="secondary"
-        outline
-        size="sm"
-        class="flex-fill text-truncate"
-        disabled={!$sortedDomains}
-        on:click={() => ctrlNewSubdomain.Open()}
+    <!-- A disabled button gets no pointer events: its wrapper carries the tooltip. -->
+    <span
+        class="d-flex flex-fill"
+        style="min-width: 0"
+        title={readOnly ? $t("domains.read-only-edit") : undefined}
     >
-        <Icon name="server" />
-        {$t("domains.add-a-subdomain")}
-    </Button>
+        <Button
+            type="button"
+            color="secondary"
+            outline
+            size="sm"
+            class="flex-fill text-truncate"
+            disabled={!$sortedDomains || readOnly}
+            on:click={() => ctrlNewSubdomain.Open()}
+        >
+            <Icon name="server" />
+            {$t("domains.add-a-subdomain")}
+        </Button>
+    </span>
     <Dropdown class="flex-shrink-0">
         <DropdownToggle
             color="secondary"
@@ -133,7 +143,11 @@
             <DropdownItem on:click={retrieveZone}>
                 {$t("domains.actions.reimport")}
             </DropdownItem>
-            <DropdownItem on:click={() => ctrlUploadZone.Open()}>
+            <DropdownItem
+                disabled={readOnly}
+                title={readOnly ? $t("domains.read-only-edit") : undefined}
+                on:click={() => ctrlUploadZone.Open()}
+            >
                 {$t("domains.actions.upload")}
             </DropdownItem>
             <DropdownItem divider />

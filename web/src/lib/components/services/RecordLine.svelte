@@ -33,6 +33,7 @@
     import RecordText from "$lib/components/records/RecordText.svelte";
     import { controls } from "$lib/components/modals/Record.svelte";
     import type { Domain } from "$lib/model/domain";
+    import { isReadOnlyProvider, providers_idx } from "$lib/stores/providers";
 
     interface Props {
         class?: ClassValue;
@@ -43,6 +44,8 @@
     }
 
     let { class: className, dn, origin, rr = $bindable(emptyRR()), onopen }: Props = $props();
+
+    let readOnly = $derived(isReadOnlyProvider($providers_idx, origin.id_provider));
 
     function openEditor() {
         onopen?.();
@@ -57,12 +60,14 @@
         {origin}
         {rr}
     />
-    <Button
-        color="light"
-        type="button"
-        style="border-radius: 0 .25em .25em 0"
-        on:click={openEditor}
-    >
-        <Icon name="pencil" />
-    </Button>
+    {#if !readOnly}
+        <Button
+            color="light"
+            type="button"
+            style="border-radius: 0 .25em .25em 0"
+            on:click={openEditor}
+        >
+            <Icon name="pencil" />
+        </Button>
+    {/if}
 </div>

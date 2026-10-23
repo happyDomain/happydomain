@@ -34,6 +34,7 @@
     import type { ServiceWithValue } from "$lib/model/service.svelte";
     import { ZoneViewGrid, ZoneViewRecords } from "$lib/model/usersettings";
         import { serviceName } from "$lib/services/infos";
+    import { isReadOnlyProvider, providers_idx } from "$lib/stores/providers";
     import { servicesSpecs } from "$lib/stores/services";
     import { thisAliases } from "$lib/stores/thiszone";
     import { userSession } from "$lib/stores/usersession";
@@ -60,6 +61,8 @@
             showResources = !showResources;
         },
     }: Props = $props();
+
+    let readOnly = $derived(isReadOnlyProvider($providers_idx, origin.id_provider));
 
     function isCNAME(services: Array<HappydnsService>) {
         return services.length === 1 && services[0]._svctype === "svcs.Alias";
@@ -119,6 +122,53 @@
         </span>
     </div>
     {#if isCNAME(services) || isPTR(services)}
+        {@const target = aliasTarget(services)}
+        <span class="text-truncate text-muted lead">
+            <Icon name="arrow-right" />
+            <span class="font-monospace">
+                {#if target.endsWith(origin.domain)}
+                    {target.substring(0, target.length - origin.domain.length - 1)}<span
+                        style="opacity: 0.5;">.{origin.domain}</span
+                    >
+                {:else}
+                    {target}
+                {/if}
+            </span>
+        </span>
+    {:else if !showResources && services.length}
+        <Badge color="primary" id={"popoversvc-" + dn.replace(".", "__")} style="cursor: pointer;">
+            {$t("domains.n-services", { count: services.length })}
+        </Badge>
+        <Popover dismissible placement="bottom" target={"popoversvc-" + dn.replace(".", "__")}>
+            {#each services as service}
+                {#if $servicesSpecs[service._svctype]}
+                    <strong>{$serviceName($servicesSpecs[service._svctype], service._svctype)}:</strong>
+                {/if}
+                <span class="text-muted">{service._comment}</span>
+                <br />
+            {/each}
+        </Popover>
+    {/if}
+    {#if $thisAliases[dn] && $thisAliases[dn].length != 0}
+        <Badge id={"popoverbadge-" + dn.replace(".", "__")} style="cursor: pointer;">
+            + {$t("domains.n-aliases", { count: $thisAliases[dn].length })}
+        </Badge>
+        <Popover
+            dismissible
+            placement="bottom"
+            target={"popoverbadge-" + dn.replace(".", "__")}
+            class="font-monospace"
+        >
+            {#each $thisAliases[dn] as alias}
+                <a href={"#" + alias}>
+                    {alias}
+                </a>
+                <br />
+            {/each}
+        </Popover>
+    {/if}
+    <div class="flex-fill"></div>
+    {#if isCNAME(services) || isPTR(services)}
         <!-- The service has no card of its own here: this opens its details. -->
         <Button
             type="button"
@@ -130,39 +180,44 @@
         >
             <Icon name="info-circle" />
         </Button>
-    {:else if showResources && services.length}
-        <Button
-            type="button"
-            color="primary"
-            outline
-            size="sm"
-            title={$t("domains.add-an-alias")}
-            on:click={() => ctrlNewAlias.Open(dn)}
-        >
-            <Icon name="link" />
-        </Button>
     {/if}
-    {#if !showResources || ($userSession.settings && $userSession.settings.zoneview !== ZoneViewGrid)}
-        {#if $userSession.settings && $userSession.settings.zoneview === ZoneViewRecords}
-            <Button
-                type="button"
-                color="primary"
-                size="sm"
-                title={$t("domains.add-a-record")}
-                on:click={() => ctrlRecord.Open(null, dn)}
-            >
-                <Icon name="plus" />
-            </Button>
-        {:else}
-            <Button
-                type="button"
-                color="primary"
-                size="sm"
-                title={$t("domains.add-a-service")}
-                on:click={() => ctrlNewService.Open(dn)}
-            >
-                <Icon name="plus" />
-            </Button>
-        {/if}
+    {#if !readOnly}
+        <span class="d-flex gap-2">
+            {#if showResources && services.length && !isCNAME(services) && !isPTR(services)}
+                <Button
+                    type="button"
+                    color="primary"
+                    outline
+                    size="sm"
+                    title={$t("domains.add-an-alias")}
+                    on:click={() => ctrlNewAlias.Open(dn)}
+                >
+                    <Icon name="link" />
+                </Button>
+            {/if}
+            {#if !showResources || ($userSession.settings && $userSession.settings.zoneview !== ZoneViewGrid)}
+                {#if $userSession.settings && $userSession.settings.zoneview === ZoneViewRecords}
+                    <Button
+                        type="button"
+                        color="primary"
+                        size="sm"
+                        title={$t("domains.add-a-record")}
+                            on:click={() => ctrlRecord.Open(null, dn)}
+                    >
+                        <Icon name="plus" />
+                    </Button>
+                {:else}
+                    <Button
+                        type="button"
+                        color="primary"
+                        size="sm"
+                        title={$t("domains.add-a-service")}
+                            on:click={() => ctrlNewService.Open(dn)}
+                    >
+                        <Icon name="plus" />
+                    </Button>
+                {/if}
+            {/if}
+        </span>
     {/if}
 </div>

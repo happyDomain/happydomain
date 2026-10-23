@@ -45,6 +45,7 @@
     import RecordEditor from "$lib/components/records/Editor.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { Zone } from "$lib/model/zone";
+    import { isReadOnlyProvider, providers_idx } from "$lib/stores/providers";
     import { thisZone } from "$lib/stores/thiszone";
     import { emptyRR } from "$lib/dns";
     import { t } from "$lib/translations";
@@ -59,6 +60,8 @@
     }
 
     let { isOpen = $bindable(false), origin, zone }: Props = $props();
+
+    let readOnly = $derived(isReadOnlyProvider($providers_idx, origin.id_provider));
 
     let dn: string = $state("");
     let record: dnsRR | undefined = $state(undefined);
@@ -86,7 +89,7 @@
     function submitRecordForm(e: SubmitEvent) {
         e.preventDefault();
 
-        if (!record) return;
+        if (!record || readOnly) return;
 
         addRecordInProgress = true;
 
@@ -149,7 +152,7 @@
         </ModalBody>
         <ModalFooter>
             <div class="ms-auto"></div>
-            {#if initialrecord}
+            {#if initialrecord && !readOnly}
                 <Button
                     color="danger"
                     disabled={addRecordInProgress ||
@@ -168,7 +171,9 @@
             <Button color="secondary" on:click={toggle}>
                 {$t("common.cancel")}
             </Button>
-            {#if initialrecord}
+            {#if readOnly}
+                <!-- Nothing can be saved: Cancel is the only way out. -->
+            {:else if initialrecord}
                 <Button
                     disabled={addRecordInProgress || deleteRecordInProgress}
                     form="addRRForm"

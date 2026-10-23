@@ -34,6 +34,7 @@
     import type { ServiceWithValue } from "$lib/model/service.svelte";
     import { ZoneViewList, ZoneViewRecords } from "$lib/model/usersettings";
     import { serviceDescription, serviceName } from "$lib/services/infos";
+    import { isReadOnlyProvider, providers_idx } from "$lib/stores/providers";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
         import { userSession } from "$lib/stores/usersession";
     import { t } from "$lib/translations";
@@ -47,6 +48,8 @@
     }
 
     let { dn, origin, services, zoneId }: Props = $props();
+
+    let readOnly = $derived(isReadOnlyProvider($providers_idx, origin.id_provider));
 
     function openService(service: ServiceWithValue) {
         const subdomainParam =
@@ -163,8 +166,10 @@
                 {/key}
             </div>
         {/each}
-        <div class="col mb-2 mb-md-3 px-2 new-service-card">
-            <ServiceCard {dn} />
-        </div>
+        {#if !readOnly}
+            <div class="col mb-2 mb-md-3 px-2 new-service-card">
+                <ServiceCard {dn} />
+            </div>
+        {/if}
     </div>
 {/if}
