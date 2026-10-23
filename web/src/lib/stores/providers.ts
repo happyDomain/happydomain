@@ -63,6 +63,12 @@ export const providers_idx = derived(providers, ($providers: Array<Provider> | u
     return idx;
 });
 
+// isReadOnlyProvider tells whether happyDomain only reads the zones behind the
+// provider, so that nothing in them may be changed.
+export function isReadOnlyProvider(idx: Record<string, Provider>, id: string | undefined): boolean {
+    return Boolean(id && idx[id]?._readonly);
+}
+
 export async function refreshProvidersSpecs() {
     const map = unwrapSdkResponse(await getProvidersSpecs()) as Record<string, ProviderInfos>;
     providersSpecs.set(map);

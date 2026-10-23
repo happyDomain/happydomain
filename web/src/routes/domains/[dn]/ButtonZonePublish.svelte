@@ -29,7 +29,7 @@
     import { getDomain as APIGetDomain } from "$lib/api/domains";
     import type { Domain } from "$lib/model/domain";
     import { domains_idx } from "$lib/stores/domains";
-    import { providers_idx } from "$lib/stores/providers";
+    import { isReadOnlyProvider, providers_idx } from "$lib/stores/providers";
     import { thisZone } from "$lib/stores/thiszone";
     import { getCachedDiffZoneSummary, zoneDiffVersion } from "$lib/stores/zonediff";
     import { t } from "$lib/translations";
@@ -46,7 +46,7 @@
 
     // The server refuses to publish through a read-only provider: the button
     // only opens the differences.
-    let readOnly = $derived(Boolean($providers_idx[domain.id_provider]?._readonly));
+    let readOnly = $derived(isReadOnlyProvider($providers_idx, domain.id_provider));
     let publishLabel = $derived(
         readOnly ? $t("domains.actions.view-diff") : $t("domains.actions.propagate"),
     );
