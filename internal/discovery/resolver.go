@@ -211,6 +211,28 @@ func Resolve(ctx context.Context, domain string, known []string, sources []NameS
 		Known:         known,
 	}
 
+	// A source handing the whole zone spares the exploration.
+	for _, source := range sources {
+		rs, ok := source.(RecordSource)
+		if !ok {
+			continue
+		}
+
+		rrs, err := rs.Records(ctx, target)
+		if err != nil {
+			log.Printf("discovery: %s: source %s: %s", domain, source.ID(), err)
+		}
+		if len(rrs) > 0 {
+			for _, rr := range rrs {
+				// The server of the zone is not trusted for other zones.
+				if dns.IsSubDomain(domain, dns.CanonicalName(rr.Header().Name)) {
+					e.addRecord(rr)
+				}
+			}
+			return e.result(), nil
+		}
+	}
+
 	// The apex comes first, then the known names: should the budget run
 	// out, the names already in the zone are the ones not to lose. A
 	// wildcard never covers the apex, so it is explored before the probe.

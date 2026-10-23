@@ -27,6 +27,7 @@ package discovery
 // The zero value must be the recommended setting: a discovery created with
 // no settings at all explores fully.
 type Settings struct {
+	AXFRSettings
 	WellKnownSettings
 	WordlistSettings
 }

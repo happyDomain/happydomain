@@ -81,6 +81,10 @@ func TestSourceFactories(t *testing.T) {
 		if source := f.New(new(Settings)); source != nil && source.ID() != f.ID {
 			t.Errorf("technique %q builds sources identified %q", f.ID, source.ID())
 		}
+
+		if _, isRecordSource := f.New(new(Settings)).(RecordSource); isRecordSource && f.Priority >= 100 {
+			t.Errorf("technique %q hands records but has priority %d; want below 100", f.ID, f.Priority)
+		}
 	}
 }
 
