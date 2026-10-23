@@ -23,4 +23,6 @@ package ct
 
 // Backends are the services searching the certificate transparency logs.
 // Adding a service is adding its file and a line here.
-var Backends = []Backend{}
+var Backends = []Backend{
+	certSpotter,
+}

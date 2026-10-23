@@ -1,0 +1,31 @@
+[
+  {
+    "id": "3906571584",
+    "tbs_sha256": "bf8b6a1e1d6c4a2bf7b6d3a6c6a4b1e5e9b6b0f3b2a9c3f6c1e2d3a4b5c6d7e8",
+    "cert_sha256": "4d5c9e2f8a1b3c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d",
+    "dns_names": ["example.com", "www.example.com"],
+    "pubkey_sha256": "0f1e2d3c4b5a69788796a5b4c3d2e1f00f1e2d3c4b5a69788796a5b4c3d2e1f0",
+    "issuer": {
+      "friendly_name": "Let's Encrypt",
+      "pubkey_sha256": "8d02536c887482bc34ff54e41d2ba659bf85b341a0a20afadb5813dcbbf8e6d4",
+      "name": "C=US, O=Let's Encrypt, CN=R11"
+    },
+    "not_before": "2026-08-01T10:00:00Z",
+    "not_after": "2026-10-30T10:00:00Z",
+    "revoked": false
+  },
+  {
+    "id": "3906571999",
+    "tbs_sha256": "aa8b6a1e1d6c4a2bf7b6d3a6c6a4b1e5e9b6b0f3b2a9c3f6c1e2d3a4b5c6d7e8",
+    "cert_sha256": "5e5c9e2f8a1b3c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d",
+    "dns_names": ["*.dev.example.com"],
+    "pubkey_sha256": "1f1e2d3c4b5a69788796a5b4c3d2e1f00f1e2d3c4b5a69788796a5b4c3d2e1f0",
+    "issuer": {
+      "pubkey_sha256": "9d02536c887482bc34ff54e41d2ba659bf85b341a0a20afadb5813dcbbf8e6d4",
+      "name": "C=US, O=Example CA, CN=Example Issuing CA"
+    },
+    "not_before": "2026-09-01T00:00:00Z",
+    "not_after": "2027-09-01T00:00:00Z",
+    "revoked": false
+  }
+]

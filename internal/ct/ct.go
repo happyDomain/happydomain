@@ -60,6 +60,11 @@ var (
 	// ErrUnavailable is returned when the service cannot be reached or
 	// fails to answer.
 	ErrUnavailable = errors.New("certificate transparency service unavailable")
+
+	// ErrTruncated is returned, with the issuances got, when the service
+	// holds more than one search may fetch. Asking again would stop at the
+	// same place.
+	ErrTruncated = errors.New("too many certificates to fetch them all")
 )
 
 // Issuance is a certificate issued for the domain searched.
