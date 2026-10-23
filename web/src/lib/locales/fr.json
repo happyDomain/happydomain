@@ -74,6 +74,11 @@
         }
     },
     "domains": {
+        "monitor-elsewhere": {
+            "button": "Surveiller un domaine hébergé ailleurs",
+            "hint": "Votre domaine est hébergé là où happyDomain ne peut pas se connecter ? happyDomain peut tout de même le surveiller : sa zone est recomposée, en lecture seule, à partir de ce que ses serveurs de noms répondent publiquement.",
+            "provider-name": "DNS public"
+        },
         "kind": "un domaine",
         "actions": {
             "audit": "Voir le journal d'actions du domaine",

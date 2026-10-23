@@ -55,9 +55,15 @@
     import DomainImport from "$lib/components/forms/DomainImport.svelte";
     import ProviderPicker from "$lib/components/forms/ProviderPicker.svelte";
     import SettingsStateButtons from "$lib/components/providers/SettingsStateButtons.svelte";
+    import { updateProvider } from "$lib/api/provider";
     import type { ProviderForm } from "$lib/model/provider_form.svelte.ts";
-    import { providers } from "$lib/stores/providers";
+    import { providers, refreshProviders } from "$lib/stores/providers";
+    import { toasts } from "$lib/stores/toasts";
     import { t } from "$lib/translations";
+
+    // The read-only provider recomposing the zone of domains hosted where
+    // happyDomain has no access.
+    const discoveryProviderType = "PublicDNSDiscovery";
 
     // step 0: pick or add a provider
     // step 1: import / add domains
@@ -71,6 +77,7 @@
     let noDomainsList = $state(false);
     let addingNewDomain = $state(false);
     let newDomainValue = $state("");
+    let pickingDiscovery = $state(false);
 
     let isOpen = $state(false);
     let request: NewDomainRequest = {};
@@ -101,6 +108,30 @@
         }
         myProvider = provider;
         step = 1;
+    }
+
+    // monitorElsewhere goes on with the discovery provider of the user,
+    // created on first use: it has nothing to configure.
+    async function monitorElsewhere(): Promise<void> {
+        pickingDiscovery = true;
+        try {
+            let provider = $providers?.find((p) => p._srctype === discoveryProviderType);
+            if (!provider) {
+                provider = await updateProvider({
+                    _srctype: discoveryProviderType,
+                    _comment: $t("domains.monitor-elsewhere.provider-name"),
+                    Provider: {},
+                } as Provider);
+                await refreshProviders();
+            }
+            onProviderSelected(provider);
+        } catch (err) {
+            toasts.addErrorToast({
+                message: err instanceof Error ? err.message : String(err),
+            });
+        } finally {
+            pickingDiscovery = false;
+        }
     }
 
     function backToProviderPicker(): void {
@@ -148,6 +179,24 @@
                 formId="newdomainproviderform"
                 ondone={onProviderSelected}
             />
+            {#if !addingProvider}
+                <hr />
+                <p class="text-muted mb-2">
+                    {$t("domains.monitor-elsewhere.hint")}
+                </p>
+                <Button
+                    color="outline-secondary"
+                    disabled={pickingDiscovery}
+                    onclick={monitorElsewhere}
+                >
+                    {#if pickingDiscovery}
+                        <Spinner size="sm" class="me-1" />
+                    {:else}
+                        <Icon name="binoculars" class="me-1" />
+                    {/if}
+                    {$t("domains.monitor-elsewhere.button")}
+                </Button>
+            {/if}
         {:else if myProvider && myProvider._id}
             <DomainImport
                 provider={myProvider}

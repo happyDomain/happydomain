@@ -6,8 +6,9 @@ the authoritative servers of the domain publicly answer, then hands the records
 to the regular import pipeline, which analyses them into services that the
 checkers look after like those of any other zone.
 
-This document is for administrators, who need to know what the discovery sends
-where, and for contributors adding an enumeration technique.
+The user documentation is on the help center, under *Monitor a domain hosted
+elsewhere*. This document is for administrators, who need to know what the
+discovery sends where, and for contributors adding an enumeration technique.
 
 ## How a zone is recomposed
 
