@@ -704,7 +704,7 @@ func TestUserGater_StartStopRunsSweep(t *testing.T) {
 	r := newGateResolver()
 	uid := addGateUser(r, happydns.UserQuota{MaxChecksPerDay: 5}, time.Now())
 	g := NewUserGater(r, 90, 0)
-	g.sweepInterval = 10 * time.Millisecond
+	g.sweeper.Interval = 10 * time.Millisecond
 
 	// Populate a stale budget so the sweeper has something to prune.
 	g.IncrementUsage(happydns.CheckTarget{UserId: uid})
@@ -738,7 +738,7 @@ func TestUserGater_StartStopRunsSweep(t *testing.T) {
 
 func TestUserGater_StartIsIdempotent(t *testing.T) {
 	g := NewUserGater(newGateResolver(), 90, 0)
-	g.sweepInterval = time.Hour // effectively disable ticks during the test
+	g.sweeper.Interval = time.Hour // effectively disable ticks during the test
 
 	g.Start(context.Background())
 	g.Start(context.Background()) // second call must be a no-op, not start another goroutine

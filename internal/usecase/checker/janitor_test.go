@@ -393,8 +393,8 @@ func TestJanitor_DefaultInterval(t *testing.T) {
 	es := newMockExecStore()
 	j := NewJanitor(ps, es, nil, nil, nil, DefaultRetentionPolicy(30), 0)
 
-	if j.interval != 6*time.Hour {
-		t.Fatalf("expected default interval 6h, got %v", j.interval)
+	if j.runner.Interval != 6*time.Hour {
+		t.Fatalf("expected default interval 6h, got %v", j.runner.Interval)
 	}
 }
 

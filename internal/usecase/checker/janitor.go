@@ -24,9 +24,9 @@ package checker
 import (
 	"context"
 	"log"
-	"sync"
 	"time"
 
+	"git.happydns.org/happyDomain/internal/periodic"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -46,12 +46,8 @@ type Janitor struct {
 	snapStore     ObservationSnapshotStorage
 	userResolver  JanitorUserResolver
 	defaultPolicy RetentionPolicy
-	interval      time.Duration
 
-	mu      sync.Mutex
-	cancel  context.CancelFunc
-	done    chan struct{}
-	running bool
+	runner periodic.Runner
 }
 
 // NewJanitor builds a Janitor that runs every `interval`. The defaultPolicy
@@ -62,67 +58,31 @@ func NewJanitor(planStore CheckPlanStorage, execStore ExecutionStorage, evalStor
 	if interval <= 0 {
 		interval = 6 * time.Hour
 	}
-	return &Janitor{
+	j := &Janitor{
 		planStore:     planStore,
 		execStore:     execStore,
 		evalStore:     evalStore,
 		snapStore:     snapStore,
 		userResolver:  userResolver,
 		defaultPolicy: defaultPolicy,
-		interval:      interval,
 	}
+	j.runner = periodic.Runner{
+		Interval:   interval,
+		RunAtStart: true,
+		Task:       func(ctx context.Context) { j.RunOnce(ctx) },
+	}
+	return j
 }
 
 // Start launches the janitor loop in a goroutine. It runs an immediate sweep
 // once the loop is up.
 func (j *Janitor) Start(ctx context.Context) {
-	j.mu.Lock()
-	if j.running {
-		j.mu.Unlock()
-		return
-	}
-	ctx, cancel := context.WithCancel(ctx)
-	j.cancel = cancel
-	j.done = make(chan struct{})
-	j.running = true
-	j.mu.Unlock()
-
-	go j.loop(ctx)
+	j.runner.Start(ctx)
 }
 
 // Stop halts the janitor and waits for the current sweep to finish.
 func (j *Janitor) Stop() {
-	j.mu.Lock()
-	cancel := j.cancel
-	done := j.done
-	j.mu.Unlock()
-	if cancel != nil {
-		cancel()
-	}
-	if done != nil {
-		<-done
-	}
-	j.mu.Lock()
-	j.running = false
-	j.mu.Unlock()
-}
-
-func (j *Janitor) loop(ctx context.Context) {
-	defer close(j.done)
-
-	// Run immediately, then on the configured interval.
-	j.RunOnce(ctx)
-
-	ticker := time.NewTicker(j.interval)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			j.RunOnce(ctx)
-		}
-	}
+	j.runner.Stop()
 }
 
 // RunOnce performs a single sweep over all check plans, applying the per-user

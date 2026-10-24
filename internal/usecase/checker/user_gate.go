@@ -28,6 +28,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"git.happydns.org/happyDomain/internal/periodic"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -61,7 +62,6 @@ type UserGater struct {
 	defaultInactivityDays  int
 	defaultMaxChecksPerDay int
 	cacheTTL               time.Duration
-	sweepInterval          time.Duration
 
 	mu    sync.Mutex
 	cache map[string]gateCacheEntry
@@ -69,10 +69,7 @@ type UserGater struct {
 	budgetMu sync.Mutex
 	budgets  map[string]*dailyBudget
 
-	sweepMu      sync.Mutex
-	sweepCancel  context.CancelFunc
-	sweepDone    chan struct{}
-	sweepRunning bool
+	sweeper periodic.Runner
 }
 
 type gateCacheEntry struct {
@@ -97,15 +94,24 @@ type dailyBudget struct {
 // unlimited. A negative UserQuota.MaxChecksPerDay disables the daily cap
 // for that specific user regardless of the system default.
 func NewUserGater(resolver JanitorUserResolver, defaultInactivityDays, defaultMaxChecksPerDay int) *UserGater {
-	return &UserGater{
+	g := &UserGater{
 		resolver:               resolver,
 		defaultInactivityDays:  defaultInactivityDays,
 		defaultMaxChecksPerDay: defaultMaxChecksPerDay,
 		cacheTTL:               5 * time.Minute,
-		sweepInterval:          defaultSweepInterval,
 		cache:                  map[string]gateCacheEntry{},
 		budgets:                map[string]*dailyBudget{},
 	}
+	g.sweeper = periodic.Runner{
+		Interval: defaultSweepInterval,
+		Task: func(context.Context) {
+			cache, budgets := g.Sweep()
+			if cache > 0 || budgets > 0 {
+				log.Printf("UserGater: swept %d cache / %d budget entries", cache, budgets)
+			}
+		},
+	}
+	return g
 }
 
 // Allow returns true if the scheduler should run jobs for the given target.
@@ -404,56 +410,12 @@ func (g *UserGater) Sweep() (cachePruned, budgetsPruned int) {
 // cache and budget entries. Calling Start again while the sweeper is
 // already running is a no-op.
 func (g *UserGater) Start(ctx context.Context) {
-	g.sweepMu.Lock()
-	if g.sweepRunning {
-		g.sweepMu.Unlock()
-		return
-	}
-	ctx, cancel := context.WithCancel(ctx)
-	done := make(chan struct{})
-	g.sweepCancel = cancel
-	g.sweepDone = done
-	g.sweepRunning = true
-	interval := g.sweepInterval
-	g.sweepMu.Unlock()
-
-	go g.sweepLoop(ctx, done, interval)
+	g.sweeper.Start(ctx)
 }
 
 // Stop halts the background sweeper, if any, and waits for it to exit.
 func (g *UserGater) Stop() {
-	g.sweepMu.Lock()
-	cancel := g.sweepCancel
-	done := g.sweepDone
-	g.sweepCancel = nil
-	g.sweepDone = nil
-	g.sweepRunning = false
-	g.sweepMu.Unlock()
-
-	if cancel != nil {
-		cancel()
-	}
-	if done != nil {
-		<-done
-	}
-}
-
-func (g *UserGater) sweepLoop(ctx context.Context, done chan struct{}, interval time.Duration) {
-	defer close(done)
-
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			cache, budgets := g.Sweep()
-			if cache > 0 || budgets > 0 {
-				log.Printf("UserGater: swept %d cache / %d budget entries", cache, budgets)
-			}
-		}
-	}
+	g.sweeper.Stop()
 }
 
 // todayUTC returns UTC midnight of the current day.
