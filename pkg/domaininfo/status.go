@@ -57,6 +57,18 @@ func StatusKey(s string) string {
 	return statusKeyReplacer.Replace(strings.ToLower(s))
 }
 
+// HasStatus tells whether status, however it is spelled, is part of the
+// statuses.
+func HasStatus(statuses []string, status string) bool {
+	key := StatusKey(status)
+	for _, s := range statuses {
+		if StatusKey(s) == key {
+			return true
+		}
+	}
+	return false
+}
+
 // normalizeStatuses applies NormalizeStatus to each status, keeping a nil
 // list nil.
 func normalizeStatuses(status []string) []string {

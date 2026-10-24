@@ -74,3 +74,22 @@ func TestNormalizeStatuses(t *testing.T) {
 		t.Errorf("normalizeStatuses() = %#v", got)
 	}
 }
+
+func TestHasStatus(t *testing.T) {
+	statuses := []string{"client transfer prohibited", "redemptionPeriod"}
+	cases := []struct {
+		statuses []string
+		status   string
+		want     bool
+	}{
+		{statuses, "clientTransferProhibited", true},
+		{statuses, "redemption period", true},
+		{statuses, "pendingDelete", false},
+		{nil, "ok", false},
+	}
+	for _, tc := range cases {
+		if got := HasStatus(tc.statuses, tc.status); got != tc.want {
+			t.Errorf("HasStatus(%q, %q) = %v, want %v", tc.statuses, tc.status, got, tc.want)
+		}
+	}
+}
