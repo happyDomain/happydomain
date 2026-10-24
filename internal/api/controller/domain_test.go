@@ -294,3 +294,54 @@ func TestGetDomains_ResponseIncludesDomainFields(t *testing.T) {
 		t.Error("expected last_check_status to be omitted when nil")
 	}
 }
+
+// --- RetrieveZoneProgress tests ---
+
+// stubRemoteZoneImporter tells progress is in flight when ok is set.
+type stubRemoteZoneImporter struct {
+	progress happydns.ImportProgressSnapshot
+	ok       bool
+}
+
+func (s *stubRemoteZoneImporter) Import(context.Context, *happydns.User, *happydns.Domain) (*happydns.Zone, error) {
+	return nil, nil
+}
+
+func (s *stubRemoteZoneImporter) Progress(*happydns.Domain) (happydns.ImportProgressSnapshot, bool) {
+	return s.progress, s.ok
+}
+
+func TestRetrieveZoneProgress_NoneInFlight(t *testing.T) {
+	dc := NewDomainController(&stubDomainUsecase{}, &stubRemoteZoneImporter{}, nil, nil)
+
+	w, c := newDomainTestContext(&happydns.User{})
+	c.Set("domain", &happydns.Domain{})
+	dc.RetrieveZoneProgress(c)
+
+	if c.Writer.Status() != http.StatusNoContent || w.Body.Len() != 0 {
+		t.Errorf("got status %d with %q; want %d and no body", c.Writer.Status(), w.Body.String(), http.StatusNoContent)
+	}
+}
+
+func TestRetrieveZoneProgress_InFlight(t *testing.T) {
+	importer := &stubRemoteZoneImporter{
+		progress: happydns.ImportProgressSnapshot{Step: happydns.ImportStepExploring, Percent: 42, StepEnd: 60},
+		ok:       true,
+	}
+	dc := NewDomainController(&stubDomainUsecase{}, importer, nil, nil)
+
+	w, c := newDomainTestContext(&happydns.User{})
+	c.Set("domain", &happydns.Domain{})
+	dc.RetrieveZoneProgress(c)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, w.Code)
+	}
+	var got map[string]any
+	if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if got["step"] != string(happydns.ImportStepExploring) || got["percent"] != 42.0 || got["step_end"] != 60.0 {
+		t.Errorf("got %v; want the progress of the import in flight", got)
+	}
+}

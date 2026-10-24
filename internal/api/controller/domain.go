@@ -265,6 +265,32 @@ func (dc *DomainController) RetrieveZone(c *gin.Context) {
 	c.JSON(http.StatusOK, &zone.ZoneMeta)
 }
 
+// RetrieveZoneProgress tells how far the retrieval of the zone in flight is.
+//
+//	@Summary	Progress of the zone retrieval.
+//	@Schemes
+//	@Description	Tell how far the retrieval of the zone from the provider in flight is. No content when none is.
+//	@Tags			zones
+//	@Produce		json
+//	@Security		securitydefinitions.basic
+//	@Param			domainId	path		string							true	"Domain identifier"
+//	@Success		200			{object}	happydns.ImportProgressSnapshot	"The progress of the retrieval"
+//	@Success		204			"No retrieval in flight"
+//	@Failure		401			{object}	happydns.ErrorResponse			"Authentication failure"
+//	@Failure		404			{object}	happydns.ErrorResponse			"Domain not found"
+//	@Router			/domains/{domainId}/retrieve_zone [get]
+func (dc *DomainController) RetrieveZoneProgress(c *gin.Context) {
+	domain := c.MustGet("domain").(*happydns.Domain)
+
+	progress, ok := dc.remoteZoneImporter.Progress(domain)
+	if !ok {
+		c.Status(http.StatusNoContent)
+		return
+	}
+
+	c.JSON(http.StatusOK, progress)
+}
+
 // ImportZone imports a zone from a BIND-style zone file.
 //
 //	@Summary	Import zone from file.

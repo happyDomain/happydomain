@@ -68,6 +68,7 @@ func DeclareDomainRoutes(
 	DeclareDomainLogRoutes(apiDomainsRoutes, domainLogUC)
 
 	apiDomainsRoutes.POST("/zone", dc.ImportZone)
+	apiDomainsRoutes.GET("/retrieve_zone", dc.RetrieveZoneProgress)
 	apiDomainsRoutes.POST("/retrieve_zone", dc.RetrieveZone)
 
 	certCtrl := controller.NewCertificateController(outboundGuard)
