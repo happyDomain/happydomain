@@ -23,7 +23,6 @@ package svcs
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	"github.com/miekg/dns"
@@ -61,7 +60,10 @@ func UnmarshalRecord(payload []byte) (happydns.Record, error) {
 
 	newrr, ok := dns.TypeToRR[header.Hdr.Rrtype]
 	if !ok {
-		return nil, fmt.Errorf("unknown rr type %d", header.Hdr.Rrtype)
+		// A type miekg/dns does not know, such as BIND's TYPE65534, was read
+		// in the generic form of RFC 3597.
+		rr := new(dns.RFC3597)
+		return rr, json.Unmarshal(payload, rr)
 	}
 
 	rr := newrr()

@@ -131,6 +131,7 @@ func TestRecordJSONRoundTrip(t *testing.T) {
 		`example.com. 300 IN SVCB 1 svc.example.com. alpn="h2" port="8443"`,
 		`example.com. 300 IN HTTPS 1 . alpn="h3,h2" ipv4hint="192.0.2.1" ipv6hint="2001:db8::1"`,
 		`example.com. 300 IN HTTPS 0 cdn.example.net.`,
+		`example.com. 0 IN TYPE65534 \# 5 0d1c520001`,
 	} {
 		rr, err := helpers.ParseRecord(line, "example.com.")
 		if err != nil {
@@ -181,5 +182,24 @@ func TestOrphanTXTSegments(t *testing.T) {
 		default:
 			t.Errorf("read back a %T, want happyDomain's abstraction", got.Record)
 		}
+	}
+}
+
+// A record of a type miekg/dns does not know, as BIND keeps its signing state
+// in TYPE65534, as stored when the zone was imported.
+func TestOrphanUnknownType(t *testing.T) {
+	payload := `{"record":{"Hdr":{"Name":"","Rrtype":65534,"Class":1,"Ttl":0,"Rdlength":5},"Rdata":"0d1c520001"}}`
+
+	var got svcs.Orphan
+	if err := json.Unmarshal([]byte(payload), &got); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+
+	record, ok := got.Record.(*dns.RFC3597)
+	if !ok {
+		t.Fatalf("read back a %T, want *dns.RFC3597", got.Record)
+	}
+	if record.Rdata != "0d1c520001" {
+		t.Errorf("Rdata = %q, want 0d1c520001", record.Rdata)
 	}
 }
