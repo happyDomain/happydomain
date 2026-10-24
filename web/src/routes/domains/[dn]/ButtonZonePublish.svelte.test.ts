@@ -32,6 +32,7 @@ vi.mock("$lib/api/domains", () => ({
     listDomains: vi.fn(async () => []),
 }));
 
+import { diffZoneSummary } from "$lib/api/zone";
 import type { Domain } from "$lib/model/domain";
 import type { Provider } from "$lib/model/provider";
 import type { Zone } from "$lib/model/zone";
@@ -46,12 +47,13 @@ beforeAll(async () => {
 });
 
 afterEach(() => {
+    vi.clearAllMocks();
     domains.set(undefined);
     providers.set(undefined);
     thisZone.set(null);
 });
 
-function setup(readonly: boolean): Domain {
+function setup(readonly: boolean, partial = false): Domain {
     const domain = {
         id: "d1",
         domain: "example.com.",
@@ -62,7 +64,7 @@ function setup(readonly: boolean): Domain {
     providers.set([
         { _id: "p1", _srctype: "DDNSServer", _readonly: readonly } as unknown as Provider,
     ]);
-    thisZone.set({ id: "z2" } as Zone);
+    thisZone.set({ id: "z2", partial } as Zone);
     return domain;
 }
 
@@ -88,5 +90,14 @@ describe("ButtonZonePublish", () => {
             await screen.findByRole("button", { name: /View the differences/ }),
         ).toBeInTheDocument();
         expect(screen.queryByRole("button", { name: /Roll back/ })).toBeNull();
+    });
+
+    it("does not compute the differences of a partial zone beforehand", async () => {
+        render(ButtonZonePublish, { domain: setup(true, true), history: "z2" });
+        expect(
+            await screen.findByRole("button", { name: /View the differences/ }),
+        ).toBeInTheDocument();
+        expect(screen.queryByText("(2)")).toBeNull();
+        expect(diffZoneSummary).not.toHaveBeenCalled();
     });
 });
