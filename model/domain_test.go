@@ -22,6 +22,7 @@
 package happydns_test
 
 import (
+	"strings"
 	"testing"
 
 	"git.happydns.org/happyDomain/model"
@@ -271,5 +272,24 @@ func TestNewDomainInitialization(t *testing.T) {
 
 	if domain.ZoneHistory != nil {
 		t.Error("NewDomain() should initialize with nil ZoneHistory")
+	}
+}
+
+func TestNormalizeDomainName(t *testing.T) {
+	for in, want := range map[string]string{
+		"example.com":      "example.com.",
+		" example.com. ":   "example.com.",
+		"sub.example.org.": "sub.example.org.",
+	} {
+		got, err := happydns.NormalizeDomainName(in)
+		if err != nil || got != want {
+			t.Errorf("NormalizeDomainName(%q) = %q, %v, want %q", in, got, err, want)
+		}
+	}
+
+	for _, in := range []string{"", "  ", ".", "a..example.com", strings.Repeat("a", 64) + ".com"} {
+		if _, err := happydns.NormalizeDomainName(in); err == nil {
+			t.Errorf("NormalizeDomainName(%q) succeeded, want an error", in)
+		}
 	}
 }

@@ -68,15 +68,17 @@ type DomainUpdateInput struct {
 	Group string `json:"group,omitempty"`
 }
 
-func NewDomain(user *User, name string, providerID Identifier) (*Domain, error) {
+// NormalizeDomainName returns the name typed by a user as a fully qualified
+// domain name, or an error when it is empty or not a domain name.
+func NormalizeDomainName(name string) (string, error) {
 	name = dns.Fqdn(strings.TrimSpace(name))
 
 	if name == "." {
-		return nil, errors.New("empty domain name")
+		return "", errors.New("empty domain name")
 	}
 
 	if _, ok := dns.IsDomainName(name); !ok {
-		return nil, errors.New("invalid domain name")
+		return "", errors.New("invalid domain name")
 	}
 
 	// Nothing more is checked here: a domain name is not a path, and RFC 2317
@@ -84,6 +86,15 @@ func NewDomain(user *User, name string, providerID Identifier) (*Domain, error) 
 	// contain characters that are separators on a file system. The providers
 	// turning a zone name into a file name, namely BIND, are the ones
 	// restricting it further.
+
+	return name, nil
+}
+
+func NewDomain(user *User, name string, providerID Identifier) (*Domain, error) {
+	name, err := NormalizeDomainName(name)
+	if err != nil {
+		return nil, err
+	}
 
 	d := &Domain{
 		Owner:      user.Id,
