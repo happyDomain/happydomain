@@ -20,6 +20,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { render, screen } from "@testing-library/svelte";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 // The network lives here: the tests decide what the backend answers.
@@ -32,26 +33,33 @@ vi.mock("$lib/api/domains", () => ({
     listDomains: vi.fn(async () => []),
 }));
 
+import { diffZoneSummary } from "$lib/api/zone";
 import type { Domain } from "$lib/model/domain";
 import type { Provider } from "$lib/model/provider";
 import type { Zone } from "$lib/model/zone";
 import { domains } from "$lib/stores/domains";
 import { providers } from "$lib/stores/providers";
 import { thisZone } from "$lib/stores/thiszone";
+import { invalidateZoneDiff } from "$lib/stores/zonediff";
 import { loadTranslations } from "$lib/translations";
 import ButtonZonePublish from "./ButtonZonePublish.svelte";
+import { controls as ctrlDiffZone } from "./ModalDiffZone.svelte";
 
 beforeAll(async () => {
     await loadTranslations("en", "/");
 });
 
 afterEach(() => {
+    vi.clearAllMocks();
+    vi.restoreAllMocks();
+    // Each test asks the backend again, rather than the cache of the former.
+    invalidateZoneDiff();
     domains.set(undefined);
     providers.set(undefined);
     thisZone.set(null);
 });
 
-function setup(readonly: boolean): Domain {
+function setup(readonly: boolean, partial = false): Domain {
     const domain = {
         id: "d1",
         domain: "example.com.",
@@ -62,7 +70,7 @@ function setup(readonly: boolean): Domain {
     providers.set([
         { _id: "p1", _srctype: "DDNSServer", _readonly: readonly } as unknown as Provider,
     ]);
-    thisZone.set({ id: "z2" } as Zone);
+    thisZone.set({ id: "z2", partial } as Zone);
     return domain;
 }
 
@@ -88,5 +96,30 @@ describe("ButtonZonePublish", () => {
             await screen.findByRole("button", { name: /View the differences/ }),
         ).toBeInTheDocument();
         expect(screen.queryByRole("button", { name: /Roll back/ })).toBeNull();
+    });
+
+    it("does not compute the differences of a partial zone beforehand", async () => {
+        render(ButtonZonePublish, { domain: setup(true, true), history: "z2" });
+        const button = await screen.findByRole("button", { name: /View the differences/ });
+        // Not the button waiting for the summary of the differences.
+        expect(button.querySelector(".spinner-border")).toBeNull();
+        expect(screen.queryByText("(2)")).toBeNull();
+        expect(diffZoneSummary).not.toHaveBeenCalled();
+    });
+
+    it("offers to publish a partial zone without computing its differences beforehand", async () => {
+        render(ButtonZonePublish, { domain: setup(false, true), history: "z2" });
+        const button = await screen.findByRole("button", { name: /Publish my changes/ });
+        expect(button.querySelector(".spinner-border")).toBeNull();
+        expect(diffZoneSummary).not.toHaveBeenCalled();
+    });
+
+    it("opens the differences of a partial zone on demand", async () => {
+        const open = vi.spyOn(ctrlDiffZone, "Open").mockImplementation(() => {});
+        render(ButtonZonePublish, { domain: setup(true, true), history: "z2" });
+
+        await userEvent.click(await screen.findByRole("button", { name: /View the differences/ }));
+
+        expect(open).toHaveBeenCalledTimes(1);
     });
 });

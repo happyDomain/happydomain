@@ -37,7 +37,8 @@ Each name is asked for a set of types chosen after its shape (apex, host, or
 The zone is only retrieved when the user imports it, or fetches the current
 deployed zone: it is not refreshed in the background. Viewing the differences
 runs a full exploration too, to compare the stored zone with what the servers
-answer now.
+answer now. For a partial zone, it therefore only runs when the user opens the
+differences: the publish button does not count them beforehand.
 
 Unless a zone transfer or a complete NSEC walk listed every name, and every
 name got an answer, the zone is marked partial: names nothing points to may be

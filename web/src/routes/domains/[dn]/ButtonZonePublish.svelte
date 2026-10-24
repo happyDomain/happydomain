@@ -68,41 +68,50 @@
 {#if $domains_idx[domain.id] && $thisZone}
     <div class={["d-flex flex-column", className]}>
         {#if $domains_idx[domain.id].zone_history && history === $domains_idx[domain.id].zone_history[0]}
-            {#key $zoneDiffVersion}
-                {#await getCachedDiffZoneSummary(domain, "@", $thisZone.id)}
-                    <Button color="primary" outline title={publishLabel} on:click={showDiff}>
-                        <Spinner size="sm" />
-                        {publishLabel}
-                    </Button>
-                {:then zoneDiffSummary}
-                    <Button
-                        color="primary"
-                        outline={zoneDiffSummary && !zoneDiffSummary.nbDiffs}
-                        title={publishLabel}
-                        on:click={showDiff}
-                    >
-                        <Icon name={publishIcon} aria-hidden="true" />
-                        {publishLabel}
-                        {#if zoneDiffSummary && zoneDiffSummary.nbDiffs}
-                            <small class="text-muted">({zoneDiffSummary.nbDiffs})</small>
-                        {/if}
-                    </Button>
-                {:catch err}
-                    <p class="mb-0 text-center">
-                        <Icon name="exclamation-triangle" class="text-danger" />
-                        {err}
-                    </p>
-                    <Button
-                        color="danger"
-                        class="mt-3"
-                        outline
-                        on:click={() => ctrlDomainDelete.Open()}
-                    >
-                        <Icon name="trash" />
-                        {$t("domains.stop")}
-                    </Button>
-                {/await}
-            {/key}
+            {#if $thisZone.partial}
+                <!-- Comparing a partial zone means exploring the public DNS again:
+                     only the modal computes the differences, on demand. -->
+                <Button color="primary" title={publishLabel} on:click={showDiff}>
+                    <Icon name={publishIcon} aria-hidden="true" />
+                    {publishLabel}
+                </Button>
+            {:else}
+                {#key $zoneDiffVersion}
+                    {#await getCachedDiffZoneSummary(domain, "@", $thisZone.id)}
+                        <Button color="primary" outline title={publishLabel} on:click={showDiff}>
+                            <Spinner size="sm" />
+                            {publishLabel}
+                        </Button>
+                    {:then zoneDiffSummary}
+                        <Button
+                            color="primary"
+                            outline={zoneDiffSummary && !zoneDiffSummary.nbDiffs}
+                            title={publishLabel}
+                            on:click={showDiff}
+                        >
+                            <Icon name={publishIcon} aria-hidden="true" />
+                            {publishLabel}
+                            {#if zoneDiffSummary && zoneDiffSummary.nbDiffs}
+                                <small class="text-muted">({zoneDiffSummary.nbDiffs})</small>
+                            {/if}
+                        </Button>
+                    {:catch err}
+                        <p class="mb-0 text-center">
+                            <Icon name="exclamation-triangle" class="text-danger" />
+                            {err}
+                        </p>
+                        <Button
+                            color="danger"
+                            class="mt-3"
+                            outline
+                            on:click={() => ctrlDomainDelete.Open()}
+                        >
+                            <Icon name="trash" />
+                            {$t("domains.stop")}
+                        </Button>
+                    {/await}
+                {/key}
+            {/if}
         {:else}
             {#if readOnly}
                 <Button color="secondary" outline title={publishLabel} on:click={showDiff}>
