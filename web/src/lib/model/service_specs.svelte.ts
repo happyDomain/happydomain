@@ -61,6 +61,7 @@ export class ServiceInfos {
     _svcicon?: string = $state("");
     family = $state("");
     categories?: Array<string> | null = $state([]);
+    keywords?: Array<string> | null = $state([]);
     record_types?: Array<number> | null = $state([]);
     tabs?: boolean = $state(false);
     restrictions = $state(new ServiceRestrictions());
@@ -72,6 +73,7 @@ export class ServiceInfos {
             this._svcicon = data._svcicon ?? "";
             this.family = data.family ?? "";
             this.categories = data.categories ?? [];
+            this.keywords = data.keywords ?? [];
             this.record_types = data.record_types ?? [];
             this.tabs = data.tabs ?? false;
             this.restrictions = data.restrictions ? new ServiceRestrictions(data.restrictions) : new ServiceRestrictions();

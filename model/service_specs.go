@@ -53,11 +53,14 @@ type ServiceRestrictions struct {
 }
 
 type ServiceInfos struct {
-	Name         string              `json:"name" binding:"required"`
-	Type         string              `json:"_svctype" binding:"required"`
-	Icon         string              `json:"_svcicon,omitempty"`
-	Family       string              `json:"family" binding:"required"`
-	Categories   []string            `json:"categories" binding:"required"`
+	Name       string   `json:"name" binding:"required"`
+	Type       string   `json:"_svctype" binding:"required"`
+	Icon       string   `json:"_svcicon,omitempty"`
+	Family     string   `json:"family" binding:"required"`
+	Categories []string `json:"categories" binding:"required"`
+	// Keywords are extra terms the service is found by when searching
+	// for it, such as the names of the third parties it deals with.
+	Keywords     []string            `json:"keywords,omitempty"`
 	RecordTypes  []uint16            `json:"record_types" binding:"required"`
 	Tabs         bool                `json:"tabs,omitempty"`
 	Restrictions ServiceRestrictions `json:"restrictions"`

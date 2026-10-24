@@ -33,12 +33,13 @@ export function filterServices(
         // Check family filter
         const familyMatch = filteredFamily == null || svc.family == filteredFamily;
 
-        // Check name/description/record types/categories filter
+        // Check name/description/record types/categories/keywords filter
         const nameMatch = !filteredName ||
             serviceNameOf(translate, svc).toLowerCase().indexOf(filteredName.toLowerCase()) >= 0 ||
             serviceDescriptionOf(translate, svc).toLowerCase().indexOf(filteredName.toLowerCase()) >= 0 ||
             (svc.record_types && svc.record_types.some((rtype) => nsrrtype(rtype).toLowerCase().indexOf(filteredName.toLowerCase()) >= 0)) ||
-            (svc.categories && svc.categories.some((category) => category.toLowerCase().indexOf(filteredName.toLowerCase()) >= 0));
+            (svc.categories && svc.categories.some((category) => category.toLowerCase().indexOf(filteredName.toLowerCase()) >= 0)) ||
+            (svc.keywords && svc.keywords.some((keyword) => keyword.toLowerCase().indexOf(filteredName.toLowerCase()) >= 0));
 
         return familyMatch && !!nameMatch;
     }

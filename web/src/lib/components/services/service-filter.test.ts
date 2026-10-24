@@ -244,6 +244,18 @@ describe("filterServices: name filter", () => {
         expect(result.available).toEqual([]);
     });
 
+    it("matches on a keyword, case-insensitively", () => {
+        const a = makeSvc({ keywords: ["GitLab Pages", "Stripe"] });
+        const result = filterServices([a], makeProvider(), NO_SERVICES, "", "gitlab");
+        expect(result.available).toEqual([a]);
+    });
+
+    it("tolerates a null keywords list", () => {
+        const a = makeSvc({ keywords: null });
+        const result = filterServices([a], makeProvider(), NO_SERVICES, "", "gitlab");
+        expect(result.available).toEqual([]);
+    });
+
     it("also filters the disabled list by name", () => {
         const restricted = makeSvc({ name: "Wonderful Widget", restrictions: { rootOnly: true } });
         const match = filterServices([restricted], makeProvider(), NO_SERVICES, "sub", "widget");
