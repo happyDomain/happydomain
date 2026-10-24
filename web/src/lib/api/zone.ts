@@ -22,6 +22,7 @@
 import {
     getDomainsByDomainIdZoneByZoneId,
     postDomainsByDomainIdZoneByZoneIdView,
+    getDomainsByDomainIdRetrieveZone,
     postDomainsByDomainIdRetrieveZone,
     postDomainsByDomainIdZoneByZoneIdApplyChanges,
     postDomainsByDomainIdZoneByZoneIdPrepareChanges,
@@ -35,7 +36,7 @@ import {
     postDomainsByDomainIdZoneByZoneIdRecordsDelete,
     patchDomainsByDomainIdZoneByZoneIdRecords,
 } from "$lib/api-base/sdk.gen";
-import type { HappydnsService } from "$lib/api-base/types.gen";
+import type { HappydnsImportProgressSnapshot, HappydnsService } from "$lib/api-base/types.gen";
 import { printRR } from "$lib/dns";
 import type { dnsRR } from "$lib/dns_rr";
 import type { Correction, FullCorrection } from "$lib/model/correction";
@@ -65,6 +66,20 @@ export async function retrieveZone(domain: Domain): Promise<ZoneMeta> {
             path: { domainId: domain.id },
         }),
     );
+}
+
+export type RetrieveZoneProgress = HappydnsImportProgressSnapshot;
+
+// getRetrieveZoneProgress tells how far the retrieval of the zone in flight
+// is, null when none is.
+export async function getRetrieveZoneProgress(domain: Domain): Promise<RetrieveZoneProgress | null> {
+    const res = await getDomainsByDomainIdRetrieveZone({
+        path: { domainId: domain.id },
+    });
+    if (res.response?.status === 204) {
+        return null;
+    }
+    return unwrapSdkResponse(res) as RetrieveZoneProgress;
 }
 
 export async function applyZone(
