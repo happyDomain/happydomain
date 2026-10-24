@@ -22,9 +22,7 @@
 package usecase
 
 import (
-	"errors"
 	"fmt"
-	"log"
 
 	"git.happydns.org/happyDomain/model"
 )
@@ -37,28 +35,12 @@ func (tu *tidyUpUsecase) TidyNotificationChannels(dropInvalid bool) error {
 		return err
 	}
 
-	var orphans []happydns.Identifier
-	err = iterateTidy(iter, dropInvalid, func(ch *happydns.NotificationChannel) error {
-		_, err := tu.store.GetUser(ch.UserId)
-		if errors.Is(err, happydns.ErrUserNotFound) {
-			orphans = append(orphans, ch.Id)
-			return nil
-		}
-		return err
-	})
-	iter.Close()
-	if err != nil {
-		return err
-	}
-
-	for _, id := range orphans {
-		log.Printf("Deleting orphan notification channel %s (user not found)", id.String())
-		if err := tu.store.DeleteChannel(id); err != nil && !errors.Is(err, happydns.ErrNotificationChannelNotFound) {
-			return fmt.Errorf("unable to delete orphan notification channel %s: %w", id.String(), err)
-		}
-	}
-
-	return nil
+	return tidyUserOrphans(tu, iter, dropInvalid,
+		func(ch *happydns.NotificationChannel) happydns.Identifier { return ch.UserId },
+		func(ch *happydns.NotificationChannel) string { return "notification channel " + ch.Id.String() },
+		func(ch *happydns.NotificationChannel) error { return tu.store.DeleteChannel(ch.Id) },
+		happydns.ErrNotificationChannelNotFound,
+	)
 }
 
 // TidyNotificationPreferences deletes the notification preferences whose user
@@ -69,28 +51,14 @@ func (tu *tidyUpUsecase) TidyNotificationPreferences(dropInvalid bool) error {
 		return err
 	}
 
-	var orphans []happydns.Identifier
-	err = iterateTidy(iter, dropInvalid, func(pref *happydns.NotificationPreference) error {
-		_, err := tu.store.GetUser(pref.UserId)
-		if errors.Is(err, happydns.ErrUserNotFound) {
-			orphans = append(orphans, pref.Id)
-			return nil
-		}
-		return err
-	})
-	iter.Close()
-	if err != nil {
-		return err
-	}
-
-	for _, id := range orphans {
-		log.Printf("Deleting orphan notification preference %s (user not found)", id.String())
-		if err := tu.store.DeletePreference(id); err != nil && !errors.Is(err, happydns.ErrNotificationPreferenceNotFound) {
-			return fmt.Errorf("unable to delete orphan notification preference %s: %w", id.String(), err)
-		}
-	}
-
-	return nil
+	return tidyUserOrphans(tu, iter, dropInvalid,
+		func(pref *happydns.NotificationPreference) happydns.Identifier { return pref.UserId },
+		func(pref *happydns.NotificationPreference) string {
+			return "notification preference " + pref.Id.String()
+		},
+		func(pref *happydns.NotificationPreference) error { return tu.store.DeletePreference(pref.Id) },
+		happydns.ErrNotificationPreferenceNotFound,
+	)
 }
 
 // TidyNotificationStates deletes the notification states whose user no longer
@@ -101,28 +69,16 @@ func (tu *tidyUpUsecase) TidyNotificationStates(dropInvalid bool) error {
 		return err
 	}
 
-	var orphans []*happydns.NotificationState
-	err = iterateTidy(iter, dropInvalid, func(state *happydns.NotificationState) error {
-		_, err := tu.store.GetUser(state.UserId)
-		if errors.Is(err, happydns.ErrUserNotFound) {
-			orphans = append(orphans, state)
-			return nil
-		}
-		return err
-	})
-	iter.Close()
-	if err != nil {
-		return err
-	}
-
-	for _, state := range orphans {
-		log.Printf("Deleting orphan notification state of %s for %s (user not found)", state.CheckerID, state.UserId.String())
-		if err := tu.store.DeleteState(state.CheckerID, state.Target, state.UserId); err != nil && !errors.Is(err, happydns.ErrNotificationStateNotFound) {
-			return fmt.Errorf("unable to delete orphan notification state of %s for %s: %w", state.CheckerID, state.UserId.String(), err)
-		}
-	}
-
-	return nil
+	return tidyUserOrphans(tu, iter, dropInvalid,
+		func(state *happydns.NotificationState) happydns.Identifier { return state.UserId },
+		func(state *happydns.NotificationState) string {
+			return fmt.Sprintf("notification state of %s for %s", state.CheckerID, state.UserId.String())
+		},
+		func(state *happydns.NotificationState) error {
+			return tu.store.DeleteState(state.CheckerID, state.Target, state.UserId)
+		},
+		happydns.ErrNotificationStateNotFound,
+	)
 }
 
 // TidyNotificationRecords deletes the notification records whose user no
@@ -133,26 +89,10 @@ func (tu *tidyUpUsecase) TidyNotificationRecords(dropInvalid bool) error {
 		return err
 	}
 
-	var orphans []happydns.Identifier
-	err = iterateTidy(iter, dropInvalid, func(rec *happydns.NotificationRecord) error {
-		_, err := tu.store.GetUser(rec.UserId)
-		if errors.Is(err, happydns.ErrUserNotFound) {
-			orphans = append(orphans, rec.Id)
-			return nil
-		}
-		return err
-	})
-	iter.Close()
-	if err != nil {
-		return err
-	}
-
-	for _, id := range orphans {
-		log.Printf("Deleting orphan notification record %s (user not found)", id.String())
-		if err := tu.store.DeleteRecord(id); err != nil {
-			return fmt.Errorf("unable to delete orphan notification record %s: %w", id.String(), err)
-		}
-	}
-
-	return nil
+	return tidyUserOrphans(tu, iter, dropInvalid,
+		func(rec *happydns.NotificationRecord) happydns.Identifier { return rec.UserId },
+		func(rec *happydns.NotificationRecord) string { return "notification record " + rec.Id.String() },
+		func(rec *happydns.NotificationRecord) error { return tu.store.DeleteRecord(rec.Id) },
+		nil,
+	)
 }

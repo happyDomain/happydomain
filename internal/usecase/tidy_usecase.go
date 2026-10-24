@@ -26,6 +26,8 @@
 package usecase
 
 import (
+	"errors"
+	"fmt"
 	"log"
 
 	"git.happydns.org/happyDomain/internal/storage"
@@ -86,6 +88,35 @@ func iterateTidy[T any](iter happydns.Iterator[T], dropInvalid bool, handle func
 		}
 	}
 	return iter.Err()
+}
+
+// tidyUserOrphans deletes, with remove, the items of iter whose user, told by
+// userOf, no longer exists. describe names an item in the logs. A removal
+// failing with notFound, when not nil, is ignored: the item is already gone.
+// iter is closed before anything is deleted.
+func tidyUserOrphans[T any](tu *tidyUpUsecase, iter happydns.Iterator[T], dropInvalid bool, userOf func(*T) happydns.Identifier, describe func(*T) string, remove func(*T) error, notFound error) error {
+	var orphans []*T
+	err := iterateTidy(iter, dropInvalid, func(item *T) error {
+		_, err := tu.store.GetUser(userOf(item))
+		if errors.Is(err, happydns.ErrUserNotFound) {
+			orphans = append(orphans, item)
+			return nil
+		}
+		return err
+	})
+	iter.Close()
+	if err != nil {
+		return err
+	}
+
+	for _, item := range orphans {
+		log.Printf("Deleting orphan %s (user not found)", describe(item))
+		if err := remove(item); err != nil && (notFound == nil || !errors.Is(err, notFound)) {
+			return fmt.Errorf("unable to delete orphan %s: %w", describe(item), err)
+		}
+	}
+
+	return nil
 }
 
 func (tu *tidyUpUsecase) TidyAll(dropInvalid bool) error {
