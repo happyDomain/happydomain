@@ -25,7 +25,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sync"
 	"time"
 
 	dangling "git.happydns.org/checker-dangling/contract"
@@ -73,7 +72,11 @@ type ExternalWhoisFacts struct {
 // DiscoveryEntries and publishes one WHOIS fact set per registrable
 // domain referenced by those entries. Two entries pointing at the
 // same registrable share one lookup.
-type externalWhoisProvider struct{}
+type externalWhoisProvider struct {
+	// getInfo looks a registrable domain up; domaininfo.GetDomainInfo
+	// when nil.
+	getInfo domaininfo.Getter
+}
 
 func (p *externalWhoisProvider) Key() happydns.ObservationKey {
 	return ObservationKeyExternalWhois
@@ -82,10 +85,9 @@ func (p *externalWhoisProvider) Key() happydns.ObservationKey {
 func (p *externalWhoisProvider) Collect(ctx context.Context, opts happydns.CheckerOptions) (any, error) {
 	raw, _ := sdk.GetOption[[]sdk.DiscoveryEntry](opts, "discovery_entries")
 
-	jobs := make([]rdapJob, 0, len(raw))
-	// Cache one job per (Ref, registrable) pair so we still produce a
-	// per-Ref entry in Facts even when several Refs share the same
-	// registrable (we resolve the registrable once below).
+	type job struct{ ref, registrable string }
+	jobs := make([]job, 0, len(raw))
+	registrables := make([]string, 0, len(raw))
 	for _, e := range raw {
 		if e.Type != dangling.ExternalTargetType {
 			continue
@@ -97,46 +99,23 @@ func (p *externalWhoisProvider) Collect(ctx context.Context, opts happydns.Check
 		if t.Registrable == "" {
 			continue
 		}
-		jobs = append(jobs, rdapJob{ref: e.Ref, registrable: t.Registrable})
+		jobs = append(jobs, job{ref: e.Ref, registrable: t.Registrable})
+		registrables = append(registrables, t.Registrable)
 	}
 
-	if len(jobs) == 0 {
-		return &ExternalWhoisData{
-			Facts:       map[string]ExternalWhoisFacts{},
-			CollectedAt: time.Now().UTC(),
-		}, nil
+	// Several Refs sharing a registrable share its lookup, and a single
+	// failed lookup is captured in its facts rather than failing the
+	// whole collection.
+	getInfo := p.getInfo
+	if getInfo == nil {
+		getInfo = domaininfo.GetDomainInfo
 	}
-
-	// Resolve unique registrables once, reuse the result for every Ref.
-	cache := map[string]ExternalWhoisFacts{}
-	var cacheMu sync.Mutex
-	var wg sync.WaitGroup
-	sem := make(chan struct{}, maxConcurrentRDAP)
-
-	uniq := uniqueRegistrables(jobs)
-dispatch:
-	for _, reg := range uniq {
-		select {
-		case sem <- struct{}{}:
-		case <-ctx.Done():
-			break dispatch
-		}
-		wg.Add(1)
-		go func(reg string) {
-			defer wg.Done()
-			defer func() { <-sem }()
-			facts := lookupRegistrable(ctx, reg)
-			cacheMu.Lock()
-			cache[reg] = facts
-			cacheMu.Unlock()
-		}(reg)
-	}
-	wg.Wait()
+	results := domaininfo.LookupMany(ctx, getInfo, registrables, maxConcurrentRDAP)
 
 	out := make(map[string]ExternalWhoisFacts, len(jobs))
 	for _, j := range jobs {
-		if f, ok := cache[j.registrable]; ok {
-			out[j.ref] = f
+		if r, ok := results[j.registrable]; ok {
+			out[j.ref] = registrableFacts(j.registrable, r)
 		}
 	}
 
@@ -146,42 +125,22 @@ dispatch:
 	}, nil
 }
 
-type rdapJob struct {
-	ref         string
-	registrable string
-}
-
-func uniqueRegistrables(jobs []rdapJob) []string {
-	seen := map[string]bool{}
-	out := make([]string, 0, len(jobs))
-	for _, j := range jobs {
-		if seen[j.registrable] {
-			continue
-		}
-		seen[j.registrable] = true
-		out = append(out, j.registrable)
-	}
-	return out
-}
-
-// lookupRegistrable wraps domaininfo.GetDomainInfo so a single failed
-// lookup is captured in ExternalWhoisFacts.Error instead of propagating
-// (we want partial results when most lookups succeed).
-func lookupRegistrable(ctx context.Context, registrable string) ExternalWhoisFacts {
+// registrableFacts turns the lookup of a registrable domain into the facts
+// published about it.
+func registrableFacts(registrable string, r domaininfo.Result) ExternalWhoisFacts {
 	out := ExternalWhoisFacts{Registrable: registrable}
-	info, err := domaininfo.GetDomainInfo(ctx, registrable)
-	if err != nil {
-		out.Error = err.Error()
+	if r.Err != nil {
+		out.Error = r.Err.Error()
 		return out
 	}
-	if info.ExpirationDate != nil {
-		out.ExpiryDate = *info.ExpirationDate
+	if r.Info.ExpirationDate != nil {
+		out.ExpiryDate = *r.Info.ExpirationDate
 	}
-	if info.CreationDate != nil {
-		out.CreationDate = *info.CreationDate
+	if r.Info.CreationDate != nil {
+		out.CreationDate = *r.Info.CreationDate
 	}
-	out.Registrar = info.Registrar
-	out.Status = info.Status
+	out.Registrar = r.Info.Registrar
+	out.Status = r.Info.Status
 	return out
 }
 
