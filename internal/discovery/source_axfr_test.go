@@ -26,6 +26,8 @@ import (
 	"net"
 	"testing"
 	"time"
+
+	"git.happydns.org/happyDomain/model"
 )
 
 func axfrTestZone(t *testing.T) *testZone {
@@ -151,5 +153,29 @@ func TestAXFRBoundByContext(t *testing.T) {
 	}
 	if elapsed := time.Since(start); elapsed > axfrTimeout/2 {
 		t.Errorf("the transfer took %s; want it cut at the end of the context", elapsed)
+	}
+}
+
+func TestAXFRReportsProgress(t *testing.T) {
+	// Two servers refusing the connection.
+	var servers []string
+	for range 2 {
+		ln, err := net.Listen("tcp", "127.0.0.1:0")
+		if err != nil {
+			t.Fatalf("listen: %v", err)
+		}
+		servers = append(servers, ln.Addr().String())
+		ln.Close()
+	}
+
+	progress := happydns.NewImportProgress()
+	progress.SetStep(happydns.ImportStepTransfer, "axfr", 10, 30)
+	ctx := happydns.WithImportProgress(context.Background(), progress)
+
+	if rrs, _ := (AXFRSource{}).Records(ctx, Target{Domain: "example.com.", Authoritative: servers}); rrs != nil {
+		t.Fatalf("a refused transfer handed %d records", len(rrs))
+	}
+	if s := progress.Snapshot(); s.Percent != 30 {
+		t.Errorf("all the servers tried put the progress at %d%%, want the end of the step at 30%%", s.Percent)
 	}
 }

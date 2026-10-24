@@ -28,6 +28,8 @@ import (
 	"time"
 
 	"github.com/miekg/dns"
+
+	"git.happydns.org/happyDomain/model"
 )
 
 // axfrTimeout bounds each step of a zone transfer: the connection, then
@@ -71,7 +73,8 @@ func (AXFRSource) Discover(ctx context.Context, t Target) ([]Name, error) {
 // not even accepting the connection, are not an error: that is what they
 // usually do.
 func (AXFRSource) Records(ctx context.Context, t Target) ([]dns.RR, error) {
-	for _, server := range t.Authoritative {
+	progress := happydns.ImportProgressFrom(ctx)
+	for i, server := range t.Authoritative {
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
@@ -79,6 +82,7 @@ func (AXFRSource) Records(ctx context.Context, t Target) ([]dns.RR, error) {
 		if rrs, err := transfer(ctx, t.Domain, server); err == nil {
 			return rrs, nil
 		}
+		progress.Advance(float64(i+1) / float64(len(t.Authoritative)))
 	}
 
 	return nil, nil

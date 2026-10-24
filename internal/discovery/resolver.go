@@ -192,8 +192,24 @@ func Resolve(ctx context.Context, domain string, known []string, sources []NameS
 		tcp:     &dns.Client{Net: "tcp", Timeout: opts.QueryTimeout},
 		seen:    map[string]bool{},
 		records: map[string]dns.RR{},
+
+		progress: happydns.ImportProgressFrom(ctx),
 	}
 
+	if e.progress != nil {
+		stop := e.reportCounts()
+		defer stop()
+	}
+
+	var recordSources []RecordSource
+	for _, source := range sources {
+		if rs, ok := source.(RecordSource); ok {
+			recordSources = append(recordSources, rs)
+		}
+	}
+	bands := planBands(len(recordSources) > 0)
+
+	e.progress.SetStep(happydns.ImportStepLocating, "", bands.locating.from, bands.locating.to)
 	e.servers, err = e.locate(ctx)
 	if err != nil {
 		return nil, false, err
@@ -216,15 +232,12 @@ func Resolve(ctx context.Context, domain string, known []string, sources []NameS
 	}
 
 	// A source handing the whole zone spares the exploration.
-	for _, source := range sources {
-		rs, ok := source.(RecordSource)
-		if !ok {
-			continue
-		}
-
+	for i, rs := range recordSources {
+		b := bands.transfer.share(i, len(recordSources))
+		e.progress.SetStep(happydns.ImportStepTransfer, rs.ID(), b.from, b.to)
 		rrs, err := rs.Records(ctx, target)
 		if err != nil {
-			log.Printf("discovery: %s: source %s: %s", domain, source.ID(), err)
+			log.Printf("discovery: %s: source %s: %s", domain, rs.ID(), err)
 		}
 		if len(rrs) > 0 {
 			for _, rr := range rrs {
@@ -240,15 +253,19 @@ func Resolve(ctx context.Context, domain string, known []string, sources []NameS
 	// The apex comes first, then the known names: should the budget run
 	// out, the names already in the zone are the ones not to lose. A
 	// wildcard never covers the apex, so it is explored before the probe.
+	e.progress.SetStep(happydns.ImportStepExploring, "", bands.apex.from, bands.apex.to)
 	names := e.exploreAll(ctx, e.unseen([]Name{{FQDN: domain, Sources: []string{"apex"}}}))
 
 	e.probeWildcard(ctx)
 
-	for _, source := range append([]NameSource{KnownSource{}}, sources...) {
+	nameSources := append([]NameSource{KnownSource{}}, sources...)
+	for i, source := range nameSources {
 		var (
 			found []Name
 			err   error
 		)
+		b := bands.collecting.share(i, len(nameSources))
+		e.progress.SetStep(happydns.ImportStepCollecting, source.ID(), b.from, b.to)
 		if es, ok := source.(ExhaustiveSource); ok {
 			found, complete, err = es.DiscoverAll(ctx, target)
 		} else {
@@ -267,8 +284,13 @@ func Resolve(ctx context.Context, domain string, known []string, sources []NameS
 
 	names = append(names, e.exploreApexTypes(ctx, names)...)
 
+	e.progress.SetStep(happydns.ImportStepExploring, "", bands.exploring.from, bands.exploring.to)
 	round := e.unseen(names)
 	for depth := 0; len(round) > 0 && depth <= opts.MaxDepth && ctx.Err() == nil; depth++ {
+		if depth > 0 {
+			b := bands.following.share(depth-1, opts.MaxDepth)
+			e.progress.SetStep(happydns.ImportStepFollowing, "", b.from, b.to)
+		}
 		round = e.unseen(e.exploreAll(ctx, round))
 	}
 
@@ -324,6 +346,100 @@ type explorer struct {
 	// wildcard.
 	wildcard map[uint16]string
 	lastErr  error
+
+	// progress is told how far the exploration is, nil when nobody
+	// listens.
+	progress *happydns.ImportProgress
+}
+
+// band is the share of the whole import a stage of the exploration spans,
+// in percent.
+type band struct{ from, to float64 }
+
+// share returns the i-th of n equal shares of b.
+func (b band) share(i, n int) band {
+	width := (b.to - b.from) / float64(max(n, 1))
+	return band{b.from + width*float64(i), b.from + width*float64(i+1)}
+}
+
+// bands are the shares of the whole import the stages of the exploration
+// span.
+type bands struct {
+	locating, transfer, apex, collecting, exploring, following band
+}
+
+// planBands shares the retrieval of the zone among the stages of the
+// exploration, after how long they usually take. The transfer is left out
+// when no source hands the whole zone.
+func planBands(transfer bool) (b bands) {
+	stages := []struct {
+		weight float64
+		band   *band
+	}{
+		{5, &b.locating},
+		{10, &b.transfer},
+		{5, &b.apex},
+		{20, &b.collecting},
+		{45, &b.exploring},
+		{10, &b.following},
+	}
+	if !transfer {
+		stages[1].weight = 0
+	}
+
+	var total float64
+	for _, stage := range stages {
+		total += stage.weight
+	}
+
+	var at float64
+	for _, stage := range stages {
+		width := stage.weight * happydns.ImportRetrievedPercent / total
+		*stage.band = band{at, at + width}
+		at += width
+	}
+	return
+}
+
+// progressInterval is how often the numbers of records found and of
+// questions asked are reported, rather than on each of them.
+const progressInterval = 500 * time.Millisecond
+
+// reportCounts reports the numbers of records found and of questions asked
+// on e.progress, at each progressInterval until the returned function is
+// called, which reports them a last time.
+func (e *explorer) reportCounts() (stop func()) {
+	report := func() {
+		e.mu.Lock()
+		records := int64(len(e.records))
+		e.mu.Unlock()
+
+		// The questions over the budget are refused, not asked.
+		e.progress.SetCounts(records, min(e.queries.Load(), int64(e.opts.MaxQueries)))
+	}
+
+	done := make(chan struct{})
+	finished := make(chan struct{})
+	go func() {
+		defer close(finished)
+
+		ticker := time.NewTicker(progressInterval)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				report()
+			case <-done:
+				return
+			}
+		}
+	}()
+
+	return func() {
+		close(done)
+		<-finished
+		report()
+	}
 }
 
 // recursiveResolver returns the "ip:port" of the recursive resolver to use.
@@ -537,8 +653,11 @@ func (e *explorer) exploreAll(ctx context.Context, names []Name) []Name {
 		mu      sync.Mutex
 		targets []Name
 		sem     = make(chan struct{}, e.opts.Concurrency)
+
+		explored atomic.Int64
 	)
 
+	e.progress.AddTotal(int64(len(names)))
 	for _, name := range names {
 		select {
 		case sem <- struct{}{}:
@@ -553,6 +672,8 @@ func (e *explorer) exploreAll(ctx context.Context, names []Name) []Name {
 			defer func() { <-sem }()
 
 			found := e.explore(ctx, name)
+			e.progress.AddDone(1)
+			e.progress.Advance(float64(explored.Add(1)) / float64(len(names)))
 
 			mu.Lock()
 			targets = append(targets, found...)
