@@ -56,9 +56,12 @@ func TestExploreAXFR(t *testing.T) {
 	zone.allowAXFR = true
 	opts := zone.serve(t)
 
-	records, err := Explore(context.Background(), "example.com.", nil, []NameSource{AXFRSource{}}, opts)
+	records, complete, err := Explore(context.Background(), "example.com.", nil, []NameSource{AXFRSource{}}, opts)
 	if err != nil {
 		t.Fatalf("Explore: %v", err)
+	}
+	if !complete {
+		t.Error("Explore tells a transferred zone is not complete")
 	}
 	got := recordStrings(records)
 
@@ -77,9 +80,12 @@ func TestExploreAXFRRefused(t *testing.T) {
 	zone := axfrTestZone(t)
 	opts := zone.serve(t)
 
-	records, err := Explore(context.Background(), "example.com.", nil, []NameSource{AXFRSource{}}, opts)
+	records, complete, err := Explore(context.Background(), "example.com.", nil, []NameSource{AXFRSource{}}, opts)
 	if err != nil {
 		t.Fatalf("Explore: %v", err)
+	}
+	if complete {
+		t.Error("Explore tells a zone explored without transfer nor walk is complete")
 	}
 	got := recordStrings(records)
 
@@ -102,7 +108,7 @@ func TestExploreAXFROutOfZone(t *testing.T) {
 	zone.allowAXFR = true
 	opts := zone.serve(t)
 
-	records, err := Explore(context.Background(), "example.com.", nil, []NameSource{AXFRSource{}}, opts)
+	records, _, err := Explore(context.Background(), "example.com.", nil, []NameSource{AXFRSource{}}, opts)
 	if err != nil {
 		t.Fatalf("Explore: %v", err)
 	}
@@ -129,9 +135,12 @@ func TestExploreAXFRNothingInZone(t *testing.T) {
 	zone := axfrTestZone(t)
 	opts := zone.serve(t)
 
-	records, err := Explore(context.Background(), "example.com.", nil, []NameSource{outOfZoneSource{}}, opts)
+	records, complete, err := Explore(context.Background(), "example.com.", nil, []NameSource{outOfZoneSource{}}, opts)
 	if err != nil {
 		t.Fatalf("Explore: %v", err)
+	}
+	if complete {
+		t.Error("Explore tells a zone is complete from a transfer of another zone")
 	}
 
 	// The exploration takes over.

@@ -163,12 +163,12 @@ func TestPublicDNSZoneRecords(t *testing.T) {
 		err error
 	)
 	record, _ := dns.NewRR("example.com. 300 IN A 192.0.2.1")
-	defer func(orig func(context.Context, string, []string, []discovery.NameSource, discovery.Options) ([]happydns.Record, error)) {
+	defer func(orig func(context.Context, string, []string, []discovery.NameSource, discovery.Options) ([]happydns.Record, bool, error)) {
 		explore = orig
 	}(explore)
-	explore = func(ctx context.Context, domain string, known []string, sources []discovery.NameSource, opts discovery.Options) ([]happydns.Record, error) {
+	explore = func(ctx context.Context, domain string, known []string, sources []discovery.NameSource, opts discovery.Options) ([]happydns.Record, bool, error) {
 		gotCtx, gotDomain, gotKnown, gotSources, gotOpts = ctx, domain, known, sources, opts
-		return []happydns.Record{record}, err
+		return []happydns.Record{record}, true, err
 	}
 
 	guard, _ := netguard.New("test", "-test-allowed-target", nil)

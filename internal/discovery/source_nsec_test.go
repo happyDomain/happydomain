@@ -286,6 +286,20 @@ func TestNSECWalkDelegation(t *testing.T) {
 	}
 }
 
+func TestExploreNSECFailedName(t *testing.T) {
+	z := nsecTestZone(t)
+	z.servfail = map[string]bool{"host.example.com.": true}
+	opts := z.serve(t)
+
+	_, complete, err := Explore(context.Background(), "example.com.", nil, []NameSource{NSECSource{}}, opts)
+	if err != nil {
+		t.Fatalf("Explore: %v", err)
+	}
+	if complete {
+		t.Error("Explore tells a zone is complete while a name of its chain got no answer")
+	}
+}
+
 func TestNSECWalkSecureDelegation(t *testing.T) {
 	z := newTestZone(t, "example.com.",
 		"example.com. 3600 IN NS ns1.example.com.",
@@ -373,9 +387,12 @@ func TestNSECWalkChildOnSameServer(t *testing.T) {
 			})))
 			opts.QueriesPerSecond = -1
 
-			records, err := Explore(context.Background(), "example.com.", nil, []NameSource{NSECSource{}}, opts)
+			records, complete, err := Explore(context.Background(), "example.com.", nil, []NameSource{NSECSource{}}, opts)
 			if err != nil {
 				t.Fatalf("Explore: %v", err)
+			}
+			if !complete {
+				t.Error("Explore tells a zone whose NSEC chain was walked is not complete")
 			}
 			got := recordStrings(records)
 
@@ -516,9 +533,12 @@ func TestExploreNSEC(t *testing.T) {
 	z.dnssec.nsec = true
 	opts := z.serve(t)
 
-	records, err := Explore(context.Background(), "example.com.", []string{"host"}, []NameSource{NSECSource{}, staticSource{"guess.example.com."}}, opts)
+	records, complete, err := Explore(context.Background(), "example.com.", []string{"host"}, []NameSource{NSECSource{}, staticSource{"guess.example.com."}}, opts)
 	if err != nil {
 		t.Fatalf("Explore: %v", err)
+	}
+	if !complete {
+		t.Error("Explore tells a zone whose NSEC chain was walked is not complete")
 	}
 	got := recordStrings(records)
 
@@ -546,12 +566,66 @@ func TestExploreNSECIncomplete(t *testing.T) {
 	z.dnssec = testDNSSEC{nsec3: true}
 	opts := z.serve(t)
 
-	if _, err := Explore(context.Background(), "example.com.", nil, []NameSource{NSECSource{}, staticSource{"guess.example.com."}}, opts); err != nil {
+	_, complete, err := Explore(context.Background(), "example.com.", nil, []NameSource{NSECSource{}, staticSource{"guess.example.com."}}, opts)
+	if err != nil {
 		t.Fatalf("Explore: %v", err)
+	}
+	if complete {
+		t.Error("Explore tells a zone is complete after a walk that could not be completed")
 	}
 
 	if !z.wasAsked("guess.example.com.") {
 		t.Error("the guesses were not asked about after a walk that could not be completed")
+	}
+}
+
+func TestExploreNSECCutShort(t *testing.T) {
+	z := nsecTestZone(t)
+	opts := z.serve(t)
+
+	_, complete, err := Explore(context.Background(), "example.com.", nil, []NameSource{NSECSource{}}, opts)
+	if err != nil || !complete {
+		t.Fatalf("Explore = %v, %v; want a complete zone", complete, err)
+	}
+	cost := z.questions.Swap(0)
+	// Locating the servers is not on the budget.
+	if _, err := Locate(context.Background(), "example.com.", opts); err != nil {
+		t.Fatalf("Locate: %v", err)
+	}
+	cost -= z.questions.Swap(0)
+
+	// The walk comes before the exploration of the names it found: one
+	// question short, the walk completes but the exploration does not.
+	opts.MaxQueries = int(cost) - 1
+	_, complete, err = Explore(context.Background(), "example.com.", nil, []NameSource{NSECSource{}}, opts)
+	if err != nil {
+		t.Fatalf("Explore: %v", err)
+	}
+	if complete {
+		t.Errorf("Explore tells a zone is complete with a budget of %d questions out of the %d its exploration takes", opts.MaxQueries, cost)
+	}
+}
+
+func TestExploreNSECCanceledDuringExploration(t *testing.T) {
+	z := nsecTestZone(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	// The walk completes, then the context ends on the first question of
+	// the exploration about a name it found.
+	opts := loopbackOptions(t, serveLocal(t, handlerFunc(func(w dns.ResponseWriter, req *dns.Msg) {
+		if q := req.Question[0]; q.Name == "host.example.com." && q.Qtype != dns.TypeNSEC {
+			cancel()
+		}
+		z.ServeDNS(w, req)
+	})))
+	opts.QueriesPerSecond = -1
+
+	_, complete, err := Explore(ctx, "example.com.", nil, []NameSource{NSECSource{}}, opts)
+	if err != nil {
+		t.Fatalf("Explore: %v", err)
+	}
+	if complete {
+		t.Error("Explore tells a zone is complete while its exploration was canceled")
 	}
 }
 
@@ -606,7 +680,7 @@ func TestExploreNSECWildcard(t *testing.T) {
 	z.dnssec.nsec = true
 	opts := z.serve(t)
 
-	records, err := Explore(context.Background(), "example.com.", nil, []NameSource{NSECSource{}}, opts)
+	records, _, err := Explore(context.Background(), "example.com.", nil, []NameSource{NSECSource{}}, opts)
 	if err != nil {
 		t.Fatalf("Explore: %v", err)
 	}

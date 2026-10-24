@@ -71,7 +71,11 @@ func Locate(ctx context.Context, domain string, opts Options) ([]string, error) 
 // The exploration is best effort: questions that fail, or that the budget
 // or the timeout leave unasked, are logged and skipped. An error is only
 // returned when nothing could be learned about the domain.
-func Explore(ctx context.Context, domain string, known []string, sources []NameSource, opts Options) ([]happydns.Record, error) {
+//
+// complete tells the records are the whole zone: a source handed it, or
+// listed every name and the exploration got an answer about all of them.
+// Otherwise the names nothing points to may be missing.
+func Explore(ctx context.Context, domain string, known []string, sources []NameSource, opts Options) (records []happydns.Record, complete bool, err error) {
 	opts = opts.withDefaults()
 	domain = dns.CanonicalName(domain)
 
@@ -86,10 +90,9 @@ func Explore(ctx context.Context, domain string, known []string, sources []NameS
 		records: map[string]dns.RR{},
 	}
 
-	var err error
 	e.servers, err = e.findAuthoritative(ctx)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	e.failures = map[string]*atomic.Int32{}
 	e.pace = map[string]*rate.Limiter{}
@@ -113,7 +116,7 @@ func Explore(ctx context.Context, domain string, known []string, sources []NameS
 
 	// A source handing the whole zone spares the exploration.
 	if e.transferZone(ctx, target, sources) {
-		return e.result(), nil
+		return e.result(), true, nil
 	}
 
 	// The apex comes first, then the known names: should the budget run
@@ -123,7 +126,8 @@ func Explore(ctx context.Context, domain string, known []string, sources []NameS
 
 	names = append(names, e.probeWildcard(ctx)...)
 
-	names = append(names, e.collectNames(ctx, target, sources)...)
+	found, complete := e.collectNames(ctx, target, sources)
+	names = append(names, found...)
 
 	names = append(names, e.exploreApexTypes(ctx, names)...)
 
@@ -134,16 +138,22 @@ func Explore(ctx context.Context, domain string, known []string, sources []NameS
 
 	if len(e.records) == 0 {
 		if e.lastErr != nil {
-			return nil, fmt.Errorf("unable to learn anything about %s: %w", domain, e.lastErr)
+			return nil, false, fmt.Errorf("unable to learn anything about %s: %w", domain, e.lastErr)
 		}
-		return nil, fmt.Errorf("the authoritative servers of %s answered no record", domain)
+		return nil, false, fmt.Errorf("the authoritative servers of %s answered no record", domain)
 	}
 
 	if ctx.Err() != nil || e.queries.Load() > int64(opts.MaxQueries) {
 		log.Printf("discovery: %s: exploration cut short after %d questions", domain, e.queries.Load())
+		complete = false
 	}
 
-	return e.result(), nil
+	// A name every server failed to answer about may hide records.
+	if e.lastErr != nil {
+		complete = false
+	}
+
+	return e.result(), complete, nil
 }
 
 // explorer holds the state of one exploration.
@@ -210,14 +220,13 @@ func (e *explorer) transferZone(ctx context.Context, target Target, sources []Na
 }
 
 // collectNames asks the name sources, the known names first, for the
-// names of the zone. A source listing every name spares the sources after
-// it.
-func (e *explorer) collectNames(ctx context.Context, target Target, sources []NameSource) (names []Name) {
+// names of the zone. complete tells one of them listed every name, sparing
+// the sources after it.
+func (e *explorer) collectNames(ctx context.Context, target Target, sources []NameSource) (names []Name, complete bool) {
 	for _, source := range append([]NameSource{KnownSource{}}, sources...) {
 		var (
-			found    []Name
-			complete bool
-			err      error
+			found []Name
+			err   error
 		)
 		if es, ok := source.(ExhaustiveSource); ok {
 			found, complete, err = es.DiscoverAll(ctx, target)

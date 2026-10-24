@@ -76,7 +76,7 @@ func TestExploreWordlist(t *testing.T) {
 	)
 	opts := zone.serve(t)
 
-	records, err := Explore(context.Background(), "example.com.", nil, []NameSource{WellKnownSource{Extra: "custom"}, WordlistSource{}}, opts)
+	records, _, err := Explore(context.Background(), "example.com.", nil, []NameSource{WellKnownSource{Extra: "custom"}, WordlistSource{}}, opts)
 	if err != nil {
 		t.Fatalf("Explore: %v", err)
 	}
@@ -111,7 +111,7 @@ func TestExploreWordlistBudget(t *testing.T) {
 		t.Fatalf("the wordlist ends with %q; want bilbo, the name this test expects left out", last)
 	}
 
-	records, err := Explore(context.Background(), "example.com.", nil, []NameSource{WellKnownSource{}, WordlistSource{}}, opts)
+	records, _, err := Explore(context.Background(), "example.com.", nil, []NameSource{WellKnownSource{}, WordlistSource{}}, opts)
 	if err != nil {
 		t.Fatalf("Explore: %v", err)
 	}

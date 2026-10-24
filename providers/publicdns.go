@@ -110,7 +110,8 @@ func (a *publicDNSActuator) GetZoneRecords(domain string) ([]happydns.Record, er
 }
 
 func (a *publicDNSActuator) GetZoneRecordsWithContext(ctx context.Context, domain string, known []string) ([]happydns.Record, error) {
-	return explore(ctx, domain, known, a.sources, a.opts)
+	records, _, err := explore(ctx, domain, known, a.sources, a.opts)
+	return records, err
 }
 
 // TestDomainExistence only looks for the name servers of the domain: the

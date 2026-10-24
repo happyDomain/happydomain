@@ -169,7 +169,7 @@ func TestExploreTCPFallback(t *testing.T) {
 		zone.ServeDNS(w, req)
 	}))
 
-	records, err := Explore(context.Background(), "example.com.", []string{"big"}, nil, loopbackOptions(t, addr))
+	records, _, err := Explore(context.Background(), "example.com.", []string{"big"}, nil, loopbackOptions(t, addr))
 	if err != nil {
 		t.Fatalf("Explore: %v", err)
 	}
@@ -192,7 +192,7 @@ func TestExploreServerFailover(t *testing.T) {
 	var failed atomic.Int32
 	addr := serveLocal(t, zone, alsoOn{"127.0.0.2", answerWith(dns.RcodeServerFailure, &failed)})
 
-	records, err := Explore(context.Background(), "example.com.", []string{"www"}, nil, loopbackOptions(t, addr))
+	records, _, err := Explore(context.Background(), "example.com.", []string{"www"}, nil, loopbackOptions(t, addr))
 	if err != nil {
 		t.Fatalf("Explore: %v", err)
 	}
@@ -237,7 +237,7 @@ func TestExploreLameServer(t *testing.T) {
 				w.WriteMsg(m)
 			})})
 
-			records, err := Explore(context.Background(), "example.com.", known, nil, loopbackOptions(t, addr))
+			records, _, err := Explore(context.Background(), "example.com.", known, nil, loopbackOptions(t, addr))
 			if err != nil {
 				t.Fatalf("Explore: %v", err)
 			}
@@ -290,7 +290,7 @@ func TestExploreErrors(t *testing.T) {
 				opts = tc.opts(t, opts)
 			}
 
-			_, err := Explore(context.Background(), "example.com.", nil, nil, opts)
+			_, _, err := Explore(context.Background(), "example.com.", nil, nil, opts)
 			if err == nil || !strings.Contains(err.Error(), tc.want) {
 				t.Errorf("Explore = %v; want an error about %q", err, tc.want)
 			}
@@ -320,7 +320,7 @@ func TestExploreCanceledDuringExploration(t *testing.T) {
 	opts.Concurrency = 1
 
 	// The exploration cut short is no error: its records are kept.
-	if _, err := Explore(ctx, "example.com.", []string{"a", "b", "c"}, nil, opts); err != nil {
+	if _, _, err := Explore(ctx, "example.com.", []string{"a", "b", "c"}, nil, opts); err != nil {
 		t.Fatalf("Explore: %v", err)
 	}
 	if n := explored.Load(); n != 1 {
@@ -336,7 +336,7 @@ func TestExploreMixedNameServers(t *testing.T) {
 		"ns1.example.com. 300 IN A 127.0.0.1",
 	)
 
-	records, err := Explore(context.Background(), "example.com.", nil, nil, loopbackOptions(t, serveLocal(t, zone)))
+	records, _, err := Explore(context.Background(), "example.com.", nil, nil, loopbackOptions(t, serveLocal(t, zone)))
 	if err != nil {
 		t.Fatalf("Explore: %v", err)
 	}
@@ -359,7 +359,7 @@ func TestExploreNothingAnswered(t *testing.T) {
 		w.WriteMsg(m)
 	}))
 
-	_, err := Explore(context.Background(), "example.com.", nil, nil, loopbackOptions(t, addr))
+	_, _, err := Explore(context.Background(), "example.com.", nil, nil, loopbackOptions(t, addr))
 	if err == nil || !strings.Contains(err.Error(), "REFUSED") {
 		t.Errorf("Explore = %v; want the refusal of the servers", err)
 	}
@@ -376,7 +376,7 @@ func TestExploreBudgetKeepsApex(t *testing.T) {
 	opts := loopbackOptions(t, serveLocal(t, zone))
 	opts.MaxQueries = len(apexTypes)
 
-	records, err := Explore(context.Background(), "example.com.", []string{"www"}, nil, opts)
+	records, _, err := Explore(context.Background(), "example.com.", []string{"www"}, nil, opts)
 	if err != nil {
 		t.Fatalf("Explore: %v", err)
 	}
@@ -399,7 +399,7 @@ func TestExploreMaxDepth(t *testing.T) {
 	opts := loopbackOptions(t, serveLocal(t, zone))
 	opts.MaxDepth = 1
 
-	records, err := Explore(context.Background(), "example.com.", []string{"a"}, nil, opts)
+	records, _, err := Explore(context.Background(), "example.com.", []string{"a"}, nil, opts)
 	if err != nil {
 		t.Fatalf("Explore: %v", err)
 	}
@@ -464,7 +464,7 @@ func TestExploreSourceError(t *testing.T) {
 	)
 	opts := zone.serve(t)
 
-	records, err := Explore(context.Background(), "example.com.", nil, []NameSource{failingSource{"www.example.com."}}, opts)
+	records, _, err := Explore(context.Background(), "example.com.", nil, []NameSource{failingSource{"www.example.com."}}, opts)
 	if err != nil {
 		t.Fatalf("Explore: %v", err)
 	}
@@ -483,7 +483,7 @@ func TestExploreWildcardCNAME(t *testing.T) {
 	)
 	opts := zone.serve(t)
 
-	records, err := Explore(context.Background(), "example.com.", []string{"real", "ghost"}, nil, opts)
+	records, _, err := Explore(context.Background(), "example.com.", []string{"real", "ghost"}, nil, opts)
 	if err != nil {
 		t.Fatalf("Explore: %v", err)
 	}
@@ -552,7 +552,7 @@ func TestExploreDNAME(t *testing.T) {
 				zone.ServeDNS(w, req)
 			})))
 
-			records, err := Explore(context.Background(), "example.com.", tt.known, nil, opts)
+			records, _, err := Explore(context.Background(), "example.com.", tt.known, nil, opts)
 			if err != nil {
 				t.Fatalf("Explore: %v", err)
 			}
@@ -622,7 +622,7 @@ func TestExploreServerFailoverDemotes(t *testing.T) {
 
 	opts := loopbackOptions(t, addr)
 	opts.Concurrency = 1
-	if _, err := Explore(context.Background(), "example.com.", known, nil, opts); err != nil {
+	if _, _, err := Explore(context.Background(), "example.com.", known, nil, opts); err != nil {
 		t.Fatalf("Explore: %v", err)
 	}
 

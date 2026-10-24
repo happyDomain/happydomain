@@ -49,6 +49,8 @@ type testZone struct {
 	cuts []string
 	// allowAXFR lets anyone transfer the zone.
 	allowAXFR bool
+	// servfail are the names failing every question, but for their NSEC.
+	servfail map[string]bool
 
 	// questions counts the questions answered.
 	questions atomic.Int32
@@ -115,6 +117,11 @@ func (z *testZone) ServeDNS(w dns.ResponseWriter, req *dns.Msg) {
 	// reply carries the denial proofs.
 	defer z.proveDenial(m, name)
 	if z.answerNSEC(m, name, qtype) {
+		return
+	}
+
+	if z.servfail[name] {
+		m.Rcode = dns.RcodeServerFailure
 		return
 	}
 
@@ -269,7 +276,7 @@ func TestExplore(t *testing.T) {
 	)
 	opts := zone.serve(t)
 
-	records, err := Explore(context.Background(), "Example.com", []string{"_dmarc", "host.sub"}, []NameSource{staticSource{"www.example.com."}}, opts)
+	records, _, err := Explore(context.Background(), "Example.com", []string{"_dmarc", "host.sub"}, []NameSource{staticSource{"www.example.com."}}, opts)
 	if err != nil {
 		t.Fatalf("Explore: %v", err)
 	}
@@ -328,7 +335,7 @@ func TestExploreDelegationGlue(t *testing.T) {
 	})))
 	opts.QueriesPerSecond = -1
 
-	records, err := Explore(context.Background(), "example.com.", []string{"sub"}, nil, opts)
+	records, _, err := Explore(context.Background(), "example.com.", []string{"sub"}, nil, opts)
 	if err != nil {
 		t.Fatalf("Explore: %v", err)
 	}
@@ -383,7 +390,7 @@ func TestExploreChildOnSameServer(t *testing.T) {
 		}}, req)
 	})))
 
-	records, err := Explore(context.Background(), "example.com.", []string{"sub", "www.sub"}, nil, opts)
+	records, _, err := Explore(context.Background(), "example.com.", []string{"sub", "www.sub"}, nil, opts)
 	if err != nil {
 		t.Fatalf("Explore: %v", err)
 	}
@@ -416,7 +423,7 @@ func TestExploreWildcard(t *testing.T) {
 	)
 	opts := zone.serve(t)
 
-	records, err := Explore(context.Background(), "example.com.", []string{"real", "ghost"}, nil, opts)
+	records, _, err := Explore(context.Background(), "example.com.", []string{"real", "ghost"}, nil, opts)
 	if err != nil {
 		t.Fatalf("Explore: %v", err)
 	}
@@ -439,7 +446,7 @@ func TestExploreWildcardOwnAnswers(t *testing.T) {
 	)
 	opts := zone.serve(t)
 
-	records, err := Explore(context.Background(), "example.com.", []string{"real"}, nil, opts)
+	records, _, err := Explore(context.Background(), "example.com.", []string{"real"}, nil, opts)
 	if err != nil {
 		t.Fatalf("Explore: %v", err)
 	}
@@ -456,13 +463,13 @@ func TestExploreWildcardCost(t *testing.T) {
 	)
 	opts := zone.serve(t)
 
-	if _, err := Explore(context.Background(), "example.com.", nil, nil, opts); err != nil {
+	if _, _, err := Explore(context.Background(), "example.com.", nil, nil, opts); err != nil {
 		t.Fatalf("Explore: %v", err)
 	}
 	base := zone.questions.Swap(0)
 
 	ghosts := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"}
-	if _, err := Explore(context.Background(), "example.com.", ghosts, nil, opts); err != nil {
+	if _, _, err := Explore(context.Background(), "example.com.", ghosts, nil, opts); err != nil {
 		t.Fatalf("Explore: %v", err)
 	}
 	if cost := zone.questions.Load() - base; cost != int32(len(ghosts)) {
@@ -486,7 +493,7 @@ func TestExploreWildcardProbeLost(t *testing.T) {
 	})))
 	opts.QueryTimeout = 200 * time.Millisecond
 
-	records, err := Explore(context.Background(), "example.com.", []string{"ghost"}, nil, opts)
+	records, _, err := Explore(context.Background(), "example.com.", []string{"ghost"}, nil, opts)
 	if err != nil {
 		t.Fatalf("Explore: %v", err)
 	}
@@ -530,7 +537,7 @@ func TestExploreWildcardSigned(t *testing.T) {
 		}}, req)
 	})))
 
-	records, err := Explore(context.Background(), "example.com.", []string{"real", "ghost"}, nil, opts)
+	records, _, err := Explore(context.Background(), "example.com.", []string{"real", "ghost"}, nil, opts)
 	if err != nil {
 		t.Fatalf("Explore: %v", err)
 	}
@@ -552,7 +559,7 @@ func TestExploreBudget(t *testing.T) {
 	opts := zone.serve(t)
 	opts.MaxQueries = 1
 
-	records, err := Explore(context.Background(), "example.com.", nil, nil, opts)
+	records, _, err := Explore(context.Background(), "example.com.", nil, nil, opts)
 	if err != nil {
 		t.Fatalf("Explore: %v", err)
 	}
@@ -570,7 +577,7 @@ func TestExploreRefusesPrivateNameServers(t *testing.T) {
 	// address the name server resolves to.
 	opts := zone.serve(t)
 
-	_, err := Explore(context.Background(), "example.com.", nil, nil, opts)
+	_, _, err := Explore(context.Background(), "example.com.", nil, nil, opts)
 	if err == nil {
 		t.Fatal("Explore reached a name server on loopback without the guard allowing it")
 	}
@@ -626,7 +633,7 @@ func TestExplorePace(t *testing.T) {
 	}
 
 	start := time.Now()
-	if _, err := Explore(context.Background(), "example.com.", nil, []NameSource{names}, opts); err != nil {
+	if _, _, err := Explore(context.Background(), "example.com.", nil, []NameSource{names}, opts); err != nil {
 		t.Fatalf("Explore: %v", err)
 	}
 
