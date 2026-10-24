@@ -223,7 +223,7 @@
                                     </div>
                                     <h5 class="fw-bold">
                                         {$t("common.records", {
-                                            n: 0,
+                                            count: 0,
                                             type: question ? question.type : "-",
                                         })}
                                     </h5>
@@ -279,7 +279,7 @@
                                         >
                                         <span class="fw-semibold">
                                             {$t("common.records", {
-                                                n: rrs.length,
+                                                count: rrs.length,
                                                 type: nsrrtype(type),
                                             })}
                                         </span>

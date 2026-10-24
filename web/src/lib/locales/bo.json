@@ -69,7 +69,7 @@
             "end": "།"
         },
         "help": "རོགས་རམ།",
-        "records": "{{n:eq; 0:{{type}} 记录 མེད; 1:{{type}} 记录 གཅིག; default:{{type}} 记录}}"
+        "records": "{{count:eq; 0:{{type}} 记录 མེད; 1:{{type}} 记录 གཅིག; default:{{type}} 记录}}"
     },
     "domains": {
         "title": "ཁྱེད་ཀྱི་ 域名",

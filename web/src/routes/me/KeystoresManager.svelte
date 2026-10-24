@@ -237,7 +237,7 @@
                         {#if objects.length === 0}
                             {$t("keystores.unused")}
                         {:else}
-                            {$t("keystores.used-by", { n: objects.length })}
+                            {$t("keystores.used-by", { count: objects.length })}
                             {objects.map((o) => o.label || o.objectId).join(", ")}
                         {/if}
                     </div>

@@ -65,7 +65,7 @@
             "end": "!"
         },
         "help": "Hilfe!",
-        "records": "{{n:eq; 0:kein {{type}} Eintrag; 1:{{type}} Eintrag; default:{{type}} Einträge}}"
+        "records": "{{count:eq; 0:kein {{type}} Eintrag; 1:{{type}} Eintrag; default:{{type}} Einträge}}"
     },
     "domains": {
         "kind": "Domain",

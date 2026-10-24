@@ -39,7 +39,6 @@ interface Params {
     forge?: string;
     "security-operations"?: string;
     "first-step"?: string;
-    n?: number;
     count?: number;
     min?: number;
     max?: number;

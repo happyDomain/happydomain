@@ -72,7 +72,7 @@
             "end": "!"
         },
         "help": "Help!",
-        "records": "{{n:eq; 0:no {{type}} record; 1:{{type}} record; default:{{type}} records}}"
+        "records": "{{count:eq; 0:no {{type}} record; 1:{{type}} record; default:{{type}} records}}"
     },
     "domains": {
         "title": "Your domains",
@@ -937,7 +937,7 @@
         "needs-owner-help": "This keystore does not open without you: notifications and scheduled checks, which run in the background, cannot use it.",
         "unavailable": "Unavailable on this instance",
         "unused": "Holds no credential.",
-        "used-by": "{{n:eq; 1:Holds the credentials of:; default:Holds the credentials of {{n}} objects:}}",
+        "used-by": "{{count:eq; 1:Holds the credentials of; default:Holds the credentials of {{count}} objects}}:",
         "migrate": "Migrate",
         "update": "Update",
         "updated": "Keystore updated.",

@@ -69,7 +69,7 @@
             "end": "!"
         },
         "help": "Tusa!",
-        "records": "{{n:eq; 0:{{type}} 记录 akū; 1:{{type}} 记录 emke; default:{{type}} 记录}}"
+        "records": "{{count:eq; 0:{{type}} 记录 akū; 1:{{type}} 记录 emke; default:{{type}} 记录}}"
     },
     "domains": {
         "title": "Sini 域名",

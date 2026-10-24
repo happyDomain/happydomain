@@ -65,7 +65,7 @@
             "end": "में!"
         },
         "help": "मदद करें!",
-        "records": "{{n:eq; 0:कोई {{type}} रिकॉर्ड नहीं; 1:{{type}} रिकॉर्ड; default:{{type}} रिकॉर्ड्स}}"
+        "records": "{{count:eq; 0:कोई {{type}} रिकॉर्ड नहीं; 1:{{type}} रिकॉर्ड; default:{{type}} रिकॉर्ड्स}}"
     },
     "domains": {
         "kind": "डोमेन",

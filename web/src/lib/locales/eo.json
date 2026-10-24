@@ -69,7 +69,7 @@
             "end": "!"
         },
         "help": "Helpo!",
-        "records": "{{n:eq; 0:neniu {{type}} rikordo; 1:{{type}} rikordo; default:{{type}} rikordoj}}"
+        "records": "{{count:eq; 0:neniu {{type}} rikordo; 1:{{type}} rikordo; default:{{type}} rikordoj}}"
     },
     "domains": {
         "title": "Viaj domajnoj",

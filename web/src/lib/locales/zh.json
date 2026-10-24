@@ -69,7 +69,7 @@
             "end": "！"
         },
         "help": "求助",
-        "records": "{{n:eq; 0:暂无 {{type}} 记录; 1:1 条 {{type}} 记录; default:{{type}} 记录}}"
+        "records": "{{count:eq; 0:暂无 {{type}} 记录; 1:1 条 {{type}} 记录; default:{{type}} 记录}}"
     },
     "domains": {
         "title": "我的域名",
