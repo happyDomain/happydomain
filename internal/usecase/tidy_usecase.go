@@ -133,6 +133,7 @@ func (tu *tidyUpUsecase) TidyAll(dropInvalid bool) error {
 		tu.TidyDomains,
 		tu.TidyZones,
 		tu.TidyDomainLogs,
+		tu.TidyDomainWatches,
 		tu.TidyCheckPlans,
 		tu.TidyCheckerConfigurations,
 		tu.TidyExecutions,

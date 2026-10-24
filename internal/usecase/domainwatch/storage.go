@@ -39,4 +39,6 @@ type DomainWatchStorage interface {
 	// RestoreDomainWatch stores w under its identifier, replacing any
 	// watch stored under it, as a backup restore does.
 	RestoreDomainWatch(w *happydns.DomainWatch) error
+	// TidyDomainWatchIndexes removes stale user index entries.
+	TidyDomainWatchIndexes() error
 }

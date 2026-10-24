@@ -78,3 +78,24 @@ func (tu *tidyUpUsecase) TidyDomainLogs(dropInvalid bool) error {
 		return nil
 	})
 }
+
+// TidyDomainWatches deletes the domain watches whose user no longer exists,
+// then the user index entries left pointing to a missing user or watch.
+func (tu *tidyUpUsecase) TidyDomainWatches(dropInvalid bool) error {
+	iter, err := tu.store.ListAllDomainWatches()
+	if err != nil {
+		return err
+	}
+
+	err = tidyUserOrphans(tu, iter, dropInvalid,
+		func(w *happydns.DomainWatch) happydns.Identifier { return w.UserId },
+		func(w *happydns.DomainWatch) string { return "domain watch " + w.Id.String() + " (" + w.DomainName + ")" },
+		func(w *happydns.DomainWatch) error { return tu.store.DeleteDomainWatch(w.Id) },
+		happydns.ErrDomainWatchNotFound,
+	)
+	if err != nil {
+		return err
+	}
+
+	return tu.store.TidyDomainWatchIndexes()
+}

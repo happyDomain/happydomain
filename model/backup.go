@@ -27,6 +27,7 @@ type Backup struct {
 	Version                  int
 	Domains                  []*Domain
 	DomainsLogs              map[string][]*DomainLog
+	DomainWatches            []*DomainWatch `json:",omitempty"`
 	Errors                   []string
 	Providers                []*ProviderMessage
 	Safes                    []*Safe           `json:",omitempty"`

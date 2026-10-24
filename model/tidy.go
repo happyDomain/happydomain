@@ -37,6 +37,7 @@ type TidyUpUseCase interface {
 	TidySnapshots(dropInvalid bool) error
 	TidyDomains(dropInvalid bool) error
 	TidyDomainLogs(dropInvalid bool) error
+	TidyDomainWatches(dropInvalid bool) error
 	TidyProviders(dropInvalid bool) error
 	TidyNotificationChannels(dropInvalid bool) error
 	TidyNotificationPreferences(dropInvalid bool) error

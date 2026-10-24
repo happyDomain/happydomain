@@ -114,3 +114,19 @@ func (s *KVStorage) RestoreDomainWatch(w *happydns.DomainWatch) error {
 	}
 	return batch.Commit()
 }
+
+func (s *KVStorage) domainWatchExists(id happydns.Identifier) bool {
+	_, err := s.GetDomainWatch(id)
+	return err == nil
+}
+
+// TidyDomainWatchIndexes removes the domwatch-user|{userId}|{watchId} index
+// entries whose user or watch no longer exists.
+func (s *KVStorage) TidyDomainWatchIndexes() error {
+	s.tidyTwoPartIndex(domwatchUserPrefix, "domain watch user", func(id happydns.Identifier) bool {
+		_, err := s.GetUser(id)
+		return err == nil
+	}, s.domainWatchExists)
+
+	return nil
+}

@@ -153,6 +153,19 @@ func (u *Usecase) Backup() happydns.Backup {
 		}
 	}
 
+	// Domain watches.
+	if watchIter, err := u.store.ListAllDomainWatches(); err != nil {
+		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve DomainWatches: %s", err.Error()))
+	} else {
+		defer watchIter.Close()
+		for watchIter.Next() {
+			ret.DomainWatches = append(ret.DomainWatches, watchIter.Item())
+		}
+		if err := watchIter.Err(); err != nil {
+			ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve every DomainWatch: %s", err.Error()))
+		}
+	}
+
 	// Notification preferences.
 	if prefIter, err := u.store.ListAllPreferences(); err != nil {
 		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve NotificationPreferences: %s", err.Error()))
@@ -364,6 +377,11 @@ func (u *Usecase) BackupUser(user *happydns.User) happydns.Backup {
 			}
 		}
 	}
+	if watches, err := u.store.ListDomainWatchesByUser(user.Id); err != nil {
+		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve DomainWatches: %s", err.Error()))
+	} else {
+		ret.DomainWatches = append(ret.DomainWatches, watches...)
+	}
 	if prefs, err := u.store.ListPreferencesByUser(user.Id); err != nil {
 		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve NotificationPreferences: %s", err.Error()))
 	} else {
@@ -530,6 +548,13 @@ func (u *Usecase) Restore(ctx context.Context, backup *happydns.Backup) error {
 	// Sessions
 	for _, session := range backup.Sessions {
 		errs = errors.Join(errs, u.store.UpdateSession(session))
+	}
+
+	for _, w := range backup.DomainWatches {
+		if w == nil {
+			continue
+		}
+		errs = errors.Join(errs, u.store.RestoreDomainWatch(w))
 	}
 
 	// Notification channels, then the preferences pointing at them, under

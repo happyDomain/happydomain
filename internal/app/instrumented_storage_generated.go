@@ -825,6 +825,11 @@ func (s *instrumentedStorage) TidyDomainIndexes() (err error) {
 	return s.inner.TidyDomainIndexes()
 }
 
+func (s *instrumentedStorage) TidyDomainWatchIndexes() (err error) {
+	defer observe("TidyDomainWatchIndexes", "tidy", "domain_watch")(&err)
+	return s.inner.TidyDomainWatchIndexes()
+}
+
 func (s *instrumentedStorage) TidyEvaluationIndexes() (err error) {
 	defer observe("TidyEvaluationIndexes", "tidy", "check_evaluation")(&err)
 	return s.inner.TidyEvaluationIndexes()
