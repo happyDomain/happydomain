@@ -698,6 +698,10 @@
     "zones": {
         "viewer": "Zone Viewer",
         "viewer-subtitle": "Your services at a glance",
+        "partial": {
+            "title": "Partial zone.",
+            "description": "This zone was recomposed from what its name servers publicly answer, without a way to list every name: the subdomains nothing points to may be missing."
+        },
         "retrieve": "Retrieving Zone",
         "retrieve-subtitle": "Fetching DNS records from your provider",
         "upload": "Import a zone",
