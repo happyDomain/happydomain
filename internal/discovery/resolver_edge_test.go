@@ -169,7 +169,7 @@ func TestResolveTCPFallback(t *testing.T) {
 		zone.ServeDNS(w, req)
 	}))
 
-	records, err := Resolve(context.Background(), "example.com.", []string{"big"}, nil, loopbackOptions(t, addr))
+	records, _, err := Resolve(context.Background(), "example.com.", []string{"big"}, nil, loopbackOptions(t, addr))
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
@@ -192,7 +192,7 @@ func TestResolveServerFailover(t *testing.T) {
 	var failed atomic.Int32
 	addr := serveLocal(t, zone, alsoOn{"127.0.0.2", answerWith(dns.RcodeServerFailure, &failed)})
 
-	records, err := Resolve(context.Background(), "example.com.", []string{"www"}, nil, loopbackOptions(t, addr))
+	records, _, err := Resolve(context.Background(), "example.com.", []string{"www"}, nil, loopbackOptions(t, addr))
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
@@ -248,7 +248,7 @@ func TestResolveErrors(t *testing.T) {
 				opts = tc.opts(t, opts)
 			}
 
-			_, err := Resolve(context.Background(), "example.com.", nil, nil, opts)
+			_, _, err := Resolve(context.Background(), "example.com.", nil, nil, opts)
 			if err == nil || !strings.Contains(err.Error(), tc.want) {
 				t.Errorf("Resolve = %v; want an error about %q", err, tc.want)
 			}
@@ -264,7 +264,7 @@ func TestResolveMixedNameServers(t *testing.T) {
 		"ns1.example.com. 300 IN A 127.0.0.1",
 	)
 
-	records, err := Resolve(context.Background(), "example.com.", nil, nil, loopbackOptions(t, serveLocal(t, zone)))
+	records, _, err := Resolve(context.Background(), "example.com.", nil, nil, loopbackOptions(t, serveLocal(t, zone)))
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
@@ -287,7 +287,7 @@ func TestResolveNothingAnswered(t *testing.T) {
 		w.WriteMsg(m)
 	}))
 
-	_, err := Resolve(context.Background(), "example.com.", nil, nil, loopbackOptions(t, addr))
+	_, _, err := Resolve(context.Background(), "example.com.", nil, nil, loopbackOptions(t, addr))
 	if err == nil || !strings.Contains(err.Error(), "REFUSED") {
 		t.Errorf("Resolve = %v; want the refusal of the servers", err)
 	}
@@ -304,7 +304,7 @@ func TestResolveBudgetKeepsApex(t *testing.T) {
 	opts := loopbackOptions(t, serveLocal(t, zone))
 	opts.MaxQueries = len(apexTypes)
 
-	records, err := Resolve(context.Background(), "example.com.", []string{"www"}, nil, opts)
+	records, _, err := Resolve(context.Background(), "example.com.", []string{"www"}, nil, opts)
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
@@ -327,7 +327,7 @@ func TestResolveMaxDepth(t *testing.T) {
 	opts := loopbackOptions(t, serveLocal(t, zone))
 	opts.MaxDepth = 1
 
-	records, err := Resolve(context.Background(), "example.com.", []string{"a"}, nil, opts)
+	records, _, err := Resolve(context.Background(), "example.com.", []string{"a"}, nil, opts)
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
@@ -418,7 +418,7 @@ func TestResolveServerFailoverDemotes(t *testing.T) {
 
 	opts := loopbackOptions(t, addr)
 	opts.Concurrency = 1
-	if _, err := Resolve(context.Background(), "example.com.", known, nil, opts); err != nil {
+	if _, _, err := Resolve(context.Background(), "example.com.", known, nil, opts); err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
 
@@ -481,7 +481,7 @@ func TestResolvePacePerServer(t *testing.T) {
 	}
 
 	start := time.Now()
-	if _, err := Resolve(context.Background(), "example.com.", nil, []NameSource{names}, opts); err != nil {
+	if _, _, err := Resolve(context.Background(), "example.com.", nil, []NameSource{names}, opts); err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
 	elapsed := time.Since(start)

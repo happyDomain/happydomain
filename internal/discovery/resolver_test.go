@@ -257,7 +257,7 @@ func TestResolve(t *testing.T) {
 	)
 	opts := zone.serve(t)
 
-	records, err := Resolve(context.Background(), "Example.com", []string{"_dmarc", "host.sub"}, []NameSource{staticSource{"www.example.com."}}, opts)
+	records, _, err := Resolve(context.Background(), "Example.com", []string{"_dmarc", "host.sub"}, []NameSource{staticSource{"www.example.com."}}, opts)
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
@@ -295,7 +295,7 @@ func TestResolveWildcard(t *testing.T) {
 	)
 	opts := zone.serve(t)
 
-	records, err := Resolve(context.Background(), "example.com.", []string{"real", "ghost"}, nil, opts)
+	records, _, err := Resolve(context.Background(), "example.com.", []string{"real", "ghost"}, nil, opts)
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
@@ -318,7 +318,7 @@ func TestResolveWildcardOwnAnswers(t *testing.T) {
 	)
 	opts := zone.serve(t)
 
-	records, err := Resolve(context.Background(), "example.com.", []string{"real"}, nil, opts)
+	records, _, err := Resolve(context.Background(), "example.com.", []string{"real"}, nil, opts)
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
@@ -335,13 +335,13 @@ func TestResolveWildcardCost(t *testing.T) {
 	)
 	opts := zone.serve(t)
 
-	if _, err := Resolve(context.Background(), "example.com.", nil, nil, opts); err != nil {
+	if _, _, err := Resolve(context.Background(), "example.com.", nil, nil, opts); err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
 	base := zone.questions.Swap(0)
 
 	ghosts := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"}
-	if _, err := Resolve(context.Background(), "example.com.", ghosts, nil, opts); err != nil {
+	if _, _, err := Resolve(context.Background(), "example.com.", ghosts, nil, opts); err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
 	if cost := zone.questions.Load() - base; cost != int32(len(ghosts)) {
@@ -358,7 +358,7 @@ func TestResolveBudget(t *testing.T) {
 	opts := zone.serve(t)
 	opts.MaxQueries = 1
 
-	records, err := Resolve(context.Background(), "example.com.", nil, nil, opts)
+	records, _, err := Resolve(context.Background(), "example.com.", nil, nil, opts)
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
@@ -376,7 +376,7 @@ func TestResolveRefusesPrivateNameServers(t *testing.T) {
 	// address the name server resolves to.
 	opts := zone.serve(t)
 
-	_, err := Resolve(context.Background(), "example.com.", nil, nil, opts)
+	_, _, err := Resolve(context.Background(), "example.com.", nil, nil, opts)
 	if err == nil {
 		t.Fatal("Resolve reached a name server on loopback without the guard allowing it")
 	}
@@ -432,7 +432,7 @@ func TestResolvePace(t *testing.T) {
 	}
 
 	start := time.Now()
-	if _, err := Resolve(context.Background(), "example.com.", nil, []NameSource{names}, opts); err != nil {
+	if _, _, err := Resolve(context.Background(), "example.com.", nil, []NameSource{names}, opts); err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
 

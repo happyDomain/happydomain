@@ -53,9 +53,12 @@ func TestResolveAXFR(t *testing.T) {
 	zone.allowAXFR = true
 	opts := zone.serve(t)
 
-	records, err := Resolve(context.Background(), "example.com.", nil, []NameSource{AXFRSource{}}, opts)
+	records, complete, err := Resolve(context.Background(), "example.com.", nil, []NameSource{AXFRSource{}}, opts)
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
+	}
+	if !complete {
+		t.Error("Resolve tells a transferred zone is not complete")
 	}
 	got := recordStrings(records)
 
@@ -70,9 +73,12 @@ func TestResolveAXFRRefused(t *testing.T) {
 	zone := axfrTestZone(t)
 	opts := zone.serve(t)
 
-	records, err := Resolve(context.Background(), "example.com.", nil, []NameSource{AXFRSource{}}, opts)
+	records, complete, err := Resolve(context.Background(), "example.com.", nil, []NameSource{AXFRSource{}}, opts)
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
+	}
+	if complete {
+		t.Error("Resolve tells a zone explored without transfer nor walk is complete")
 	}
 	got := recordStrings(records)
 
@@ -95,7 +101,7 @@ func TestResolveAXFROutOfZone(t *testing.T) {
 	zone.allowAXFR = true
 	opts := zone.serve(t)
 
-	records, err := Resolve(context.Background(), "example.com.", nil, []NameSource{AXFRSource{}}, opts)
+	records, _, err := Resolve(context.Background(), "example.com.", nil, []NameSource{AXFRSource{}}, opts)
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}

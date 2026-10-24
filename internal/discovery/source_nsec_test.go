@@ -332,9 +332,12 @@ func TestResolveNSEC(t *testing.T) {
 	z.dnssec.nsec = true
 	opts := z.serve(t)
 
-	records, err := Resolve(context.Background(), "example.com.", []string{"host"}, []NameSource{NSECSource{}, staticSource{"guess.example.com."}}, opts)
+	records, complete, err := Resolve(context.Background(), "example.com.", []string{"host"}, []NameSource{NSECSource{}, staticSource{"guess.example.com."}}, opts)
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
+	}
+	if !complete {
+		t.Error("Resolve tells a zone whose NSEC chain was walked is not complete")
 	}
 	got := recordStrings(records)
 
@@ -362,8 +365,12 @@ func TestResolveNSECIncomplete(t *testing.T) {
 	z.dnssec = testDNSSEC{nsec3: true}
 	opts := z.serve(t)
 
-	if _, err := Resolve(context.Background(), "example.com.", nil, []NameSource{NSECSource{}, staticSource{"guess.example.com."}}, opts); err != nil {
+	_, complete, err := Resolve(context.Background(), "example.com.", nil, []NameSource{NSECSource{}, staticSource{"guess.example.com."}}, opts)
+	if err != nil {
 		t.Fatalf("Resolve: %v", err)
+	}
+	if complete {
+		t.Error("Resolve tells a zone is complete after a walk that could not be completed")
 	}
 
 	if !z.wasAsked("guess.example.com.") {
@@ -422,7 +429,7 @@ func TestResolveNSECWildcard(t *testing.T) {
 	z.dnssec.nsec = true
 	opts := z.serve(t)
 
-	records, err := Resolve(context.Background(), "example.com.", nil, []NameSource{NSECSource{}}, opts)
+	records, _, err := Resolve(context.Background(), "example.com.", nil, []NameSource{NSECSource{}}, opts)
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
