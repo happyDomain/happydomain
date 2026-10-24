@@ -142,6 +142,10 @@ func ParseRecord(input, origin string) (happydns.Record, error) {
 		return happydns.NewTXT(rr.(*dns.TXT)), nil
 	} else if rr.Header().Rrtype == dns.TypeSPF {
 		return happydns.NewSPF(rr.(*dns.SPF)), nil
+	} else if rr.Header().Rrtype == dns.TypeSVCB {
+		return happydns.NewSVCB(rr.(*dns.SVCB)), nil
+	} else if rr.Header().Rrtype == dns.TypeHTTPS {
+		return happydns.NewHTTPS(rr.(*dns.HTTPS)), nil
 	}
 
 	return rr, nil

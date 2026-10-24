@@ -26,6 +26,8 @@ import (
 	"fmt"
 
 	"github.com/miekg/dns"
+
+	"git.happydns.org/happyDomain/model"
 )
 
 // UnmarshalRecord rebuilds the record a service stored, dispatching on the
@@ -34,13 +36,24 @@ import (
 // The pseudo-types happyDomain represents need a hand: they are *dns.PrivateRR,
 // whose rdata sits behind a non-empty interface, and encoding/json refuses to
 // unmarshal into one even when it already holds a concrete value.
-func UnmarshalRecord(payload []byte) (dns.RR, error) {
+func UnmarshalRecord(payload []byte) (happydns.Record, error) {
 	var header struct {
 		Hdr dns.RR_Header
 	}
 
 	if err := json.Unmarshal(payload, &header); err != nil {
 		return nil, err
+	}
+
+	// happyDomain's own abstractions of the records whose miekg/dns form
+	// encoding/json cannot read back.
+	switch header.Hdr.Rrtype {
+	case dns.TypeSVCB:
+		rr := new(happydns.SVCB)
+		return rr, json.Unmarshal(payload, rr)
+	case dns.TypeHTTPS:
+		rr := new(happydns.HTTPS)
+		return rr, json.Unmarshal(payload, rr)
 	}
 
 	newrr, ok := dns.TypeToRR[header.Hdr.Rrtype]

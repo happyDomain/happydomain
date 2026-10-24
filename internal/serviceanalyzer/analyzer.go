@@ -289,12 +289,16 @@ func AnalyzeZone(origin string, records []happydns.Record) (svcs map[happydns.Su
 	}
 
 	for i, record := range a.zone {
-		// Convert TXT-like records: merge into one string
+		// Convert the records happyDomain has its own abstraction of (TXT merged into one string, storable SVCB)
 		switch record.(type) {
 		case *dns.TXT:
 			a.zone[i] = happydns.NewTXT((record.(*dns.TXT)))
 		case *dns.SPF:
 			a.zone[i] = happydns.NewSPF((record.(*dns.SPF)))
+		case *dns.SVCB:
+			a.zone[i] = happydns.NewSVCB(record.(*dns.SVCB))
+		case *dns.HTTPS:
+			a.zone[i] = happydns.NewHTTPS(record.(*dns.HTTPS))
 		}
 	}
 
