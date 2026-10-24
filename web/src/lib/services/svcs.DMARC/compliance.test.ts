@@ -288,7 +288,7 @@ describe("DMARC compliance: subdomain policy inheritance", () => {
         expect(ids(issues)).toContain("dmarc.subdomain-weakens-parent");
     });
     it("says nothing when the apex record is missing or unreadable", () => {
-        for (const services of [
+        for (const services of <Array<Zone["services"]>>[
             {},
             { _dmarc: [dmarc("")] },
             { _dmarc: [dmarc("v=DMARC1;p=bogus")] },
