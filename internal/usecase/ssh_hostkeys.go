@@ -239,9 +239,15 @@ func (us *resolverUsecase) classifySSHError(ctx context.Context, err error) (sta
 		return "connect-error", fmt.Sprintf("cannot resolve the host: %s", dnsErr.Err)
 	}
 
+	// Only a failed dial means the server could not be reached: a read or
+	// write error comes from a connection that was established, so the
+	// server answered and it is the handshake that failed.
 	var opErr *net.OpError
 	if errors.As(err, &opErr) {
-		return "connect-error", opErr.Err.Error()
+		if opErr.Op == "dial" {
+			return "connect-error", opErr.Err.Error()
+		}
+		return "handshake-error", opErr.Err.Error()
 	}
 
 	if err == nil {

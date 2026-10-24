@@ -37,6 +37,7 @@ import (
 	"net/netip"
 	"os"
 	"strings"
+	"syscall"
 	"testing"
 
 	"golang.org/x/crypto/ssh"
@@ -256,6 +257,44 @@ func TestFetchSSHHostKeys_NotAnSSHServer(t *testing.T) {
 	}
 	if resp.ErrorMsg == "" {
 		t.Error("a failure must come with an explanation")
+	}
+}
+
+// A server resetting the connection after accepting it was reached: the
+// failure belongs to the handshake, not to the connection.
+func TestFetchSSHHostKeys_ResetAfterAccept(t *testing.T) {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("listen: %s", err)
+	}
+	defer listener.Close()
+
+	go func() {
+		for {
+			conn, err := listener.Accept()
+			if err != nil {
+				return
+			}
+			// Waiting for the client banner guarantees the dial completed:
+			// a RST sent earlier can make connect() itself fail.
+			conn.Read(make([]byte, 256))
+			// A zero linger turns Close into a RST instead of a FIN.
+			conn.(*net.TCPConn).SetLinger(0)
+			conn.Close()
+		}
+	}()
+
+	addr := listener.Addr().(*net.TCPAddr)
+	resp, err := loopbackUsecase(t).FetchSSHHostKeys(happydns.SSHHostKeysRequest{
+		Host: addr.IP.String(),
+		Port: uint16(addr.Port),
+	})
+	if err != nil {
+		t.Fatalf("FetchSSHHostKeys: %s", err)
+	}
+
+	if resp.Status != "handshake-error" {
+		t.Fatalf("status = %q (%s), want handshake-error", resp.Status, resp.ErrorMsg)
 	}
 }
 
@@ -480,6 +519,8 @@ func TestClassifySSHError(t *testing.T) {
 		{"context deadline", context.Background(), fmt.Errorf("x: %w", context.DeadlineExceeded), "timeout"},
 		{"dns", context.Background(), &net.DNSError{Err: "no such host"}, "connect-error"},
 		{"op error", context.Background(), &net.OpError{Op: "dial", Err: errors.New("refused")}, "connect-error"},
+		{"reset on read", context.Background(), &net.OpError{Op: "read", Err: syscall.ECONNRESET}, "handshake-error"},
+		{"broken pipe on write", context.Background(), &net.OpError{Op: "write", Err: syscall.EPIPE}, "handshake-error"},
 		{"no error", context.Background(), nil, "handshake-error"},
 		{"other", context.Background(), errors.New("ssh: handshake failed"), "handshake-error"},
 	}
