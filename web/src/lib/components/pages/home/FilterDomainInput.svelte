@@ -36,9 +36,7 @@
     } from "@sveltestrap/sveltestrap";
 
     import { addDomain } from "$lib/api/domains";
-    import PickProvider, {
-        controls as pickProviderControls,
-    } from "$lib/components/modals/PickProvider.svelte";
+    import { controls as newDomainControls } from "$lib/components/modals/NewDomain.svelte";
     import { fqdn, validateDomain } from "$lib/dns";
     import { domains, refreshDomains } from "$lib/stores/domains";
     import { filterDomains, filteredName, filteredProvider } from "$lib/stores/home";
@@ -66,45 +64,25 @@
     }
 
     function addDomainToProvider() {
-        addingNewDomain = true;
-
         if ($filteredProvider) {
-            addDomain($filteredName, $filteredProvider).then(
-                () => {
-                    addingNewDomain = false;
-                    filteredName.set("");
-                    refreshDomains();
-                },
-                (error) => {
-                    addingNewDomain = false;
-                    throw error;
-                },
-            );
+            addDomainAndOpen($filteredProvider);
         } else if ($providers && $providers.length == 1) {
-            addDomain($filteredName, $providers[0]).then(
-                () => {
-                    addingNewDomain = false;
-                    filteredName.set("");
-                    refreshDomains();
-                },
-                (error) => {
-                    addingNewDomain = false;
-                    throw error;
-                },
-            );
+            addDomainAndOpen($providers[0]);
         } else {
-            addingNewDomain = false;
-            pickProviderControls.Open();
+            newDomainControls.Open({ ondone: addDomainAndOpen });
         }
     }
 
-    function onProviderSelected(provider: Provider) {
+    // addDomainAndOpen takes the user to the domain once added. The domain
+    // page looks the domain up in the list: it has to be refreshed first.
+    function addDomainAndOpen(provider: Provider) {
         addingNewDomain = true;
         addDomain($filteredName, provider).then(
-            () => {
+            async (domain) => {
+                await refreshDomains();
                 addingNewDomain = false;
                 filteredName.set("");
-                refreshDomains();
+                goto(domainLinks().zone(domain.domain));
             },
             (error) => {
                 addingNewDomain = false;
@@ -124,8 +102,6 @@
     );
     let actionAddDomain = $derived($filteredName && matchingDomains.length == 0);
 </script>
-
-<PickProvider ondone={onProviderSelected} />
 
 <form onsubmit={submitFilterDomainInput}>
     <ListGroup {...rest}>

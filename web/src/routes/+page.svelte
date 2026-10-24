@@ -24,6 +24,7 @@
 <script>
     import { page } from "$app/state";
 
+    import NewDomain from "$lib/components/modals/NewDomain.svelte";
     import Onboarding from "$lib/components/modals/Onboarding.svelte";
     import Home from "$lib/components/pages/Home.svelte";
     import { domains } from "$lib/stores/domains";
@@ -36,6 +37,7 @@
     <title>happyDomain</title>
 </svelte:head>
 
+<NewDomain />
 <Home />
 {#if showOnboarding}
     <Onboarding isOpen />

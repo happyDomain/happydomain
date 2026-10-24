@@ -42,9 +42,6 @@
     import NewDomainModal, {
         controls as newDomainControls,
     } from "$lib/components/modals/NewDomain.svelte";
-    import PickProvider, {
-        controls as pickProviderControls,
-    } from "$lib/components/modals/PickProvider.svelte";
     import type { Provider } from "$lib/model/provider";
     import { domains, refreshDomains } from "$lib/stores/domains";
     import { providers } from "$lib/stores/providers";
@@ -95,7 +92,7 @@
 
     $effect(() => {
         if (newDomainName) {
-            pickProviderControls.Open();
+            newDomainControls.Open({ ondone: onNewDomainProviderSelected });
         }
     });
 
@@ -118,7 +115,6 @@
 </svelte:head>
 
 <NewDomainModal />
-<PickProvider ondone={onNewDomainProviderSelected} />
 
 <Container class="flex-fill my-5">
     <PageTitle title={$t("domains.title")} subtitle={$t("domains.description")}>

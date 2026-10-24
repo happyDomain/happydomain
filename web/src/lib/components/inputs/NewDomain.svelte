@@ -35,7 +35,7 @@
     } from "@sveltestrap/sveltestrap";
 
     import { addDomain } from "$lib/api/domains";
-    import PickProvider, { controls as pickProviderControls } from "$lib/components/modals/PickProvider.svelte";
+    import { controls as newDomainControls } from "$lib/components/modals/NewDomain.svelte";
     import { validateDomain } from "$lib/dns";
     import type { Provider } from "$lib/model/provider";
     import { refreshDomains } from "$lib/stores/domains";
@@ -76,7 +76,7 @@
         }
 
         if (!provider) {
-            pickProviderControls.Open();
+            newDomainControls.Open({ ondone: onProviderSelected });
             addingNewDomain = false;
         } else {
             addDomain(value, provider).then(
@@ -115,8 +115,6 @@
         return validateDomain(val, "", false);
     }
 </script>
-
-<PickProvider ondone={onProviderSelected} />
 
 <form id={formId} onsubmit={addDomainToProvider}>
     <ListGroup {...rest}>

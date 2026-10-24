@@ -4,6 +4,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import type { Domain } from "$lib/model/domain";
 import type { Provider } from "$lib/model/provider";
+import type { NewDomainRequest } from "$lib/components/modals/NewDomain.svelte";
 import { loadTranslations } from "$lib/translations";
 import NewDomain from "./NewDomain.svelte";
 
@@ -17,16 +18,11 @@ vi.mock("$lib/stores/domains", () => ({
     refreshDomains: () => refreshDomains(),
 }));
 
-// Swaps in a plain-button stand-in for the real, multi-step picker modal so
-// onProviderSelected can be exercised without driving a Bootstrap modal.
-vi.mock("$lib/components/modals/PickProvider.svelte", async () => {
-    const stub = await import("./__fixtures__/PickProviderStub.svelte");
-    return { default: stub.default, controls: { Open: vi.fn() } };
-});
+const openNewDomain = vi.fn((_request?: NewDomainRequest) => {});
 
-const { controls: pickProviderControls } = (await import(
-    "$lib/components/modals/PickProvider.svelte"
-)) as unknown as { controls: { Open: ReturnType<typeof vi.fn> } };
+vi.mock("$lib/components/modals/NewDomain.svelte", () => ({
+    controls: { Open: (request?: NewDomainRequest) => openNewDomain(request) },
+}));
 
 beforeAll(async () => {
     await loadTranslations("en", "/");
@@ -126,7 +122,7 @@ describe("New domain input", () => {
         await user.type(screen.getByPlaceholderText("my.new.domain."), "example.com");
         await user.click(screen.getByRole("button", { name: /Add new domain/ }));
 
-        expect(pickProviderControls.Open).toHaveBeenCalled();
+        expect(openNewDomain).toHaveBeenCalledWith({ ondone: expect.any(Function) });
         expect(addDomain).not.toHaveBeenCalled();
     });
 
@@ -186,9 +182,9 @@ describe("New domain input", () => {
         await user.type(screen.getByPlaceholderText("my.new.domain."), "example.com");
         await user.click(screen.getByRole("button", { name: /Add new domain/ }));
 
-        expect(pickProviderControls.Open).toHaveBeenCalled();
+        expect(openNewDomain).toHaveBeenCalled();
 
-        await user.click(screen.getByRole("button", { name: "pick provider" }));
+        openNewDomain.mock.calls[0][0]!.ondone!({ _id: "picked-provider" } as Provider);
 
         expect(addDomain).toHaveBeenCalledWith("example.com", { _id: "picked-provider" });
         await vi.waitFor(() => expect(refreshDomains).toHaveBeenCalled());

@@ -22,10 +22,20 @@
 -->
 
 <script module lang="ts">
-    import type { ModalController } from "$lib/model/modal_controller";
+    import type { Provider } from "$lib/model/provider";
 
-    export const controls: ModalController = {
-        Open(): void {},
+    export interface NewDomainRequest {
+        // ondone, when set, is handed the provider the user picked, and the
+        // dialog closes there: for callers already knowing the domain to add.
+        // Without it, the dialog goes on with importing domains from the
+        // provider.
+        ondone?: (provider: Provider) => void;
+    }
+
+    // The dialog is mounted once, by each page opening it: the home page and
+    // the domains list.
+    export const controls = {
+        Open(_request?: NewDomainRequest): void {},
     };
 </script>
 
@@ -43,16 +53,9 @@
     import DomainImport from "$lib/components/forms/DomainImport.svelte";
     import ProviderPicker from "$lib/components/forms/ProviderPicker.svelte";
     import SettingsStateButtons from "$lib/components/providers/SettingsStateButtons.svelte";
-    import type { Provider } from "$lib/model/provider";
     import type { ProviderForm } from "$lib/model/provider_form.svelte.ts";
     import { providers } from "$lib/stores/providers";
     import { t } from "$lib/translations";
-
-    interface Props {
-        isOpen?: boolean;
-    }
-
-    let { isOpen = $bindable(false) }: Props = $props();
 
     // step 0: pick or add a provider
     // step 1: import / add domains
@@ -67,8 +70,12 @@
     let addingNewDomain = $state(false);
     let newDomainValue = $state("");
 
-    function Open(): void {
+    let isOpen = $state(false);
+    let request: NewDomainRequest = {};
+
+    function Open(newRequest: NewDomainRequest = {}): void {
         isOpen = true;
+        request = newRequest;
         step = 0;
         addingProvider = !$providers || $providers.length === 0;
         providerType = "";
@@ -85,6 +92,11 @@
     }
 
     function onProviderSelected(provider: Provider): void {
+        if (request.ondone) {
+            isOpen = false;
+            request.ondone(provider);
+            return;
+        }
         myProvider = provider;
         step = 1;
     }
