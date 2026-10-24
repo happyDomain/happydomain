@@ -24,6 +24,7 @@ package svcs
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/miekg/dns"
 
@@ -45,9 +46,11 @@ func UnmarshalRecord(payload []byte) (happydns.Record, error) {
 		return nil, err
 	}
 
-	// happyDomain's own abstractions of the records whose miekg/dns form
-	// encoding/json cannot read back.
+	// happyDomain's own abstractions: the text of TXT and SPF in one string,
+	// and SVCB whose miekg/dns form encoding/json cannot read back.
 	switch header.Hdr.Rrtype {
+	case dns.TypeTXT, dns.TypeSPF:
+		return unmarshalTXT(header.Hdr.Rrtype, payload)
 	case dns.TypeSVCB:
 		rr := new(happydns.SVCB)
 		return rr, json.Unmarshal(payload, rr)
@@ -85,4 +88,33 @@ func UnmarshalRecord(payload []byte) (happydns.Record, error) {
 	}
 
 	return prr, nil
+}
+
+// unmarshalTXT reads a TXT or SPF record, whether stored as happyDomain's
+// abstraction or in the miekg/dns form, the text split in segments.
+func unmarshalTXT(rrtype uint16, payload []byte) (happydns.Record, error) {
+	var stored struct {
+		Hdr dns.RR_Header
+		Txt json.RawMessage
+	}
+
+	if err := json.Unmarshal(payload, &stored); err != nil {
+		return nil, err
+	}
+
+	var txt string
+	if stored.Txt != nil {
+		if err := json.Unmarshal(stored.Txt, &txt); err != nil {
+			var segments []string
+			if err := json.Unmarshal(stored.Txt, &segments); err != nil {
+				return nil, err
+			}
+			txt = strings.Join(segments, "")
+		}
+	}
+
+	if rrtype == dns.TypeSPF {
+		return &happydns.SPF{Hdr: stored.Hdr, Txt: txt}, nil
+	}
+	return &happydns.TXT{Hdr: stored.Hdr, Txt: txt}, nil
 }

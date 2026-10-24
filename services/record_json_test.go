@@ -24,6 +24,7 @@ package svcs_test
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/miekg/dns"
@@ -113,6 +114,9 @@ func TestRecordJSONRoundTrip(t *testing.T) {
 		`example.com. 300 IN MX 10 mx.example.net.`,
 		`1.2.0.192.in-addr.arpa. 300 IN PTR host.example.com.`,
 		`_sip._tcp.example.com. 300 IN SRV 10 60 5060 sip.example.com.`,
+		`a.example.com. 300 IN TXT "hello world"`,
+		`a.example.com. 300 IN TXT "` + strings.Repeat("x", 300) + `"`,
+		`a.example.com. 300 IN SPF "v=spf1 -all"`,
 		`example.com. 300 IN CAA 0 issue "letsencrypt.org"`,
 		`example.com. 300 IN CAA 128 iodef "mailto:security@example.com"`,
 		`_443._tcp.example.com. 300 IN TLSA 3 1 1 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef`,
@@ -150,6 +154,32 @@ func TestRecordJSONRoundTrip(t *testing.T) {
 		}
 		if fmt.Sprintf("%T", got.Record) != fmt.Sprintf("%T", rr) {
 			t.Errorf("%s: read back a %T, want %T", line, got.Record, rr)
+		}
+	}
+}
+
+// The miekg/dns form, the text split in segments, is still read.
+func TestOrphanTXTSegments(t *testing.T) {
+	for _, payload := range []string{
+		`{"record":{"Hdr":{"Name":"a","Rrtype":16,"Class":1,"Ttl":300},"Txt":["hel","lo"]}}`,
+		`{"record":{"Hdr":{"Name":"a","Rrtype":99,"Class":1,"Ttl":300},"Txt":["hel","lo"]}}`,
+	} {
+		var got svcs.Orphan
+		if err := json.Unmarshal([]byte(payload), &got); err != nil {
+			t.Fatalf("unmarshal %s: %v", payload, err)
+		}
+
+		switch record := got.Record.(type) {
+		case *happydns.TXT:
+			if record.Txt != "hello" {
+				t.Errorf("Txt = %q, want hello", record.Txt)
+			}
+		case *happydns.SPF:
+			if record.Txt != "hello" {
+				t.Errorf("Txt = %q, want hello", record.Txt)
+			}
+		default:
+			t.Errorf("read back a %T, want happyDomain's abstraction", got.Record)
 		}
 	}
 }
