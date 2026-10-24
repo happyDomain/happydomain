@@ -352,3 +352,232 @@ func TestRemoteZoneImporter_RecoversPanic(t *testing.T) {
 		t.Fatalf("Import returned zone %v; want the panic as an error", zone)
 	}
 }
+
+// reportingRetriever reports the step step on the progress its context
+// carries, then holds the retrieval until release is closed, or fails it
+// with err.
+type reportingRetriever struct {
+	step     happydns.ImportStep
+	err      error
+	progress chan *happydns.ImportProgress
+	release  chan struct{}
+}
+
+func newReportingRetriever(step happydns.ImportStep, err error) *reportingRetriever {
+	return &reportingRetriever{
+		step:     step,
+		err:      err,
+		progress: make(chan *happydns.ImportProgress, 1),
+		release:  make(chan struct{}),
+	}
+}
+
+func (r *reportingRetriever) RetrieveZone(ctx context.Context, _ *happydns.Provider, _ string, _ ...string) ([]happydns.Record, bool, error) {
+	p := happydns.ImportProgressFrom(ctx)
+	if r.step != "" {
+		p.SetStep(r.step, "", 0, 0)
+	}
+	r.progress <- p
+	<-r.release
+	return nil, false, r.err
+}
+
+func newReportingImporter(retriever *reportingRetriever) *orchestrator.RemoteZoneImporterUsecase {
+	return orchestrator.NewRemoteZoneImporterUsecase(
+		domainlogUC.NoopDomainLogAppender{},
+		&mockProviderGetter{provider: &happydns.Provider{}},
+		&countingZoneImporter{},
+		nil,
+		retriever,
+	)
+}
+
+func TestRemoteZoneImporter_ProgressDuringImport(t *testing.T) {
+	retriever := newReportingRetriever("", nil)
+	uc := newReportingImporter(retriever)
+	domain := &happydns.Domain{Id: happydns.Identifier([]byte("d1")), DomainName: "example.com."}
+
+	if _, ok := uc.Progress(domain); ok {
+		t.Fatal("Progress tells an import in flight before any started")
+	}
+
+	errs := make(chan error, 1)
+	go func() {
+		_, err := uc.Import(context.Background(), &happydns.User{}, domain)
+		errs <- err
+	}()
+
+	if p := <-retriever.progress; p == nil {
+		t.Error("the retrieval was handed no progress to report on")
+	}
+
+	s, ok := uc.Progress(domain)
+	if !ok {
+		t.Fatal("Progress tells no import in flight while one is")
+	}
+	if s.Step != happydns.ImportStepRetrieving {
+		t.Errorf("the import is at step %q; want %q", s.Step, happydns.ImportStepRetrieving)
+	}
+	if _, ok := uc.Progress(&happydns.Domain{Id: happydns.Identifier([]byte("d2"))}); ok {
+		t.Error("Progress tells an import in flight for another domain")
+	}
+
+	close(retriever.release)
+	if err := <-errs; err != nil {
+		t.Fatalf("Import: %v", err)
+	}
+	if _, ok := uc.Progress(domain); ok {
+		t.Error("Progress still tells an import in flight once it ended")
+	}
+}
+
+func TestRemoteZoneImporter_ProgressOfJoinedImport(t *testing.T) {
+	retriever := newReportingRetriever(happydns.ImportStepExploring, nil)
+	uc := newReportingImporter(retriever)
+	domain := &happydns.Domain{Id: happydns.Identifier([]byte("d1")), DomainName: "example.com."}
+
+	errs := make(chan error, 2)
+	importOnce := func() {
+		_, err := uc.Import(context.Background(), &happydns.User{}, domain)
+		errs <- err
+	}
+
+	go importOnce()
+	<-retriever.progress
+	go importOnce()
+	// Leave the second caller the time to join the import in flight.
+	time.Sleep(50 * time.Millisecond)
+
+	if s, ok := uc.Progress(domain); !ok || s.Step != happydns.ImportStepExploring {
+		t.Errorf("Progress = %+v, %v; want the step of the import both callers wait for", s, ok)
+	}
+
+	close(retriever.release)
+	for range 2 {
+		if err := <-errs; err != nil {
+			t.Fatalf("Import: %v", err)
+		}
+	}
+	if len(retriever.progress) != 0 {
+		t.Error("the second caller retrieved the zone again")
+	}
+	if _, ok := uc.Progress(domain); ok {
+		t.Error("Progress still tells an import in flight once it ended")
+	}
+}
+
+func TestRemoteZoneImporter_ProgressReported(t *testing.T) {
+	retriever := newReportingRetriever(happydns.ImportStepExploring, nil)
+	uc := newReportingImporter(retriever)
+	domain := &happydns.Domain{Id: happydns.Identifier([]byte("d1")), DomainName: "example.com."}
+
+	errs := make(chan error, 1)
+	go func() {
+		_, err := uc.Import(context.Background(), &happydns.User{}, domain)
+		errs <- err
+	}()
+	<-retriever.progress
+
+	if s, _ := uc.Progress(domain); s.Step != happydns.ImportStepExploring {
+		t.Errorf("the import is at step %q; want the %q the retrieval reported", s.Step, happydns.ImportStepExploring)
+	}
+
+	close(retriever.release)
+	<-errs
+}
+
+func TestRemoteZoneImporter_ProgressEndsOnError(t *testing.T) {
+	retriever := newReportingRetriever("", errors.New("unreachable"))
+	uc := newReportingImporter(retriever)
+	domain := &happydns.Domain{Id: happydns.Identifier([]byte("d1")), DomainName: "example.com."}
+
+	errs := make(chan error, 1)
+	go func() {
+		_, err := uc.Import(context.Background(), &happydns.User{}, domain)
+		errs <- err
+	}()
+	<-retriever.progress
+	close(retriever.release)
+
+	if err := <-errs; err == nil {
+		t.Fatal("Import succeeded; want the error of the retrieval")
+	}
+	if _, ok := uc.Progress(domain); ok {
+		t.Error("Progress still tells an import in flight once it failed")
+	}
+}
+
+func TestRemoteZoneImporter_ProgressEndsOnPanic(t *testing.T) {
+	uc := orchestrator.NewRemoteZoneImporterUsecase(
+		domainlogUC.NoopDomainLogAppender{},
+		&mockProviderGetter{provider: &happydns.Provider{}},
+		&countingZoneImporter{},
+		nil,
+		panickingRetriever{},
+	)
+	domain := &happydns.Domain{Id: happydns.Identifier([]byte("d1")), DomainName: "example.com."}
+
+	if _, err := uc.Import(context.Background(), &happydns.User{}, domain); err == nil {
+		t.Fatal("Import succeeded; want the panic as an error")
+	}
+	if _, ok := uc.Progress(domain); ok {
+		t.Error("Progress still tells an import in flight once it panicked")
+	}
+}
+
+// failingZoneImporter fails every import.
+type failingZoneImporter struct{}
+
+func (failingZoneImporter) Import(*happydns.User, *happydns.Domain, []happydns.Record, bool) (*happydns.Zone, error) {
+	return nil, errors.New("storage down")
+}
+
+func TestRemoteZoneImporter_ProgressEndsOnImportError(t *testing.T) {
+	uc := orchestrator.NewRemoteZoneImporterUsecase(
+		domainlogUC.NoopDomainLogAppender{},
+		&mockProviderGetter{provider: &happydns.Provider{}},
+		failingZoneImporter{},
+		nil,
+		&knownRecorder{},
+	)
+	domain := &happydns.Domain{Id: happydns.Identifier([]byte("d1")), DomainName: "example.com."}
+
+	if _, err := uc.Import(context.Background(), &happydns.User{}, domain); err == nil {
+		t.Fatal("Import succeeded; want the error of the zone importer")
+	}
+	if _, ok := uc.Progress(domain); ok {
+		t.Error("Progress still tells an import in flight once the records failed to import")
+	}
+}
+
+// probingZoneImporter calls probe while importing the zone.
+type probingZoneImporter struct {
+	probe func()
+}
+
+func (z *probingZoneImporter) Import(_ *happydns.User, _ *happydns.Domain, _ []happydns.Record, _ bool) (*happydns.Zone, error) {
+	z.probe()
+	return &happydns.Zone{}, nil
+}
+
+func TestRemoteZoneImporter_ProgressImportingStep(t *testing.T) {
+	importer := &probingZoneImporter{}
+	uc := orchestrator.NewRemoteZoneImporterUsecase(
+		domainlogUC.NoopDomainLogAppender{},
+		&mockProviderGetter{provider: &happydns.Provider{}},
+		importer,
+		nil,
+		&knownRecorder{},
+	)
+	domain := &happydns.Domain{Id: happydns.Identifier([]byte("d1")), DomainName: "example.com."}
+
+	var s happydns.ImportProgressSnapshot
+	importer.probe = func() { s, _ = uc.Progress(domain) }
+	if _, err := uc.Import(context.Background(), &happydns.User{}, domain); err != nil {
+		t.Fatalf("Import: %v", err)
+	}
+
+	if s.Step != happydns.ImportStepImporting || s.Percent != happydns.ImportRetrievedPercent {
+		t.Errorf("the records were imported at step %q, %d%%; want %q, %d%%", s.Step, s.Percent, happydns.ImportStepImporting, happydns.ImportRetrievedPercent)
+	}
+}

@@ -28,6 +28,7 @@ import (
 	"maps"
 	"runtime/debug"
 	"slices"
+	"sync"
 	"time"
 
 	"golang.org/x/sync/singleflight"
@@ -51,6 +52,8 @@ type RemoteZoneImporterUsecase struct {
 
 	// inflight runs a single import at a time for each domain.
 	inflight singleflight.Group
+	// progress holds the progress of each import in flight, by domain.
+	progress sync.Map
 }
 
 // remoteImportTimeout bounds an import, which no longer depends on the
@@ -85,7 +88,8 @@ func NewRemoteZoneImporterUsecase(
 // zone may take long, and one leaving before the end would otherwise lose
 // it, and start it over on coming back.
 func (uc *RemoteZoneImporterUsecase) Import(ctx context.Context, user *happydns.User, domain *happydns.Domain) (*happydns.Zone, error) {
-	done := uc.inflight.DoChan(domain.Id.String(), func() (zone any, err error) {
+	id := domain.Id.String()
+	done := uc.inflight.DoChan(id, func() (zone any, err error) {
 		// The import no longer runs in the request, out of reach of its
 		// recovery: singleflight would raise a panic again where nothing
 		// can catch it, bringing the whole server down.
@@ -96,10 +100,14 @@ func (uc *RemoteZoneImporterUsecase) Import(ctx context.Context, user *happydns.
 			}
 		}()
 
+		progress := happydns.NewImportProgress()
+		uc.progress.Store(id, progress)
+		defer uc.progress.Delete(id)
+
 		detached, cancel := context.WithTimeout(context.WithoutCancel(ctx), remoteImportTimeout)
 		defer cancel()
 
-		return uc.importNow(detached, user, domain)
+		return uc.importNow(happydns.WithImportProgress(detached, progress), user, domain)
 	})
 
 	select {
@@ -113,6 +121,16 @@ func (uc *RemoteZoneImporterUsecase) Import(ctx context.Context, user *happydns.
 	}
 }
 
+// Progress tells how far the import of domain in flight is, and whether
+// one is.
+func (uc *RemoteZoneImporterUsecase) Progress(domain *happydns.Domain) (happydns.ImportProgressSnapshot, bool) {
+	progress, ok := uc.progress.Load(domain.Id.String())
+	if !ok {
+		return happydns.ImportProgressSnapshot{}, false
+	}
+	return progress.(*happydns.ImportProgress).Snapshot(), true
+}
+
 // importNow retrieves the zone of domain from its provider and imports it.
 func (uc *RemoteZoneImporterUsecase) importNow(ctx context.Context, user *happydns.User, domain *happydns.Domain) (*happydns.Zone, error) {
 	provider, err := uc.providerService.GetUserProvider(ctx, user, domain.ProviderId)
@@ -124,6 +142,8 @@ func (uc *RemoteZoneImporterUsecase) importNow(ctx context.Context, user *happyd
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve the zone from server: %w", err)
 	}
+
+	happydns.ImportProgressFrom(ctx).SetStep(happydns.ImportStepImporting, "", happydns.ImportRetrievedPercent, 100)
 
 	myZone, err := uc.zoneImporter.Import(user, domain, zone, partial)
 	if err != nil {
