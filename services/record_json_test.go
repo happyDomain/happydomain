@@ -23,10 +23,12 @@ package svcs_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/miekg/dns"
 
+	"git.happydns.org/happyDomain/internal/helpers"
 	svc "git.happydns.org/happyDomain/internal/serviceanalyzer"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/services"
@@ -94,5 +96,60 @@ func TestOrphanHTTPSLegacy(t *testing.T) {
 
 	if got.Record.String() != want.String() {
 		t.Errorf("legacy record misread:\n want %s\n got  %s", want, got.Record)
+	}
+}
+
+// Every common record type, as the analyzer or the user hands it, survives
+// being stored in a service and read back.
+func TestRecordJSONRoundTrip(t *testing.T) {
+	for _, line := range []string{
+		`a.example.com. 300 IN A 192.0.2.1`,
+		`a.example.com. 300 IN AAAA 2001:db8::1`,
+		`a.example.com. 300 IN CNAME target.example.net.`,
+		`a.example.com. 300 IN DNAME target.example.net.`,
+		`example.com. 300 IN ALIAS target.example.net.`,
+		`example.com. 300 IN NS ns1.example.net.`,
+		`example.com. 300 IN SOA ns1.example.net. hostmaster.example.com. 2026102401 7200 3600 1209600 300`,
+		`example.com. 300 IN MX 10 mx.example.net.`,
+		`1.2.0.192.in-addr.arpa. 300 IN PTR host.example.com.`,
+		`_sip._tcp.example.com. 300 IN SRV 10 60 5060 sip.example.com.`,
+		`example.com. 300 IN CAA 0 issue "letsencrypt.org"`,
+		`example.com. 300 IN CAA 128 iodef "mailto:security@example.com"`,
+		`_443._tcp.example.com. 300 IN TLSA 3 1 1 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef`,
+		`a.example.com. 300 IN SSHFP 4 2 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef`,
+		`example.com. 300 IN DS 12345 13 2 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef`,
+		`example.com. 300 IN DNSKEY 257 3 13 mdsswUyr3DPW132mOi8V9xESWE8jTo0dxCjjnopKl+GqJxpVXckHAeF+KkxLbxILfDLUT0rAK9iUzy1L53eKGQ==`,
+		`example.com. 300 IN NAPTR 100 10 "S" "SIP+D2U" "" _sip._udp.example.com.`,
+		`a.example.com. 300 IN LOC 48 51 24.000 N 2 21 3.000 E 35.00m 1m 10000m 10m`,
+		`a.example.com. 300 IN HINFO "x86_64" "Linux"`,
+		`a.example.com. 300 IN RP hostmaster.example.com. info.example.com.`,
+		`_http._tcp.example.com. 300 IN URI 10 1 "https://example.com/"`,
+		`example.com. 300 IN SVCB 1 svc.example.com. alpn="h2" port="8443"`,
+		`example.com. 300 IN HTTPS 1 . alpn="h3,h2" ipv4hint="192.0.2.1" ipv6hint="2001:db8::1"`,
+		`example.com. 300 IN HTTPS 0 cdn.example.net.`,
+	} {
+		rr, err := helpers.ParseRecord(line, "example.com.")
+		if err != nil {
+			t.Fatalf("ParseRecord(%q): %v", line, err)
+		}
+
+		payload, err := json.Marshal(&svcs.Orphan{Record: rr})
+		if err != nil {
+			t.Errorf("marshal %q: %v", line, err)
+			continue
+		}
+
+		var got svcs.Orphan
+		if err := json.Unmarshal(payload, &got); err != nil {
+			t.Errorf("unmarshal %s: %v", payload, err)
+			continue
+		}
+
+		if got.Record.String() != rr.String() {
+			t.Errorf("round trip changed the record:\n want %s\n got  %s", rr, got.Record)
+		}
+		if fmt.Sprintf("%T", got.Record) != fmt.Sprintf("%T", rr) {
+			t.Errorf("%s: read back a %T, want %T", line, got.Record, rr)
+		}
 	}
 }
