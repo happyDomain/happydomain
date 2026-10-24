@@ -80,8 +80,9 @@ checker `domain_watch`. Webhooks receive `"event": "domain_watch"`, with a
 
 Lookups go through the same RDAP then WHOIS chain as the registration data
 page, each bounded to 20 seconds. Adding a domain and "check now" look it up
-while the user waits; "check now" returns the last result when the domain was
-checked less than a minute ago.
+while the user waits; they share the rate limit of the registration data
+lookups (10 a minute per client), and "check now" returns the last result when
+the domain was checked less than a minute ago.
 
 The worker (`internal/usecase/domainwatch/worker.go`) wakes up every 15 minutes
 and looks up the watches that are due, 4 at a time. A domain watched by several

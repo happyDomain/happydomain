@@ -50,6 +50,7 @@ type Dependencies struct {
 	Domain                happydns.DomainUsecase
 	DomainInfo            happydns.DomainInfoUsecase
 	DomainLog             happydns.DomainLogUsecase
+	DomainWatch           happydns.DomainWatchUsecase
 	EmailAutoconfig       happydns.EmailAutoconfigUsecase
 	MTASTS                happydns.MTASTSUsecase
 	BIMI                  happydns.BIMIUsecase
@@ -146,7 +147,10 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 	}
 	auc := DeclareAuthUserRoutes(apiRoutes, dep.AuthUser, lc)
 
-	DeclareDomainInfoRoutes(apiRoutes.Group("/domaininfo/:domain", perClientRateLimiter(10)), dep.DomainInfo)
+	// The registration data lookups query the registries: the WHOIS page and
+	// the watchlist share a single per-client budget.
+	lookupRL := perClientRateLimiter(10)
+	DeclareDomainInfoRoutes(apiRoutes.Group("/domaininfo/:domain", lookupRL), dep.DomainInfo)
 	DeclareFaviconRoutes(apiRoutes.Group("/favicon", perClientRateLimiter(60)), dep.FaviconService)
 
 	// The endpoints serving content for the domains happyDomain hosts are
@@ -221,6 +225,9 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 		nc,
 		dep.OutboundGuard,
 	)
+	if dep.DomainWatch != nil {
+		DeclareDomainWatchRoutes(apiAuthRoutes, lookupRL, dep.DomainWatch)
+	}
 	DeclareProviderRoutes(apiAuthRoutes, dep.Provider)
 	DeclareProviderSettingsRoutes(apiAuthRoutes, dep.ProviderSettings, dep.Provider)
 	DeclareRecordRoutes(apiAuthRoutes)

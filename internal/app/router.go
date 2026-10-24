@@ -164,6 +164,7 @@ func (app *App) setupRouter() {
 			Domain:                app.usecases.domain,
 			DomainInfo:            app.usecases.domainInfo,
 			DomainLog:             app.usecases.domainLog,
+			DomainWatch:           app.usecases.domainWatch,
 			EmailAutoconfig:       app.usecases.emailAutoconfig,
 			MTASTS:                app.usecases.mtasts,
 			BIMI:                  app.usecases.bimi,
