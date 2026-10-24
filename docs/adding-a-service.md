@@ -98,8 +98,15 @@ func init() {
   resort by the interface. **There is no `Description` field**: how a service is
   introduced to the user is wording, and wording is translated, so it lives with
   the frontend part (see below).
+- `Keywords` is optional: extra terms the service selector finds the service
+  by, beside its name, description, categories and record types. Abstract
+  services standing for several third parties list their names there.
 
 Nothing else. No list to append to, no central registry to edit.
+
+A TXT record proving to a third party that you control the domain is not a new
+service: add a line to `VerificationProviders` in
+`services/abstract/domain-verification.go`, then run `go generate`.
 
 ---
 

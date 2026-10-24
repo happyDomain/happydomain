@@ -95,6 +95,98 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             "single": true
         }
     },
+    "abstract.DomainVerification": {
+        "name": "Domain Verification",
+        "_svctype": "abstract.DomainVerification",
+        "family": "abstract",
+        "categories": [
+            "verification"
+        ],
+        "keywords": [
+            "1Password",
+            "Adobe",
+            "Adobe Sign",
+            "Afternic",
+            "Ahrefs",
+            "Airtable",
+            "Amazon SES",
+            "Anthropic",
+            "Apple",
+            "Atlassian",
+            "Atlassian Statuspage",
+            "Autodesk",
+            "Bluesky",
+            "Box",
+            "Brevo",
+            "Calendly",
+            "Canva",
+            "Cisco Webex",
+            "Cursor",
+            "dan.com",
+            "DigiCert",
+            "Docker",
+            "DocuSign",
+            "Dropbox",
+            "Facebook",
+            "Figma",
+            "GitLab Pages",
+            "GlobalSign",
+            "Google",
+            "HackerOne",
+            "HashiCorp",
+            "Have I Been Pwned",
+            "HubSpot",
+            "Jamf",
+            "JetBrains",
+            "Keybase",
+            "Klaviyo",
+            "KnowBe4",
+            "Krisp",
+            "Linear",
+            "LinkedIn",
+            "LogMeIn",
+            "Loom",
+            "Mailgun",
+            "Mandrill",
+            "Microsoft",
+            "Miro",
+            "Mixpanel",
+            "MongoDB",
+            "Notion",
+            "Okta",
+            "OneTrust",
+            "OpenAI",
+            "Pinterest",
+            "Postman",
+            "Proton",
+            "Salesforce Marketing Cloud",
+            "Scaleway",
+            "Segment",
+            "Serval",
+            "Shopify",
+            "Slack",
+            "Smartsheet",
+            "Stripe",
+            "Tailscale",
+            "TeamViewer",
+            "TikTok",
+            "Tuta",
+            "Twilio",
+            "Vercel",
+            "VMware",
+            "Workplace from Meta",
+            "Wrike",
+            "Yahoo",
+            "Yandex",
+            "Zapier",
+            "Zoho",
+            "Zoom"
+        ],
+        "record_types": null,
+        "restrictions": {
+            "nearAlone": true
+        }
+    },
     "abstract.EmailAutoConfig": {
         "name": "Email Auto-configuration",
         "_svctype": "abstract.EmailAutoConfig",
@@ -126,28 +218,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             "nearAlone": true
         }
     },
-    "abstract.GitlabPageVerif": {
-        "name": "Gitlab Pages Verification",
-        "_svctype": "abstract.GitlabPageVerif",
-        "family": "abstract",
-        "categories": [
-            "verification"
-        ],
-        "record_types": null,
-        "restrictions": {
-            "nearAlone": true
-        }
-    },
-    "abstract.GoogleVerif": {
-        "name": "Google Verification",
-        "_svctype": "abstract.GoogleVerif",
-        "family": "abstract",
-        "categories": [
-            "verification"
-        ],
-        "record_types": null,
-        "restrictions": {}
-    },
     "abstract.Kerberos": {
         "name": "Kerberos",
         "_svctype": "abstract.Kerberos",
@@ -163,18 +233,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
                 33
             ],
             "single": true
-        }
-    },
-    "abstract.KeybaseVerif": {
-        "name": "Keybase Verification",
-        "_svctype": "abstract.KeybaseVerif",
-        "family": "abstract",
-        "categories": [
-            "verification"
-        ],
-        "record_types": null,
-        "restrictions": {
-            "nearAlone": true
         }
     },
     "abstract.LDAP": {
@@ -341,18 +399,6 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             "needTypes": [
                 53
             ]
-        }
-    },
-    "abstract.ScalewayChallenge": {
-        "name": "Scaleway Challenge",
-        "_svctype": "abstract.ScalewayChallenge",
-        "family": "abstract",
-        "categories": [
-            "verification"
-        ],
-        "record_types": null,
-        "restrictions": {
-            "nearAlone": true
         }
     },
     "abstract.Server": {

@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "abstract": {
+            "DomainVerification": {
+                "name": "Domain Verification",
+                "description": "Record to prove to a third party that you control the domain."
+            }
+        }
+    }
+}

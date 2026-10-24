@@ -25,7 +25,7 @@ COPY generate.go ./
 
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    mkdir -p web/src/lib/services/svcs.CAAPolicy && \
+    mkdir -p web/src/lib/services/svcs.CAAPolicy web/src/lib/services/abstract.DomainVerification && \
     go generate ./...
 
 
@@ -38,6 +38,7 @@ COPY web/ web/
 COPY --from=gogenerator /src/web/src/lib/dns_rr.ts web/src/lib/dns_rr.ts
 COPY --from=gogenerator /src/web/src/lib/services_specs.ts web/src/lib/services_specs.ts
 COPY --from=gogenerator /src/web/src/lib/services/svcs.CAAPolicy/issuers.json web/src/lib/services/svcs.CAAPolicy/issuers.json
+COPY --from=gogenerator /src/web/src/lib/services/abstract.DomainVerification/providers.ts web/src/lib/services/abstract.DomainVerification/providers.ts
 
 RUN --mount=type=cache,target=/usr/local/share/.cache/yarn \
     yarn --cwd web --network-timeout 100000 install && \

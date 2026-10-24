@@ -5,6 +5,7 @@ node_modules
 /build
 /src/lib/api-base
 /src/lib/api-admin
+/src/lib/services/abstract.DomainVerification/providers.ts
 
 # OS
 .DS_Store

@@ -29,6 +29,10 @@ export interface AbstractDelegationBody {
     ds: Array<dnsTypeDS>;
 }
 
+export interface AbstractDomainVerificationBody {
+    txt: dnsTypeTXT;
+}
+
 export interface AbstractEmailAutoConfigBody {
     displayName?: string;
     displayShortName?: string;
@@ -47,14 +51,6 @@ export interface AbstractGithubOrgVerifBody {
     txt: dnsTypeTXT;
 }
 
-export interface AbstractGitlabPageVerifBody {
-    txt: dnsTypeTXT;
-}
-
-export interface AbstractGoogleVerifBody {
-    txt: dnsTypeTXT;
-}
-
 export interface AbstractKerberosBody {
     kdc_tcp?: Array<dnsTypeSRV>;
     kdc_udp?: Array<dnsTypeSRV>;
@@ -62,10 +58,6 @@ export interface AbstractKerberosBody {
     admin?: Array<dnsTypeSRV>;
     kpasswd_tcp?: Array<dnsTypeSRV>;
     kpasswd_udp?: Array<dnsTypeSRV>;
-}
-
-export interface AbstractKeybaseVerifBody {
-    txt: dnsTypeTXT;
 }
 
 export interface AbstractLDAPBody {
@@ -113,10 +105,6 @@ export interface AbstractSIPBody {
 export interface AbstractSMimeCertBody {
     username?: string;
     smimea: dnsTypeSMIMEA;
-}
-
-export interface AbstractScalewayChallengeBody {
-    txt: dnsTypeTXT;
 }
 
 export interface AbstractServerBody {
@@ -220,12 +208,10 @@ export interface ServiceBodies {
     "abstract.CalDAV": AbstractCalDAVBody;
     "abstract.CardDAV": AbstractCardDAVBody;
     "abstract.Delegation": AbstractDelegationBody;
+    "abstract.DomainVerification": AbstractDomainVerificationBody;
     "abstract.EmailAutoConfig": AbstractEmailAutoConfigBody;
     "abstract.GithubOrgVerif": AbstractGithubOrgVerifBody;
-    "abstract.GitlabPageVerif": AbstractGitlabPageVerifBody;
-    "abstract.GoogleVerif": AbstractGoogleVerifBody;
     "abstract.Kerberos": AbstractKerberosBody;
-    "abstract.KeybaseVerif": AbstractKeybaseVerifBody;
     "abstract.LDAP": AbstractLDAPBody;
     "abstract.LibravatarServer": AbstractLibravatarServerBody;
     "abstract.MTASTS": AbstractMTASTSBody;
@@ -236,7 +222,6 @@ export interface ServiceBodies {
     "abstract.RFC6186": AbstractRFC6186Body;
     "abstract.SIP": AbstractSIPBody;
     "abstract.SMimeCert": AbstractSMimeCertBody;
-    "abstract.ScalewayChallenge": AbstractScalewayChallengeBody;
     "abstract.Server": AbstractServerBody;
     "abstract.XMPP": AbstractXMPPBody;
     "google.GSuite": GoogleGSuiteBody;

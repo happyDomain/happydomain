@@ -390,3 +390,15 @@ func TestRoundTrip_CardDAV(t *testing.T) {
 	}
 	assertRoundTrip(t, origin, records)
 }
+
+func TestRoundTrip_DomainVerification(t *testing.T) {
+	origin := "example.com."
+	records := []happydns.Record{
+		mustNewRR(t, "example.com. 3600 IN TXT \"anthropic-domain-verification-4az7qn=if8YWuRRqwLycGJDooumzHtxm\""),
+		mustNewRR(t, "example.com. 3600 IN TXT \"stripe-verification=f88ef173\""),
+		mustNewRR(t, "_keybase.example.com. 3600 IN TXT \"keybase-site-verification=abc123\""),
+		mustNewRR(t, "_scaleway-challenge.example.com. 3600 IN TXT \"token\""),
+		mustNewRR(t, "_gitlab-pages-verification-code.blog.example.com. 3600 IN TXT \"gitlab-pages-verification-code=abc123\""),
+	}
+	assertRoundTrip(t, origin, records)
+}

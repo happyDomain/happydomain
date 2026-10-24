@@ -1,0 +1,10 @@
+{
+    "svcinfo": {
+        "abstract": {
+            "DomainVerification": {
+                "name": "Vérification de domaine",
+                "description": "Enregistrement prouvant à un tiers que vous contrôlez le domaine."
+            }
+        }
+    }
+}

@@ -287,7 +287,7 @@ func migrateFrom7(s *KVStorage) error {
 			return nil, err
 		}
 
-		var challenge abstract.GitlabPageVerif
+		var challenge abstract.DomainVerification
 
 		rr, err := dns.NewRR(fmt.Sprintf("_gitlab-pages-verification-code.zZzZ. 0 IN TXT gitlab-pages-verification-code=%q", val["Code"].(string)))
 		if err != nil {
@@ -309,7 +309,7 @@ func migrateFrom7(s *KVStorage) error {
 			return nil, err
 		}
 
-		var challenge abstract.GoogleVerif
+		var challenge abstract.DomainVerification
 
 		rr, err := dns.NewRR(fmt.Sprintf("zZzZ. 0 IN TXT google-site-verification=%s", strings.TrimPrefix(val["SiteVerification"].(string), "google-site-verification=")))
 		if err != nil {
@@ -331,9 +331,9 @@ func migrateFrom7(s *KVStorage) error {
 			return nil, err
 		}
 
-		var challenge abstract.KeybaseVerif
+		var challenge abstract.DomainVerification
 
-		rr, err := dns.NewRR(fmt.Sprintf("zZzZ. 0 IN TXT keybase-site-verification=%s", val["SiteVerification"].(string)))
+		rr, err := dns.NewRR(fmt.Sprintf("_keybase.zZzZ. 0 IN TXT keybase-site-verification=%s", val["SiteVerification"].(string)))
 		if err != nil {
 			return nil, err
 		}
@@ -577,7 +577,7 @@ func migrateFrom7(s *KVStorage) error {
 			return nil, err
 		}
 
-		var challenge abstract.ScalewayChallenge
+		var challenge abstract.DomainVerification
 
 		rr, err := dns.NewRR(fmt.Sprintf("_scaleway-challenge.zZzZ. 0 IN TXT %q", val["Code"].(string)))
 		if err != nil {
