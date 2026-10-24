@@ -87,3 +87,15 @@ func (r *Resolver) ResolveChannels(user *happydns.User, pref *happydns.Notificat
 	}
 	return result
 }
+
+// HasChannels tells whether user set up any channel, enabled or not. On a
+// storage failure, it answers true: better stay silent than reach the user
+// somewhere they did not choose.
+func (r *Resolver) HasChannels(user *happydns.User) bool {
+	channels, err := r.channelStore.ListChannelsByUser(user.Id)
+	if err != nil {
+		log.Printf("notification: failed to load channels for user %q: %v", user.Id, err)
+		return true
+	}
+	return len(channels) > 0
+}

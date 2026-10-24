@@ -26,6 +26,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 
 	"git.happydns.org/happyDomain/internal/netguard"
 	"git.happydns.org/happyDomain/internal/secret"
@@ -49,6 +50,36 @@ type NotificationPayload struct {
 	NewStatus     happydns.Status
 	States        []happydns.CheckState
 	Annotation    string
+	// Event, when set, makes this a notification about something else than
+	// a checker status change: its text replaces the status change report.
+	Event *NotificationEvent
+}
+
+// NotificationEvent is a notification raised by a feature other than the
+// checkers, which writes its text.
+type NotificationEvent struct {
+	// Kind identifies the event for machines, e.g. "domain_watch".
+	Kind string
+	// Title is a one-line summary, the subject of an email.
+	Title string
+	// Body is the message, in Markdown. Its author escapes the third-party
+	// values it embeds.
+	Body string
+	// Path of the page about the event, relative to the base URL of
+	// happyDomain, e.g. "/watchlist/".
+	Path string
+}
+
+// eventURL returns the link to the page about an event.
+func eventURL(baseURL string, ev *NotificationEvent) string {
+	if baseURL == "" {
+		return ""
+	}
+	u, err := url.JoinPath(baseURL, ev.Path)
+	if err != nil {
+		return ""
+	}
+	return u
 }
 
 type ChannelConfig interface {

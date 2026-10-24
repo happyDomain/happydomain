@@ -133,6 +133,49 @@ func (d *Dispatcher) OnExecutionComplete(exec *happydns.Execution, eval *happydn
 	}
 }
 
+// NotifyUser sends payload, about an event not tied to a checker, to user
+// through the channels of their global preference. The user asked for such
+// events: the severity threshold, the acknowledgements and the quiet hours of
+// checker alerts do not apply. A user who set up no channel at all gets them at
+// their account email, so that the event is not lost.
+func (d *Dispatcher) NotifyUser(user *happydns.User, payload *notifPkg.NotificationPayload) {
+	pref := d.resolver.ResolvePreference(user, happydns.CheckTarget{UserId: user.Id.String()})
+	if !pref.Enabled {
+		return
+	}
+
+	base := *payload
+	if base.Recipient.Email == "" {
+		base.Recipient.Email = user.Email
+	}
+	// The history tells what sent a notification by its checker.
+	if base.CheckerID == "" && base.Event != nil {
+		base.CheckerID = base.Event.Kind
+	}
+
+	channels := d.resolver.ResolveChannels(user, pref)
+	if len(channels) == 0 && !d.resolver.HasChannels(user) {
+		// Never stored. Opening its (empty) configuration still needs
+		// an identifier: the secret context requires one.
+		id, err := happydns.NewRandomIdentifier()
+		if err != nil {
+			log.Printf("notification: failed to make the account email channel of user %q: %v", user.Id, err)
+			return
+		}
+		channels = []*happydns.NotificationChannel{{
+			Id:      id,
+			UserId:  user.Id,
+			Type:    notifPkg.ChannelTypeEmail,
+			Name:    "Account email",
+			Enabled: true,
+		}}
+	}
+
+	for _, ch := range channels {
+		d.pool.Enqueue(ch, d.payloadForChannel(&base, ch), user)
+	}
+}
+
 func (d *Dispatcher) loadOrInitState(exec *happydns.Execution, userId happydns.Identifier) (*happydns.NotificationState, error) {
 	state, err := d.stateStore.GetState(exec.CheckerID, exec.Target, userId)
 	if errors.Is(err, happydns.ErrNotificationStateNotFound) {

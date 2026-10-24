@@ -136,3 +136,20 @@ func TestMergeChannelForUpdateRefusesTypeChange(t *testing.T) {
 		})
 	}
 }
+
+func TestEventURL(t *testing.T) {
+	for _, tc := range []struct {
+		base, path, want string
+	}{
+		{"https://happydomain.example", "/watchlist/", "https://happydomain.example/watchlist/"},
+		{"https://happydomain.example/", "/watchlist/", "https://happydomain.example/watchlist/"},
+		{"https://happydomain.example/app", "watchlist", "https://happydomain.example/app/watchlist"},
+		{"https://happydomain.example", "", "https://happydomain.example"},
+		{"", "/watchlist/", ""},
+		{"://bad", "/watchlist/", ""},
+	} {
+		if got := eventURL(tc.base, &NotificationEvent{Path: tc.path}); got != tc.want {
+			t.Errorf("eventURL(%q, %q) = %q, want %q", tc.base, tc.path, got, tc.want)
+		}
+	}
+}

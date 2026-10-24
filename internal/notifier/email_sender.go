@@ -75,6 +75,15 @@ func (s *EmailSender) Send(_ context.Context, c EmailConfig, payload *Notificati
 
 	to := &mail.Address{Address: addr}
 
+	if ev := payload.Event; ev != nil {
+		var body strings.Builder
+		fmt.Fprintf(&body, "%s\n\n", ev.Body)
+		if link := eventURL(s.baseURL, ev); link != "" {
+			fmt.Fprintf(&body, "[View in happyDomain](%s)\n", link)
+		}
+		return s.mailer.SendMail(to, "[happyDomain] "+stripCRLF(ev.Title), body.String())
+	}
+
 	// Strip CR/LF to prevent RFC 5322 header injection.
 	displayDomain := payload.DomainName
 	if payload.ServiceDomain != "" {
@@ -87,13 +96,13 @@ func (s *EmailSender) Send(_ context.Context, c EmailConfig, payload *Notificati
 	// Wrap third-party-sourced fields as Markdown code spans to neutralize injected link syntax in DKIM-signed mail; Annotation is user-authored, no boundary.
 	var body strings.Builder
 	fmt.Fprintf(&body, "## Status Change: %s -> %s\n\n", payload.OldStatus, payload.NewStatus)
-	fmt.Fprintf(&body, "**Domain:** %s\n\n", mdLiteral(payload.DomainName))
-	fmt.Fprintf(&body, "**Checker:** %s\n\n", mdLiteral(payload.CheckerID))
+	fmt.Fprintf(&body, "**Domain:** %s\n\n", MarkdownLiteral(payload.DomainName))
+	fmt.Fprintf(&body, "**Checker:** %s\n\n", MarkdownLiteral(payload.CheckerID))
 
 	if len(payload.States) > 0 {
 		body.WriteString("### Rule Results\n\n")
 		for _, state := range payload.States {
-			fmt.Fprintf(&body, "- %s (%s): %s\n", mdLiteral(state.Code), state.Status, mdLiteral(state.Message))
+			fmt.Fprintf(&body, "- %s (%s): %s\n", MarkdownLiteral(state.Code), state.Status, MarkdownLiteral(state.Message))
 		}
 		body.WriteString("\n")
 	}
@@ -123,7 +132,9 @@ func stripCRLF(s string) string {
 	return strings.NewReplacer("\r", "", "\n", "").Replace(s)
 }
 
-// Wraps s as a code span; backticks become apostrophes to avoid fence accounting.
-func mdLiteral(s string) string {
+// MarkdownLiteral wraps s as a code span, so that a third-party value cannot
+// inject Markdown (a link, say) into a message; backticks become apostrophes
+// to avoid fence accounting.
+func MarkdownLiteral(s string) string {
 	return "`" + strings.ReplaceAll(s, "`", "'") + "`"
 }

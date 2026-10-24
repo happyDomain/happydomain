@@ -74,3 +74,28 @@ func TestPostJSONInvalidURLErrorHidesTheURL(t *testing.T) {
 		t.Errorf("postJSON error reveals the secret: %v", err)
 	}
 }
+
+func TestBuildHTTPPayloadEvent(t *testing.T) {
+	p := buildHTTPPayload(&NotificationPayload{
+		CheckerID:  "domain_watch",
+		DomainName: "example.com",
+		Event: &NotificationEvent{
+			Kind:  "domain_watch",
+			Title: "example.com is available",
+			Body:  "Register it now.",
+			Path:  "/watchlist/",
+		},
+	}, "https://happydomain.example/")
+
+	if p.Event != "domain_watch" || p.Domain != "example.com" || p.Title != "example.com is available" || p.Message != "Register it now." {
+		t.Errorf("unexpected payload: %+v", p)
+	}
+	if p.DashboardURL != "https://happydomain.example/watchlist/" {
+		t.Errorf("DashboardURL = %q", p.DashboardURL)
+	}
+
+	// A checker notification keeps its shape.
+	if p := buildHTTPPayload(&NotificationPayload{CheckerID: "ping"}, "https://happydomain.example"); p.Event != "status_change" || p.Title != "" {
+		t.Errorf("unexpected checker payload: %+v", p)
+	}
+}

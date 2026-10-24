@@ -43,11 +43,25 @@ type httpJSONPayload struct {
 	OldStatus    happydns.Status       `json:"oldStatus"`
 	NewStatus    happydns.Status       `json:"newStatus"`
 	States       []happydns.CheckState `json:"states,omitempty"`
+	Title        string                `json:"title,omitempty"`
+	Message      string                `json:"message,omitempty"`
 	Timestamp    time.Time             `json:"timestamp"`
 	DashboardURL string                `json:"dashboardUrl,omitempty"`
 }
 
 func buildHTTPPayload(p *NotificationPayload, dashboardURL string) httpJSONPayload {
+	if ev := p.Event; ev != nil {
+		return httpJSONPayload{
+			Event:        ev.Kind,
+			Checker:      p.CheckerID,
+			Domain:       p.DomainName,
+			Title:        ev.Title,
+			Message:      ev.Body,
+			Timestamp:    time.Now(),
+			DashboardURL: eventURL(dashboardURL, ev),
+		}
+	}
+
 	return httpJSONPayload{
 		Event:        "status_change",
 		Checker:      p.CheckerID,

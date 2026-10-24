@@ -108,3 +108,22 @@ so JSON decode, `Validate`, redact, merge, and `SendTest` are uniform across
 transports. Senders that carry secrets implement `ConfigRedactor[C]`, so the
 client never sees the secret, and `ConfigMerger[C]`, so an empty value on
 update preserves the stored secret rather than wiping it.
+
+## Events not tied to a checker
+
+Other features reuse the channels, the worker pool and the audit log to tell
+the user about their own events.
+They call `Dispatcher.NotifyUser(user, payload)` with a payload carrying an
+`Event` (`Kind`, `Title`, Markdown `Body`, `Path` of the page to open):
+
+- there is no status transition, so no `NotificationState`, threshold,
+  acknowledgement nor quiet hours: the feature decides when to notify, and the
+  user explicitly asked for these events;
+- the global preference still applies: disabled, it silences them; its channel
+  allow list restricts them;
+- a user who set up no channel at all receives them at their account email,
+  rather than not at all; one who disabled all their channels receives nothing;
+- emails use `Title` as subject and `Body` as content; webhook and UnifiedPush
+  payloads carry `event: <Kind>`, `title`, `message` and `dashboardUrl`;
+- the audit record stores the `Kind` as its checker, unless the payload names
+  one.
