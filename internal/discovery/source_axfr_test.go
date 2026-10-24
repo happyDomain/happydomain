@@ -29,6 +29,8 @@ import (
 	"time"
 
 	"github.com/miekg/dns"
+
+	"git.happydns.org/happyDomain/model"
 )
 
 func axfrTestZone(t *testing.T) *testZone {
@@ -270,6 +272,72 @@ func TestAXFRBoundByContext(t *testing.T) {
 	}
 	if elapsed := time.Since(start); elapsed > axfrTimeout/2 {
 		t.Errorf("the transfer took %s; want it cut at the end of the context", elapsed)
+	}
+}
+
+func TestExploreAXFRReportsProgress(t *testing.T) {
+	zone := axfrTestZone(t)
+	zone.allowAXFR = true
+	opts := zone.serve(t)
+
+	progress := happydns.NewImportProgress()
+	ctx := happydns.WithImportProgress(context.Background(), progress)
+
+	records, _, err := Explore(ctx, "example.com.", nil, []NameSource{AXFRSource{}}, opts)
+	if err != nil {
+		t.Fatalf("Explore: %v", err)
+	}
+
+	// The transfer spares the exploration, not the last counts.
+	s := progress.Snapshot()
+	if s.Step != happydns.ImportStepTransfer || s.Source != "axfr" {
+		t.Errorf("the exploration ended at step %q, source %q; want %q, \"axfr\"", s.Step, s.Source, happydns.ImportStepTransfer)
+	}
+	if s.Records != int64(len(records)) {
+		t.Errorf("the progress counts %d records; want the %d transferred", s.Records, len(records))
+	}
+}
+
+func TestExploreAXFRRefusedReportsProgress(t *testing.T) {
+	zone := axfrTestZone(t)
+	opts := zone.serve(t)
+
+	progress := happydns.NewImportProgress()
+	ctx := happydns.WithImportProgress(context.Background(), progress)
+
+	var seen happydns.ImportProgressSnapshot
+	if _, _, err := Explore(ctx, "example.com.", nil, []NameSource{AXFRSource{}, progressSource{nil, &seen}}, opts); err != nil {
+		t.Fatalf("Explore: %v", err)
+	}
+
+	// The transfer refused, the collection still starts past its band.
+	bands := planBands(true)
+	if seen.Step != happydns.ImportStepCollecting || float64(seen.Percent) < bands.transfer.to {
+		t.Errorf("the source was asked at step %q, %d%%; want %q, past the transfer at %v%%", seen.Step, seen.Percent, happydns.ImportStepCollecting, bands.transfer.to)
+	}
+}
+
+func TestAXFRReportsProgress(t *testing.T) {
+	// Two servers refusing the connection.
+	var servers []string
+	for range 2 {
+		ln, err := net.Listen("tcp", "127.0.0.1:0")
+		if err != nil {
+			t.Fatalf("listen: %v", err)
+		}
+		servers = append(servers, ln.Addr().String())
+		ln.Close()
+	}
+
+	progress := happydns.NewImportProgress()
+	progress.SetStep(happydns.ImportStepTransfer, "axfr", 10, 30)
+	ctx := happydns.WithImportProgress(context.Background(), progress)
+
+	if rrs, _ := (AXFRSource{}).Records(ctx, Target{Domain: "example.com.", Authoritative: servers}); rrs != nil {
+		t.Fatalf("a refused transfer handed %d records", len(rrs))
+	}
+	if s := progress.Snapshot(); s.Percent != 30 {
+		t.Errorf("all the servers tried put the progress at %d%%, want the end of the step at 30%%", s.Percent)
 	}
 }
 

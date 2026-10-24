@@ -25,6 +25,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"net"
 	"slices"
 	"strings"
@@ -680,5 +681,130 @@ func TestQueryOutOfTime(t *testing.T) {
 	// A question the pace leaves no time for is not a server failing.
 	if n := e.failures[addr].Load(); n != 0 {
 		t.Errorf("the server failed %d questions; want none", n)
+	}
+}
+
+// progressSource yields names, recording how far the import was when
+// asked for them.
+type progressSource struct {
+	names []string
+	seen  *happydns.ImportProgressSnapshot
+}
+
+func (progressSource) ID() string { return "progress" }
+
+func (s progressSource) Discover(ctx context.Context, t Target) (names []Name, err error) {
+	*s.seen = happydns.ImportProgressFrom(ctx).Snapshot()
+	return staticSource(s.names).Discover(ctx, t)
+}
+
+func TestExploreReportsProgress(t *testing.T) {
+	zone := newTestZone(t, "example.com.",
+		"example.com. 3600 IN NS ns1.example.com.",
+		"example.com. 300 IN A 192.0.2.1",
+		"ns1.example.com. 300 IN A 127.0.0.1",
+		"www.example.com. 300 IN CNAME web.example.com.",
+		"web.example.com. 300 IN A 192.0.2.20",
+	)
+	opts := zone.serve(t)
+
+	progress := happydns.NewImportProgress()
+	ctx := happydns.WithImportProgress(context.Background(), progress)
+
+	var seen happydns.ImportProgressSnapshot
+	records, _, err := Explore(ctx, "example.com.", nil, []NameSource{progressSource{[]string{"www.example.com.", "absent.example.com."}, &seen}}, opts)
+	if err != nil {
+		t.Fatalf("Explore: %v", err)
+	}
+
+	if seen.Step != happydns.ImportStepCollecting || seen.Source != "progress" {
+		t.Errorf("the source was asked at step %q, source %q; want %q, \"progress\"", seen.Step, seen.Source, happydns.ImportStepCollecting)
+	}
+	if seen.Done == 0 {
+		t.Error("the apex was not counted as explored before the sources were asked")
+	}
+	bands := planBands(false)
+	if float64(seen.Percent) < bands.collecting.from || float64(seen.Percent) > bands.collecting.to {
+		t.Errorf("the source was asked at %d%%; want within the collection, from %v%% to %v%%", seen.Percent, bands.collecting.from, bands.collecting.to)
+	}
+
+	s := progress.Snapshot()
+	if s.Step != happydns.ImportStepFollowing {
+		t.Errorf("the exploration ended at step %q; want %q, as www has a target to follow", s.Step, happydns.ImportStepFollowing)
+	}
+	if s.Total == 0 || s.Done != s.Total {
+		t.Errorf("the exploration ended at %d names of %d; want all of them, and some", s.Done, s.Total)
+	}
+	if float64(s.Percent) < bands.exploring.to || s.Percent > happydns.ImportRetrievedPercent {
+		t.Errorf("the exploration ended at %d%%; want past the exploration, at %v%%, and up to %d%%", s.Percent, bands.exploring.to, happydns.ImportRetrievedPercent)
+	}
+	if s.Records != int64(len(records)) {
+		t.Errorf("the progress counts %d records; want the %d found", s.Records, len(records))
+	}
+	if s.Queries == 0 {
+		t.Error("the progress counts no question")
+	}
+}
+
+func TestReportCountsWhileExploring(t *testing.T) {
+	defer func(interval time.Duration) { progressInterval = interval }(progressInterval)
+	progressInterval = 10 * time.Millisecond
+
+	rr, _ := dns.NewRR("www.example.com. 300 IN A 192.0.2.1")
+	e := &explorer{
+		opts:     Options{MaxQueries: 10},
+		records:  map[string]dns.RR{},
+		progress: happydns.NewImportProgress(),
+	}
+	stop := e.reportCounts()
+	defer stop()
+
+	e.addRecord(rr)
+	e.queries.Add(15)
+
+	deadline := time.Now().Add(time.Second)
+	for s := e.progress.Snapshot(); s.Records != 1 || s.Queries != 10; s = e.progress.Snapshot() {
+		if time.Now().After(deadline) {
+			t.Fatalf("the progress counts %d records and %d questions; want 1 and the 10 of the budget, before the end", s.Records, s.Queries)
+		}
+		time.Sleep(time.Millisecond)
+	}
+}
+
+func TestPlanBands(t *testing.T) {
+	for _, transfer := range []bool{true, false} {
+		b := planBands(transfer)
+		stages := []struct {
+			name string
+			band band
+		}{
+			{"locating", b.locating},
+			{"transfer", b.transfer},
+			{"apex", b.apex},
+			{"collecting", b.collecting},
+			{"exploring", b.exploring},
+			{"following", b.following},
+		}
+
+		// The stages follow each other, from 0% to the end of the
+		// retrieval.
+		var at float64
+		for _, stage := range stages {
+			if math.Abs(stage.band.from-at) > 1e-9 || stage.band.to < stage.band.from {
+				t.Errorf("transfer %v: the %s spans %v%% to %v%%; want from %v%%", transfer, stage.name, stage.band.from, stage.band.to, at)
+			}
+			at = stage.band.to
+		}
+		if math.Abs(at-happydns.ImportRetrievedPercent) > 1e-9 {
+			t.Errorf("transfer %v: the stages end at %v%%; want %d%%", transfer, at, happydns.ImportRetrievedPercent)
+		}
+	}
+
+	with, without := planBands(true), planBands(false)
+	if w := without.transfer.to - without.transfer.from; w != 0 {
+		t.Errorf("without a source handing the whole zone, the transfer spans %v%%; want none", w)
+	}
+	if without.exploring.to-without.exploring.from <= with.exploring.to-with.exploring.from {
+		t.Error("the share of the transfer left out was not handed to the other stages")
 	}
 }

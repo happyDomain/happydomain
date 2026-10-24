@@ -88,8 +88,24 @@ func Explore(ctx context.Context, domain string, known []string, sources []NameS
 		udp:     &dns.Client{Timeout: opts.QueryTimeout},
 		seen:    map[string]bool{},
 		records: map[string]dns.RR{},
+
+		progress: happydns.ImportProgressFrom(ctx),
 	}
 
+	if e.progress != nil {
+		stop := e.reportCounts()
+		defer stop()
+	}
+
+	var recordSources []RecordSource
+	for _, source := range sources {
+		if rs, ok := source.(RecordSource); ok {
+			recordSources = append(recordSources, rs)
+		}
+	}
+	bands := planBands(len(recordSources) > 0)
+
+	e.progress.SetStep(happydns.ImportStepLocating, "", bands.locating.from, bands.locating.to)
 	e.servers, err = e.findAuthoritative(ctx)
 	if err != nil {
 		return nil, false, err
@@ -115,24 +131,30 @@ func Explore(ctx context.Context, domain string, known []string, sources []NameS
 	}
 
 	// A source handing the whole zone spares the exploration.
-	if e.transferZone(ctx, target, sources) {
+	if e.transferZone(ctx, target, recordSources, bands.transfer) {
 		return e.result(), true, nil
 	}
 
 	// The apex comes first, then the known names: should the budget run
 	// out, the names already in the zone are the ones not to lose. A
 	// wildcard never covers the apex, so it is explored before the probe.
+	e.progress.SetStep(happydns.ImportStepExploring, "", bands.apex.from, bands.apex.to)
 	names := e.exploreAll(ctx, e.unseen([]Name{{FQDN: domain, Sources: []string{"apex"}}}))
 
 	names = append(names, e.probeWildcard(ctx)...)
 
-	found, complete := e.collectNames(ctx, target, sources)
+	found, complete := e.collectNames(ctx, target, sources, bands.collecting)
 	names = append(names, found...)
 
 	names = append(names, e.exploreApexTypes(ctx, names)...)
 
+	e.progress.SetStep(happydns.ImportStepExploring, "", bands.exploring.from, bands.exploring.to)
 	round := e.unseen(names)
 	for depth := 0; len(round) > 0 && depth <= opts.MaxDepth && ctx.Err() == nil; depth++ {
+		if depth > 0 {
+			b := bands.following.share(depth-1, opts.MaxDepth)
+			e.progress.SetStep(happydns.ImportStepFollowing, "", b.from, b.to)
+		}
 		round = e.unseen(e.exploreAll(ctx, round))
 	}
 
@@ -188,21 +210,28 @@ type explorer struct {
 	// wildcard.
 	wildcard map[uint16]string
 	lastErr  error
+
+	// progress is told how far the exploration is, nil when nobody
+	// listens.
+	progress *happydns.ImportProgress
 }
 
-// transferZone asks the sources handing records for the whole zone, and
-// keeps the records of the first one handing some. It tells whether one
-// did, sparing the exploration.
-func (e *explorer) transferZone(ctx context.Context, target Target, sources []NameSource) bool {
-	for _, source := range sources {
-		rs, ok := source.(RecordSource)
-		if !ok {
-			continue
-		}
+// share returns the i-th of n equal shares of b.
+func (b band) share(i, n int) band {
+	width := (b.to - b.from) / float64(max(n, 1))
+	return band{b.from + width*float64(i), b.from + width*float64(i+1)}
+}
 
+// transferZone asks the sources handing records for the whole zone, within
+// stage of the import, and keeps the records of the first one handing
+// some. It tells whether one did, sparing the exploration.
+func (e *explorer) transferZone(ctx context.Context, target Target, sources []RecordSource, stage band) bool {
+	for i, rs := range sources {
+		b := stage.share(i, len(sources))
+		e.progress.SetStep(happydns.ImportStepTransfer, rs.ID(), b.from, b.to)
 		rrs, err := rs.Records(ctx, target)
 		if err != nil {
-			log.Printf("discovery: %s: source %s: %s", e.domain, source.ID(), err)
+			log.Printf("discovery: %s: source %s: %s", e.domain, rs.ID(), err)
 		}
 		kept := 0
 		for _, rr := range rrs {
@@ -220,14 +249,17 @@ func (e *explorer) transferZone(ctx context.Context, target Target, sources []Na
 }
 
 // collectNames asks the name sources, the known names first, for the
-// names of the zone. complete tells one of them listed every name, sparing
-// the sources after it.
-func (e *explorer) collectNames(ctx context.Context, target Target, sources []NameSource) (names []Name, complete bool) {
-	for _, source := range append([]NameSource{KnownSource{}}, sources...) {
+// names of the zone, within stage of the import. complete tells one of
+// them listed every name, sparing the sources after it.
+func (e *explorer) collectNames(ctx context.Context, target Target, sources []NameSource, stage band) (names []Name, complete bool) {
+	nameSources := append([]NameSource{KnownSource{}}, sources...)
+	for i, source := range nameSources {
 		var (
 			found []Name
 			err   error
 		)
+		b := stage.share(i, len(nameSources))
+		e.progress.SetStep(happydns.ImportStepCollecting, source.ID(), b.from, b.to)
 		if es, ok := source.(ExhaustiveSource); ok {
 			found, complete, err = es.DiscoverAll(ctx, target)
 		} else {
@@ -289,8 +321,11 @@ func (e *explorer) exploreAll(ctx context.Context, names []Name) []Name {
 		mu      sync.Mutex
 		targets []Name
 		sem     = make(chan struct{}, e.opts.Concurrency)
+
+		explored atomic.Int64
 	)
 
+	e.progress.AddTotal(int64(len(names)))
 	for _, name := range names {
 		select {
 		case sem <- struct{}{}:
@@ -305,6 +340,8 @@ func (e *explorer) exploreAll(ctx context.Context, names []Name) []Name {
 			defer func() { <-sem }()
 
 			found := e.explore(ctx, name)
+			e.progress.AddDone(1)
+			e.progress.Advance(float64(explored.Add(1)) / float64(len(names)))
 
 			mu.Lock()
 			targets = append(targets, found...)
