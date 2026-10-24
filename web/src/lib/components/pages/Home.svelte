@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import { replaceState } from "$app/navigation";
+    import { afterNavigate, replaceState } from "$app/navigation";
     import { page } from "$app/state";
     import { get } from "svelte/store";
     import { Col, Container, Row } from "@sveltestrap/sveltestrap";
@@ -72,8 +72,17 @@
     if (!$providers) refreshProviders();
     if (!$providersSpecs) refreshProvidersSpecs();
 
+    // replaceState throws until the router has finished its first navigation,
+    // which the first render of the page comes before.
+    let routerReady = $state(false);
+    afterNavigate(() => {
+        routerReady = true;
+    });
+
     // Sync filter stores to URL query params
     $effect(() => {
+        if (!routerReady) return;
+
         // Built and read out within this scope, never kept as reactive state.
         // eslint-disable-next-line svelte/prefer-svelte-reactivity
         const params = new URLSearchParams();
