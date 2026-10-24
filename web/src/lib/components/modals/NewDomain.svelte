@@ -40,6 +40,8 @@
 </script>
 
 <script lang="ts">
+    import { goto } from "$app/navigation";
+    import { resolve } from "$app/paths";
     import {
         Button,
         Icon,
@@ -108,6 +110,13 @@
         newDomainValue = "";
     }
 
+    // onDomainAdded takes the user to the domain typed in by hand: it is the
+    // one they came to add.
+    function onDomainAdded(dn: string): void {
+        isOpen = false;
+        goto(resolve("/domains/[dn]/[[historyid]]", { dn }));
+    }
+
     function previous(): void {
         if (providerType) {
             form.previousState().then(() => {
@@ -147,6 +156,7 @@
                 bind:value={newDomainValue}
                 formId="newdomaininputform"
                 noButton
+                onadded={(domain) => onDomainAdded(domain.domain)}
             />
         {:else}
             <div class="d-flex justify-content-center align-items-center gap-2 my-3">

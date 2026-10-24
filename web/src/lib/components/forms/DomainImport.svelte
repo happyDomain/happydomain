@@ -26,6 +26,7 @@
 
     import CardImportableDomains from "$lib/components/providers/CardImportableDomains.svelte";
     import NewDomainInput from "$lib/components/inputs/NewDomain.svelte";
+    import type { Domain } from "$lib/model/domain";
     import type { Provider } from "$lib/model/provider";
 
     interface Props {
@@ -37,6 +38,8 @@
         formId?: string;
         noButton?: boolean;
         noDomainsList?: boolean;
+        /** Called once a domain typed in NewDomainInput has been added. */
+        onadded?: (domain: Domain) => void;
         value?: string;
     }
 
@@ -47,6 +50,7 @@
         formId = "new-domain-form",
         noButton = false,
         noDomainsList = $bindable(false),
+        onadded,
         value = $bindable(""),
     }: Props = $props();
 </script>
@@ -58,6 +62,7 @@
         class="mb-3"
         {formId}
         {noButton}
+        {onadded}
         {provider}
         bind:value
     />

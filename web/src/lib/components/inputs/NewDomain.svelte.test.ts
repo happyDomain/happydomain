@@ -39,6 +39,7 @@ function mount(
     props: {
         provider?: Provider;
         noButton?: boolean;
+        onadded?: (domain: Domain) => void;
         onNewDomainAdded?: (domain: Domain) => void;
     } = {},
 ) {
@@ -50,6 +51,7 @@ function mount(
         {
             provider: props.provider,
             noButton: props.noButton,
+            onadded: props.onadded,
             $$events: props.onNewDomainAdded
                 ? { newDomainAdded: (e: CustomEvent<Domain>) => props.onNewDomainAdded!(e.detail) }
                 : undefined,
@@ -76,6 +78,17 @@ describe("New domain input", () => {
         expect(addDomain).toHaveBeenCalledWith("example.com", provider);
         await vi.waitFor(() => expect(refreshDomains).toHaveBeenCalled());
         await vi.waitFor(() => expect(onNewDomainAdded).toHaveBeenCalledWith({ domain: "example.com" }));
+    });
+
+    it("hands the added domain to onadded", async () => {
+        const user = userEvent.setup();
+        const onadded = vi.fn();
+        mount({ provider, onadded });
+
+        await user.type(screen.getByPlaceholderText("my.new.domain."), "example.com");
+        await user.click(screen.getByRole("button", { name: /Add new domain/ }));
+
+        await vi.waitFor(() => expect(onadded).toHaveBeenCalledWith({ domain: "example.com" }));
     });
 
     it("clears the field once the domain has been added", async () => {

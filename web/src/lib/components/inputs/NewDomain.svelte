@@ -37,6 +37,7 @@
     import { addDomain } from "$lib/api/domains";
     import { controls as newDomainControls } from "$lib/components/modals/NewDomain.svelte";
     import { validateDomain } from "$lib/dns";
+    import type { Domain } from "$lib/model/domain";
     import type { Provider } from "$lib/model/provider";
     import { refreshDomains } from "$lib/stores/domains";
     import { t } from "$lib/translations";
@@ -48,6 +49,7 @@
         autofocus?: boolean;
         formId?: string;
         noButton?: boolean;
+        onadded?: (domain: Domain) => void;
         preAddFunc?: (arg0: string) => Promise<boolean>;
         provider?: Provider;
         value?: string;
@@ -59,6 +61,7 @@
         autofocus = false,
         formId = "new-domain-form",
         noButton = false,
+        onadded,
         preAddFunc,
         provider,
         value = $bindable(""),
@@ -83,8 +86,8 @@
                 (domain) => {
                     addingNewDomain = false;
                     value = "";
-                    refreshDomains();
                     dispatch("newDomainAdded", domain);
+                    refreshDomains().then(() => onadded?.(domain));
                 },
                 (error) => {
                     addingNewDomain = false;
@@ -100,8 +103,10 @@
             (domain) => {
                 addingNewDomain = false;
                 value = "";
-                refreshDomains();
                 dispatch("newDomainAdded", domain);
+                // The domain page looks the domain up in the list: it has to
+                // know about it before onadded can take the user there.
+                refreshDomains().then(() => onadded?.(domain));
             },
             (error) => {
                 addingNewDomain = false;
