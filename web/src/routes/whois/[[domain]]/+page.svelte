@@ -24,18 +24,17 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
-        import { untrack } from "svelte";
+    import { untrack } from "svelte";
     import { fly, fade } from "svelte/transition";
     import { cubicOut } from "svelte/easing";
 
-    import {
-        Col,
-        Container,
-        Row,
-        Spinner,
-    } from "@sveltestrap/sveltestrap";
+    import { Col, Container, Row, Spinner } from "@sveltestrap/sveltestrap";
 
-    import { type DomainInfoState, createDomainInfoState, fetchDomainInfo } from "$lib/components/DomainInfoFetcher.svelte";
+    import {
+        type DomainInfoState,
+        createDomainInfoState,
+        fetchDomainInfo,
+    } from "$lib/components/DomainInfoFetcher.svelte";
     import DomainInfoDisplay from "$lib/components/DomainInfoDisplay.svelte";
     import DomainInfoLookupForm from "$lib/components/DomainInfoLookupForm.svelte";
     import { t } from "$lib/translations";
@@ -67,10 +66,11 @@
         if (inputDomain === domain) {
             fetchDomainInfo(inputDomain, lookup);
         } else {
-            goto(resolve("/whois/[[domain]]", { domain: encodeURIComponent(inputDomain) }), { noScroll: true });
+            goto(resolve("/whois/[[domain]]", { domain: encodeURIComponent(inputDomain) }), {
+                noScroll: true,
+            });
         }
     }
-
 </script>
 
 <svelte:head>
@@ -90,7 +90,7 @@
                     style="top: 1rem"
                     in:fly={{ x: -40, duration: 400, easing: cubicOut }}
                 >
-                    <PageTitle title={$t("domaininfo.page-title")} domain={domain} />
+                    <PageTitle title={$t("domaininfo.page-title")} {domain} />
                     <DomainInfoLookupForm
                         bind:inputDomain
                         requestPending={lookup.pending}
@@ -101,7 +101,10 @@
             </Col>
 
             {#if lookup.pending}
-                <div class="col-md-8 pt-5 pb-5 d-flex align-items-center justify-content-center" in:fade={{ duration: 200 }}>
+                <div
+                    class="col-md-8 pt-5 pb-5 d-flex align-items-center justify-content-center"
+                    in:fade={{ duration: 200 }}
+                >
                     <div class="text-center text-muted">
                         <Spinner />
                         <p class="mt-3">{$t("common.spinning")}…</p>
@@ -138,7 +141,10 @@
                     </div>
                 </div>
             {:else if lookup.info !== null}
-                <div class="col-md-8 pt-3 pb-5" in:fly={{ y: 20, duration: 400, delay: 100, easing: cubicOut }}>
+                <div
+                    class="col-md-8 pt-3 pb-5"
+                    in:fly={{ y: 20, duration: 400, delay: 100, easing: cubicOut }}
+                >
                     <DomainInfoDisplay info={lookup.info} {domain} />
                 </div>
             {/if}
@@ -146,7 +152,10 @@
     </Container>
 {:else}
     <div class="my-5 container flex-fill" in:fade={{ duration: 300 }}>
-        <PageTitle title={$t("domaininfo.page-title")} subtitle={$t("domaininfo.page-description")} />
+        <PageTitle
+            title={$t("domaininfo.page-title")}
+            subtitle={$t("domaininfo.page-description")}
+        />
         <Row class="justify-content-center mt-4">
             <Col md="10" lg="8">
                 <div class="card rounded-4 p-2">
