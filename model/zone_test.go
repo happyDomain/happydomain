@@ -90,6 +90,7 @@ func createTestZone() *happydns.Zone {
 
 func TestZoneDerivateNew(t *testing.T) {
 	originalZone := createTestZone()
+	originalZone.Partial = true
 	originalTime := originalZone.LastModified
 
 	time.Sleep(10 * time.Millisecond)
@@ -110,6 +111,11 @@ func TestZoneDerivateNew(t *testing.T) {
 
 	if newZone.DefaultTTL != originalZone.DefaultTTL {
 		t.Errorf("DerivateNew().DefaultTTL = %d; want %d", newZone.DefaultTTL, originalZone.DefaultTTL)
+	}
+
+	// An edit leaves the zone as partial as it was discovered.
+	if !newZone.Partial {
+		t.Error("DerivateNew() of a partial zone is not partial")
 	}
 
 	if newZone.LastModified.Before(originalTime) || newZone.LastModified.Equal(originalTime) {

@@ -34,5 +34,7 @@ type ZoneCorrectionApplierUsecase interface {
 }
 
 type ZoneImporterUsecase interface {
-	Import(*User, *Domain, []Record) (*Zone, error)
+	// Import creates the newest zone of the domain from rrs. partial
+	// tells rrs may not be the whole zone.
+	Import(user *User, domain *Domain, rrs []Record, partial bool) (*Zone, error)
 }

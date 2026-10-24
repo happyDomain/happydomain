@@ -192,7 +192,7 @@ func (uc *ZoneCorrectionApplierUsecase) Apply(
 	publishedRecords := targetRecords
 	refetched := false
 	if providerReg.ProviderHasCapability(provider, "manages-soa-serial") {
-		fetched, fetchErr := uc.zoneRetriever.RetrieveZone(ctx, provider, domain.DomainName)
+		fetched, _, fetchErr := uc.zoneRetriever.RetrieveZone(ctx, provider, domain.DomainName)
 		if fetchErr != nil {
 			log.Printf("%s: unable to re-fetch zone after deploy, using target records: %s", domain.DomainName, fetchErr)
 		} else {

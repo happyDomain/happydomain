@@ -52,8 +52,9 @@ func NewZoneImporterUsecase(domainUpdater DomainUpdater, zoneCreator *zoneUC.Cre
 
 // Import analyzes rrs into services, optionally carries over metadata from the
 // domain's most recent zone, persists the new zone, and prepends its ID to the
-// domain's history.  Returns the created zone or an error.
-func (uc *ZoneImporterUsecase) Import(user *happydns.User, domain *happydns.Domain, rrs []happydns.Record) (*happydns.Zone, error) {
+// domain's history. partial marks the zone as possibly missing records.
+// Returns the created zone or an error.
+func (uc *ZoneImporterUsecase) Import(user *happydns.User, domain *happydns.Domain, rrs []happydns.Record, partial bool) (*happydns.Zone, error) {
 	services, defaultTTL, err := svc.AnalyzeZone(domain.DomainName, rrs)
 	if err != nil {
 		return nil, happydns.ValidationError{Msg: fmt.Sprintf("unable to perform the analysis of your zone: %s", err.Error())}
@@ -82,6 +83,7 @@ func (uc *ZoneImporterUsecase) Import(user *happydns.User, domain *happydns.Doma
 			CommitMsg:    &commit,
 			CommitDate:   &now,
 			Published:    &now,
+			Partial:      partial,
 		},
 		Services: services,
 	}

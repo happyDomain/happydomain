@@ -61,9 +61,9 @@ type discoveringActuator struct {
 	stubActuator
 }
 
-func (a *discoveringActuator) GetZoneRecordsWithContext(ctx context.Context, domain string, known []string) ([]happydns.Record, error) {
+func (a *discoveringActuator) GetZoneRecordsWithContext(ctx context.Context, domain string, known []string) ([]happydns.Record, bool, error) {
 	a.known = known
-	return nil, nil
+	return nil, true, nil
 }
 
 // stubBody hands out its actuator. The instantiation works on a copy of
@@ -113,8 +113,12 @@ func Test_RetrieveZone_HandsKnownSubdomainsToDiscoverers(t *testing.T) {
 	actuator := &discoveringActuator{}
 	p := stubProvider(&guardedStubBody{actuator: actuator})
 
-	if _, err := providerService.RetrieveZone(ctx, p, "example.com.", "www", "_dmarc"); err != nil {
+	_, partial, err := providerService.RetrieveZone(ctx, p, "example.com.", "www", "_dmarc")
+	if err != nil {
 		t.Fatalf("RetrieveZone() = %v", err)
+	}
+	if !partial {
+		t.Error("RetrieveZone lost that the discovered zone is partial")
 	}
 
 	if actuator.listed {
@@ -160,8 +164,12 @@ func Test_RetrieveZone_ListsOtherProviders(t *testing.T) {
 	actuator := &stubActuator{}
 	p := stubProvider(&stubBody{actuator: actuator})
 
-	if _, err := providerService.RetrieveZone(ctx, p, "example.com.", "www"); err != nil {
+	_, partial, err := providerService.RetrieveZone(ctx, p, "example.com.", "www")
+	if err != nil {
 		t.Fatalf("RetrieveZone() = %v", err)
+	}
+	if partial {
+		t.Error("RetrieveZone tells a listed zone is partial")
 	}
 
 	if !actuator.listed {

@@ -281,7 +281,7 @@ func Test_Secret_InstantiateOpensLegacyPlaintext(t *testing.T) {
 	}
 
 	instantiatedWith = nil
-	if _, err := svc.RetrieveZone(ctx, p, "example.com"); err != nil {
+	if _, _, err := svc.RetrieveZone(ctx, p, "example.com"); err != nil {
 		t.Fatalf("RetrieveZone: %v", err)
 	}
 	if instantiatedWith == nil || *instantiatedWith != "legacy" {
@@ -300,7 +300,7 @@ func Test_Secret_InstantiateFailsClosedOnUnopenable(t *testing.T) {
 	}
 
 	instantiatedWith = nil
-	if _, err := svc.RetrieveZone(ctx, p, "example.com"); !errors.Is(err, secret.ErrUnknownSafe) {
+	if _, _, err := svc.RetrieveZone(ctx, p, "example.com"); !errors.Is(err, secret.ErrUnknownSafe) {
 		t.Errorf("RetrieveZone = %v, want ErrUnknownSafe", err)
 	}
 	if instantiatedWith != nil {
@@ -337,7 +337,7 @@ func Test_Secret_UnopenableLeavesTheOthersUsable(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetUserProvider of the broken provider: %v", err)
 	}
-	if _, err := svc.RetrieveZone(ctx, p, "example.com"); !errors.Is(err, secret.ErrUnknownSafe) {
+	if _, _, err := svc.RetrieveZone(ctx, p, "example.com"); !errors.Is(err, secret.ErrUnknownSafe) {
 		t.Errorf("RetrieveZone on the broken provider = %v, want ErrUnknownSafe", err)
 	}
 
@@ -345,7 +345,7 @@ func Test_Secret_UnopenableLeavesTheOthersUsable(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetUserProvider of the working provider: %v", err)
 	}
-	if _, err := svc.RetrieveZone(ctx, p, "example.com"); err != nil {
+	if _, _, err := svc.RetrieveZone(ctx, p, "example.com"); err != nil {
 		t.Errorf("RetrieveZone on the working provider: %v", err)
 	}
 
@@ -449,7 +449,7 @@ func Test_Secret_InstancePolicyNeverStoresClear(t *testing.T) {
 		t.Fatal(err)
 	}
 	instantiatedWith = nil
-	if _, err := svc.RetrieveZone(ctx, stored, "example.com"); err != nil {
+	if _, _, err := svc.RetrieveZone(ctx, stored, "example.com"); err != nil {
 		t.Fatalf("RetrieveZone: %v", err)
 	}
 	if instantiatedWith == nil || *instantiatedWith != "my-key" {
@@ -477,7 +477,7 @@ func Test_Secret_LegacyPlaintextSealedOnNextWrite(t *testing.T) {
 
 	stored, _ := svc.GetUserProvider(ctx, user, legacy.Id)
 	instantiatedWith = nil
-	if _, err := svc.RetrieveZone(ctx, stored, "example.com"); err != nil {
+	if _, _, err := svc.RetrieveZone(ctx, stored, "example.com"); err != nil {
 		t.Fatal(err)
 	}
 	if instantiatedWith == nil || *instantiatedWith != "legacy" {
@@ -682,7 +682,7 @@ func Test_Secret_ResealDoesNotLoseConcurrentUpdates(t *testing.T) {
 		t.Fatal(err)
 	}
 	instantiatedWith = nil
-	if _, err := adminSvc.RetrieveZone(ctx, p, "example.com"); err != nil {
+	if _, _, err := adminSvc.RetrieveZone(ctx, p, "example.com"); err != nil {
 		t.Fatal(err)
 	}
 	if want := fmt.Sprintf("user-%d", rounds-1); instantiatedWith == nil || *instantiatedWith != want {
@@ -858,7 +858,7 @@ func Test_Secret_KeystoreChosenByRequest(t *testing.T) {
 		t.Fatal(err)
 	}
 	instantiatedWith = nil
-	if _, err := svc.RetrieveZone(ctx, stored, "example.com"); err != nil || instantiatedWith == nil || *instantiatedWith != "my-key" {
+	if _, _, err := svc.RetrieveZone(ctx, stored, "example.com"); err != nil || instantiatedWith == nil || *instantiatedWith != "my-key" {
 		t.Errorf("RetrieveZone = %v, instantiated with %v; want the clear key", err, instantiatedWith)
 	}
 }
@@ -913,7 +913,7 @@ func Test_Secret_MoveOwnerSecrets(t *testing.T) {
 		t.Fatal(err)
 	}
 	instantiatedWith = nil
-	if _, err := svc.RetrieveZone(ctx, stored, "example.com"); err != nil || instantiatedWith == nil || *instantiatedWith != "my-key" {
+	if _, _, err := svc.RetrieveZone(ctx, stored, "example.com"); err != nil || instantiatedWith == nil || *instantiatedWith != "my-key" {
 		t.Errorf("RetrieveZone = %v, instantiated with %v; want the clear key", err, instantiatedWith)
 	}
 }
@@ -954,7 +954,7 @@ func Test_Secret_LockedKeystore(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := svc.RetrieveZone(other, stored, "example.com"); !isLocked(err) {
+	if _, _, err := svc.RetrieveZone(other, stored, "example.com"); !isLocked(err) {
 		t.Errorf("RetrieveZone(other session) = %v, want the keystore to unlock", err)
 	}
 

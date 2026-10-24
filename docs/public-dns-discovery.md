@@ -39,6 +39,10 @@ deployed zone: it is not refreshed in the background. Viewing the differences
 runs a full exploration too, to compare the stored zone with what the servers
 answer now.
 
+Unless a zone transfer or a complete NSEC walk listed every name, and every
+name got an answer, the zone is marked partial: names nothing points to may be
+missing from it.
+
 ## Techniques
 
 | ID | Priority | What it yields | Setting disabling it |

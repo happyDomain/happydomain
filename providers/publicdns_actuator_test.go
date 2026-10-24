@@ -160,7 +160,8 @@ func TestPublicDNSZoneRecords(t *testing.T) {
 		gotSources []discovery.NameSource
 		gotOpts    discovery.Options
 
-		err error
+		complete bool
+		err      error
 	)
 	record, _ := dns.NewRR("example.com. 300 IN A 192.0.2.1")
 	defer func(orig func(context.Context, string, []string, []discovery.NameSource, discovery.Options) ([]happydns.Record, bool, error)) {
@@ -168,7 +169,7 @@ func TestPublicDNSZoneRecords(t *testing.T) {
 	}(explore)
 	explore = func(ctx context.Context, domain string, known []string, sources []discovery.NameSource, opts discovery.Options) ([]happydns.Record, bool, error) {
 		gotCtx, gotDomain, gotKnown, gotSources, gotOpts = ctx, domain, known, sources, opts
-		return []happydns.Record{record}, true, err
+		return []happydns.Record{record}, complete, err
 	}
 
 	guard, _ := netguard.New("test", "-test-allowed-target", nil)
@@ -176,9 +177,14 @@ func TestPublicDNSZoneRecords(t *testing.T) {
 	actuator := instance.(*publicDNSActuator)
 
 	ctx := context.WithValue(context.Background(), key{}, "import")
-	records, e := actuator.GetZoneRecordsWithContext(ctx, "example.com.", []string{"www"})
-	if e != nil || len(records) != 1 || records[0] != record {
-		t.Fatalf("GetZoneRecordsWithContext = %v, %v; want the records of the exploration", records, e)
+	for _, complete = range []bool{true, false} {
+		records, partial, e := actuator.GetZoneRecordsWithContext(ctx, "example.com.", []string{"www"})
+		if e != nil || len(records) != 1 || records[0] != record {
+			t.Fatalf("GetZoneRecordsWithContext = %v, %v; want the records of the exploration", records, e)
+		}
+		if partial == complete {
+			t.Errorf("GetZoneRecordsWithContext of a zone explored complete=%v tells partial=%v", complete, partial)
+		}
 	}
 	if gotCtx.Value(key{}) != "import" || gotDomain != "example.com." || !slices.Equal(gotKnown, []string{"www"}) {
 		t.Errorf("Explore got %v, %q, %v; want the context, the domain and the known names handed", gotCtx, gotDomain, gotKnown)
@@ -192,7 +198,7 @@ func TestPublicDNSZoneRecords(t *testing.T) {
 	}
 
 	err = errors.New("unreachable")
-	if _, e := actuator.GetZoneRecordsWithContext(ctx, "example.com.", nil); !errors.Is(e, err) {
+	if _, _, e := actuator.GetZoneRecordsWithContext(ctx, "example.com.", nil); !errors.Is(e, err) {
 		t.Errorf("GetZoneRecordsWithContext error = %v; want that of the exploration", e)
 	}
 }

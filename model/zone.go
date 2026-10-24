@@ -52,6 +52,10 @@ type ZoneMeta struct {
 
 	// Published indicates whether the Zone has already been published or not.
 	Published *time.Time `json:"published,omitempty" format:"date-time"`
+
+	// Partial indicates the Zone was discovered by a provider unable to
+	// make sure it found every record, such as the names nothing points to.
+	Partial bool `json:"partial,omitempty"`
 }
 
 // ZoneMessage is the intermediate struct for parsing zones.
@@ -73,6 +77,7 @@ func (z *Zone) DerivateNew() *Zone {
 	newZone.ZoneMeta.ParentZone = &z.ZoneMeta.Id
 	newZone.ZoneMeta.IdAuthor = z.ZoneMeta.IdAuthor
 	newZone.ZoneMeta.DefaultTTL = z.ZoneMeta.DefaultTTL
+	newZone.ZoneMeta.Partial = z.ZoneMeta.Partial
 	newZone.ZoneMeta.LastModified = time.Now()
 	newZone.Services = map[Subdomain][]*Service{}
 
