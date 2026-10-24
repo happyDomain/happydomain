@@ -34,6 +34,11 @@ import (
 
 // ServiceAnalyzer is a callback function that inspects DNS records in an
 // Analyzer and claims those that belong to a particular service type.
+//
+// A record the analyzer cannot parse is no error: the analyzer leaves it
+// unclaimed, for the analyzers coming next and, at last, the orphans. An
+// error returned is abnormal, such as a record claimed twice, and stops the
+// analysis of the whole zone.
 type ServiceAnalyzer func(*Analyzer) error
 
 // recordPool holds DNS records and tracks which ones have been claimed by
