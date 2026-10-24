@@ -25,6 +25,9 @@ import "context"
 
 type RemoteZoneImporterUsecase interface {
 	Import(context.Context, *User, *Domain) (*Zone, error)
+	// Progress tells how far the import of the domain in flight is, and
+	// whether one is.
+	Progress(*Domain) (ImportProgressSnapshot, bool)
 }
 
 type ZoneCorrectionApplierUsecase interface {
