@@ -29,6 +29,7 @@ import (
 
 	"git.happydns.org/happyDomain/internal/dnschecker"
 	"git.happydns.org/happyDomain/model"
+	"git.happydns.org/happyDomain/pkg/domaininfo"
 )
 
 const defaultRequiredLockStatuses = "clientTransferProhibited"
@@ -36,17 +37,6 @@ const defaultRequiredLockStatuses = "clientTransferProhibited"
 // domainLockRule verifies that a domain carries the expected EPP lock
 // statuses (e.g. clientTransferProhibited) as reported by RDAP/WHOIS.
 type domainLockRule struct{}
-
-// normalizeLockStatus strips spaces, dashes and underscores and lowercases
-// the value so that "client transfer prohibited", "client-transfer-prohibited"
-// and "clientTransferProhibited" all compare equal.
-func normalizeLockStatus(s string) string {
-	s = strings.ToLower(s)
-	s = strings.ReplaceAll(s, " ", "")
-	s = strings.ReplaceAll(s, "-", "")
-	s = strings.ReplaceAll(s, "_", "")
-	return s
-}
 
 func (r *domainLockRule) Name() string {
 	return "domain_lock_check"
@@ -106,12 +96,12 @@ func (r *domainLockRule) Evaluate(ctx context.Context, obs happydns.ObservationG
 
 	present := make(map[string]bool, len(whois.Status))
 	for _, s := range whois.Status {
-		present[normalizeLockStatus(s)] = true
+		present[domaininfo.StatusKey(s)] = true
 	}
 
 	var missing []string
 	for _, req := range required {
-		if !present[normalizeLockStatus(req)] {
+		if !present[domaininfo.StatusKey(req)] {
 			missing = append(missing, req)
 		}
 	}

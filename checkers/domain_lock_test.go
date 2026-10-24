@@ -169,24 +169,6 @@ func TestDomainLockRule_EvaluateObservationError(t *testing.T) {
 	}
 }
 
-func TestNormalizeLockStatus(t *testing.T) {
-	cases := []struct {
-		in, want string
-	}{
-		{"clientTransferProhibited", "clienttransferprohibited"},
-		{"client transfer prohibited", "clienttransferprohibited"},
-		{"client-transfer-prohibited", "clienttransferprohibited"},
-		{"client_transfer_prohibited", "clienttransferprohibited"},
-		{"  Client Transfer Prohibited  ", "clienttransferprohibited"},
-		{"", ""},
-	}
-	for _, tc := range cases {
-		if got := normalizeLockStatus(tc.in); got != tc.want {
-			t.Errorf("normalizeLockStatus(%q) = %q, want %q", tc.in, got, tc.want)
-		}
-	}
-}
-
 func TestDomainLockRule_ValidateOptions(t *testing.T) {
 	rule := &domainLockRule{}
 	cases := []struct {
