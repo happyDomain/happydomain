@@ -36,22 +36,24 @@ import (
 	"git.happydns.org/happyDomain/services/abstract"
 )
 
-// knownRecorder records the known subdomains it is handed.
+// knownRecorder records the known subdomains it is handed, and tells the
+// zone is partial when partial is set.
 type knownRecorder struct {
-	known  []string
-	called bool
+	known   []string
+	called  bool
+	partial bool
 }
 
-func (r *knownRecorder) RetrieveZone(_ context.Context, _ *happydns.Provider, _ string, known ...string) ([]happydns.Record, error) {
+func (r *knownRecorder) RetrieveZone(_ context.Context, _ *happydns.Provider, _ string, known ...string) ([]happydns.Record, bool, error) {
 	r.called = true
 	r.known = known
-	return nil, nil
+	return nil, r.partial, nil
 }
 
 type stubZoneImporter struct{}
 
-func (stubZoneImporter) Import(_ *happydns.User, _ *happydns.Domain, _ []happydns.Record) (*happydns.Zone, error) {
-	return &happydns.Zone{ZoneMeta: happydns.ZoneMeta{Id: happydns.Identifier([]byte("imported"))}}, nil
+func (stubZoneImporter) Import(_ *happydns.User, _ *happydns.Domain, _ []happydns.Record, partial bool) (*happydns.Zone, error) {
+	return &happydns.Zone{ZoneMeta: happydns.ZoneMeta{Id: happydns.Identifier([]byte("imported")), Partial: partial}}, nil
 }
 
 // zoneWithServicesAt is a zone holding a service at each subdomain.
@@ -107,6 +109,26 @@ func TestRemoteZoneImporter_KnownSubdomains(t *testing.T) {
 	}
 }
 
+func TestRemoteZoneImporter_TellsPartialZones(t *testing.T) {
+	for _, partial := range []bool{false, true} {
+		uc := orchestrator.NewRemoteZoneImporterUsecase(
+			domainlogUC.NoopDomainLogAppender{},
+			&mockProviderGetter{provider: &happydns.Provider{}},
+			stubZoneImporter{},
+			nil,
+			&knownRecorder{partial: partial},
+		)
+
+		zone, err := uc.Import(context.Background(), &happydns.User{}, &happydns.Domain{Id: happydns.Identifier([]byte("partial")), DomainName: "example.com."})
+		if err != nil {
+			t.Fatalf("Import: %v", err)
+		}
+		if zone.Partial != partial {
+			t.Errorf("imported zone partial = %v; want %v as retrieved", zone.Partial, partial)
+		}
+	}
+}
+
 func TestZoneCorrectionLister_HandsKnownSubdomains(t *testing.T) {
 	retriever := &knownRecorder{}
 	uc := orchestrator.NewZoneCorrectionListerUsecase(
@@ -144,12 +166,12 @@ func newBlockingRetriever() *blockingRetriever {
 	}
 }
 
-func (r *blockingRetriever) RetrieveZone(ctx context.Context, _ *happydns.Provider, _ string, _ ...string) ([]happydns.Record, error) {
+func (r *blockingRetriever) RetrieveZone(ctx context.Context, _ *happydns.Provider, _ string, _ ...string) ([]happydns.Record, bool, error) {
 	r.calls.Add(1)
 	r.started <- struct{}{}
 	<-r.release
 	r.ctxErrs <- ctx.Err()
-	return nil, nil
+	return nil, false, nil
 }
 
 // countingZoneImporter counts the zones it imports.
@@ -157,7 +179,7 @@ type countingZoneImporter struct {
 	calls atomic.Int32
 }
 
-func (i *countingZoneImporter) Import(_ *happydns.User, _ *happydns.Domain, _ []happydns.Record) (*happydns.Zone, error) {
+func (i *countingZoneImporter) Import(_ *happydns.User, _ *happydns.Domain, _ []happydns.Record, _ bool) (*happydns.Zone, error) {
 	n := i.calls.Add(1)
 	return &happydns.Zone{ZoneMeta: happydns.ZoneMeta{Id: happydns.Identifier([]byte{byte(n)})}}, nil
 }
@@ -281,7 +303,7 @@ func TestRemoteZoneImporter_DistinctDomains(t *testing.T) {
 // panickingRetriever panics on every retrieval, as a faulty provider would.
 type panickingRetriever struct{}
 
-func (panickingRetriever) RetrieveZone(context.Context, *happydns.Provider, string, ...string) ([]happydns.Record, error) {
+func (panickingRetriever) RetrieveZone(context.Context, *happydns.Provider, string, ...string) ([]happydns.Record, bool, error) {
 	panic("provider bug")
 }
 

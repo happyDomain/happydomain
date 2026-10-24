@@ -98,12 +98,13 @@ func (a *publicDNSActuator) CreateDomain(fqdn string) error {
 }
 
 func (a *publicDNSActuator) GetZoneRecords(domain string) ([]happydns.Record, error) {
-	return a.GetZoneRecordsWithContext(context.Background(), domain, nil)
+	records, _, err := a.GetZoneRecordsWithContext(context.Background(), domain, nil)
+	return records, err
 }
 
-func (a *publicDNSActuator) GetZoneRecordsWithContext(ctx context.Context, domain string, known []string) ([]happydns.Record, error) {
-	records, _, err := discovery.Resolve(ctx, domain, known, a.sources, a.opts)
-	return records, err
+func (a *publicDNSActuator) GetZoneRecordsWithContext(ctx context.Context, domain string, known []string) ([]happydns.Record, bool, error) {
+	records, complete, err := discovery.Resolve(ctx, domain, known, a.sources, a.opts)
+	return records, !complete, err
 }
 
 // TestDomainExistence only looks for the name servers of the domain: the

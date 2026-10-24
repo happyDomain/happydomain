@@ -59,8 +59,8 @@ type mockZoneRetriever struct {
 	err     error
 }
 
-func (m *mockZoneRetriever) RetrieveZone(_ context.Context, _ *happydns.Provider, _ string, _ ...string) ([]happydns.Record, error) {
-	return m.records, m.err
+func (m *mockZoneRetriever) RetrieveZone(_ context.Context, _ *happydns.Provider, _ string, _ ...string) ([]happydns.Record, bool, error) {
+	return m.records, false, m.err
 }
 
 func newTestListRecordsUsecase() *zoneUC.ListRecordsUsecase {

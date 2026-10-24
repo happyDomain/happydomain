@@ -305,7 +305,7 @@ func (dc *DomainController) ImportZone(c *gin.Context) {
 		rrs = append(rrs, rr)
 	}
 
-	zone, err := dc.zoneImporter.Import(user, domain, rrs)
+	zone, err := dc.zoneImporter.Import(user, domain, rrs, false)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return

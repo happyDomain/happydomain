@@ -69,7 +69,7 @@ func (uc *ZoneCorrectionListerUsecase) listWithRecords(
 		return nil, nil, nil, 0, err
 	}
 
-	providerRecords, err := uc.zoneRetriever.RetrieveZone(ctx, provider, domain.DomainName, subdomainsOf(zone)...)
+	providerRecords, _, err := uc.zoneRetriever.RetrieveZone(ctx, provider, domain.DomainName, subdomainsOf(zone)...)
 	if err != nil {
 		return nil, nil, nil, 0, err
 	}

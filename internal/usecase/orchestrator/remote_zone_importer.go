@@ -117,12 +117,12 @@ func (uc *RemoteZoneImporterUsecase) importNow(ctx context.Context, user *happyd
 		return nil, err
 	}
 
-	zone, err := uc.zoneRetriever.RetrieveZone(ctx, provider, domain.DomainName, uc.knownSubdomains(domain)...)
+	zone, partial, err := uc.zoneRetriever.RetrieveZone(ctx, provider, domain.DomainName, uc.knownSubdomains(domain)...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve the zone from server: %w", err)
 	}
 
-	myZone, err := uc.zoneImporter.Import(user, domain, zone)
+	myZone, err := uc.zoneImporter.Import(user, domain, zone, partial)
 	if err != nil {
 		return nil, err
 	}

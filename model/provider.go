@@ -171,8 +171,9 @@ type ProviderUsecase interface {
 	ListZoneCorrections(context.Context, *Provider, *Domain, []Record) ([]*Correction, int, error)
 	// RetrieveZone retrieves the records of the zone. known are the
 	// subdomains of the current zone, for providers discovering the zone
-	// rather than listing it (see DiscoveryZoneGetter).
-	RetrieveZone(ctx context.Context, provider *Provider, name string, known ...string) ([]Record, error)
+	// rather than listing it (see DiscoveryZoneGetter). partial tells such
+	// a provider could not make sure the records are the whole zone.
+	RetrieveZone(ctx context.Context, provider *Provider, name string, known ...string) (records []Record, partial bool, err error)
 	// ShowReferences replaces, in p, each credential a keystore of
 	// references keeps by that reference, which is not secret. p is changed
 	// in place: only call it on a provider about to be answered, never stored.
@@ -206,8 +207,9 @@ type ProviderActuator interface {
 // once keeps being looked after, and a context, as discovering takes time.
 type DiscoveryZoneGetter interface {
 	// GetZoneRecordsWithContext is GetZoneRecords, also looking after the
-	// known subdomains, relative to domain.
-	GetZoneRecordsWithContext(ctx context.Context, domain string, known []string) ([]Record, error)
+	// known subdomains, relative to domain. partial tells the records may
+	// miss names, the discovery having found no way to list them all.
+	GetZoneRecordsWithContext(ctx context.Context, domain string, known []string) (records []Record, partial bool, err error)
 }
 
 // DomainExistenceChecker is implemented by provider actuators able to tell a

@@ -29,18 +29,20 @@ import (
 
 // RetrieveZone retrieves the current zone records for the given domain from the provider.
 // known are the subdomains of the current zone, handed to the providers
-// discovering the zone rather than listing it.
-func (s *Service) RetrieveZone(ctx context.Context, provider *happydns.Provider, name string, known ...string) ([]happydns.Record, error) {
+// discovering the zone rather than listing it, which tell whether the
+// records they found may only be part of the zone.
+func (s *Service) RetrieveZone(ctx context.Context, provider *happydns.Provider, name string, known ...string) ([]happydns.Record, bool, error) {
 	instance, err := s.instantiate(ctx, provider)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	if discoverer, ok := instance.(happydns.DiscoveryZoneGetter); ok {
 		return discoverer.GetZoneRecordsWithContext(ctx, name, known)
 	}
 
-	return instance.GetZoneRecords(name)
+	records, err := instance.GetZoneRecords(name)
+	return records, false, err
 }
 
 // ListZoneCorrections lists the corrections needed to synchronize the zone with the given records.

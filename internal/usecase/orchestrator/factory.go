@@ -46,7 +46,7 @@ type ProviderGetter interface {
 
 // ZoneRetriever is an interface for retrieving zones from providers.
 type ZoneRetriever interface {
-	RetrieveZone(ctx context.Context, provider *happydns.Provider, name string, known ...string) ([]happydns.Record, error)
+	RetrieveZone(ctx context.Context, provider *happydns.Provider, name string, known ...string) ([]happydns.Record, bool, error)
 }
 
 // ZoneCorrector is an interface for getting zone corrections.
