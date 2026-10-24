@@ -23,7 +23,7 @@
 
 <script lang="ts">
     import { resolve } from "$app/paths";
-    import { Icon, Spinner } from "@sveltestrap/sveltestrap";
+    import { Alert, Icon, Spinner } from "@sveltestrap/sveltestrap";
 
     import AliasModal from "$lib/components/modals/Alias.svelte";
     import ChecksSummaryBadge from "$lib/components/checkers/ChecksSummaryBadge.svelte";
@@ -96,6 +96,13 @@
                 </SubdomainItem>
             {/snippet}
         </SubdomainList>
+        {#if $thisZone.partial}
+            <Alert color="info" fade={false} class="mx-2">
+                <Icon name="binoculars" />
+                <strong>{$t("zones.partial.title")}</strong>
+                {$t("zones.partial.description")}
+            </Alert>
+        {/if}
     </div>
 {/if}
 

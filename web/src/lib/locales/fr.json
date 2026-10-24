@@ -563,6 +563,10 @@
     "zones": {
         "viewer": "Visualiseur de zone",
         "viewer-subtitle": "Vos services en un coup d'œil",
+        "partial": {
+            "title": "Zone partielle.",
+            "description": "Cette zone a été recomposée à partir de ce que ses serveurs de noms répondent publiquement, sans moyen d'en lister tous les noms : les sous-domaines vers lesquels rien ne pointe peuvent manquer."
+        },
         "retrieve": "Récupération de la zone",
         "retrieve-subtitle": "Récupération des enregistrements DNS depuis votre fournisseur",
         "upload": "Importer une zone",
