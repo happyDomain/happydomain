@@ -25,6 +25,10 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"runtime/debug"
+	"time"
+
+	"golang.org/x/sync/singleflight"
 
 	domainlogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
 	"git.happydns.org/happyDomain/model"
@@ -34,12 +38,19 @@ import (
 // from the provider and delegates to ZoneImporterUsecase to persist them.  It
 // also appends a domain log entry on success.
 type RemoteZoneImporterUsecase struct {
-	appendDomainLog    domainlogUC.DomainLogAppender
-	providerService    ProviderGetter
-	zoneImporter       happydns.ZoneImporterUsecase
-	zoneRetriever      ZoneRetriever
-	schedulerNotifier  happydns.SchedulerDomainNotifier
+	appendDomainLog   domainlogUC.DomainLogAppender
+	providerService   ProviderGetter
+	zoneImporter      happydns.ZoneImporterUsecase
+	zoneRetriever     ZoneRetriever
+	schedulerNotifier happydns.SchedulerDomainNotifier
+
+	// inflight runs a single import at a time for each domain.
+	inflight singleflight.Group
 }
+
+// remoteImportTimeout bounds an import, which no longer depends on the
+// request that started it.
+const remoteImportTimeout = 5 * time.Minute
 
 // NewRemoteZoneImporterUsecase creates a RemoteZoneImporterUsecase wired to
 // the given log appender, provider getter, zone importer, and zone retriever.
@@ -60,7 +71,42 @@ func NewRemoteZoneImporterUsecase(
 // Import resolves the provider for the domain, retrieves its current records,
 // and imports them via ZoneImporterUsecase.  A domain log entry is appended on
 // success.  Returns the newly created zone or an error.
+//
+// A single import runs at a time for a domain: a caller arriving while one
+// is in flight gets its zone. The import outlives the callers: retrieving a
+// zone may take long, and one leaving before the end would otherwise lose
+// it, and start it over on coming back.
 func (uc *RemoteZoneImporterUsecase) Import(ctx context.Context, user *happydns.User, domain *happydns.Domain) (*happydns.Zone, error) {
+	done := uc.inflight.DoChan(domain.Id.String(), func() (zone any, err error) {
+		// The import no longer runs in the request, out of reach of its
+		// recovery: singleflight would raise a panic again where nothing
+		// can catch it, bringing the whole server down.
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("panic while importing the zone of %s: %v\n%s", domain.DomainName, r, debug.Stack())
+				zone, err = nil, fmt.Errorf("unable to import the zone of %s: internal error", domain.DomainName)
+			}
+		}()
+
+		detached, cancel := context.WithTimeout(context.WithoutCancel(ctx), remoteImportTimeout)
+		defer cancel()
+
+		return uc.importNow(detached, user, domain)
+	})
+
+	select {
+	case res := <-done:
+		if res.Err != nil {
+			return nil, res.Err
+		}
+		return res.Val.(*happydns.Zone), nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+}
+
+// importNow retrieves the zone of domain from its provider and imports it.
+func (uc *RemoteZoneImporterUsecase) importNow(ctx context.Context, user *happydns.User, domain *happydns.Domain) (*happydns.Zone, error) {
 	provider, err := uc.providerService.GetUserProvider(ctx, user, domain.ProviderId)
 	if err != nil {
 		return nil, err
