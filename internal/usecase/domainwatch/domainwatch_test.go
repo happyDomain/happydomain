@@ -30,6 +30,7 @@ import (
 	"testing"
 	"time"
 
+	notifPkg "git.happydns.org/happyDomain/internal/notifier"
 	"git.happydns.org/happyDomain/internal/storage"
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	"git.happydns.org/happyDomain/internal/usecase/domainwatch"
@@ -86,9 +87,23 @@ func (r *registry) count(name string) int {
 	return r.lookups[name]
 }
 
+type notifier struct {
+	mu   sync.Mutex
+	sent []*notifPkg.NotificationPayload
+	to   []*happydns.User
+}
+
+func (n *notifier) NotifyUser(user *happydns.User, p *notifPkg.NotificationPayload) {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	n.sent = append(n.sent, p)
+	n.to = append(n.to, user)
+}
+
 type fixture struct {
 	db       storage.Storage
 	registry *registry
+	notifier *notifier
 	service  *domainwatch.Service
 	worker   *domainwatch.Worker
 	now      time.Time
@@ -107,6 +122,7 @@ func newFixture(t *testing.T, maxPerUser int) *fixture {
 	f := &fixture{
 		db:       db,
 		registry: newRegistry(),
+		notifier: &notifier{},
 		now:      time.Date(2026, 10, 24, 12, 0, 0, 0, time.UTC),
 	}
 	f.alice = &happydns.User{Id: happydns.Identifier{0x0a}, Email: "alice@example.com"}
@@ -117,7 +133,7 @@ func newFixture(t *testing.T, maxPerUser int) *fixture {
 		}
 	}
 
-	f.service = domainwatch.NewService(db, f.registry.lookup, maxPerUser)
+	f.service = domainwatch.NewService(db, db, f.registry.lookup, f.notifier, maxPerUser)
 	f.service.SetClock(func() time.Time { return f.now }, func() time.Duration { return 0 })
 	f.worker = domainwatch.NewWorker(f.service)
 	return f
@@ -144,6 +160,10 @@ func TestCreateLooksTheDomainUp(t *testing.T) {
 	if w.LastCheck == nil || !w.NextCheck.Equal(f.now.Add(7*day)) {
 		t.Errorf("last check %v, next check %v", w.LastCheck, w.NextCheck)
 	}
+	if len(f.notifier.sent) != 0 {
+		t.Errorf("the first lookup notified: %+v", f.notifier.sent)
+	}
+
 	// Stored as returned.
 	stored, err := f.service.GetDomainWatch(f.alice, w.Id)
 	if err != nil || stored.Phase != happydns.DomainWatchRegistered {
@@ -331,7 +351,7 @@ func TestLookupKeepsTheNoteEditedMeanwhile(t *testing.T) {
 }
 
 // The whole life of a domain, from expiring to available, as the worker sees
-// it.
+// it, with one notification per step.
 func TestWorkerFollowsTheLifeOfADomain(t *testing.T) {
 	f := newFixture(t, 0)
 	ctx := context.Background()
@@ -351,14 +371,15 @@ func TestWorkerFollowsTheLifeOfADomain(t *testing.T) {
 		info  *domaininfo.DomainInfo
 		err   error
 		want  happydns.DomainWatchPhase
+		title string
 	}{
 		// Due when it starts expiring, 10 days later.
-		{10 * day, f.expiresIn(40 * day), nil, happydns.DomainWatchExpiring},
-		{41 * day, f.expiresIn(40 * day), nil, happydns.DomainWatchGrace},
-		{45 * day, f.expiresIn(40*day, "redemption period"), nil, happydns.DomainWatchRedemption},
-		{75 * day, f.expiresIn(40*day, "pending delete"), nil, happydns.DomainWatchPendingDelete},
-		{80 * day, nil, types.ErrDomainDoesNotExist, happydns.DomainWatchAvailable},
-		{81 * day, f.expiresIn(445 * day), nil, happydns.DomainWatchRegistered},
+		{10 * day, f.expiresIn(40 * day), nil, happydns.DomainWatchExpiring, "example.com expires in 30 days"},
+		{41 * day, f.expiresIn(40 * day), nil, happydns.DomainWatchGrace, "example.com has expired"},
+		{45 * day, f.expiresIn(40*day, "redemption period"), nil, happydns.DomainWatchRedemption, "example.com entered its redemption period"},
+		{75 * day, f.expiresIn(40*day, "pending delete"), nil, happydns.DomainWatchPendingDelete, "example.com will be released within days"},
+		{80 * day, nil, types.ErrDomainDoesNotExist, happydns.DomainWatchAvailable, "example.com is available!"},
+		{81 * day, f.expiresIn(445 * day), nil, happydns.DomainWatchRegistered, "example.com was registered"},
 	}
 
 	start := f.now
@@ -372,6 +393,16 @@ func TestWorkerFollowsTheLifeOfADomain(t *testing.T) {
 		list, _ := f.service.ListDomainWatches(f.alice)
 		if len(list) != 1 || list[0].Phase != st.want {
 			t.Fatalf("step %d: watches %+v, want phase %q", i, list, st.want)
+		}
+		if len(f.notifier.sent) != i+1 {
+			t.Fatalf("step %d: %d notifications, want %d", i, len(f.notifier.sent), i+1)
+		}
+		last := f.notifier.sent[i]
+		if last.Event == nil || last.Event.Title != st.title || last.CheckerID != domainwatch.EventKind || last.DomainName != "example.com" {
+			t.Errorf("step %d: notification %+v", i, last.Event)
+		}
+		if !f.notifier.to[i].Id.Equals(f.alice.Id) {
+			t.Errorf("step %d: notified %v, want alice", i, f.notifier.to[i].Id)
 		}
 
 		// Checked again right away: not due anymore.
@@ -413,6 +444,9 @@ func TestWorkerSharesLookupsAndSurvivesFailures(t *testing.T) {
 			t.Errorf("a failed lookup changed the watch: %+v", list[0])
 		}
 	}
+	if len(f.notifier.sent) != 0 {
+		t.Errorf("a failed lookup notified: %+v", f.notifier.sent)
+	}
 }
 
 func TestNoteIsBounded(t *testing.T) {
@@ -431,6 +465,28 @@ func TestNoteIsBounded(t *testing.T) {
 	}
 	if _, err := f.service.UpdateDomainWatch(f.alice, w.Id, happydns.DomainWatchInput{Note: long}); !errors.As(err, &ve) {
 		t.Errorf("update with a long note: got %v, want a validation error", err)
+	}
+}
+
+func TestWorkerDoesNotNotifyAUserGone(t *testing.T) {
+	f := newFixture(t, 0)
+	ctx := context.Background()
+
+	f.registry.set("example.com", f.expiresIn(200*day), nil)
+	if _, err := f.service.CreateDomainWatch(ctx, f.alice, happydns.DomainWatchInput{Domain: "example.com"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.db.DeleteUser(f.alice.Id); err != nil {
+		t.Fatal(err)
+	}
+
+	f.now = f.now.Add(8 * day)
+	f.registry.set("example.com", nil, types.ErrDomainDoesNotExist)
+	if n := f.worker.RunOnce(ctx); n != 1 {
+		t.Fatalf("worker checked %d watches, want 1", n)
+	}
+	if len(f.notifier.sent) != 0 {
+		t.Errorf("notified the owner gone: %+v", f.notifier.sent)
 	}
 }
 
@@ -500,5 +556,47 @@ func TestWorkerLeavesDueTheWatchesNotLookedUp(t *testing.T) {
 
 	if n := f.worker.RunOnce(context.Background()); n != 1 {
 		t.Errorf("worker checked %d watches, want 1: the watch is still due", n)
+	}
+}
+
+// Checked on demand, the domain changing phase notifies the user asking.
+func TestCheckNotifiesThePhaseChange(t *testing.T) {
+	f := newFixture(t, 0)
+	ctx := context.Background()
+	f.registry.set("example.com", f.expiresIn(200*day), nil)
+	w, err := f.service.CreateDomainWatch(ctx, f.alice, happydns.DomainWatchInput{Domain: "example.com"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	f.now = f.now.Add(time.Hour)
+	f.registry.set("example.com", nil, types.ErrDomainDoesNotExist)
+	if _, err := f.service.CheckDomainWatch(ctx, f.alice, w.Id); err != nil {
+		t.Fatal(err)
+	}
+	if len(f.notifier.sent) != 1 || f.notifier.sent[0].Event.Title != "example.com is available!" {
+		t.Fatalf("notifications = %+v, want the domain available", f.notifier.sent)
+	}
+	if f.notifier.to[0] != f.alice {
+		t.Errorf("notified %+v, want the user who checked", f.notifier.to[0])
+	}
+}
+
+func TestServiceWithoutNotifier(t *testing.T) {
+	f := newFixture(t, 0)
+	ctx := context.Background()
+	service := domainwatch.NewService(f.db, f.db, f.registry.lookup, nil, 0)
+	service.SetClock(func() time.Time { return f.now }, func() time.Duration { return 0 })
+
+	f.registry.set("example.com", f.expiresIn(200*day), nil)
+	w, err := service.CreateDomainWatch(ctx, f.alice, happydns.DomainWatchInput{Domain: "example.com"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	f.now = f.now.Add(time.Hour)
+	f.registry.set("example.com", nil, types.ErrDomainDoesNotExist)
+	if got, err := service.CheckDomainWatch(ctx, f.alice, w.Id); err != nil || got.Phase != happydns.DomainWatchAvailable {
+		t.Errorf("CheckDomainWatch = %+v, %v; want the domain available", got, err)
 	}
 }

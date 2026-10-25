@@ -22,8 +22,11 @@
 package domainwatch
 
 import (
+	"fmt"
+	"math"
 	"time"
 
+	notifPkg "git.happydns.org/happyDomain/internal/notifier"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/pkg/domaininfo"
 )
@@ -177,4 +180,96 @@ func nextCheck(w *happydns.DomainWatch, now time.Time) time.Time {
 // the renewal or to delete the domain.
 func isAutoRenewPending(w *happydns.DomainWatch) bool {
 	return domaininfo.HasStatus(w.Status, "autoRenewPeriod")
+}
+
+// isPastExpiration tells whether the phase comes after the expiration of a
+// registration that was not renewed.
+func isPastExpiration(p happydns.DomainWatchPhase) bool {
+	return p == happydns.DomainWatchGrace || p == happydns.DomainWatchRedemption || p == happydns.DomainWatchPendingDelete
+}
+
+// isHeld tells whether someone holds a domain in the phase, not expired.
+func isHeld(p happydns.DomainWatchPhase) bool {
+	return p == happydns.DomainWatchRegistered || p == happydns.DomainWatchExpiring
+}
+
+// eventFor writes the notification telling that the domain of w changed from
+// a phase to its current one, at now.
+func eventFor(w *happydns.DomainWatch, from happydns.DomainWatchPhase, now time.Time) *notifPkg.NotificationEvent {
+	name := w.DisplayName
+	if name == "" {
+		name = w.DomainName
+	}
+	lit := notifPkg.MarkdownLiteral(name)
+
+	ev := &notifPkg.NotificationEvent{
+		Kind: EventKind,
+		Path: "/watchlist/",
+	}
+
+	switch {
+	case isPastExpiration(from) && isHeld(w.Phase):
+		ev.Title = fmt.Sprintf("%s was renewed", name)
+		ev.Body = fmt.Sprintf("The owner of %s renewed it%s. happyDomain keeps watching it and will tell you if it expires again.", lit, expiresOn(w))
+
+	case from == happydns.DomainWatchAvailable:
+		ev.Title = fmt.Sprintf("%s was registered", name)
+		ev.Body = fmt.Sprintf("%s has been registered%s%s. happyDomain keeps watching it and will tell you if it expires.", lit, byRegistrar(w), expiresOn(w))
+
+	case w.Phase == happydns.DomainWatchExpiring:
+		days := 0
+		if w.ExpirationDate != nil {
+			// Rounded: the jitter delays the lookup past the day it
+			// starts expiring by up to half an hour.
+			days = int(math.Round(w.ExpirationDate.Sub(now).Hours() / 24))
+		}
+		ev.Title = fmt.Sprintf("%s expires in %d days", name, days)
+		ev.Body = fmt.Sprintf("The registration of %s ends on %s. If its owner does not renew it, it will go through a grace period and a redemption period before being released. happyDomain will tell you at each step.", lit, formatDate(w.ExpirationDate))
+
+	case w.Phase == happydns.DomainWatchRegistered:
+		ev.Title = fmt.Sprintf("%s was renewed", name)
+		ev.Body = fmt.Sprintf("The owner of %s renewed it%s. happyDomain keeps watching it.", lit, expiresOn(w))
+
+	case w.Phase == happydns.DomainWatchGrace:
+		ev.Title = fmt.Sprintf("%s has expired", name)
+		ev.Body = fmt.Sprintf("%s has reached its expiration date. During the grace period, which usually lasts up to 45 days, its owner can still renew it as usual. happyDomain now checks it twice a day.", lit)
+
+	case w.Phase == happydns.DomainWatchRedemption:
+		ev.Title = fmt.Sprintf("%s entered its redemption period", name)
+		ev.Body = fmt.Sprintf("%s was not renewed: its owner can now only restore it, for a fee. Unless restored, the registry should release it by %s.", lit, formatDate(w.EstimatedRelease))
+
+	case w.Phase == happydns.DomainWatchPendingDelete:
+		ev.Title = fmt.Sprintf("%s will be released within days", name)
+		ev.Body = fmt.Sprintf("%s is pending deletion: nothing can prevent its release anymore. The registry should release it by %s. Get ready to register it as soon as it is available: drop-catching services may try too.", lit, formatDate(w.EstimatedRelease))
+
+	case w.Phase == happydns.DomainWatchAvailable:
+		ev.Title = fmt.Sprintf("%s is available!", name)
+		ev.Body = fmt.Sprintf("%s is no longer registered: you can register it now with the registrar of your choice.", lit)
+
+	default:
+		return nil
+	}
+
+	return ev
+}
+
+func expiresOn(w *happydns.DomainWatch) string {
+	if w.ExpirationDate == nil {
+		return ""
+	}
+	return ", until " + formatDate(w.ExpirationDate)
+}
+
+func byRegistrar(w *happydns.DomainWatch) string {
+	if w.Registrar == "" || w.Registrar == "Unknown" {
+		return ""
+	}
+	return " through " + notifPkg.MarkdownLiteral(w.Registrar)
+}
+
+func formatDate(t *time.Time) string {
+	if t == nil {
+		return "an unknown date"
+	}
+	return t.UTC().Format("January 2, 2006")
 }

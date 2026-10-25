@@ -112,7 +112,7 @@ update preserves the stored secret rather than wiping it.
 ## Events not tied to a checker
 
 Other features reuse the channels, the worker pool and the audit log to tell
-the user about their own events.
+the user about their own events, such as the [domain watchlist](domain-watchlist.md).
 They call `Dispatcher.NotifyUser(user, payload)` with a payload carrying an
 `Event` (`Kind`, `Title`, Markdown `Body`, `Path` of the page to open):
 

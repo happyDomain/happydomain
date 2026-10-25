@@ -23,6 +23,7 @@ package domainwatch
 
 import (
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -189,6 +190,53 @@ func TestNextCheck(t *testing.T) {
 			w := &happydns.DomainWatch{Phase: tc.phase, ExpirationDate: tc.exp, Status: tc.status}
 			if got := nextCheck(w, now); !got.Equal(tc.want) {
 				t.Errorf("nextCheck() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestEventFor(t *testing.T) {
+	cases := []struct {
+		from, to happydns.DomainWatchPhase
+		title    string
+		body     string
+	}{
+		{happydns.DomainWatchRegistered, happydns.DomainWatchExpiring, "example.com expires in 20 days", "ends on November 13, 2026"},
+		{happydns.DomainWatchExpiring, happydns.DomainWatchGrace, "example.com has expired", "can still renew it"},
+		{happydns.DomainWatchGrace, happydns.DomainWatchRedemption, "example.com entered its redemption period", "by November 28, 2026"},
+		{happydns.DomainWatchRedemption, happydns.DomainWatchPendingDelete, "example.com will be released within days", "by October 29, 2026"},
+		{happydns.DomainWatchPendingDelete, happydns.DomainWatchAvailable, "example.com is available!", "register it now"},
+		{happydns.DomainWatchAvailable, happydns.DomainWatchRegistered, "example.com was registered", "through `Acme`"},
+		{happydns.DomainWatchRedemption, happydns.DomainWatchRegistered, "example.com was renewed", "renewed it, until"},
+		{happydns.DomainWatchGrace, happydns.DomainWatchExpiring, "example.com was renewed", "will tell you if it expires again"},
+		{happydns.DomainWatchExpiring, happydns.DomainWatchRegistered, "example.com was renewed", "renewed it"},
+		{happydns.DomainWatchRegistered, happydns.DomainWatchPendingDelete, "example.com will be released within days", "pending deletion"},
+	}
+	for _, tc := range cases {
+		t.Run(string(tc.from)+"->"+string(tc.to), func(t *testing.T) {
+			w := &happydns.DomainWatch{DomainName: "example.com", DisplayName: "example.com", Phase: tc.to, PhaseSince: &now, Registrar: "Acme"}
+			if tc.to == happydns.DomainWatchExpiring {
+				w.ExpirationDate = at(20*day + time.Hour)
+			} else if tc.to != happydns.DomainWatchAvailable {
+				w.ExpirationDate = at(300 * day)
+			}
+			w.EstimatedRelease = estimateRelease(w)
+
+			ev := eventFor(w, tc.from, now)
+			if ev == nil {
+				t.Fatal("no event")
+			}
+			if ev.Title != tc.title {
+				t.Errorf("title = %q, want %q", ev.Title, tc.title)
+			}
+			if !strings.Contains(ev.Body, tc.body) {
+				t.Errorf("body = %q, want it to contain %q", ev.Body, tc.body)
+			}
+			if !strings.Contains(ev.Body, "`example.com`") {
+				t.Errorf("body does not quote the domain: %q", ev.Body)
+			}
+			if ev.Kind != EventKind || ev.Path != "/watchlist/" {
+				t.Errorf("kind %q, path %q", ev.Kind, ev.Path)
 			}
 		})
 	}

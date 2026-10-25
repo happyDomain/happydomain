@@ -23,6 +23,7 @@ package domainwatch
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"math/rand/v2"
@@ -35,9 +36,13 @@ import (
 	"golang.org/x/net/idna"
 	"golang.org/x/net/publicsuffix"
 
+	notifPkg "git.happydns.org/happyDomain/internal/notifier"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/pkg/domaininfo"
 )
+
+// EventKind identifies the notifications about watched domains.
+const EventKind = "domain_watch"
 
 const (
 	// lookupTimeout bounds a lookup made while the user waits.
@@ -51,10 +56,22 @@ const (
 	maxNoteLength = 1000
 )
 
+// UserGetter finds the owner of a watch, to notify them.
+type UserGetter interface {
+	GetUser(id happydns.Identifier) (*happydns.User, error)
+}
+
+// Notifier tells a user about an event of one of their watches.
+type Notifier interface {
+	NotifyUser(user *happydns.User, payload *notifPkg.NotificationPayload)
+}
+
 // Service manages the domains users watch, and looks them up when due.
 type Service struct {
 	store      DomainWatchStorage
+	users      UserGetter
 	lookup     domaininfo.Getter
+	notifier   Notifier
 	maxPerUser int
 
 	// mu serializes the read-modify-write of watches, so that a lookup
@@ -70,12 +87,15 @@ type Service struct {
 var _ happydns.DomainWatchUsecase = (*Service)(nil)
 
 // NewService builds the domain watch service. lookup retrieves the
-// registration information of a domain; maxPerUser caps the number of watches
-// of a user, 0 meaning unlimited.
-func NewService(store DomainWatchStorage, lookup domaininfo.Getter, maxPerUser int) *Service {
+// registration information of a domain; notifier, which may be nil, tells
+// users about the phase changes of their domains; maxPerUser caps the number
+// of watches of a user, 0 meaning unlimited.
+func NewService(store DomainWatchStorage, users UserGetter, lookup domaininfo.Getter, notifier Notifier, maxPerUser int) *Service {
 	return &Service{
 		store:      store,
+		users:      users,
 		lookup:     lookup,
+		notifier:   notifier,
 		maxPerUser: maxPerUser,
 		nowFn:      time.Now,
 		jitterFn:   func() time.Duration { return rand.N(maxJitter) },
@@ -253,11 +273,12 @@ func (s *Service) check(ctx context.Context, user *happydns.User, id happydns.Id
 		return nil, err
 	}
 
-	return s.record(id, domaininfo.Result{Info: info, Err: lerr})
+	return s.record(user, id, domaininfo.Result{Info: info, Err: lerr})
 }
 
-// record applies the lookup r to the watch id, and stores it.
-func (s *Service) record(id happydns.Identifier, r domaininfo.Result) (*happydns.DomainWatch, error) {
+// record applies the lookup r to the watch id, stores it and notifies its
+// owner, user (looked up when nil), of a phase change.
+func (s *Service) record(user *happydns.User, id happydns.Identifier, r domaininfo.Result) (*happydns.DomainWatch, error) {
 	s.mu.Lock()
 	// Read again: it may have changed, or gone, during the lookup.
 	w, err := s.store.GetDomainWatch(id)
@@ -276,8 +297,36 @@ func (s *Service) record(id happydns.Identifier, r domaininfo.Result) (*happydns
 
 	if changed {
 		log.Printf("DomainWatch: %s went from %s to %s", w.DomainName, from, w.Phase)
+		s.notify(user, w, from, now)
 	}
 	return w, nil
+}
+
+func (s *Service) notify(user *happydns.User, w *happydns.DomainWatch, from happydns.DomainWatchPhase, now time.Time) {
+	if s.notifier == nil {
+		return
+	}
+
+	ev := eventFor(w, from, now)
+	if ev == nil {
+		return
+	}
+
+	if user == nil {
+		var err error
+		if user, err = s.users.GetUser(w.UserId); err != nil {
+			if !errors.Is(err, happydns.ErrUserNotFound) {
+				log.Printf("DomainWatch: unable to find the owner of %s to notify: %v", w.DomainName, err)
+			}
+			return
+		}
+	}
+
+	s.notifier.NotifyUser(user, &notifPkg.NotificationPayload{
+		CheckerID:  EventKind,
+		DomainName: w.DomainName,
+		Event:      ev,
+	})
 }
 
 func checkNote(note string) error {

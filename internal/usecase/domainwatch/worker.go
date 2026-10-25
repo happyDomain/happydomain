@@ -105,7 +105,7 @@ func (wk *Worker) RunOnce(ctx context.Context) int {
 		if !ok || r.Err != nil && ctx.Err() != nil {
 			continue
 		}
-		if _, err := s.record(w.Id, r); errors.Is(err, happydns.ErrDomainWatchNotFound) {
+		if _, err := s.record(nil, w.Id, r); errors.Is(err, happydns.ErrDomainWatchNotFound) {
 			// Removed during the lookup.
 			continue
 		} else if err != nil {

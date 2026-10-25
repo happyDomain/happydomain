@@ -230,12 +230,15 @@ func (app *App) initUsecases() {
 	}
 
 	// Domain watchlist: follows domains users do not manage, through the
-	// same lookup chain as the WHOIS page.
+	// same lookup chain as the WHOIS page, and tells them of their phase
+	// changes through their notification channels.
 	domainWatch := domainwatch.NewService(
+		app.store,
 		app.store,
 		func(ctx context.Context, name string) (*domaininfo.DomainInfo, error) {
 			return app.usecases.domainInfo.GetDomainInfo(ctx, happydns.Origin(name))
 		},
+		app.usecases.notificationDispatcher,
 		app.cfg.DomainWatchMaxPerUser,
 	)
 	app.usecases.domainWatch = domainWatch

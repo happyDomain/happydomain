@@ -19,8 +19,9 @@ for contributors.
   not come closer by surprise: a registered domain is looked up once a week.
   Past its expiration date, every step lasts days, so twice a day is enough not
   to miss one.
-- **Never lose what is known.** A failed lookup keeps what is known of the
-  domain.
+- **Never lose an alert, never raise a false one.** A failed lookup keeps what
+  is known of the domain and notifies no one. A user who set up no
+  notification channel is notified at the email address of their account.
 - **Stay small.** The watchlist is a standalone entity with its own background
   worker. It does not go through the checker engine: a watched domain is not a
   happyDomain domain, and has no checker plan, quota, nor execution history.
@@ -51,6 +52,27 @@ The estimated release date is the latest date the registry should release the
 domain at: 5 days after it was first seen pending deletion, 35 days after it
 was first seen in redemption (the ICANN lengths for gTLDs). A domain already in
 its phase when first seen is released earlier.
+
+## Notifications
+
+Only phase changes notify, never the first lookup of a domain, nor a failed
+lookup:
+
+| Change | Notification |
+|---|---|
+| to `expiring` | The domain expires in N days |
+| to `grace` | The domain expired; its owner can still renew it |
+| to `redemption` | The domain entered its redemption period, and should be released by a date |
+| to `pending_delete` | The domain will be released within days, by a date |
+| to `available` | The domain is available |
+| from `grace`, `redemption` or `pending_delete` to `registered` or `expiring` | The domain was renewed |
+| from `available` to another phase | The domain was registered again |
+
+They go through `Dispatcher.NotifyUser` (see [Checker notifications](checker-notifications.md#events-not-tied-to-a-checker)):
+the channels of the user's global preference, or the account email when the
+user set up no channel. They are recorded in the notification history with the
+checker `domain_watch`. Webhooks receive `"event": "domain_watch"`, with a
+`title`, a Markdown `message` and a `dashboardUrl` leading to the watchlist.
 
 ## For administrators
 
