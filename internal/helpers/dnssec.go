@@ -32,5 +32,9 @@ func IsDNSSECType(rrtype uint16) bool {
 		rrtype == dns.TypeNSEC3 ||
 		rrtype == dns.TypeNSEC3PARAM ||
 		rrtype == dns.TypeDNSKEY ||
-		rrtype == dns.TypeRRSIG
+		rrtype == dns.TypeRRSIG ||
+		// Only found in the type bitmap of the NSEC records a server
+		// signing on the fly makes up for names that do not exist
+		// (RFC 9824).
+		rrtype == dns.TypeNXNAME
 }

@@ -59,6 +59,11 @@ func TestIsDNSSECType(t *testing.T) {
 			rrtype:   dns.TypeRRSIG,
 			expected: true,
 		},
+		{
+			name:     "NXNAME type",
+			rrtype:   dns.TypeNXNAME,
+			expected: true,
+		},
 		// Common non-DNSSEC types - should return false
 		{
 			name:     "A type",
@@ -392,6 +397,7 @@ func TestIsDNSSECTypeAllDNSSECTypes(t *testing.T) {
 		dns.TypeNSEC3PARAM,
 		dns.TypeDNSKEY,
 		dns.TypeRRSIG,
+		dns.TypeNXNAME,
 	}
 
 	for _, rrtype := range dnssecTypes {
