@@ -217,6 +217,10 @@ type Options struct {
 	// 0 means unlimited.
 	DomainWatchMaxPerUser int
 
+	// ZoneTemplateMaxPerUser caps the number of zone templates of a user.
+	// 0 means unlimited.
+	ZoneTemplateMaxPerUser int
+
 	// CaptchaProvider selects the captcha provider ("hcaptcha", "recaptchav2", "turnstile", or "").
 	CaptchaProvider string
 

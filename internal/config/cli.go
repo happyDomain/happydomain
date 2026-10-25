@@ -67,6 +67,7 @@ func declareFlags(o *happydns.Options) {
 	flag.BoolVar(&o.CheckerCountManualTriggers, "checker-count-manual-triggers", true, "When true (default), manual checker triggers count against UserQuota.MaxChecksPerDay and are refused with HTTP 429 once exhausted; when false, manual triggers bypass the quota entirely (see docs/checker-quotas.md)")
 	flag.BoolVar(&o.DisableCheckerScheduler, "disable-checker-scheduler", o.DisableCheckerScheduler, "Prevent the checker scheduler from starting automatically at boot (it can still be enabled at runtime through the admin API)")
 	flag.IntVar(&o.DomainWatchMaxPerUser, "domain-watch-max-per-user", 100, "Maximum number of domains a user can watch for expiration and availability (0 for unlimited)")
+	flag.IntVar(&o.ZoneTemplateMaxPerUser, "zone-template-max-per-user", 50, "Maximum number of zone templates a user can keep (0 for unlimited)")
 
 	flag.Var(&URL{&o.ListmonkURL}, "newsletter-server-url", "Base URL of the listmonk newsletter server")
 	flag.IntVar(&o.ListmonkID, "newsletter-id", 1, "Listmonk identifier of the list receiving the new user")

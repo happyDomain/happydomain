@@ -22,6 +22,7 @@
 package happydns
 
 import (
+	"io"
 	"time"
 )
 
@@ -79,4 +80,41 @@ func (t *ZoneTemplate) Zone() *Zone {
 		},
 		Services: t.Services,
 	}
+}
+
+// ZoneTemplateInput is what a user tells about a template.
+type ZoneTemplateInput struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+// ZoneTemplateUsecase manages zone templates. A nil user stands for an
+// administrator, who manages the global templates.
+type ZoneTemplateUsecase interface {
+	// ListZoneTemplates lists the templates of the user, then the global
+	// ones; only the global ones for a nil user.
+	ListZoneTemplates(user *User) ([]*ZoneTemplate, error)
+	GetZoneTemplate(user *User, id Identifier) (*ZoneTemplate, error)
+	// CreateZoneTemplate stores an empty template.
+	CreateZoneTemplate(user *User, input ZoneTemplateInput) (*ZoneTemplate, error)
+	// CreateZoneTemplateFromZone saves the services of a zone of domain,
+	// but for its origin, as a template.
+	CreateZoneTemplateFromZone(user *User, input ZoneTemplateInput, domain *Domain, zone *Zone) (*ZoneTemplate, error)
+	// ImportZoneTemplate makes a template from a zone file written for
+	// origin, ZoneTemplateOrigin when empty.
+	ImportZoneTemplate(user *User, input ZoneTemplateInput, origin string, zoneFile io.Reader) (*ZoneTemplate, error)
+	// UpdateZoneTemplate changes the name and the description of a
+	// template.
+	UpdateZoneTemplate(user *User, id Identifier, input ZoneTemplateInput) (*ZoneTemplate, error)
+	DeleteZoneTemplate(user *User, id Identifier) error
+
+	AddZoneTemplateService(user *User, id Identifier, subdomain Subdomain, service *Service) (*ZoneTemplate, error)
+	UpdateZoneTemplateService(user *User, id Identifier, subdomain Subdomain, serviceId Identifier, service *Service) (*ZoneTemplate, error)
+	DeleteZoneTemplateService(user *User, id Identifier, subdomain Subdomain, serviceId Identifier) (*ZoneTemplate, error)
+
+	// AddZoneTemplateRecords adds records, given as text relative to
+	// ZoneTemplateOrigin, to its services.
+	AddZoneTemplateRecords(user *User, id Identifier, records []string) (*ZoneTemplate, error)
+	DeleteZoneTemplateRecords(user *User, id Identifier, records []string) (*ZoneTemplate, error)
+	UpdateZoneTemplateRecord(user *User, id Identifier, form UpdateRecordForm) (*ZoneTemplate, error)
 }

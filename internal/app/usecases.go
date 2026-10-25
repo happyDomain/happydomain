@@ -46,6 +46,7 @@ import (
 	userUC "git.happydns.org/happyDomain/internal/usecase/user"
 	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
 	zoneServiceUC "git.happydns.org/happyDomain/internal/usecase/zone_service"
+	"git.happydns.org/happyDomain/internal/usecase/zonetemplate"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/pkg/domaininfo"
 	"git.happydns.org/happyDomain/pkg/favicon"
@@ -112,6 +113,12 @@ func (app *App) initUsecases() {
 		zoneService.CreateZoneUC,
 		serviceService.ValidateServiceUC,
 		app.store,
+	)
+	app.usecases.zoneTemplate = zonetemplate.NewService(
+		app.store,
+		serviceService.ValidateServiceUC,
+		zoneService,
+		app.cfg.ZoneTemplateMaxPerUser,
 	)
 
 	userService := userUC.NewUserUsecases(

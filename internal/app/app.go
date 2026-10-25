@@ -75,6 +75,7 @@ type Usecases struct {
 	userAdmin        happydns.AdminUserUsecase
 	zone             happydns.ZoneUsecase
 	zoneService      happydns.ZoneServiceUsecase
+	zoneTemplate     happydns.ZoneTemplateUsecase
 
 	orchestrator *orchestrator.Orchestrator
 
