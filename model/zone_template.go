@@ -26,6 +26,18 @@ import (
 	"time"
 )
 
+// ZoneTemplateApplyMode tells how a template is applied to a zone.
+type ZoneTemplateApplyMode string
+
+const (
+	// ZoneTemplateMerge adds the services of the template to those of the
+	// zone, replacing those that cannot stand next to them.
+	ZoneTemplateMerge ZoneTemplateApplyMode = "merge"
+	// ZoneTemplateOverwrite replaces the services of the zone by those of
+	// the template, but for the origin of the zone, kept as it is.
+	ZoneTemplateOverwrite ZoneTemplateApplyMode = "overwrite"
+)
+
 // ZoneTemplateMeta holds what describes a zone template, apart from its
 // services.
 type ZoneTemplateMeta struct {
@@ -88,6 +100,12 @@ type ZoneTemplateInput struct {
 	Description string `json:"description"`
 }
 
+// ApplyZoneTemplateForm tells which template to apply to a zone, and how.
+type ApplyZoneTemplateForm struct {
+	TemplateId Identifier            `json:"template_id" swaggertype:"string" binding:"required"`
+	Mode       ZoneTemplateApplyMode `json:"mode" binding:"required" enums:"merge,overwrite"`
+}
+
 // ZoneTemplateUsecase manages zone templates. A nil user stands for an
 // administrator, who manages the global templates.
 type ZoneTemplateUsecase interface {
@@ -117,4 +135,9 @@ type ZoneTemplateUsecase interface {
 	AddZoneTemplateRecords(user *User, id Identifier, records []string) (*ZoneTemplate, error)
 	DeleteZoneTemplateRecords(user *User, id Identifier, records []string) (*ZoneTemplate, error)
 	UpdateZoneTemplateRecord(user *User, id Identifier, form UpdateRecordForm) (*ZoneTemplate, error)
+
+	// ApplyZoneTemplate applies a template to the zone of domain, deriving
+	// an editable zone first when that one is already published. It
+	// returns the zone changed.
+	ApplyZoneTemplate(user *User, domain *Domain, zone *Zone, form ApplyZoneTemplateForm) (*Zone, error)
 }

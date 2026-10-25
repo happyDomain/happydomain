@@ -21,9 +21,19 @@
 
 package zonetemplate
 
-import "time"
+import (
+	"time"
+
+	"git.happydns.org/happyDomain/model"
+)
 
 // SetClock replaces the clock of the service, for tests.
 func (s *Service) SetClock(now func() time.Time) {
 	s.nowFn = now
+}
+
+// SetRestrictions replaces the restrictions of the types of service, for
+// tests.
+func (s *Service) SetRestrictions(of func(svctype string) happydns.ServiceRestrictions) {
+	s.restrictionsOf = of
 }

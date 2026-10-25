@@ -118,6 +118,8 @@ func (app *App) initUsecases() {
 		app.store,
 		serviceService.ValidateServiceUC,
 		zoneService,
+		app.usecases.zoneService,
+		app.store,
 		app.cfg.ZoneTemplateMaxPerUser,
 	)
 

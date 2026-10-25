@@ -51,14 +51,30 @@ type RecordEditor interface {
 	DeleteRecord(zone *happydns.Zone, origin string, record happydns.Record) error
 }
 
+// EditableZoneActor runs an action on an editable zone of a domain, deriving
+// one first when the zone given is already published.
+type EditableZoneActor interface {
+	ActionOnEditableZone(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone, act func(*happydns.Zone) error) (*happydns.Zone, error)
+}
+
+// ZoneUpdater saves a zone.
+type ZoneUpdater interface {
+	UpdateZone(zone *happydns.Zone) error
+}
+
 // Service manages the zone templates.
 type Service struct {
 	store      ZoneTemplateStorage
 	validator  ServiceValidator
 	records    RecordEditor
+	zones      EditableZoneActor
+	zoneStore  ZoneUpdater
 	maxPerUser int
 
-	nowFn func() time.Time
+	// restrictionsOf is replaced by the tests, to try restrictions no
+	// service declares.
+	restrictionsOf func(svctype string) happydns.ServiceRestrictions
+	nowFn          func() time.Time
 }
 
 var _ happydns.ZoneTemplateUsecase = (*Service)(nil)
@@ -66,13 +82,16 @@ var _ happydns.ZoneTemplateUsecase = (*Service)(nil)
 // NewService builds the zone template service. maxPerUser caps the number of
 // templates of a user, 0 meaning unlimited; it does not apply to the global
 // templates.
-func NewService(store ZoneTemplateStorage, validator ServiceValidator, records RecordEditor, maxPerUser int) *Service {
+func NewService(store ZoneTemplateStorage, validator ServiceValidator, records RecordEditor, zones EditableZoneActor, zoneStore ZoneUpdater, maxPerUser int) *Service {
 	return &Service{
-		store:      store,
-		validator:  validator,
-		records:    records,
-		maxPerUser: maxPerUser,
-		nowFn:      time.Now,
+		store:          store,
+		validator:      validator,
+		records:        records,
+		zones:          zones,
+		zoneStore:      zoneStore,
+		maxPerUser:     maxPerUser,
+		restrictionsOf: registeredRestrictions,
+		nowFn:          time.Now,
 	}
 }
 

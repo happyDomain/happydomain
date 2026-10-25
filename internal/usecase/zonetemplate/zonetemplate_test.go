@@ -37,6 +37,7 @@ import (
 	"git.happydns.org/happyDomain/internal/storage/inmemory"
 	serviceUC "git.happydns.org/happyDomain/internal/usecase/service"
 	zoneUC "git.happydns.org/happyDomain/internal/usecase/zone"
+	zoneServiceUC "git.happydns.org/happyDomain/internal/usecase/zone_service"
 	"git.happydns.org/happyDomain/internal/usecase/zonetemplate"
 	"git.happydns.org/happyDomain/model"
 	_ "git.happydns.org/happyDomain/services"
@@ -57,8 +58,19 @@ func (r records) DeleteRecord(zone *happydns.Zone, origin string, record happydn
 	return r.del.Delete(zone, origin, record)
 }
 
+// zones runs the actions on the zone given, telling how many ran.
+type zones struct {
+	acts int
+}
+
+func (z *zones) ActionOnEditableZone(user *happydns.User, domain *happydns.Domain, zone *happydns.Zone, act func(*happydns.Zone) error) (*happydns.Zone, error) {
+	z.acts++
+	return zone, act(zone)
+}
+
 type fixture struct {
 	store storage.Storage
+	zones *zones
 	uc    *zonetemplate.Service
 }
 
@@ -69,15 +81,23 @@ func newFixture(t *testing.T, maxPerUser int) *fixture {
 		t.Fatal(err)
 	}
 
+	f := &fixture{store: store, zones: &zones{}}
+	f.uc = f.service(f.zones, maxPerUser)
+	return f
+}
+
+// service builds a use case on the storage of the fixture, editing the zones
+// through zones.
+func (f *fixture) service(zones zonetemplate.EditableZoneActor, maxPerUser int) *zonetemplate.Service {
 	list := serviceUC.NewListRecordsUsecase()
-	f := &fixture{store: store}
-	f.uc = zonetemplate.NewService(
-		store,
+	return zonetemplate.NewService(
+		f.store,
 		serviceUC.NewValidateServiceUsecase(),
 		records{add: zoneUC.NewAddRecordUsecase(list), del: zoneUC.NewDeleteRecordUsecase(list, serviceUC.NewSearchRecordUsecase(list))},
+		zones,
+		f.store,
 		maxPerUser,
 	)
-	return f
 }
 
 var (
@@ -576,5 +596,299 @@ func TestEditRecords(t *testing.T) {
 	}
 	if _, err := f.uc.AddZoneTemplateRecords(alice, tpl.Id, []string{"@ 3600 IN NS ns.example.net."}); err == nil {
 		t.Error("AddZoneTemplateRecords of a NS at the apex succeeded, a template cannot hold the origin")
+	}
+}
+
+const targetZone = `$ORIGIN target.org.
+$TTL 3600
+@     IN SOA ns1.host.net. hostmaster.target.org. 1 7200 3600 1209600 3600
+@     IN NS  ns1.host.net.
+@     IN MX  10 mx.old.net.
+www   IN A   198.51.100.1
+blog  IN A   198.51.100.2
+`
+
+func TestApplyMerge(t *testing.T) {
+	f := newFixture(t, 0)
+	tpl := f.template(t, alice, "mail")
+	domain, zone := f.newZone(t, "target.org.", targetZone)
+
+	zone, err := f.uc.ApplyZoneTemplate(alice, domain, zone, happydns.ApplyZoneTemplateForm{TemplateId: tpl.Id, Mode: happydns.ZoneTemplateMerge})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := []string{
+		"blog.target.org. A 198.51.100.2",
+		"mail.target.org. A 192.0.2.1",
+		"target.org. MX 10 mail.target.org.",
+		"target.org. NS ns1.host.net.",
+		"target.org. SOA ns1.host.net. hostmaster.target.org. 1 7200 3600 1209600 3600",
+		"target.org. TXT \"v=spf1 include:_spf.example.com ~all\"",
+		"www.target.org. CNAME target.org.",
+	}
+	if got := recordsOf(t, "target.org.", zone); !slices.Equal(got, want) {
+		t.Errorf("records after merge:\n%s\nwant:\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+
+	stored, err := f.store.GetZone(zone.Id)
+	if err != nil || len(stored.Services["www"]) != 1 {
+		t.Errorf("stored zone = %v, %v; want the merged zone saved", stored, err)
+	}
+
+	// Applied again, it changes nothing.
+	again, err := f.uc.ApplyZoneTemplate(alice, domain, zone, happydns.ApplyZoneTemplateForm{TemplateId: tpl.Id, Mode: happydns.ZoneTemplateMerge})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := recordsOf(t, "target.org.", again); !slices.Equal(got, want) {
+		t.Errorf("records after a second merge:\n%s\nwant:\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+}
+
+// A name publishes a single DMARC, MTA-STS or TLS-RPT policy: the one of the
+// template replaces the one of the zone, as the SPF directives of both are
+// merged.
+func TestApplyMergeReplacesThePolicies(t *testing.T) {
+	for _, tc := range []struct {
+		name, zone, template, want string
+	}{
+		{"DMARC", `_dmarc IN TXT "v=DMARC1; p=none"`, `_dmarc 3600 IN TXT "v=DMARC1; p=reject"`, "p=reject"},
+		{"MTA-STS", `_mta-sts IN TXT "v=STSv1; id=zone"`, `_mta-sts 3600 IN TXT "v=STSv1; id=template"`, "id=template"},
+		{"TLS-RPT", `_smtp._tls IN TXT "v=TLSRPTv1; rua=mailto:tls@target.org"`, `_smtp._tls 3600 IN TXT "v=TLSRPTv1; rua=mailto:tls@example.com"`, "rua=mailto:tls@example.com"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newFixture(t, 0)
+			tpl := f.template(t, alice, "mail")
+			domain, zone := f.newZone(t, "target.org.", `$ORIGIN target.org.
+$TTL 3600
+@      IN SOA ns1.host.net. hostmaster.target.org. 1 7200 3600 1209600 3600
+@      IN NS  ns1.host.net.
+@      IN TXT "v=spf1 ip4:198.51.100.1 -all"
+`+tc.zone+"\n")
+			if _, err := f.uc.AddZoneTemplateRecords(alice, tpl.Id, []string{tc.template}); err != nil {
+				t.Fatal(err)
+			}
+
+			zone, err := f.uc.ApplyZoneTemplate(alice, domain, zone, happydns.ApplyZoneTemplateForm{TemplateId: tpl.Id, Mode: happydns.ZoneTemplateMerge})
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			prefix := strings.Fields(tc.zone)[0] + ".target.org. TXT"
+			var policies, spf []string
+			for _, rr := range recordsOf(t, "target.org.", zone) {
+				if strings.HasPrefix(rr, prefix) {
+					policies = append(policies, rr)
+				}
+				if strings.Contains(rr, "v=spf1") {
+					spf = append(spf, rr)
+				}
+			}
+			if len(policies) != 1 || !strings.Contains(policies[0], tc.want) {
+				t.Errorf("%s records after merge = %v, want only the policy of the template", tc.name, policies)
+			}
+			if len(spf) != 1 || !strings.Contains(spf[0], "ip4:198.51.100.1") || !strings.Contains(spf[0], "include:_spf.example.com") {
+				t.Errorf("SPF records after merge = %v, want one record with the directives of both", spf)
+			}
+		})
+	}
+}
+
+func TestApplyOverwrite(t *testing.T) {
+	f := newFixture(t, 0)
+	tpl := f.template(t, nil, "global")
+	domain, zone := f.newZone(t, "target.org.", targetZone)
+
+	zone, err := f.uc.ApplyZoneTemplate(bob, domain, zone, happydns.ApplyZoneTemplateForm{TemplateId: tpl.Id, Mode: happydns.ZoneTemplateOverwrite})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := []string{
+		"mail.target.org. A 192.0.2.1",
+		"target.org. MX 10 mail.target.org.",
+		"target.org. NS ns1.host.net.",
+		"target.org. SOA ns1.host.net. hostmaster.target.org. 1 7200 3600 1209600 3600",
+		"target.org. TXT \"v=spf1 include:_spf.example.com ~all\"",
+		"www.target.org. CNAME target.org.",
+	}
+	if got := recordsOf(t, "target.org.", zone); !slices.Equal(got, want) {
+		t.Errorf("records after overwrite:\n%s\nwant:\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+	if f.zones.acts != 1 {
+		t.Errorf("the template was applied through %d actions on an editable zone, want 1", f.zones.acts)
+	}
+}
+
+func TestApplyRefusals(t *testing.T) {
+	f := newFixture(t, 0)
+	tpl := f.template(t, alice, "mine")
+	domain, zone := f.newZone(t, "target.org.", targetZone)
+
+	if _, err := f.uc.ApplyZoneTemplate(alice, domain, zone, happydns.ApplyZoneTemplateForm{TemplateId: tpl.Id, Mode: "replace"}); err == nil {
+		t.Error("ApplyZoneTemplate with an unknown mode succeeded")
+	}
+	if _, err := f.uc.ApplyZoneTemplate(bob, domain, zone, happydns.ApplyZoneTemplateForm{TemplateId: tpl.Id, Mode: happydns.ZoneTemplateMerge}); !errors.Is(err, happydns.ErrZoneTemplateNotFound) {
+		t.Errorf("ApplyZoneTemplate of the template of another = %v, want not found", err)
+	}
+	if f.zones.acts != 0 {
+		t.Errorf("a refused template changed the zone %d times", f.zones.acts)
+	}
+}
+
+func TestApplyLastModified(t *testing.T) {
+	f := newFixture(t, 0)
+	tpl := f.template(t, alice, "mail")
+	domain, zone := f.newZone(t, "target.org.", targetZone)
+	now := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+	f.uc.SetClock(func() time.Time { return now })
+
+	zone, err := f.uc.ApplyZoneTemplate(alice, domain, zone, happydns.ApplyZoneTemplateForm{TemplateId: tpl.Id, Mode: happydns.ZoneTemplateOverwrite})
+	if err != nil || !zone.LastModified.Equal(now) {
+		t.Errorf("ApplyZoneTemplate = %v, %v; want the zone modified at %s", zone, err, now)
+	}
+}
+
+// Services following the default TTL of the template keep it in a zone of
+// another default TTL.
+func TestApplyKeepsTheTTL(t *testing.T) {
+	f := newFixture(t, 0)
+	tpl := f.template(t, alice, "mail")
+	domain, zone := f.newZone(t, "target.org.", strings.Replace(targetZone, "$TTL 3600", "$TTL 300", 1))
+
+	zone, err := f.uc.ApplyZoneTemplate(alice, domain, zone, happydns.ApplyZoneTemplateForm{TemplateId: tpl.Id, Mode: happydns.ZoneTemplateMerge})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := zone.Services["mail"][0].Ttl; got != 3600 {
+		t.Errorf("TTL of the service of the template = %d, want 3600", got)
+	}
+	if got := zone.Services["blog"][0].Ttl; got != 0 {
+		t.Errorf("TTL of the service of the zone = %d, want 0, the default of the zone", got)
+	}
+}
+
+// A derived zone shares its slices with the published one: merging leaves
+// them as they were.
+func TestApplyMergeKeepsTheSlicesOfTheZone(t *testing.T) {
+	f := newFixture(t, 0)
+	tpl := f.template(t, alice, "mail")
+	domain, zone := f.newZone(t, "target.org.", targetZone)
+	apex := zone.Services[""]
+	want := slices.Clone(apex)
+
+	if _, err := f.uc.ApplyZoneTemplate(alice, domain, zone, happydns.ApplyZoneTemplateForm{TemplateId: tpl.Id, Mode: happydns.ZoneTemplateMerge}); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(apex, want) {
+		t.Error("merging changed the services of the zone it started from")
+	}
+}
+
+// domains keeps the zone history a use case saves for a domain.
+type domains struct {
+	history []happydns.Identifier
+}
+
+func (d *domains) Update(_ happydns.Identifier, _ *happydns.User, update func(*happydns.Domain)) error {
+	var domain happydns.Domain
+	update(&domain)
+	d.history = domain.ZoneHistory
+	return nil
+}
+
+// Applied to a published zone, a template changes a zone derived from it,
+// leaving the published one as it was.
+func TestApplyToAPublishedZone(t *testing.T) {
+	f := newFixture(t, 0)
+	history := &domains{}
+	f.uc = f.service(zoneServiceUC.NewActionOnDomainUsecase(history, zoneUC.NewCreateZoneUsecase(f.store)), 0)
+	tpl := f.template(t, alice, "mail")
+	domain, published := f.newZone(t, "target.org.", targetZone)
+	now := time.Now()
+	published.Published = &now
+	if err := f.store.UpdateZone(published); err != nil {
+		t.Fatal(err)
+	}
+
+	zone, err := f.uc.ApplyZoneTemplate(alice, domain, published, happydns.ApplyZoneTemplateForm{TemplateId: tpl.Id, Mode: happydns.ZoneTemplateOverwrite})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if zone.Id.Equals(published.Id) || zone.ParentZone == nil || !zone.ParentZone.Equals(published.Id) {
+		t.Errorf("zone changed = %s, parent %v; want a zone derived from %s", zone.Id, zone.ParentZone, published.Id)
+	}
+	if len(history.history) != 2 || !history.history[0].Equals(zone.Id) {
+		t.Errorf("history of the domain = %v, want the derived zone first", history.history)
+	}
+
+	stored, err := f.store.GetZone(zone.Id)
+	if err != nil || len(stored.Services["mail"]) != 1 {
+		t.Errorf("derived zone = %v, %v; want the template applied", stored, err)
+	}
+	kept, err := f.store.GetZone(published.Id)
+	if err != nil || len(kept.Services["blog"]) != 1 || len(kept.Services["mail"]) != 0 {
+		t.Errorf("published zone = %v, %v; want it unchanged", kept, err)
+	}
+}
+
+// The restrictions of the types of service tell which services of the zone
+// one of the template replaces on its name.
+func TestApplyMergeRestrictions(t *testing.T) {
+	const (
+		alias  = "svcs.Alias"
+		server = "abstract.Server"
+		txt    = "svcs.TXT"
+	)
+	for _, tc := range []struct {
+		name         string
+		zone, add    string
+		restrictions map[string]happydns.ServiceRestrictions
+		want         []string
+	}{
+		{"kept next to another type", "blog IN A 198.51.100.2", `blog 3600 IN TXT "added"`, nil, []string{server, txt}},
+		{"CNAME replaced", "blog IN CNAME elsewhere.net.", "blog 3600 IN A 192.0.2.7", nil, []string{server}},
+		{"replaced by a CNAME", "blog IN A 198.51.100.2", "blog 3600 IN CNAME elsewhere.net.", nil, []string{alias}},
+		{"CNAME kept next to a NearAlone", "blog IN CNAME elsewhere.net.", `blog 3600 IN TXT "added"`, map[string]happydns.ServiceRestrictions{txt: {NearAlone: true}}, []string{alias, txt}},
+		{"NearAlone kept next to a CNAME", `blog IN TXT "kept"`, "blog 3600 IN CNAME elsewhere.net.", map[string]happydns.ServiceRestrictions{txt: {NearAlone: true}}, []string{alias, txt}},
+		{"Alone replaced", `blog IN TXT "alone"`, "blog 3600 IN A 192.0.2.7", map[string]happydns.ServiceRestrictions{txt: {Alone: true}}, []string{server}},
+		{"replaced by an Alone", "blog IN A 198.51.100.2", `blog 3600 IN TXT "alone"`, map[string]happydns.ServiceRestrictions{txt: {Alone: true}}, []string{txt}},
+		{"exclusive replaced", `blog IN TXT "kept"`, "blog 3600 IN A 192.0.2.7", map[string]happydns.ServiceRestrictions{server: {ExclusiveRR: []string{txt}}}, []string{server}},
+		{"replaced by an exclusive", `blog IN TXT "kept"`, "blog 3600 IN A 192.0.2.7", map[string]happydns.ServiceRestrictions{txt: {ExclusiveRR: []string{server}}}, []string{server}},
+		{"kept next to its type", `blog IN TXT "kept"`, `blog 3600 IN TXT "added"`, nil, []string{txt, txt}},
+		{"Single replaced", `blog IN TXT "replaced"`, `blog 3600 IN TXT "added"`, map[string]happydns.ServiceRestrictions{txt: {Single: true}}, []string{txt}},
+		{"Single kept next to another type", "blog IN A 198.51.100.2", `blog 3600 IN TXT "added"`, map[string]happydns.ServiceRestrictions{txt: {Single: true}}, []string{server, txt}},
+		{"Alone kept next to a NearAlone", `blog IN TXT "alone"`, "blog 3600 IN A 192.0.2.7", map[string]happydns.ServiceRestrictions{txt: {Alone: true}, server: {NearAlone: true}}, []string{server, txt}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newFixture(t, 0)
+			f.uc.SetRestrictions(func(svctype string) happydns.ServiceRestrictions { return tc.restrictions[svctype] })
+			tpl, err := f.uc.CreateZoneTemplate(alice, happydns.ZoneTemplateInput{Name: tc.name})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := f.uc.AddZoneTemplateRecords(alice, tpl.Id, []string{tc.add}); err != nil {
+				t.Fatal(err)
+			}
+			domain, zone := f.newZone(t, "target.org.", `$ORIGIN target.org.
+$TTL 3600
+@ IN SOA ns1.host.net. hostmaster.target.org. 1 7200 3600 1209600 3600
+@ IN NS  ns1.host.net.
+`+tc.zone+"\n")
+
+			zone, err = f.uc.ApplyZoneTemplate(alice, domain, zone, happydns.ApplyZoneTemplateForm{TemplateId: tpl.Id, Mode: happydns.ZoneTemplateMerge})
+			if err != nil {
+				t.Fatal(err)
+			}
+			var got []string
+			for _, svc := range zone.Services["blog"] {
+				got = append(got, svc.Type)
+			}
+			slices.Sort(got)
+			if !slices.Equal(got, tc.want) {
+				t.Errorf("services of blog after merge = %v, want %v", got, tc.want)
+			}
+		})
 	}
 }
