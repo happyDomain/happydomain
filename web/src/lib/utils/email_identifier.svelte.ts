@@ -35,6 +35,9 @@ export async function computeEmailIdentifier(domainId: string, username: string)
     const local = await digestHex("SHA-256", new TextEncoder().encode(username), 28);
     if (local !== undefined) return local;
 
+    // The backend is asked through the domain: a zone template has none.
+    if (!domainId) throw new Error("this page is not served over HTTPS");
+
     return getEmailIdentifier(domainId, username);
 }
 

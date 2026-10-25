@@ -413,14 +413,17 @@
 
             {#if !readonly}
                 <div class="d-flex flex-wrap gap-2 mt-3 align-items-center">
-                    <button
-                        type="button"
-                        class="btn btn-sm btn-outline-secondary"
-                        onclick={() => fetchLive(i)}
-                        disabled={fetching !== null}
-                    >
-                        {fetching === i ? "Fetching…" : "Fetch from live server"}
-                    </button>
+                    <!-- The server is asked through the domain: a zone template has none. -->
+                    {#if origin.id}
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-secondary"
+                            onclick={() => fetchLive(i)}
+                            disabled={fetching !== null}
+                        >
+                            {fetching === i ? "Fetching…" : "Fetch from live server"}
+                        </button>
+                    {/if}
                     <label
                         class="btn btn-sm btn-outline-secondary mb-0"
                         class:disabled={!canHash && rec.MatchingType !== 0}
