@@ -49,6 +49,7 @@
     import { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
     import { controls as ctrlDomainWhois } from "./ModalDomainWhois.svelte";
     import { controls as ctrlUploadZone } from "./ModalUploadZone.svelte";
+    import { controls as ctrlApplyTemplate } from "./ModalApplyTemplate.svelte";
     import { controls as ctrlSaveAsTemplate } from "./ModalSaveAsTemplate.svelte";
     import { controls as ctrlNewSubdomain } from "$lib/components/zones/NewSubdomainPath.svelte";
     import SubdomainListTiny from "$lib/components/zones/SubdomainListTiny.svelte";
@@ -153,6 +154,13 @@
                 on:click={() => ctrlUploadZone.Open()}
             >
                 {$t("domains.actions.upload")}
+            </DropdownItem>
+            <DropdownItem
+                disabled={readOnly}
+                title={readOnly ? $t("domains.read-only-edit") : undefined}
+                on:click={() => ctrlApplyTemplate.Open()}
+            >
+                {$t("domains.actions.apply-template")}
             </DropdownItem>
             <DropdownItem divider />
             <DropdownItem disabled title="Coming soon...">

@@ -68,12 +68,13 @@ function setup(readonly: boolean) {
 }
 
 describe("ZoneSidebar", () => {
-    it("offers to add a subdomain, to import a zone and to save it through a writable provider", async () => {
+    it("offers to add a subdomain, to import a zone, to save it and to apply a template through a writable provider", async () => {
         render(ZoneSidebar, setup(false));
         expect(screen.getByRole("button", { name: /Add a subdomain/ })).toBeEnabled();
 
         await userEvent.setup().click(screen.getByRole("button", { name: /More actions/ }));
         expect(await screen.findByText("Import a zone file")).not.toHaveClass("disabled");
+        expect(screen.getByText("Apply a template")).not.toHaveClass("disabled");
         expect(screen.getByText("Save as a template")).not.toHaveClass("disabled");
     });
 
@@ -85,6 +86,11 @@ describe("ZoneSidebar", () => {
 
         await userEvent.setup().click(screen.getByRole("button", { name: /More actions/ }));
         expect(await screen.findByText("Import a zone file")).toHaveClass("disabled");
+        expect(screen.getByText("Apply a template")).toHaveClass("disabled");
+        expect(screen.getByText("Apply a template")).toHaveAttribute(
+            "title",
+            expect.stringMatching(/read-only/),
+        );
         // Saving the zone as a template does not change it.
         expect(screen.getByText("Save as a template")).not.toHaveClass("disabled");
     });

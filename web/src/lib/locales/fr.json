@@ -95,7 +95,8 @@
             "others": "Plus d'actions sur {{domain}}",
             "label": "Actions",
             "menu-title": "Actions sur le domaine",
-            "save-template": "Enregistrer comme modèle"
+            "save-template": "Enregistrer comme modèle",
+            "apply-template": "Appliquer un modèle"
         },
         "alert": {
             "remove": "Cette action retirera définitivement le domaine {{domain}} de votre liste. L'historique et les zones abstraites seront supprimés. Cela ne supprimera ni n'affectera votre domaine auprès de votre fournisseur, ni ne modifiera ce qui est actuellement diffusé. Cela ne concerne seulement que ce que vous voyez dans happyDomain. Êtes-vous certain de vouloir continuer ?",
@@ -410,6 +411,21 @@
             "submit": "Enregistrer le modèle",
             "done": "Modèle « {{name}} » enregistré",
             "open": "Ouvrir le modèle"
+        },
+        "apply": {
+            "title": "Appliquer un modèle",
+            "description": "Les services du modèle sont ajoutés à la zone de {{domain}}. Rien n'est envoyé à votre hébergeur avant que vous publiiez les changements.",
+            "template": "Modèle",
+            "none": "Vous n'avez pas encore de modèle.",
+            "manage": "Gérer mes modèles",
+            "mode": "Comment l'appliquer",
+            "merge": "Fusionner",
+            "merge-help": "Garder les services de la zone et y ajouter ceux du modèle. Un service présent une seule fois par nom, comme les serveurs de messagerie ou un alias, remplace celui de la zone.",
+            "overwrite": "Remplacer",
+            "overwrite-help": "Retirer tous les services de la zone, sauf ses enregistrements SOA et NS, et mettre ceux du modèle à la place.",
+            "submit": "Appliquer le modèle",
+            "done": "Modèle « {{name}} » appliqué",
+            "review": "Relisez les changements, puis publiez-les vers votre hébergeur."
         },
         "mine": "Mes modèles",
         "modified": "Modifié {{when}}"

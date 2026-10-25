@@ -99,7 +99,8 @@
             "others": "More actions on {{domain}}",
             "label": "Actions",
             "menu-title": "Domain actions",
-            "save-template": "Save as a template"
+            "save-template": "Save as a template",
+            "apply-template": "Apply a template"
         },
         "alert": {
             "remove": "This action only removes {{domain}} from your happyDomain managed domains. All history and abstracted zones will be discarded. The domain {{domain}} remains fully intact at the provider. Are you sure you want to continue?"
@@ -416,6 +417,21 @@
             "submit": "Save the template",
             "done": "Template “{{name}}” saved",
             "open": "Open the template"
+        },
+        "apply": {
+            "title": "Apply a template",
+            "description": "The services of the template are added to the zone of {{domain}}. Nothing is sent to your provider before you publish the changes.",
+            "template": "Template",
+            "none": "You have no template yet.",
+            "manage": "Manage my templates",
+            "mode": "How to apply it",
+            "merge": "Merge",
+            "merge-help": "Keep the services of the zone and add those of the template. A service found only once per name, such as the mail servers or an alias, replaces the one of the zone.",
+            "overwrite": "Replace",
+            "overwrite-help": "Remove every service of the zone, but its SOA and NS records, and put those of the template instead.",
+            "submit": "Apply the template",
+            "done": "Template “{{name}}” applied",
+            "review": "Review the changes, then publish them to your provider."
         },
         "mine": "My templates",
         "modified": "Changed {{when}}"
