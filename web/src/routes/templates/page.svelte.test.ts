@@ -18,11 +18,13 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { render, screen, waitFor } from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 const api = vi.hoisted(() => ({
+    createZoneTemplate: vi.fn(),
+    importZoneTemplate: vi.fn(),
     listZoneTemplates: vi.fn(),
     updateZoneTemplate: vi.fn(),
     deleteZoneTemplate: vi.fn(),
@@ -31,6 +33,9 @@ vi.mock("$lib/api/zone_template", () => api);
 
 const toasts = vi.hoisted(() => ({ addErrorToast: vi.fn(), addToast: vi.fn() }));
 vi.mock("$lib/stores/toasts", () => ({ toasts }));
+
+const navigation = vi.hoisted(() => ({ goto: vi.fn() }));
+vi.mock("$app/navigation", () => navigation);
 
 import type { ZoneTemplate } from "$lib/model/zone_template";
 import { zoneTemplates } from "$lib/stores/zone_templates";
@@ -111,5 +116,93 @@ describe("zone templates page", () => {
         api.listZoneTemplates.mockResolvedValue([tpl("1", "Mail")]);
         await user.click(screen.getByText("Try again"));
         await waitFor(() => expect(titles()).toContain("Mail"));
+    });
+
+    it("creates an empty template, and opens it", async () => {
+        const user = userEvent.setup();
+        api.listZoneTemplates.mockResolvedValue([]);
+        api.createZoneTemplate.mockResolvedValue(tpl("3", "Web", { services: {} }));
+        render(Page);
+        await screen.findByText("No template yet");
+
+        await user.click(screen.getByRole("button", { name: /New template/ }));
+        await user.type(await screen.findByLabelText("Name"), "Web");
+        expect(screen.queryByLabelText("Origin")).toBeNull();
+        await user.click(screen.getByRole("button", { name: "Create the template" }));
+
+        await waitFor(() => expect(navigation.goto).toHaveBeenCalledWith("/templates/3"));
+        expect(api.createZoneTemplate).toHaveBeenCalledWith({ name: "Web", description: "" });
+        expect(api.importZoneTemplate).not.toHaveBeenCalled();
+    });
+
+    it("imports a template from the zone file typed", async () => {
+        const user = userEvent.setup();
+        api.listZoneTemplates.mockResolvedValue([]);
+        api.importZoneTemplate.mockResolvedValue(tpl("4", "Imported"));
+        render(Page);
+        await screen.findByText("No template yet");
+
+        await user.click(screen.getByRole("button", { name: /Import a zone file/ }));
+        await user.type(await screen.findByLabelText("Name"), "Imported");
+        await user.type(screen.getByLabelText("Origin"), "example.org");
+        await user.type(screen.getByLabelText("Import from text"), "www 3600 IN A 192.0.2.1");
+        await user.click(screen.getByRole("button", { name: "Import" }));
+
+        await waitFor(() => expect(navigation.goto).toHaveBeenCalledWith("/templates/4"));
+        const [input, file] = api.importZoneTemplate.mock.calls[0];
+        expect(input).toEqual({ name: "Imported", description: "", origin: "example.org" });
+        expect(await (file as Blob).text()).toBe("www 3600 IN A 192.0.2.1");
+    });
+
+    // Saved, a template is not to be made again for want of the list.
+    it("opens the template created while the list could not be loaded", async () => {
+        const user = userEvent.setup();
+        api.listZoneTemplates.mockRejectedValue(new Error("unreachable"));
+        api.createZoneTemplate.mockResolvedValue(tpl("3", "Web", { services: {} }));
+        render(Page);
+        await screen.findByText(/Unable to load the templates/);
+
+        await user.click(screen.getByRole("button", { name: /New template/ }));
+        await user.type(await screen.findByLabelText("Name"), "Web");
+        await user.click(screen.getByRole("button", { name: "Create the template" }));
+
+        await waitFor(() => expect(navigation.goto).toHaveBeenCalledWith("/templates/3"));
+        expect(api.listZoneTemplates).toHaveBeenCalledTimes(1);
+    });
+
+    it("imports a template from the zone file chosen", async () => {
+        const user = userEvent.setup();
+        api.listZoneTemplates.mockResolvedValue([]);
+        api.importZoneTemplate.mockResolvedValue(tpl("5", "Uploaded"));
+        const { baseElement } = render(Page);
+        await screen.findByText("No template yet");
+
+        await user.click(screen.getByRole("button", { name: /Import a zone file/ }));
+        await user.type(await screen.findByLabelText("Name"), "Uploaded");
+        await user.click(screen.getByText("Import from file"));
+        const zone = new File(["mail 3600 IN A 192.0.2.2\n"], "example.org.zone");
+        const input = baseElement.querySelector<HTMLInputElement>("input[type=file]")!;
+        // jsdom cannot give files to an input, which the binding writes back.
+        Object.defineProperty(input, "files", { value: [zone], writable: true });
+        await fireEvent.change(input);
+        await user.click(screen.getByRole("button", { name: "Import" }));
+
+        await waitFor(() => expect(navigation.goto).toHaveBeenCalledWith("/templates/5"));
+        expect(api.importZoneTemplate.mock.calls[0][1]).toBe(zone);
+    });
+
+    it("tells why a template could not be created", async () => {
+        const user = userEvent.setup();
+        api.listZoneTemplates.mockResolvedValue([]);
+        api.importZoneTemplate.mockRejectedValue(new Error("Unable to read your zone file"));
+        render(Page);
+        await screen.findByText("No template yet");
+
+        await user.click(screen.getByRole("button", { name: /Import a zone file/ }));
+        await user.type(await screen.findByLabelText("Name"), "Broken");
+        await user.click(screen.getByRole("button", { name: "Import" }));
+
+        expect(await screen.findByText("Unable to read your zone file")).toBeVisible();
+        expect(navigation.goto).not.toHaveBeenCalled();
     });
 });

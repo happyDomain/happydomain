@@ -361,6 +361,8 @@
         "description": "Save the services of a zone once, and fill your new domains with them in a few clicks.",
         "loading": "Loading your templates…",
         "retry": "Try again",
+        "new": "New template",
+        "import": "Import a zone file",
         "global": "Offered to everyone",
         "global-hint": "Set up by the administrators: you can apply this template to your domains, not change it.",
         "actions": {
@@ -375,8 +377,12 @@
             "description": "Description",
             "description-placeholder": "What this template sets up, and for which domains",
             "origin": "Origin",
-            "origin-help": "The domain the services are written for: their names are read relative to it. Applied to a domain, the names under the origin name that domain; texts, such as an SPF include, are kept as they are."
+            "origin-help": "The domain the zone file is written for: the names under it are read relative to it, and name the domains the template is applied to. Texts, such as an SPF include, are kept as they are.",
+            "zone": "Zone file",
+            "zone-help": "Its SOA and NS records are left out: they belong to the domain the template is applied to."
         },
+        "create": "Create the template",
+        "import-submit": "Import",
         "edit": "Edit the details",
         "save": "Save",
         "delete": "Delete the template",

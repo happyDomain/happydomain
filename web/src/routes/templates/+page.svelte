@@ -27,8 +27,16 @@
 
     import { Button, Card, CardBody, Col, Container, Row, Spinner } from "@sveltestrap/sveltestrap";
 
-    import { deleteZoneTemplate, updateZoneTemplate } from "$lib/api/zone_template";
+    import {
+        createZoneTemplate,
+        deleteZoneTemplate,
+        importZoneTemplate,
+        updateZoneTemplate,
+    } from "$lib/api/zone_template";
     import PageTitle from "$lib/components/PageTitle.svelte";
+    import ModalNewTemplate, {
+        controls as ctrlNewTemplate,
+    } from "$lib/components/zone_templates/ModalNewTemplate.svelte";
     import ModalTemplateDetails, {
         controls as ctrlTemplateDetails,
     } from "$lib/components/zone_templates/ModalTemplateDetails.svelte";
@@ -36,6 +44,7 @@
     import {
         isGlobalTemplate,
         type ZoneTemplate,
+        type ZoneTemplateImportInput,
         type ZoneTemplateInput,
     } from "$lib/model/zone_template";
     import { toasts } from "$lib/stores/toasts";
@@ -71,6 +80,15 @@
     }
 
     onMount(load);
+
+    async function create(input: ZoneTemplateImportInput, zoneFile?: Blob) {
+        const tpl = await (zoneFile
+            ? importZoneTemplate(input, zoneFile)
+            : createZoneTemplate(input));
+        // Unloaded, the list is left to the page of the template to load.
+        upsertZoneTemplate(tpl);
+        return tpl;
+    }
 
     let editing = $state<ZoneTemplate | null>(null);
 
@@ -113,7 +131,16 @@
 </svelte:head>
 
 <Container class="flex-fill mt-4 mb-5">
-    <PageTitle title={$t("zone-templates.title")} subtitle={$t("zone-templates.description")} />
+    <PageTitle title={$t("zone-templates.title")} subtitle={$t("zone-templates.description")}>
+        <div class="d-flex flex-wrap gap-2">
+            <Button color="primary" on:click={() => ctrlNewTemplate.Open()}>
+                <i class="bi bi-plus-lg me-1"></i>{$t("zone-templates.new")}
+            </Button>
+            <Button color="secondary" outline on:click={() => ctrlNewTemplate.OpenImport()}>
+                <i class="bi bi-upload me-1"></i>{$t("zone-templates.import")}
+            </Button>
+        </div>
+    </PageTitle>
 
     {#if loadError && $zoneTemplates === undefined}
         <Card body color="danger" outline>
@@ -168,6 +195,7 @@
     {/if}
 </Container>
 
+<ModalNewTemplate {create} />
 {#if editing}
     <ModalTemplateDetails template={editing} save={saveDetails} />
 {/if}

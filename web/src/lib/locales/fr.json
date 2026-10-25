@@ -355,6 +355,8 @@
         "description": "Enregistrez une fois les services d'une zone, et remplissez-en vos nouveaux domaines en quelques clics.",
         "loading": "Chargement de vos modèles…",
         "retry": "Réessayer",
+        "new": "Nouveau modèle",
+        "import": "Importer un fichier de zone",
         "global": "Proposé à tous",
         "global-hint": "Mis en place par les administrateurs : vous pouvez appliquer ce modèle à vos domaines, mais pas le modifier.",
         "actions": {
@@ -369,8 +371,12 @@
             "description": "Description",
             "description-placeholder": "Ce que met en place ce modèle, et pour quels domaines",
             "origin": "Origine",
-            "origin-help": "Le domaine pour lequel les services sont écrits : leurs noms sont lus relativement à lui. Appliqué à un domaine, les noms sous l'origine désignent ce domaine ; les textes, comme un include SPF, sont conservés tels quels."
+            "origin-help": "Le domaine pour lequel le fichier de zone est écrit : les noms sous lui sont lus relativement à lui, et désignent les domaines auxquels le modèle est appliqué. Les textes, comme un include SPF, sont conservés tels quels.",
+            "zone": "Fichier de zone",
+            "zone-help": "Ses enregistrements SOA et NS sont laissés de côté : ils appartiennent au domaine auquel le modèle est appliqué."
         },
+        "create": "Créer le modèle",
+        "import-submit": "Importer",
         "edit": "Modifier les détails",
         "save": "Enregistrer",
         "delete": "Supprimer le modèle",
