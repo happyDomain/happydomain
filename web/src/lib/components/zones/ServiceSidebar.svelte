@@ -22,14 +22,13 @@
 -->
 
 <script lang="ts">
-    import { resolve } from "$app/paths";
     import type { ResolvedPathname } from "$app/types";
     import { fqdn } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
-    import { domainLink } from "$lib/stores/domains";
     import { serviceName } from "$lib/services/infos";
     import { servicesSpecs } from "$lib/stores/services";
     import { thisZone } from "$lib/stores/thiszone";
+    import { useZoneEditor } from "./editor";
 
     interface Props {
         origin: Domain;
@@ -39,6 +38,8 @@
     }
 
     let { origin, subdomain, serviceid, historyId }: Props = $props();
+
+    const editor = useZoneEditor(() => origin);
 
     // Ancestors from shallowest to deepest:
     // "" → [], "www" → [], "a.b" → ["b"], "a.b.c" → ["c", "b.c"]
@@ -65,21 +66,12 @@
     );
 
     function subdomainLink(dn: string): ResolvedPathname {
-        const path = resolve("/domains/[dn]/[[historyid]]", {
-            dn: domainLink(origin.id),
-            historyid: historyId,
-        });
         // The fragment is what scrolls the zone to that subdomain.
-        return `${path}#${dn ? dn : "@"}` as ResolvedPathname;
+        return `${editor.zoneHref(historyId)}#${dn ? dn : "@"}` as ResolvedPathname;
     }
 
     function serviceLink(svc: { _id?: string }): ResolvedPathname {
-        return resolve("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]", {
-            dn: domainLink(origin.id),
-            historyid: historyId,
-            subdomain: subdomain === "" ? "@" : subdomain,
-            serviceid: svc._id!,
-        });
+        return editor.serviceHref(historyId, subdomain, svc._id!);
     }
 </script>
 

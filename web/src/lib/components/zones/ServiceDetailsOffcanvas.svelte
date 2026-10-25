@@ -22,7 +22,6 @@
 -->
 
 <script module lang="ts">
-    import { resolve } from "$app/paths";
     import type { ServiceWithValue } from "$lib/model/service.svelte";
 
     export const controls = {
@@ -47,7 +46,7 @@
 
     import { listScopedCheckers } from "$lib/api/checkers";
     import { getServiceSpec } from "$lib/api/service_specs";
-    import { deleteZoneService, updateZoneService } from "$lib/api/zone";
+    import { useZoneEditor } from "./editor";
     import { notifyServiceChange, zoneWasForked } from "$lib/stores/zonefeedback";
     import ServiceBadges from "./ServiceBadges.svelte";
     import PropagationStatus from "$lib/components/services/PropagationStatus.svelte";
@@ -55,7 +54,7 @@
     import { collectRRs } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
         import { checkers } from "$lib/stores/checkers";
-    import { domainLink, refreshDomains } from "$lib/stores/domains";
+    import { refreshDomains } from "$lib/stores/domains";
     import { isReadOnlyProvider, providers_idx } from "$lib/stores/providers";
     import { serviceDescription, serviceName } from "$lib/services/infos";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
@@ -70,6 +69,8 @@
     }
 
     let { domain, selectedHistory = "", isOpen = $bindable(false) }: Props = $props();
+
+    const editor = useZoneEditor(() => domain);
 
     let service: ServiceWithValue = $state({} as ServiceWithValue);
     function Open(svc: ServiceWithValue): void {
@@ -91,7 +92,7 @@
         const previousZone = $thisZone;
         const svctype = service._svctype;
         const dn = service._domain;
-        deleteZoneService(domain, $thisZone.id, service).then(
+        editor.deleteService($thisZone.id, service).then(
             (z) => {
                 deleteInProgress = false;
                 isOpen = false;
@@ -114,7 +115,7 @@
         );
     }
 
-    let readOnly = $derived(isReadOnlyProvider($providers_idx, domain.id_provider));
+    let readOnly = $derived(editor.readOnly || isReadOnlyProvider($providers_idx, domain.id_provider));
 
     let canDelete = $derived(
         !readOnly &&
@@ -126,12 +127,12 @@
     const zoneId = $derived(selectedHistory || domain.zone_history?.[0] || "");
     const subdomain = $derived(service._domain || "@");
     const checksPromise = $derived(
-        service._id && zoneId
+        editor.isDomain && service._id && zoneId
             ? listScopedCheckers({ domainId: domain.id, zoneId, subdomain, serviceId: service._id })
             : null,
     );
     const serviceLinks = $derived(
-        service._id && zoneId
+        editor.isDomain && service._id && zoneId
             ? serviceCheckerLinks(
                   encodeURIComponent(domain.domain),
                   encodeURIComponent(zoneId),
@@ -150,7 +151,7 @@
         const svctype = service._svctype;
         const dn = service._domain;
         const serviceId = service._id;
-        updateZoneService(domain, $thisZone.id, service).then(
+        editor.updateService($thisZone.id, service).then(
             (z) => {
                 thisZone.set(z);
                 notifyServiceChange("updated", {
@@ -316,14 +317,9 @@
                     disabled={readOnly}
                     on:click={() => {
                         isOpen = false;
-                        goto(
-                            resolve("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]", {
-                                dn: encodeURIComponent(domainLink(domain.id)),
-                                historyid: encodeURIComponent(selectedHistory ?? ""),
-                                subdomain: encodeURIComponent(service._domain ? service._domain : "@"),
-                                serviceid: encodeURIComponent(service._id!),
-                            }),
-                        );
+                        // The editor resolves the path.
+                        // eslint-disable-next-line svelte/no-navigation-without-resolve
+                        goto(editor.serviceHref(selectedHistory ?? "", service._domain, service._id!));
                     }}
                 >
                     <Icon name="pencil" />

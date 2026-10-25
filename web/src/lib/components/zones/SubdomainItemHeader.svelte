@@ -28,6 +28,7 @@
     import { controls as ctrlRecord } from "$lib/components/modals/Record.svelte";
     import { controls as ctrlNewService } from "$lib/components/services/NewServicePath.svelte";
     import { controls as ctrlServiceDetails } from "./ServiceDetailsOffcanvas.svelte";
+    import { useZoneEditor } from "./editor";
     import { fqdn, unreverseDomain } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { HappydnsService } from "$lib/api-base/types.gen";
@@ -62,7 +63,9 @@
         },
     }: Props = $props();
 
-    let readOnly = $derived(isReadOnlyProvider($providers_idx, origin.id_provider));
+    const editor = useZoneEditor(() => origin);
+
+    let readOnly = $derived(editor.readOnly || isReadOnlyProvider($providers_idx, origin.id_provider));
 
     function isCNAME(services: Array<HappydnsService>) {
         return services.length === 1 && services[0]._svctype === "svcs.Alias";

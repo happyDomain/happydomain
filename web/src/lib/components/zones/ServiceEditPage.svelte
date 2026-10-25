@@ -23,7 +23,6 @@
 
 <script lang="ts">
     import { goto } from "$app/navigation";
-    import { resolve } from "$app/paths";
     import { onDestroy } from "svelte";
     import { page } from "$app/state";
 
@@ -31,7 +30,6 @@
 
     import type { ServiceWithValue } from "$lib/model/service.svelte";
     import { initializeService } from "$lib/api/service_specs";
-    import { addZoneService, updateZoneService } from "$lib/api/zone";
     import {
         newServiceIdIn,
         notifyServiceChange,
@@ -39,10 +37,10 @@
     } from "$lib/stores/zonefeedback";
     import PageTitle from "$lib/components/PageTitle.svelte";
     import ServiceEditor from "$lib/components/services/ServiceEditor.svelte";
+    import { useZoneEditor } from "./editor";
     import { fqdn } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import { ServiceCombined } from "$lib/model/service.svelte";
-    import { domainLink } from "$lib/stores/domains";
     import { helpLinkOverride } from "$lib/stores/help";
     import { isReadOnlyProvider, providers_idx } from "$lib/stores/providers";
     import { serviceDescription, serviceName } from "$lib/services/infos";
@@ -52,7 +50,7 @@
     import { refreshDomains } from "$lib/stores/domains";
 
     interface Props {
-        // The domain of the zone.
+        // The domain of the zone, or the stand-in domain of a template.
         origin: Domain;
         // The zone shown when the user goes back.
         history: string;
@@ -63,9 +61,11 @@
 
     let { origin, history, subdomain, serviceid }: Props = $props();
 
+    const editor = useZoneEditor(() => origin);
+
     let svcType: string = $derived(page.url.searchParams.get("type") ?? "");
 
-    let readOnly = $derived(isReadOnlyProvider($providers_idx, origin.id_provider));
+    let readOnly = $derived(editor.readOnly || isReadOnlyProvider($providers_idx, origin.id_provider));
 
     let service: ServiceWithValue | undefined = $state();
     let serviceLoading = $state(false);
@@ -107,12 +107,9 @@
     let addServiceInProgress = $state(false);
 
     function goBack(historyid?: string) {
-        goto(
-            resolve("/domains/[dn]/[[historyid]]", {
-                dn: encodeURIComponent(domainLink(origin.id)),
-                historyid: encodeURIComponent(historyid ? historyid : history),
-            }),
-        );
+        // The editor resolves the path.
+        // eslint-disable-next-line svelte/no-navigation-without-resolve
+        goto(editor.zoneHref(historyid ? historyid : history));
     }
 
     function submitServiceForm(e: SubmitEvent) {
@@ -121,14 +118,14 @@
 
         addServiceInProgress = true;
         const isNew = !service._id;
-        const action = service._id ? updateZoneService : addZoneService;
+        const action = service._id ? editor.updateService : editor.addService;
         // The zone is replaced below, but telling what changed needs the one we
         // started from.
         const previousZone = $thisZone;
         const svctype = service._svctype;
         const dn = service._domain;
 
-        action(origin, $thisZone.id, service).then(
+        action($thisZone.id, service).then(
             (z) => {
                 thisZone.set(z);
                 // Keep the button busy until the user is actually back on the
@@ -136,7 +133,9 @@
                 // wait, and releasing it here would let a second submit through.
                 const serviceId = isNew ? newServiceIdIn(previousZone, z, dn) : service?._id;
                 const forked = zoneWasForked(previousZone, z);
-                refreshDomains().then(() => {
+                // Saving may derive a new zone of the domain, changing the
+                // history the domains store holds; a template has none.
+                (editor.isDomain ? refreshDomains() : Promise.resolve()).then(() => {
                     // Confirm as we hand the user back to the zone, not before:
                     // the highlight only lasts a couple of seconds, and it has
                     // to still be running once the grid is on screen.
@@ -211,7 +210,7 @@
         </form>
 
         <div class="d-flex justify-content-end align-items-center gap-2 mt-3">
-            {#if service._id}
+            {#if service._id && editor.isDomain}
                 <Button
                     color="info"
                     outline

@@ -20,7 +20,13 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { cleanup, render, screen } from "@testing-library/svelte";
-import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+
+const checkers = vi.hoisted(() => ({ listScopedCheckers: vi.fn() }));
+vi.mock("$lib/api/checkers", async (importOriginal) => ({
+    ...(await importOriginal<typeof import("$lib/api/checkers")>()),
+    ...checkers,
+}));
 
 import type { Domain } from "$lib/model/domain";
 import type { Provider } from "$lib/model/provider";
@@ -29,7 +35,10 @@ import { providers } from "$lib/stores/providers";
 import { thisZone } from "$lib/stores/thiszone";
 import { makeZone } from "$lib/test-utils/fixtures";
 import { loadTranslations } from "$lib/translations";
+import { domainZoneEditor, zoneEditorContext, type ZoneEditor } from "./editor";
 import ServiceDetailsOffcanvas, { controls } from "./ServiceDetailsOffcanvas.svelte";
+
+const domain = { id: "d1", domain: "example.com.", id_provider: "p1" } as unknown as Domain;
 
 beforeAll(async () => {
     await loadTranslations("en", "/");
@@ -37,19 +46,17 @@ beforeAll(async () => {
 
 afterEach(() => {
     cleanup();
+    vi.resetAllMocks();
     providers.set(undefined);
     thisZone.set(null);
 });
 
-function open(readonly: boolean) {
+function open(readonly: boolean, context?: Map<symbol, ZoneEditor>) {
     providers.set([
         { _id: "p1", _srctype: "DDNSServer", _readonly: readonly } as unknown as Provider,
     ]);
     thisZone.set(makeZone({ id: "z1" }));
-    render(ServiceDetailsOffcanvas, {
-        domain: { id: "d1", domain: "example.com.", id_provider: "p1" } as unknown as Domain,
-        selectedHistory: "z1",
-    });
+    render(ServiceDetailsOffcanvas, { props: { domain, selectedHistory: "z1" }, context });
     controls.Open({
         _id: "s1",
         _svctype: "svcs.Alias",
@@ -64,6 +71,7 @@ describe("ServiceDetailsOffcanvas", () => {
         expect(await screen.findByRole("button", { name: /Edit/ })).toBeEnabled();
         expect(screen.getByRole("button", { name: /Delete/ })).toBeEnabled();
         expect(screen.getByRole("spinbutton")).toBeEnabled();
+        expect(checkers.listScopedCheckers).toHaveBeenCalled();
     });
 
     it("keeps the details but changes nothing through a read-only provider", async () => {
@@ -73,5 +81,20 @@ describe("ServiceDetailsOffcanvas", () => {
         expect(edit.parentElement).toHaveAttribute("title", expect.stringMatching(/read-only/));
         expect(screen.queryByRole("button", { name: /Delete/ })).toBeNull();
         expect(screen.getByRole("spinbutton")).toBeDisabled();
+    });
+
+    it("changes nothing, and offers no check, in a zone the page made read-only", async () => {
+        const editor: ZoneEditor = {
+            ...domainZoneEditor(() => domain),
+            isDomain: false,
+            readOnly: true,
+        };
+        open(false, zoneEditorContext(editor));
+
+        const edit = await screen.findByRole("button", { name: /Edit/ });
+        expect(edit).toBeDisabled();
+        expect(screen.queryByRole("button", { name: /Delete/ })).toBeNull();
+        expect(screen.getByRole("spinbutton")).toBeDisabled();
+        expect(checkers.listScopedCheckers).not.toHaveBeenCalled();
     });
 });

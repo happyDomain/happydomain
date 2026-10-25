@@ -37,6 +37,7 @@
     import ModalDomainWhois from "./ModalDomainWhois.svelte";
     import ModalUploadZone from "./ModalUploadZone.svelte";
     import NewSubdomainPath from "$lib/components/zones/NewSubdomainPath.svelte";
+    import { domainZoneEditor, provideZoneEditor } from "$lib/components/zones/editor";
     import ServiceDetailsOffcanvas from "$lib/components/zones/ServiceDetailsOffcanvas.svelte";
     import Sidebar from "./Sidebar.svelte";
 
@@ -46,6 +47,8 @@
     }
 
     let { data, children }: Props = $props();
+
+    provideZoneEditor(domainZoneEditor(() => data.domain));
 
     let selectedDomain = $derived(data.domain.id);
     function domainChange(dn: string) {

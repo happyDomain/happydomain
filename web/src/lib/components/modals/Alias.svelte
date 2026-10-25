@@ -41,7 +41,7 @@
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
-    import { addZoneService } from "$lib/api/zone";
+    import { useZoneEditor } from "$lib/components/zones/editor";
     import {
         newServiceIdIn,
         notifyServiceChange,
@@ -72,6 +72,7 @@
         value = $bindable("")
     }: Props = $props();
     let zone = $thisZone;
+    const editor = useZoneEditor(() => origin);
 
     let validDomain: boolean | undefined = $state(undefined);
     let validSubDomain: boolean = $derived(!!validDomain && validateNewSubdomain(value));
@@ -110,7 +111,7 @@
             // holds what the zone actually looks like right now.
             const previousZone = $thisZone;
             const aliasDn = value;
-            addZoneService(origin, zone.id, new ServiceCombined({
+            editor.addService(zone.id, new ServiceCombined({
                 _domain: value,
                 _svctype: "svcs.Alias",
                 Service: { record: { Hdr: { Rrtype: 5, Class: 1 }, Target: dn ? dn : "@" } },

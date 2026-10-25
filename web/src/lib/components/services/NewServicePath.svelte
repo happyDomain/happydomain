@@ -23,7 +23,6 @@
 
 <script module lang="ts">
     import { goto } from "$app/navigation";
-    import { domainLinks } from "$links";
     export const controls = {
         Open (_domain: string): void { },
     };
@@ -33,6 +32,7 @@
     import ServiceSelectorModal, {
         controls as ctrlServiceSelector,
     } from "$lib/components/modals/ServiceSelector.svelte";
+    import { useZoneEditor } from "$lib/components/zones/editor";
     import type { Domain } from "$lib/model/domain";
     import type { Zone } from "$lib/model/zone";
     
@@ -44,6 +44,8 @@
 
     let { origin, zone, historyId }: Props = $props();
 
+    const editor = useZoneEditor(() => origin);
+
     function Open(domain: string): void {
         ctrlServiceSelector.Open(domain);
     }
@@ -52,14 +54,8 @@
 
     function onShowNextModal(event: CustomEvent<{ _svctype: string; _domain: string }>) {
         const { _svctype, _domain } = event.detail;
-        const subdomainParam = _domain === "" ? "@" : _domain;
         // "new" is the service id the editor reads as "create one".
-        const path = domainLinks().service(
-            encodeURIComponent(origin.domain),
-            encodeURIComponent(historyId),
-            encodeURIComponent(subdomainParam),
-            "new",
-        );
+        const path = editor.serviceHref(historyId, _domain, "new");
         // The path is resolved above; only the query is appended here.
         // eslint-disable-next-line svelte/no-navigation-without-resolve
         goto(`${path}?type=${encodeURIComponent(_svctype)}`);

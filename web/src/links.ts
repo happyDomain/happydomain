@@ -85,7 +85,8 @@ export function serviceCheckerLinks(
  */
 export function domainLinks() {
     return {
-        zone: (dn: string) => resolve("/domains/[dn]/[[historyid]]", { dn }),
+        zone: (dn: string, historyid?: string) =>
+            resolve("/domains/[dn]/[[historyid]]", { dn, historyid }),
         history: (dn: string) => resolve("/domains/[dn]/history", { dn }),
         checks: (dn: string) => resolve("/domains/[dn]/checks", { dn }),
         service: (dn: string, historyid: string, subdomain: string, serviceid: string) =>

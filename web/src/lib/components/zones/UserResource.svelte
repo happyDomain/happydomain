@@ -23,10 +23,10 @@
 
 <script lang="ts">
     import { goto } from "$app/navigation";
-    import { resolve } from "$app/paths";
     import { getServiceSpec } from "$lib/api/service_specs";
     import ServiceCard from "./ServiceCard.svelte";
     import ServiceBadges from "./ServiceBadges.svelte";
+    import { useZoneEditor } from "./editor";
     import Service from "$lib/components/services/Service.svelte";
     import RecordText from "$lib/components/records/RecordText.svelte";
     import { controls as ctrlRecord } from "$lib/components/modals/Record.svelte";
@@ -49,19 +49,15 @@
 
     let { dn, origin, services, zoneId }: Props = $props();
 
-    let readOnly = $derived(isReadOnlyProvider($providers_idx, origin.id_provider));
+    const editor = useZoneEditor(() => origin);
+
+    let readOnly = $derived(editor.readOnly || isReadOnlyProvider($providers_idx, origin.id_provider));
 
     function openService(service: ServiceWithValue) {
-        const subdomainParam =
-            service._domain === "" || service._domain === "@" ? "@" : service._domain;
-        goto(
-            resolve("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]", {
-                dn: encodeURIComponent(origin.domain),
-                historyid: encodeURIComponent(zoneId),
-                subdomain: encodeURIComponent(subdomainParam),
-                serviceid: encodeURIComponent(service._id!),
-            }),
-        );
+        const subdomain = service._domain === "@" ? "" : service._domain;
+        // The editor resolves the path.
+        // eslint-disable-next-line svelte/no-navigation-without-resolve
+        goto(editor.serviceHref(zoneId, subdomain, service._id!));
     }
 </script>
 

@@ -41,8 +41,8 @@
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
-    import { addZoneRecord, deleteZoneRecord, updateZoneRecord } from "$lib/api/zone";
     import RecordEditor from "$lib/components/records/Editor.svelte";
+    import { useZoneEditor } from "$lib/components/zones/editor";
     import type { Domain } from "$lib/model/domain";
     import type { Zone } from "$lib/model/zone";
     import { isReadOnlyProvider, providers_idx } from "$lib/stores/providers";
@@ -61,7 +61,9 @@
 
     let { isOpen = $bindable(false), origin, zone }: Props = $props();
 
-    let readOnly = $derived(isReadOnlyProvider($providers_idx, origin.id_provider));
+    const editor = useZoneEditor(() => origin);
+
+    let readOnly = $derived(editor.readOnly || isReadOnlyProvider($providers_idx, origin.id_provider));
 
     let dn: string = $state("");
     let record: dnsRR | undefined = $state(undefined);
@@ -73,7 +75,7 @@
     function deleteRecord() {
         if (!record) return;
         deleteRecordInProgress = true;
-        deleteZoneRecord(origin, zone.id, dn, record).then(
+        editor.deleteRecord(zone.id, dn, record).then(
             (z: Zone) => {
                 thisZone.set(z);
                 deleteRecordInProgress = false;
@@ -95,9 +97,9 @@
 
         let promise: Promise<Zone>;
         if (initialrecord) {
-            promise = updateZoneRecord(origin, zone.id, dn, record, initialrecord);
+            promise = editor.updateRecord(zone.id, dn, record, initialrecord);
         } else {
-            promise = addZoneRecord(origin, zone.id, dn, record);
+            promise = editor.addRecord(zone.id, dn, record);
         }
 
         promise.then(
