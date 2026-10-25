@@ -45,6 +45,7 @@ type Dependencies struct {
 	Provider              happydns.ProviderUsecase
 	RemoteZoneImporter    happydns.RemoteZoneImporterUsecase
 	Service               happydns.ServiceUsecase
+	ServiceSpecs          happydns.ServiceSpecsUsecase
 	User                  happydns.UserUsecase
 	Zone                  happydns.ZoneUsecase
 	ZoneCorrectionApplier happydns.ZoneCorrectionApplierUsecase
@@ -66,6 +67,12 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, dep Dependencies) 
 	// token; it is declared before the auth middleware is attached to the group.
 	authController := controller.NewAdminAuthController(cfg)
 	apiRoutes.POST("/admin-login", authController.Login)
+
+	// Public, as on the API of the users: the service editors of the global
+	// zone templates need the specs.
+	if dep.ServiceSpecs != nil {
+		api.DeclareServiceSpecsRoutes(apiRoutes, dep.ServiceSpecs)
+	}
 
 	// Every subsequent route requires a valid admin session (no-op when
 	// AdminPasswordHash is empty).
