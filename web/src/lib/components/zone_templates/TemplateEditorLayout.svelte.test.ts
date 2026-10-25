@@ -26,6 +26,9 @@ const navigation = vi.hoisted(() => ({ goto: vi.fn() }));
 vi.mock("$app/navigation", () => navigation);
 vi.mock("$app/state", () => ({ page: { params: { tid: "t1" } } }));
 
+const toasts = vi.hoisted(() => ({ addErrorToast: vi.fn(), addToast: vi.fn() }));
+vi.mock("$lib/stores/toasts", () => ({ toasts }));
+
 import type { ZoneTemplate } from "$lib/model/zone_template";
 import { thisZone } from "$lib/stores/thiszone";
 import { thisTemplate, zoneTemplates } from "$lib/stores/zone_templates";
@@ -71,6 +74,8 @@ afterEach(() => {
 function setup() {
     const backend = {
         list: vi.fn().mockResolvedValue([mail, web]),
+        update: vi.fn(),
+        delete: vi.fn().mockResolvedValue(undefined),
     } as unknown as ZoneTemplateBackend;
     render(TemplateEditorLayout, { template: mail, backend, readOnly: false });
     return backend;
@@ -88,5 +93,79 @@ describe("TemplateEditorLayout", () => {
         await user.selectOptions(select, "Web");
 
         expect(navigation.goto).toHaveBeenCalledWith("/templates/t2");
+    });
+
+    it("saves the details of the template", async () => {
+        const user = userEvent.setup();
+        const backend = setup();
+        vi.mocked(backend.update).mockResolvedValue({
+            ...mail,
+            name: "Mail servers",
+        } as ZoneTemplate);
+
+        await user.click(screen.getByRole("button", { name: /Actions/ }));
+        await user.click(await screen.findByText("Edit the details"));
+        const name = await screen.findByLabelText("Name");
+        await user.clear(name);
+        await user.type(name, "Mail servers");
+        await user.click(screen.getByRole("button", { name: "Save" }));
+
+        await waitFor(() =>
+            expect(backend.update).toHaveBeenCalledWith(
+                "t1",
+                expect.objectContaining({ name: "Mail servers" }),
+            ),
+        );
+        await waitFor(() =>
+            expect(screen.getByRole("combobox", { name: "Zone templates" })).toHaveDisplayValue(
+                "Mail servers",
+            ),
+        );
+    });
+
+    it("deletes the template once confirmed, then goes back to the list", async () => {
+        const user = userEvent.setup();
+        const backend = setup();
+        vi.stubGlobal("confirm", () => true);
+
+        await user.click(screen.getByRole("button", { name: /Actions/ }));
+        await user.click(await screen.findByText("Delete the template"));
+
+        await waitFor(() => expect(navigation.goto).toHaveBeenCalledWith("/templates"));
+        expect(backend.delete).toHaveBeenCalledWith("t1");
+        expect(toasts.addToast).toHaveBeenCalledWith(
+            expect.objectContaining({ title: "Template “Mail” deleted" }),
+        );
+    });
+
+    it("tells why the template could not be deleted, and stays on it", async () => {
+        const user = userEvent.setup();
+        const backend = setup();
+        vi.stubGlobal("confirm", () => true);
+        vi.mocked(backend.delete).mockRejectedValue(new Error("unreachable"));
+
+        await user.click(screen.getByRole("button", { name: /Actions/ }));
+        await user.click(await screen.findByText("Delete the template"));
+
+        await waitFor(() =>
+            expect(toasts.addErrorToast).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    title: "Unable to delete the template",
+                    message: "unreachable",
+                }),
+            ),
+        );
+        expect(navigation.goto).not.toHaveBeenCalled();
+    });
+
+    it("keeps the template when the deletion is not confirmed", async () => {
+        const user = userEvent.setup();
+        const backend = setup();
+        vi.stubGlobal("confirm", () => false);
+
+        await user.click(screen.getByRole("button", { name: /Actions/ }));
+        await user.click(await screen.findByText("Delete the template"));
+
+        expect(backend.delete).not.toHaveBeenCalled();
     });
 });

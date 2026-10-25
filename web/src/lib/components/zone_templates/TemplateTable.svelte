@@ -25,7 +25,7 @@
     import { goto } from "$app/navigation";
     import { templateLinks } from "$links";
 
-    import { Badge, Table } from "@sveltestrap/sveltestrap";
+    import { Badge, Button, ButtonGroup, Icon, Table } from "@sveltestrap/sveltestrap";
 
     import { countServices, isGlobalTemplate, type ZoneTemplate } from "$lib/model/zone_template";
     import { locale, t } from "$lib/translations";
@@ -33,9 +33,11 @@
 
     interface Props {
         items: Array<ZoneTemplate>;
+        onedit: (template: ZoneTemplate) => void;
+        ondelete: (template: ZoneTemplate) => void;
     }
 
-    let { items }: Props = $props();
+    let { items, onedit, ondelete }: Props = $props();
 
     function open(template: ZoneTemplate) {
         goto(templateLinks().template(encodeURIComponent(template.id)));
@@ -49,6 +51,7 @@
             <th>{$t("zone-templates.fields.description")}</th>
             <th>{$t("zone-templates.services-title")}</th>
             <th>{$t("zone-templates.last-modified")}</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -76,6 +79,42 @@
                             {formatRelativeTime(template.last_modified, $locale)}
                         </span>
                     {/if}
+                </td>
+                <td class="text-end">
+                    <ButtonGroup size="sm">
+                        <Button
+                            color="outline-secondary"
+                            title={$t("zone-templates.actions.view")}
+                            onclick={(e) => {
+                                e.stopPropagation();
+                                open(template);
+                            }}
+                        >
+                            <Icon name="eye" />
+                        </Button>
+                        {#if !isGlobalTemplate(template)}
+                            <Button
+                                color="outline-secondary"
+                                title={$t("zone-templates.edit")}
+                                onclick={(e) => {
+                                    e.stopPropagation();
+                                    onedit(template);
+                                }}
+                            >
+                                <Icon name="pencil" />
+                            </Button>
+                            <Button
+                                color="outline-danger"
+                                title={$t("zone-templates.delete")}
+                                onclick={(e) => {
+                                    e.stopPropagation();
+                                    ondelete(template);
+                                }}
+                            >
+                                <Icon name="trash" />
+                            </Button>
+                        {/if}
+                    </ButtonGroup>
                 </td>
             </tr>
         {/each}

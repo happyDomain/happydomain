@@ -357,13 +357,29 @@
         "retry": "Réessayer",
         "global": "Proposé à tous",
         "global-hint": "Mis en place par les administrateurs : vous pouvez appliquer ce modèle à vos domaines, mais pas le modifier.",
+        "actions": {
+            "view": "Voir"
+        },
         "services-title": "Services",
         "last-modified": "Dernière modification",
         "services": "{{count:eq; 0:Aucun service; 1:1 service; default:{{count}} services}}",
-        "origin": "Écrit pour {{origin}}",
+        "fields": {
+            "name": "Nom",
+            "name-placeholder": "Ma configuration de messagerie",
+            "description": "Description",
+            "description-placeholder": "Ce que met en place ce modèle, et pour quels domaines",
+            "origin": "Origine",
+            "origin-help": "Le domaine pour lequel les services sont écrits : leurs noms sont lus relativement à lui. Appliqué à un domaine, les noms sous l'origine désignent ce domaine ; les textes, comme un include SPF, sont conservés tels quels."
+        },
+        "edit": "Modifier les détails",
+        "save": "Enregistrer",
+        "delete": "Supprimer le modèle",
+        "delete-confirm": "Supprimer le modèle « {{name}} » ? Les domaines auxquels il a été appliqué gardent leurs services.",
+        "deleted": "Modèle « {{name}} » supprimé",
         "back": "Tous mes modèles",
         "errors": {
-            "load": "Impossible de charger les modèles"
+            "load": "Impossible de charger les modèles",
+            "delete": "Impossible de supprimer le modèle"
         },
         "empty": {
             "title": "Aucun modèle pour l'instant",

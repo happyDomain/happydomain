@@ -24,6 +24,8 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 const api = vi.hoisted(() => ({
     listZoneTemplates: vi.fn(),
+    updateZoneTemplate: vi.fn(),
+    deleteZoneTemplate: vi.fn(),
 }));
 vi.mock("$lib/api/zone_template", () => api);
 

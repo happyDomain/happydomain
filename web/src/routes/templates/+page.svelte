@@ -22,16 +22,29 @@
 -->
 
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
     import { fade } from "svelte/transition";
 
     import { Button, Card, CardBody, Col, Container, Row, Spinner } from "@sveltestrap/sveltestrap";
 
+    import { deleteZoneTemplate, updateZoneTemplate } from "$lib/api/zone_template";
     import PageTitle from "$lib/components/PageTitle.svelte";
+    import ModalTemplateDetails, {
+        controls as ctrlTemplateDetails,
+    } from "$lib/components/zone_templates/ModalTemplateDetails.svelte";
     import TemplateTable from "$lib/components/zone_templates/TemplateTable.svelte";
-    import { isGlobalTemplate } from "$lib/model/zone_template";
+    import {
+        isGlobalTemplate,
+        type ZoneTemplate,
+        type ZoneTemplateInput,
+    } from "$lib/model/zone_template";
     import { toasts } from "$lib/stores/toasts";
-    import { refreshZoneTemplates, zoneTemplates } from "$lib/stores/zone_templates";
+    import {
+        refreshZoneTemplates,
+        removeZoneTemplate,
+        upsertZoneTemplate,
+        zoneTemplates,
+    } from "$lib/stores/zone_templates";
     import { t } from "$lib/translations";
 
     let loadError = $state<string | null>(null);
@@ -58,6 +71,41 @@
     }
 
     onMount(load);
+
+    let editing = $state<ZoneTemplate | null>(null);
+
+    async function edit(tpl: ZoneTemplate) {
+        editing = tpl;
+        // The modal reads the template when it opens: let it be mounted.
+        await tick();
+        ctrlTemplateDetails.Open();
+    }
+
+    async function saveDetails(input: ZoneTemplateInput): Promise<ZoneTemplate> {
+        const tpl = await updateZoneTemplate(editing!.id, input);
+        upsertZoneTemplate(tpl);
+        return tpl;
+    }
+
+    async function remove(tpl: ZoneTemplate) {
+        if (!confirm($t("zone-templates.delete-confirm", { name: tpl.name }))) return;
+
+        try {
+            await deleteZoneTemplate(tpl.id);
+            removeZoneTemplate(tpl.id);
+            toasts.addToast({
+                type: "success",
+                title: $t("zone-templates.deleted", { name: tpl.name }),
+                timeout: 5000,
+            });
+        } catch (err) {
+            toasts.addErrorToast({
+                title: $t("zone-templates.errors.delete"),
+                message: err instanceof Error ? err.message : String(err),
+                timeout: 8000,
+            });
+        }
+    }
 </script>
 
 <svelte:head>
@@ -115,10 +163,14 @@
         {/if}
 
         {#if $zoneTemplates.length > 0}
-            <TemplateTable items={$zoneTemplates} />
+            <TemplateTable items={$zoneTemplates} onedit={edit} ondelete={remove} />
         {/if}
     {/if}
 </Container>
+
+{#if editing}
+    <ModalTemplateDetails template={editing} save={saveDetails} />
+{/if}
 
 <style>
     .step-number {

@@ -35,12 +35,24 @@
     import { provideZoneEditor } from "$lib/components/zones/editor";
     import NewSubdomainPath from "$lib/components/zones/NewSubdomainPath.svelte";
     import ServiceDetailsOffcanvas from "$lib/components/zones/ServiceDetailsOffcanvas.svelte";
-    import { templateAsZone, templateOrigin, type ZoneTemplate } from "$lib/model/zone_template";
+    import {
+        templateAsZone,
+        templateOrigin,
+        type ZoneTemplate,
+        type ZoneTemplateInput,
+    } from "$lib/model/zone_template";
     import { thisZone } from "$lib/stores/thiszone";
-    import { thisTemplate, upsertZoneTemplate, zoneTemplates } from "$lib/stores/zone_templates";
+    import { toasts } from "$lib/stores/toasts";
+    import {
+        removeZoneTemplate,
+        thisTemplate,
+        upsertZoneTemplate,
+        zoneTemplates,
+    } from "$lib/stores/zone_templates";
     import { t } from "$lib/translations";
     import type { ZoneTemplateBackend } from "./backend";
     import { templateZoneEditor } from "./editor";
+    import ModalTemplateDetails from "./ModalTemplateDetails.svelte";
     import TemplateSidebar from "./TemplateSidebar.svelte";
 
     interface Props {
@@ -91,6 +103,38 @@
     function select(id: string) {
         if (id !== template.id) goto(templateLinks().template(encodeURIComponent(id)));
     }
+
+    async function saveDetails(input: ZoneTemplateInput): Promise<ZoneTemplate> {
+        const t = await backend.update(current.id, input);
+        saved(t);
+        thisZone.set(templateAsZone(t));
+        return t;
+    }
+
+    let deleteInProgress = $state(false);
+    async function deleteTemplate() {
+        if (!confirm($t("zone-templates.delete-confirm", { name: current.name }))) return;
+
+        deleteInProgress = true;
+        try {
+            await backend.delete(current.id);
+            removeZoneTemplate(current.id);
+            toasts.addToast({
+                type: "success",
+                title: $t("zone-templates.deleted", { name: current.name }),
+                timeout: 5000,
+            });
+            goto(templateLinks().list);
+        } catch (err) {
+            toasts.addErrorToast({
+                title: $t("zone-templates.errors.delete"),
+                message: err instanceof Error ? err.message : String(err),
+                timeout: 8000,
+            });
+        } finally {
+            deleteInProgress = false;
+        }
+    }
 </script>
 
 <Container fluid class="d-flex flex-column flex-fill">
@@ -101,7 +145,14 @@
             class="py-2 sticky-top d-flex flex-column"
             style="background-color: #edf5f2; z-index: 0; max-height: 100vh; overflow-y: auto;"
         >
-            <TemplateSidebar template={current} {readOnly} {service} onselect={select} />
+            <TemplateSidebar
+                template={current}
+                {readOnly}
+                {service}
+                {deleteInProgress}
+                onselect={select}
+                ondelete={deleteTemplate}
+            />
         </Col>
 
         <div class="col-sm-8 col-md-9 d-flex">
@@ -124,3 +175,4 @@
     <AliasModal {origin} />
     <ServiceDetailsOffcanvas domain={origin} selectedHistory={template.id} />
 {/if}
+<ModalTemplateDetails template={current} save={saveDetails} />

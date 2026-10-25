@@ -31,6 +31,7 @@ import { makeService } from "$lib/test-utils/fixtures";
 import { loadTranslations } from "$lib/translations";
 import type { ZoneTemplateBackend } from "./backend";
 import { templateZoneEditor } from "./editor";
+import { controls as ctrlTemplateDetails } from "./ModalTemplateDetails.svelte";
 import TemplateSidebar from "./TemplateSidebar.svelte";
 
 function tpl(id: string, name: string, userId?: string): ZoneTemplate {
@@ -77,6 +78,7 @@ function setup(
     zoneTemplates.set([mine, global]);
     thisZone.set(templateAsZone(template));
     const onselect = vi.fn();
+    const ondelete = vi.fn();
     // As the layout of the templates does.
     const context = zoneEditorContext(
         templateZoneEditor(
@@ -86,10 +88,10 @@ function setup(
         ),
     );
     render(TemplateSidebar, {
-        props: { template, readOnly, service, onselect },
+        props: { template, readOnly, service, deleteInProgress: false, onselect, ondelete },
         context,
     });
-    return { onselect };
+    return { onselect, ondelete };
 }
 
 describe("TemplateSidebar", () => {
@@ -117,20 +119,34 @@ describe("TemplateSidebar", () => {
         );
     });
 
-    it("offers to add a subdomain", async () => {
+    it("offers to add a subdomain and to manage the template", async () => {
+        const user = userEvent.setup();
         const openSubdomain = vi.spyOn(ctrlNewSubdomain, "Open").mockImplementation(() => {});
-        setup(mine, false);
+        const openDetails = vi.spyOn(ctrlTemplateDetails, "Open").mockImplementation(() => {});
+        const { ondelete } = setup(mine, false);
 
-        await userEvent.setup().click(screen.getByRole("button", { name: /Add a subdomain/ }));
+        await user.click(screen.getByRole("button", { name: /Add a subdomain/ }));
         expect(openSubdomain).toHaveBeenCalled();
+
+        await user.click(screen.getByRole("button", { name: /Actions/ }));
+        await user.click(await screen.findByText("Edit the details"));
+        expect(openDetails).toHaveBeenCalled();
+
+        await user.click(screen.getByRole("button", { name: /Actions/ }));
+        await user.click(await screen.findByText("Delete the template"));
+        expect(ondelete).toHaveBeenCalled();
     });
 
-    it("disables the changes to a global template, telling why", () => {
+    it("disables the changes to a global template, telling why", async () => {
         setup(global, true);
 
         const add = screen.getByRole("button", { name: /Add a subdomain/ });
         expect(add).toBeDisabled();
         expect(add.parentElement).toHaveAttribute("title", expect.stringMatching(/administrators/));
+
+        await userEvent.setup().click(screen.getByRole("button", { name: /Actions/ }));
+        expect(await screen.findByText("Edit the details")).toHaveClass("disabled");
+        expect(screen.getByText("Delete the template")).toHaveClass("disabled");
     });
 
     it("shows the services of the subdomain on the page of a service", () => {

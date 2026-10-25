@@ -363,13 +363,29 @@
         "retry": "Try again",
         "global": "Offered to everyone",
         "global-hint": "Set up by the administrators: you can apply this template to your domains, not change it.",
+        "actions": {
+            "view": "View"
+        },
         "services-title": "Services",
         "last-modified": "Last modified",
         "services": "{{count:eq; 0:No service; 1:1 service; default:{{count}} services}}",
-        "origin": "Written for {{origin}}",
+        "fields": {
+            "name": "Name",
+            "name-placeholder": "My mail setup",
+            "description": "Description",
+            "description-placeholder": "What this template sets up, and for which domains",
+            "origin": "Origin",
+            "origin-help": "The domain the services are written for: their names are read relative to it. Applied to a domain, the names under the origin name that domain; texts, such as an SPF include, are kept as they are."
+        },
+        "edit": "Edit the details",
+        "save": "Save",
+        "delete": "Delete the template",
+        "delete-confirm": "Delete the template “{{name}}”? The domains it was applied to keep their services.",
+        "deleted": "Template “{{name}}” deleted",
         "back": "All my templates",
         "errors": {
-            "load": "Unable to load the templates"
+            "load": "Unable to load the templates",
+            "delete": "Unable to delete the template"
         },
         "empty": {
             "title": "No template yet",

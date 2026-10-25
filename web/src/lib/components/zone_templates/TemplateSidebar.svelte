@@ -24,7 +24,15 @@
 <script lang="ts">
     import { templateLinks } from "$links";
 
-    import { Button, Icon } from "@sveltestrap/sveltestrap";
+    import {
+        Button,
+        Dropdown,
+        DropdownItem,
+        DropdownMenu,
+        DropdownToggle,
+        Icon,
+        Spinner,
+    } from "@sveltestrap/sveltestrap";
 
     import { controls as ctrlNewSubdomain } from "$lib/components/zones/NewSubdomainPath.svelte";
     import ServiceSidebar from "$lib/components/zones/ServiceSidebar.svelte";
@@ -33,6 +41,7 @@
     import { sortedDomains, sortedDomainsWithIntermediate } from "$lib/stores/thiszone";
     import { zoneTemplates } from "$lib/stores/zone_templates";
     import { t } from "$lib/translations";
+    import { controls as ctrlTemplateDetails } from "./ModalTemplateDetails.svelte";
     import SelectTemplate from "./SelectTemplate.svelte";
 
     interface Props {
@@ -41,10 +50,12 @@
         readOnly: boolean;
         // The service being edited, when on its page.
         service?: { subdomain: string; serviceid: string };
+        deleteInProgress: boolean;
         onselect: (id: string) => void;
+        ondelete: () => void;
     }
 
-    let { template, readOnly, service, onselect }: Props = $props();
+    let { template, readOnly, service, deleteInProgress, onselect, ondelete }: Props = $props();
 
     const origin = templateOrigin();
 </script>
@@ -92,6 +103,36 @@
                 {$t("domains.add-a-subdomain")}
             </Button>
         </span>
+        <Dropdown class="flex-shrink-0">
+            <DropdownToggle color="secondary" outline size="sm" class="text-nowrap">
+                {#if deleteInProgress}
+                    <Spinner size="sm" />
+                {:else}
+                    <Icon name="gear-fill" aria-hidden="true" />
+                {/if}
+                {$t("domains.actions.label")}
+            </DropdownToggle>
+            <DropdownMenu style="z-index: 11;">
+                <DropdownItem header>
+                    {$t("zone-templates.title")}
+                    <span class="d-block fw-normal text-muted text-truncate">{template.name}</span>
+                </DropdownItem>
+                <DropdownItem
+                    disabled={readOnly}
+                    title={readOnly ? $t("zone-templates.global-hint") : undefined}
+                    on:click={() => ctrlTemplateDetails.Open()}
+                >
+                    {$t("zone-templates.edit")}
+                </DropdownItem>
+                <DropdownItem
+                    disabled={readOnly || deleteInProgress}
+                    title={readOnly ? $t("zone-templates.global-hint") : undefined}
+                    on:click={ondelete}
+                >
+                    {$t("zone-templates.delete")}
+                </DropdownItem>
+            </DropdownMenu>
+        </Dropdown>
     </div>
     <div style="min-height:0; overflow-y: auto;">
         {#if $sortedDomains && $sortedDomainsWithIntermediate}
