@@ -24,6 +24,8 @@ import { get } from "svelte/store";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const api = vi.hoisted(() => ({
+    addDomainWatch: vi.fn(),
+    listDomainWatches: vi.fn(),
     checkDomainWatch: vi.fn(),
     deleteDomainWatch: vi.fn(),
     updateDomainWatch: vi.fn(),
@@ -33,7 +35,9 @@ vi.mock("$lib/api/watchlist", () => api);
 const toasts = vi.hoisted(() => ({ addErrorToast: vi.fn(), addToast: vi.fn() }));
 vi.mock("$lib/stores/toasts", () => ({ toasts }));
 
+import type { User } from "$lib/model/user";
 import type { DomainWatch } from "$lib/model/watchlist";
+import { userSession } from "$lib/stores/usersession";
 import { watchlist } from "$lib/stores/watchlist";
 import { loadTranslations } from "$lib/translations";
 import WatchCard from "./WatchCard.svelte";
@@ -59,6 +63,7 @@ beforeEach(() => {
 
 afterEach(() => {
     vi.resetAllMocks();
+    userSession.set({} as User);
     vi.unstubAllGlobals();
 });
 
@@ -225,5 +230,22 @@ describe("WatchCard", () => {
         expect(screen.getByText("Last check failed: timeout")).toBeVisible();
         expect(screen.getByText("Never checked")).toBeVisible();
         expect(screen.getByText("Registration data unavailable")).toBeVisible();
+    });
+
+    it("offers to watch a domain looked up, without the actions of a watch", () => {
+        userSession.set({ id: "u1" } as User);
+        render(WatchCard, { watch: { domain: "example.org", phase: "available" } });
+
+        expect(screen.getByText("Available now!")).toBeVisible();
+        expect(screen.getByRole("button", { name: /Watch this domain/ })).toBeVisible();
+        expect(screen.queryByTitle("Check now")).toBeNull();
+        expect(screen.queryByText(/Checked|Never checked/)).toBeNull();
+    });
+
+    it("leaves out the link to the registration details when asked to", () => {
+        render(WatchCard, { watch, showDetails: false });
+
+        expect(screen.queryByTitle("Registration details")).toBeNull();
+        expect(screen.getByTitle("Check now")).toBeVisible();
     });
 });

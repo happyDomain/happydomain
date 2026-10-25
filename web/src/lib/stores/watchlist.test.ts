@@ -24,10 +24,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const api = vi.hoisted(() => ({ listDomainWatches: vi.fn() }));
 vi.mock("$lib/api/watchlist", () => api);
 
-import { refreshWatchlist, removeWatch, upsertWatch, watchlist } from "./watchlist";
+import {
+    ensureWatchlist,
+    refreshWatchlist,
+    removeWatch,
+    upsertWatch,
+    watchlist,
+} from "./watchlist";
 
 describe("watchlist store", () => {
     beforeEach(() => {
+        vi.resetAllMocks();
         watchlist.set(undefined);
     });
 
@@ -76,5 +83,25 @@ describe("watchlist store", () => {
 
         await expect(refreshWatchlist()).rejects.toThrow("unreachable");
         expect(get(watchlist)).toEqual([{ id: "1", domain: "a.example" }]);
+    });
+
+    it("loads the watchlist once for all those asking at once", async () => {
+        api.listDomainWatches.mockResolvedValue([{ id: "1", domain: "example.com" }]);
+
+        const [a, b] = await Promise.all([ensureWatchlist(), ensureWatchlist()]);
+        expect(a).toEqual([{ id: "1", domain: "example.com" }]);
+        expect(b).toBe(a);
+        expect(api.listDomainWatches).toHaveBeenCalledTimes(1);
+
+        await ensureWatchlist();
+        expect(api.listDomainWatches).toHaveBeenCalledTimes(1);
+    });
+
+    it("loads the watchlist again once a load failed", async () => {
+        api.listDomainWatches.mockRejectedValueOnce(new Error("unreachable"));
+        await expect(ensureWatchlist()).rejects.toThrow("unreachable");
+
+        api.listDomainWatches.mockResolvedValue([]);
+        await expect(ensureWatchlist()).resolves.toEqual([]);
     });
 });

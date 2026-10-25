@@ -18,7 +18,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { writable, type Writable } from "svelte/store";
+import { get, writable, type Writable } from "svelte/store";
 
 import { listDomainWatches } from "$lib/api/watchlist";
 import type { DomainWatch } from "$lib/model/watchlist";
@@ -29,6 +29,19 @@ export async function refreshWatchlist(): Promise<DomainWatch[]> {
     const data = await listDomainWatches();
     watchlist.set(data);
     return data;
+}
+
+let loading: Promise<DomainWatch[]> | undefined;
+
+/**
+ * Load the watchlist unless it is already loaded, or being loaded: the
+ * components needing it can all ask for it at once.
+ */
+export function ensureWatchlist(): Promise<DomainWatch[]> {
+    const list = get(watchlist);
+    if (list !== undefined) return Promise.resolve(list);
+    loading ??= refreshWatchlist().finally(() => (loading = undefined));
+    return loading;
 }
 
 /** Add a watch to the list, or replace the one with the same identifier. */

@@ -81,6 +81,24 @@ function hasStatus(status: string[] | undefined, code: string): boolean {
     return (status ?? []).some((s) => s.toLowerCase().replace(/[^a-z]/g, "") === want);
 }
 
+/**
+ * The watch of the domain among the list. The watch is on the registrable
+ * domain: a subdomain matches it.
+ */
+export function findWatch(
+    list: DomainWatch[] | undefined,
+    domain: string,
+): DomainWatch | undefined {
+    const name = domain.toLowerCase().replace(/\.$/, "");
+    return list?.find(
+        (w) =>
+            name === w.domain ||
+            name === w.displayName ||
+            name.endsWith("." + w.domain) ||
+            name.endsWith("." + w.displayName),
+    );
+}
+
 function phaseRank(w: DomainWatch): number {
     const i = PHASE_ORDER.indexOf(w.phase ?? "unknown");
     return i < 0 ? PHASE_ORDER.length : i;

@@ -324,6 +324,15 @@
         "check-now": "Check now",
         "remove": "Stop watching",
         "confirm-remove": "Stop watching {{domain}}?",
+        "button": {
+            "watch": "Watch this domain",
+            "watch-hint": "Be told when this domain expires and when you can register it",
+            "watched": "In your watchlist"
+        },
+        "added": {
+            "title": "Domain watched",
+            "message": "happyDomain will tell you when {{domain}} is about to be released."
+        },
         "empty": {
             "title": "Covet a domain name already taken?",
             "intro": "Many domains are not renewed by their owner. Add the ones you would like to own, and happyDomain follows them through their whole life cycle.",
@@ -342,6 +351,7 @@
         },
         "errors": {
             "load": "Unable to load your watchlist",
+            "add": "Unable to watch this domain",
             "check": "Unable to check the domain",
             "remove": "Unable to stop watching the domain",
             "note": "Unable to save the note"

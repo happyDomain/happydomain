@@ -23,6 +23,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { DomainWatch } from "$lib/model/watchlist";
 import {
     compareWatches,
+    findWatch,
     isAutoRenewPending,
     lifecycleStep,
     watchComparator,
@@ -160,6 +161,19 @@ describe("watchlist helpers", () => {
             {},
         ]);
         expect(watchHeadline({ phase: "unknown" })).toEqual(["watchlist.headline.not-checked", {}]);
+    });
+
+    it("finds the watch of a domain or of its parent", () => {
+        const list: DomainWatch[] = [
+            { id: "1", domain: "example.com" },
+            { id: "2", domain: "xn--bcher-kva.de", displayName: "bücher.de" },
+        ];
+        expect(findWatch(list, "example.com")?.id).toBe("1");
+        expect(findWatch(list, "Www.Example.com.")?.id).toBe("1");
+        expect(findWatch(list, "bücher.de")?.id).toBe("2");
+        expect(findWatch(list, "notexample.com")).toBeUndefined();
+        expect(findWatch([{ id: "3", domain: "shop.example.co" }], "example.co")).toBeUndefined();
+        expect(findWatch(undefined, "example.com")).toBeUndefined();
     });
 
     it("tells an auto-renewal waiting for its registrar", () => {

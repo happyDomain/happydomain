@@ -318,6 +318,15 @@
         "check-now": "Vérifier maintenant",
         "remove": "Ne plus surveiller",
         "confirm-remove": "Ne plus surveiller {{domain}} ?",
+        "button": {
+            "watch": "Surveiller ce domaine",
+            "watch-hint": "Être prévenu lorsque ce domaine expire et lorsque vous pouvez l'enregistrer",
+            "watched": "Dans vos domaines surveillés"
+        },
+        "added": {
+            "title": "Domaine surveillé",
+            "message": "happyDomain vous préviendra lorsque {{domain}} sera sur le point d'être libéré."
+        },
         "empty": {
             "title": "Vous convoitez un nom de domaine déjà pris ?",
             "intro": "De nombreux domaines ne sont pas renouvelés par leur titulaire. Ajoutez ceux que vous aimeriez posséder, et happyDomain les suit tout au long de leur cycle de vie.",
@@ -336,6 +345,7 @@
         },
         "errors": {
             "load": "Impossible de charger vos domaines surveillés",
+            "add": "Impossible de surveiller ce domaine",
             "check": "Impossible de vérifier le domaine",
             "remove": "Impossible d'arrêter de surveiller le domaine",
             "note": "Impossible d'enregistrer la note"

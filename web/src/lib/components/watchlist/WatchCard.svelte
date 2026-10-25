@@ -28,6 +28,7 @@
     import { checkDomainWatch, deleteDomainWatch, updateDomainWatch } from "$lib/api/watchlist";
     import DomainStatusBadges from "$lib/components/DomainStatusBadges.svelte";
     import LifecycleStepper from "$lib/components/watchlist/LifecycleStepper.svelte";
+    import WatchDomainButton from "$lib/components/watchlist/WatchDomainButton.svelte";
     import type { DomainWatch } from "$lib/model/watchlist";
     import { removeWatch, upsertWatch } from "$lib/stores/watchlist";
     import { toasts } from "$lib/stores/toasts";
@@ -43,12 +44,18 @@
     } from "$lib/utils/watchlist";
 
     interface Props {
+        // A watch without identifier describes a domain looked up but not
+        // watched: only what the lookup told is shown, with a way to watch it.
         watch: DomainWatch;
         // Draw attention to a watch just added.
         highlight?: boolean;
+        // Link to the registration details of the domain.
+        showDetails?: boolean;
     }
 
-    let { watch, highlight = false }: Props = $props();
+    let { watch, highlight = false, showDetails = true }: Props = $props();
+
+    let saved = $derived(!!watch.id);
 
     let phase = $derived(watch.phase ?? "unknown");
     let autoRenew = $derived(
@@ -239,78 +246,86 @@
                 {#if watch.registrar && watch.registrar !== "Unknown"}
                     <span class="me-2"><i class="bi bi-building me-1"></i>{watch.registrar}</span>
                 {/if}
-                <span
-                    title={$t("watchlist.next-check", {
-                        when: formatRelativeTime(watch.nextCheck, $locale),
-                    })}
-                >
-                    <i class="bi bi-clock-history me-1"></i>
-                    {#if watch.lastCheck}
-                        {$t("watchlist.last-check", {
-                            when: formatRelativeTime(watch.lastCheck, $locale),
+                {#if saved}
+                    <span
+                        title={$t("watchlist.next-check", {
+                            when: formatRelativeTime(watch.nextCheck, $locale),
                         })}
-                    {:else}
-                        {$t("watchlist.never-checked")}
+                    >
+                        <i class="bi bi-clock-history me-1"></i>
+                        {#if watch.lastCheck}
+                            {$t("watchlist.last-check", {
+                                when: formatRelativeTime(watch.lastCheck, $locale),
+                            })}
+                        {:else}
+                            {$t("watchlist.never-checked")}
+                        {/if}
+                    </span>
+                {/if}
+            </div>
+            {#if !saved}
+                <WatchDomainButton domain={watch.domain ?? ""} />
+            {:else}
+                <div class="d-flex gap-1">
+                    {#if watch.history && watch.history.length > 0}
+                        <Button
+                            size="sm"
+                            color="secondary"
+                            outline
+                            active={showHistory}
+                            title={$t("watchlist.history")}
+                            onclick={() => (showHistory = !showHistory)}
+                        >
+                            <i class="bi bi-list-ul"></i>
+                        </Button>
                     {/if}
-                </span>
-            </div>
-            <div class="d-flex gap-1">
-                {#if watch.history && watch.history.length > 0}
+                    {#if !editingNote}
+                        <Button
+                            size="sm"
+                            color="secondary"
+                            outline
+                            title={$t("watchlist.edit-note")}
+                            onclick={editNote}
+                        >
+                            <i class="bi bi-pencil"></i>
+                        </Button>
+                    {/if}
+                    {#if showDetails}
+                        <Button
+                            size="sm"
+                            color="secondary"
+                            outline
+                            href={resolve("/whois/[[domain]]", {
+                                domain: encodeURIComponent(watch.domain ?? ""),
+                            })}
+                            title={$t("watchlist.details")}
+                        >
+                            <i class="bi bi-info-circle"></i>
+                        </Button>
+                    {/if}
                     <Button
                         size="sm"
-                        color="secondary"
+                        color="primary"
                         outline
-                        active={showHistory}
-                        title={$t("watchlist.history")}
-                        onclick={() => (showHistory = !showHistory)}
+                        title={$t("watchlist.check-now")}
+                        disabled={checking}
+                        onclick={checkNow}
                     >
-                        <i class="bi bi-list-ul"></i>
+                        {#if checking}<Spinner size="sm" />{:else}<i class="bi bi-arrow-clockwise"
+                            ></i>{/if}
                     </Button>
-                {/if}
-                {#if !editingNote}
                     <Button
                         size="sm"
-                        color="secondary"
+                        color="danger"
                         outline
-                        title={$t("watchlist.edit-note")}
-                        onclick={editNote}
+                        title={$t("watchlist.remove")}
+                        disabled={removing}
+                        onclick={remove}
                     >
-                        <i class="bi bi-pencil"></i>
+                        <i class="bi bi-trash"></i>
                     </Button>
-                {/if}
-                <Button
-                    size="sm"
-                    color="secondary"
-                    outline
-                    href={resolve("/whois/[[domain]]", {
-                        domain: encodeURIComponent(watch.domain ?? ""),
-                    })}
-                    title={$t("watchlist.details")}
-                >
-                    <i class="bi bi-info-circle"></i>
-                </Button>
-                <Button
-                    size="sm"
-                    color="primary"
-                    outline
-                    title={$t("watchlist.check-now")}
-                    disabled={checking}
-                    onclick={checkNow}
-                >
-                    {#if checking}<Spinner size="sm" />{:else}<i class="bi bi-arrow-clockwise"
-                        ></i>{/if}
-                </Button>
-                <Button
-                    size="sm"
-                    color="danger"
-                    outline
-                    title={$t("watchlist.remove")}
-                    disabled={removing}
-                    onclick={remove}
-                >
-                    <i class="bi bi-trash"></i>
-                </Button>
-            </div>
+                </div>
+            {/if}
         </div>
     </CardBody>
 </Card>
