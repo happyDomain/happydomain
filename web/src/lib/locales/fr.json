@@ -94,7 +94,8 @@
             "whois": "Voir les infos d'enregistrement",
             "others": "Plus d'actions sur {{domain}}",
             "label": "Actions",
-            "menu-title": "Actions sur le domaine"
+            "menu-title": "Actions sur le domaine",
+            "save-template": "Enregistrer comme modèle"
         },
         "alert": {
             "remove": "Cette action retirera définitivement le domaine {{domain}} de votre liste. L'historique et les zones abstraites seront supprimés. Cela ne supprimera ni n'affectera votre domaine auprès de votre fournisseur, ni ne modifiera ce qui est actuellement diffusé. Cela ne concerne seulement que ce que vous voyez dans happyDomain. Êtes-vous certain de vouloir continuer ?",
@@ -402,6 +403,13 @@
                 "title": "Appliquez-le",
                 "text": "Depuis les actions d'un autre domaine, appliquez le modèle, relisez les changements, puis publiez-les."
             }
+        },
+        "save-as": {
+            "title": "Enregistrer comme modèle",
+            "description": "Les services de la zone de {{domain}} sont enregistrés dans un nouveau modèle, sauf ses enregistrements SOA et NS, qui appartiennent au domaine.",
+            "submit": "Enregistrer le modèle",
+            "done": "Modèle « {{name}} » enregistré",
+            "open": "Ouvrir le modèle"
         },
         "mine": "Mes modèles",
         "modified": "Modifié {{when}}"

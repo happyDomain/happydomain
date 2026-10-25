@@ -49,6 +49,7 @@
     import { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
     import { controls as ctrlDomainWhois } from "./ModalDomainWhois.svelte";
     import { controls as ctrlUploadZone } from "./ModalUploadZone.svelte";
+    import { controls as ctrlSaveAsTemplate } from "./ModalSaveAsTemplate.svelte";
     import { controls as ctrlNewSubdomain } from "$lib/components/zones/NewSubdomainPath.svelte";
     import SubdomainListTiny from "$lib/components/zones/SubdomainListTiny.svelte";
 
@@ -137,11 +138,14 @@
                 {$t("domains.actions.whois")}
             </DropdownItem>
             <DropdownItem divider />
+            <DropdownItem on:click={retrieveZone}>
+                {$t("domains.actions.reimport")}
+            </DropdownItem>
             <DropdownItem on:click={viewZone} disabled={!$sortedDomains}>
                 {$t("domains.actions.view")}
             </DropdownItem>
-            <DropdownItem on:click={retrieveZone}>
-                {$t("domains.actions.reimport")}
+            <DropdownItem on:click={() => ctrlSaveAsTemplate.Open()} disabled={!$sortedDomains}>
+                {$t("domains.actions.save-template")}
             </DropdownItem>
             <DropdownItem
                 disabled={readOnly}

@@ -98,7 +98,8 @@
             "whois": "View registration data",
             "others": "More actions on {{domain}}",
             "label": "Actions",
-            "menu-title": "Domain actions"
+            "menu-title": "Domain actions",
+            "save-template": "Save as a template"
         },
         "alert": {
             "remove": "This action only removes {{domain}} from your happyDomain managed domains. All history and abstracted zones will be discarded. The domain {{domain}} remains fully intact at the provider. Are you sure you want to continue?"
@@ -408,6 +409,13 @@
                 "title": "Apply it",
                 "text": "From the actions of another domain, apply the template, review the changes, then publish them."
             }
+        },
+        "save-as": {
+            "title": "Save as a template",
+            "description": "The services of the zone of {{domain}} are saved as a new template, but for its SOA and NS records, which belong to the domain.",
+            "submit": "Save the template",
+            "done": "Template “{{name}}” saved",
+            "open": "Open the template"
         },
         "mine": "My templates",
         "modified": "Changed {{when}}"

@@ -36,6 +36,7 @@
     import ModalDomainDelete, { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
     import ModalDomainWhois from "./ModalDomainWhois.svelte";
     import ModalUploadZone from "./ModalUploadZone.svelte";
+    import ModalSaveAsTemplate from "./ModalSaveAsTemplate.svelte";
     import NewSubdomainPath from "$lib/components/zones/NewSubdomainPath.svelte";
     import { domainZoneEditor, provideZoneEditor } from "$lib/components/zones/editor";
     import ServiceDetailsOffcanvas from "$lib/components/zones/ServiceDetailsOffcanvas.svelte";
@@ -161,6 +162,8 @@
     domain={data.domain}
     on:retrieveZoneDone={(ev) => retrieveZoneDone(ev.detail)}
 />
+
+<ModalSaveAsTemplate domain={data.domain} {selectedHistory} />
 
 <ModalDomainDelete on:detachDomain={detachDomain} />
 
