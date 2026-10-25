@@ -19,6 +19,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import { derived } from "svelte/store";
 import i18n from "sveltekit-i18n";
 import type { Config } from "sveltekit-i18n";
 const { MODE } = import.meta.env;
@@ -166,3 +167,16 @@ export const config: Config<Params> = {
 };
 
 export const { t, locales, locale, loadTranslations } = new i18n(config);
+
+/**
+ * $tOr(key, fallback) is $t(key), or fallback when there is no translation for
+ * key: sveltekit-i18n echoes the key back then.
+ */
+export const tOr = derived(
+    t,
+    ($t) =>
+        <F extends string | undefined>(key: string, fallback: F): string | F => {
+            const s = $t(key);
+            return s && s !== key ? s : fallback;
+        },
+);

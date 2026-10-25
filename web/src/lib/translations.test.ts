@@ -19,9 +19,10 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import { get } from "svelte/store";
 import { describe, it, expect } from "vitest";
 
-import { config, loadTranslations, t } from "./translations";
+import { config, loadTranslations, t, tOr } from "./translations";
 
 async function load(locale: string, key = "") {
     const loader = config.loaders?.find((l) => l.locale === locale && l.key === key);
@@ -58,6 +59,15 @@ describe("translations", () => {
         // registered by the backend.
         expect(t.get("svcinfo.svcs.NoSuchService.name")).toBe("svcinfo.svcs.NoSuchService.name");
         expect(t.get("svcinfo.svcs.ForSale.name")).toBe("Domain For Sale");
+    });
+
+    it("falls back when there is no translation", async () => {
+        await loadTranslations("en", "/");
+        expect(get(tOr)("domaininfo.status-descriptions.ok", "ok")).toBe(
+            "The domain is active with no restrictions.",
+        );
+        expect(get(tOr)("domaininfo.status-descriptions.unknown", "unknown")).toBe("unknown");
+        expect(get(tOr)("domaininfo.status-descriptions.unknown", undefined)).toBeUndefined();
     });
 
     it("does not mutate the application translations while merging", async () => {

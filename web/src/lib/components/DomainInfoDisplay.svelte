@@ -23,7 +23,6 @@
 
 <script lang="ts">
     import {
-        Badge,
         Card,
         CardBody,
         CardHeader,
@@ -34,8 +33,16 @@
         Row,
     } from "@sveltestrap/sveltestrap";
 
+    import DomainStatusBadges from "$lib/components/DomainStatusBadges.svelte";
     import type { DomainInfo } from "$lib/model/domaininfo";
     import { t } from "$lib/translations";
+    import {
+        daysUntil,
+        expirationColor,
+        expirationLabel,
+        expirationProgress,
+        formatDate,
+    } from "$lib/utils/domaininfo";
 
     interface Props {
         info: DomainInfo;
@@ -43,44 +50,6 @@
     }
 
     let { info, domain }: Props = $props();
-
-    function statusColor(code: string): string {
-        const lc = code.toLowerCase();
-        if (lc === "ok" || lc === "active") return "success";
-        if (lc.includes("hold")) return "danger";
-        if (lc.includes("prohibited") || lc.includes("pending")) return "info";
-        return "secondary";
-    }
-
-    function expirationProgress(expiration?: string): number {
-        if (!expiration) return 0;
-        const days = daysUntilExpiration(expiration);
-        if (days <= 0) return 0;
-        return Math.min(100, Math.round((days / 365) * 100));
-    }
-
-    function expirationColor(expiration?: string): string {
-        if (!expiration) return "secondary";
-        const days = Math.round((new Date(expiration).getTime() - Date.now()) / 86400000);
-        if (days < 0) return "danger";
-        if (days < 30) return "danger";
-        if (days < 90) return "warning";
-        return "success";
-    }
-
-    function daysUntilExpiration(expiration?: string): number {
-        if (!expiration) return 0;
-        return Math.round((new Date(expiration).getTime() - Date.now()) / 86400000);
-    }
-
-    function formatDate(iso?: string): string {
-        if (!iso) return "";
-        return new Date(iso).toLocaleDateString(undefined, {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-        });
-    }
 </script>
 
 <h2 class="display-7 fw-bold mt-3 mb-1 font-monospace">
@@ -91,22 +60,7 @@
 {#if info.status && info.status.length > 0}
     <div class="mb-4">
         <p class="text-muted small mb-1">{$t("domaininfo.status")}</p>
-        <div class="d-flex flex-wrap gap-2">
-            {#each info.status as code, i (i)}
-                <Badge
-                    color={statusColor(code)}
-                    title={$t(`domaininfo.status-descriptions.${code}`) || code}
-                >
-                    {code}
-                </Badge>
-            {/each}
-        </div>
-        {#if info.status.length === 1}
-            {@const desc = $t(`domaininfo.status-descriptions.${info.status[0]}`)}
-            {#if desc && !desc.startsWith("domaininfo.")}
-                <p class="text-muted small mt-1 mb-0">{desc}</p>
-            {/if}
-        {/if}
+        <DomainStatusBadges status={info.status} />
     </div>
 {/if}
 
@@ -133,14 +87,9 @@
                     {$t("domaininfo.expiration-date")}
                 </p>
                 {#if info.expiration}
-                    {@const days = daysUntilExpiration(info.expiration)}
+                    {@const days = daysUntil(info.expiration)}
                     {@const color = expirationColor(info.expiration)}
-                    {@const expiresLabel =
-                        days < 0
-                            ? $t("domaininfo.expired", { days: Math.abs(days) })
-                            : days === 0
-                              ? $t("domaininfo.expires-today")
-                              : $t("domaininfo.expires-in", { days })}
+                    {@const expiresLabel = $t(...expirationLabel(days))}
                     <p class="fw-semibold mb-1">
                         {formatDate(info.expiration)}
                     </p>
@@ -151,15 +100,7 @@
                             style="width: {expirationProgress(info.expiration)}%"
                         ></div>
                     </div>
-                    <p class="text-{color} small mb-0">
-                        {#if days < 0}
-                            {$t("domaininfo.expired", { days: Math.abs(days) })}
-                        {:else if days === 0}
-                            {$t("domaininfo.expires-today")}
-                        {:else}
-                            {$t("domaininfo.expires-in", { days })}
-                        {/if}
-                    </p>
+                    <p class="text-{color} small mb-0">{expiresLabel}</p>
                 {:else}
                     <p class="text-muted mb-0">
                         {$t("domaininfo.no-expiration")}
