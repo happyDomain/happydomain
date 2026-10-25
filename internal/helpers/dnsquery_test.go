@@ -100,7 +100,7 @@ func TestExchangeRetriesOverTCPWhenTruncated(t *testing.T) {
 	addr, tcpQuestions := startTruncatingDNSServer(t, true)
 	client := &dns.Client{Timeout: time.Second}
 
-	r, err := Exchange(context.Background(), client, txtQuestion(), addr)
+	r, err := Exchange(context.Background(), client, txtQuestion(), []string{addr})
 	if err != nil {
 		t.Fatalf("Exchange: %v", err)
 	}
@@ -118,7 +118,7 @@ func TestExchangeRetriesOverTCPWhenTruncated(t *testing.T) {
 func TestExchangeStaysOnUDPWhenNotTruncated(t *testing.T) {
 	addr, tcpQuestions := startTruncatingDNSServer(t, false)
 
-	r, err := Exchange(context.Background(), &dns.Client{Timeout: time.Second}, txtQuestion(), addr)
+	r, err := Exchange(context.Background(), &dns.Client{Timeout: time.Second}, txtQuestion(), []string{addr})
 	if err != nil {
 		t.Fatalf("Exchange: %v", err)
 	}
@@ -130,15 +130,71 @@ func TestExchangeStaysOnUDPWhenNotTruncated(t *testing.T) {
 	}
 }
 
-func TestExchangeError(t *testing.T) {
-	// Nothing listens there: the question times out.
+// silentServer returns the address of a UDP socket that never answers.
+func silentServer(t *testing.T) string {
+	t.Helper()
+
 	pc, err := net.ListenPacket("udp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatalf("listen: %v", err)
 	}
-	defer pc.Close()
+	t.Cleanup(func() { pc.Close() })
+	return pc.LocalAddr().String()
+}
 
-	if _, err := Exchange(context.Background(), &dns.Client{Timeout: 100 * time.Millisecond}, txtQuestion(), pc.LocalAddr().String()); err == nil {
-		t.Fatal("want an error from a server not answering")
+func TestExchangeError(t *testing.T) {
+	client := &dns.Client{Timeout: 100 * time.Millisecond}
+
+	if _, err := Exchange(context.Background(), client, txtQuestion(), []string{silentServer(t), silentServer(t)}); err == nil {
+		t.Fatal("want an error when no server answers")
+	}
+
+	if _, err := Exchange(context.Background(), client, txtQuestion(), nil); err == nil {
+		t.Fatal("want an error without any server")
+	}
+}
+
+func TestExchangeFallsBackToTheNextServer(t *testing.T) {
+	addr, _ := startTruncatingDNSServer(t, false)
+
+	r, err := Exchange(context.Background(), &dns.Client{Timeout: 100 * time.Millisecond}, txtQuestion(), []string{silentServer(t), addr})
+	if err != nil {
+		t.Fatalf("Exchange: %v", err)
+	}
+	if len(r.Answer) != 1 {
+		t.Fatalf("want 1 record from the second server, got %d", len(r.Answer))
+	}
+}
+
+func TestExchangeKeepsAnAnswerWhateverItsRcode(t *testing.T) {
+	var asked atomic.Int32
+	refusing := func(t *testing.T) string {
+		pc, err := net.ListenPacket("udp", "127.0.0.1:0")
+		if err != nil {
+			t.Fatalf("listen: %v", err)
+		}
+		srv := &dns.Server{PacketConn: pc, Handler: dns.HandlerFunc(func(w dns.ResponseWriter, req *dns.Msg) {
+			asked.Add(1)
+			m := new(dns.Msg)
+			m.SetRcode(req, dns.RcodeRefused)
+			w.WriteMsg(m)
+		})}
+		started := make(chan struct{})
+		srv.NotifyStartedFunc = func() { close(started) }
+		go srv.ActivateAndServe()
+		<-started
+		t.Cleanup(func() { srv.Shutdown() })
+		return pc.LocalAddr().String()
+	}
+
+	r, err := Exchange(context.Background(), &dns.Client{Timeout: time.Second}, txtQuestion(), []string{refusing(t), refusing(t)})
+	if err != nil {
+		t.Fatalf("Exchange: %v", err)
+	}
+	if r.Rcode != dns.RcodeRefused {
+		t.Errorf("want REFUSED, got %s", dns.RcodeToString[r.Rcode])
+	}
+	if n := asked.Load(); n != 1 {
+		t.Errorf("want only the first server asked, got %d questions", n)
 	}
 }

@@ -55,7 +55,7 @@ func (ru *resolverUsecase) CheckDMARCReportAuth(req happydns.DMARCReportAuthRequ
 	m.RecursionDesired = true
 	m.SetEdns0(4096, true)
 
-	r, err := helpers.Exchange(context.Background(), &client, m, ru.config.DefaultResolvers[0])
+	r, err := helpers.Exchange(context.Background(), &client, m, ru.config.DefaultResolvers)
 	if err != nil {
 		resp.Status = "resolver-error"
 		resp.ErrorMsg = err.Error()

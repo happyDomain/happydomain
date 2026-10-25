@@ -61,7 +61,7 @@ func NewResolverUsecase(cfg *happydns.Options, resolverGuard, outboundGuard *net
 	}
 }
 
-func resolverANYQuestion(client *dns.Client, resolver string, dn string) (r *dns.Msg, err error) {
+func resolverANYQuestion(client *dns.Client, resolvers []string, dn string) (r *dns.Msg, err error) {
 	var response *dns.Msg
 
 	for _, rrType := range RRToAskForANY {
@@ -74,7 +74,7 @@ func resolverANYQuestion(client *dns.Client, resolver string, dn string) (r *dns
 		m.RecursionDesired = true
 		m.SetEdns0(4096, true)
 
-		response, err = helpers.Exchange(context.Background(), client, m, resolver)
+		response, err = helpers.Exchange(context.Background(), client, m, resolvers)
 		if err != nil {
 			return
 		}
@@ -97,13 +97,13 @@ func resolverANYQuestion(client *dns.Client, resolver string, dn string) (r *dns
 	return
 }
 
-func resolverQuestion(client *dns.Client, resolver string, dn string, rrType uint16) (*dns.Msg, error) {
+func resolverQuestion(client *dns.Client, resolvers []string, dn string, rrType uint16) (*dns.Msg, error) {
 	m := new(dns.Msg)
 	m.SetQuestion(dn, rrType)
 	m.RecursionDesired = true
 	m.SetEdns0(4096, true)
 
-	r, err := helpers.Exchange(context.Background(), client, m, resolver)
+	r, err := helpers.Exchange(context.Background(), client, m, resolvers)
 
 	return r, err
 }
@@ -113,7 +113,7 @@ func (ru *resolverUsecase) ResolveQuestion(request happydns.ResolverRequest) (*d
 
 	// The resolver choice, wherever it came from in the request, is picked and
 	// vetted in one place shared with the other resolver endpoints.
-	resolver, err := ru.pickResolver(context.Background(), request.Resolver, request.Custom)
+	resolvers, err := ru.pickResolver(context.Background(), request.Resolver, request.Custom)
 	if err != nil {
 		return nil, err
 	}
@@ -130,9 +130,9 @@ func (ru *resolverUsecase) ResolveQuestion(request happydns.ResolverRequest) (*d
 	}
 
 	if rrType == dns.TypeANY {
-		r, err = resolverANYQuestion(&client, resolver, request.DomainName)
+		r, err = resolverANYQuestion(&client, resolvers, request.DomainName)
 	} else {
-		r, err = resolverQuestion(&client, resolver, request.DomainName, rrType)
+		r, err = resolverQuestion(&client, resolvers, request.DomainName, rrType)
 	}
 	if err != nil {
 		return nil, happydns.ValidationError{Msg: err.Error()}
@@ -168,22 +168,22 @@ func (ru *resolverUsecase) ResolveQuestion(request happydns.ResolverRequest) (*d
 }
 
 // pickResolver turns the resolver a request to the resolver tool asked for
-// into a dialable "ip:port", the default resolver when it asked for none or
-// for "local".
+// into the dialable "ip:port" to ask, or, when it asked for none or for
+// "local", the default resolvers to try in turn.
 //
 // Everything the request supplies goes through the resolver guard, and that
 // includes the plain `name` form: the frontend sends "8.8.8.8" or "9.9.9.10"
 // straight in that field (see web/src/lib/resolver.ts), so it is exactly as
-// caller-controlled as `custom` is. Only the default resolver is exempt,
-// because the operator chose it, routinely on loopback.
-func (ru *resolverUsecase) pickResolver(ctx context.Context, name, custom string) (string, error) {
+// caller-controlled as `custom` is. Only the default resolvers are exempt,
+// because the operator chose them, routinely on loopback.
+func (ru *resolverUsecase) pickResolver(ctx context.Context, name, custom string) ([]string, error) {
 	resolver := name
 	switch resolver {
 	case "", "local":
-		return ru.config.DefaultResolvers[0], nil
+		return ru.config.DefaultResolvers, nil
 	case "custom":
 		if custom == "" {
-			return "", happydns.ValidationError{Msg: "custom resolver address required"}
+			return nil, happydns.ValidationError{Msg: "custom resolver address required"}
 		}
 		resolver = custom
 	}
@@ -199,14 +199,14 @@ func (ru *resolverUsecase) pickResolver(ctx context.Context, name, custom string
 		// Our own resolver failing to answer says nothing about the server the
 		// caller asked for, so it must not be reported as a refused one.
 		if errors.Is(err, netguard.ErrTemporary) {
-			return "", happydns.InternalError{
+			return nil, happydns.InternalError{
 				Err:         fmt.Errorf("unable to check the requested resolver: %w", err),
 				UserMessage: ru.resolverGuard.Unavailable("The requested DNS server"),
 			}
 		}
 
-		return "", happydns.ValidationError{Msg: ru.resolverGuard.Refusal("The requested DNS server")}
+		return nil, happydns.ValidationError{Msg: ru.resolverGuard.Refusal("The requested DNS server")}
 	}
 
-	return target, nil
+	return []string{target}, nil
 }

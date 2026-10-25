@@ -22,6 +22,7 @@
 package usecase
 
 import (
+	"slices"
 	"testing"
 
 	"git.happydns.org/happyDomain/internal/netguard"
@@ -122,7 +123,7 @@ func TestPickResolver(t *testing.T) {
 			if tt.wantErr {
 				return
 			}
-			if got != tt.want {
+			if len(got) != 1 || got[0] != tt.want {
 				t.Errorf("pickResolver(%q, %q) = %q, want %q", tt.resolver, tt.custom, got, tt.want)
 			}
 		})
@@ -137,8 +138,9 @@ func TestPickResolverLocal(t *testing.T) {
 		t.Fatalf("netguard.New => %v", err)
 	}
 
+	want := []string{"127.0.0.1:5353", "[::1]:53"}
 	ru := &resolverUsecase{
-		config:        &happydns.Options{DefaultResolvers: []string{"127.0.0.1:5353"}},
+		config:        &happydns.Options{DefaultResolvers: want},
 		resolverGuard: guard,
 	}
 
@@ -147,8 +149,8 @@ func TestPickResolverLocal(t *testing.T) {
 		if err != nil {
 			t.Fatalf("pickResolver(%q): %v", name, err)
 		}
-		if got != "127.0.0.1:5353" {
-			t.Errorf("pickResolver(%q) = %q, want %q", name, got, "127.0.0.1:5353")
+		if !slices.Equal(got, want) {
+			t.Errorf("pickResolver(%q) = %q, want %q", name, got, want)
 		}
 	}
 }

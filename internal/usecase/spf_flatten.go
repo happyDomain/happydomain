@@ -119,7 +119,7 @@ func parseSPFTerm(raw string) parsedSPFTerm {
 // flattenContext threads the global limits (lookups, voids, deadline) through
 // the recursion.
 type flattenContext struct {
-	resolver string
+	resolvers []string
 
 	deadline time.Time
 	lookups  int
@@ -143,13 +143,13 @@ func (fc *flattenContext) deadlineExceeded() bool {
 // queryTXT issues a TXT query and returns the raw payload joined into a
 // single string per record. The second return value is true when the lookup
 // "voids" — i.e. NXDOMAIN, NoData, or no SPF record found.
-func queryTXT(client dns.Client, resolver, name string) ([]string, bool, error) {
+func queryTXT(client dns.Client, resolvers []string, name string) ([]string, bool, error) {
 	m := new(dns.Msg)
 	m.SetQuestion(dns.Fqdn(name), dns.TypeTXT)
 	m.RecursionDesired = true
 	m.SetEdns0(4096, true)
 
-	r, err := helpers.Exchange(context.Background(), &client, m, resolver)
+	r, err := helpers.Exchange(context.Background(), &client, m, resolvers)
 	if err != nil {
 		return nil, false, err
 	}
@@ -208,7 +208,7 @@ func (fc *flattenContext) flatten(client dns.Client, domain, record, mechanism s
 			node.Error = "timeout"
 			return node
 		}
-		records, void, err := queryTXT(client, fc.resolver, domain)
+		records, void, err := queryTXT(client, fc.resolvers, domain)
 		if err != nil {
 			node.Error = "resolver"
 			return node
@@ -327,9 +327,9 @@ func (ru *resolverUsecase) FlattenSPF(req happydns.SPFFlattenRequest) (*happydns
 	client := dns.Client{Timeout: spfPerLookupTimeout}
 
 	fc := &flattenContext{
-		resolver: ru.config.DefaultResolvers[0],
-		deadline: time.Now().Add(spfTotalDeadline),
-		visited:  map[string]struct{}{},
+		resolvers: ru.config.DefaultResolvers,
+		deadline:  time.Now().Add(spfTotalDeadline),
+		visited:   map[string]struct{}{},
 	}
 
 	root := fc.flatten(client, req.Domain, req.Record, "root", 0)

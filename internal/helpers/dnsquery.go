@@ -23,14 +23,35 @@ package helpers
 
 import (
 	"context"
+	"errors"
 
 	"github.com/miekg/dns"
 )
 
-// Exchange sends m to server, and sends it again over TCP when the answer
+// Exchange sends m to the first of servers, and to the next one when a
+// server does not answer, the way the system resolver walks through the
+// name servers of /etc/resolv.conf. An answer, whatever its rcode, ends the
+// walk: only a server that cannot be reached is skipped.
+func Exchange(ctx context.Context, client *dns.Client, m *dns.Msg, servers []string) (*dns.Msg, error) {
+	if len(servers) == 0 {
+		return nil, errors.New("no DNS server to ask")
+	}
+
+	var err error
+	for _, server := range servers {
+		var r *dns.Msg
+		r, err = exchangeOne(ctx, client, m, server)
+		if err == nil || ctx.Err() != nil {
+			return r, err
+		}
+	}
+	return nil, err
+}
+
+// exchangeOne sends m to server, and sends it again over TCP when the answer
 // is truncated: an answer too large for UDP, DNSSEC records included, would
 // otherwise come back empty or partial.
-func Exchange(ctx context.Context, client *dns.Client, m *dns.Msg, server string) (*dns.Msg, error) {
+func exchangeOne(ctx context.Context, client *dns.Client, m *dns.Msg, server string) (*dns.Msg, error) {
 	r, _, err := client.ExchangeContext(ctx, m, server)
 	if err != nil || r == nil || !r.Truncated || client.Net == "tcp" {
 		return r, err
