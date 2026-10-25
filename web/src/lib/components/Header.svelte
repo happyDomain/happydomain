@@ -119,6 +119,13 @@
                         <Icon name="hdd-network" class="me-2" />
                         {$t("menu.my-providers")}
                     </DropdownItem>
+                    <DropdownItem
+                        active={page.route && page.route.id == "/watchlist"}
+                        href="/watchlist"
+                    >
+                        <Icon name="clock-history" class="me-2" />
+                        {$t("menu.watchlist")}
+                    </DropdownItem>
                     <DropdownItem divider />
                     <DropdownItem
                         active={page.route && page.route.id == "/providers/features"}

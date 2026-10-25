@@ -242,8 +242,26 @@
         }
     },
     "watchlist": {
+        "title": "Domaines surveillés",
+        "description": "Gardez un œil sur les noms de domaine que vous aimeriez posséder : happyDomain vous prévient lorsqu'ils sont sur le point d'être libérés, et lorsque vous pouvez les enregistrer.",
         "lifecycle": "Cycle de vie du domaine",
+        "loading": "Chargement de vos domaines surveillés…",
+        "retry": "Réessayer",
+        "sort": {
+            "label": "Trier par",
+            "urgency": "Urgence",
+            "name": "Nom",
+            "expiration": "Date d'expiration",
+            "added": "Date d'ajout"
+        },
+        "no-match": "Aucun domaine surveillé ne correspond à « {{filter}} ».",
+        "domain-label": "Domaine à surveiller",
+        "add": "Surveiller",
+        "adding": "Vérification…",
+        "add-note": "Ajouter une note",
         "note-placeholder": "Pourquoi voulez-vous ce domaine ?",
+        "notifications-hint": "Vous êtes prévenu à chaque étape par vos canaux de notification.",
+        "notifications-link": "Gérer les notifications",
         "steps": {
             "registered": "Enregistré",
             "grace": "Expiré",
@@ -300,7 +318,24 @@
         "check-now": "Vérifier maintenant",
         "remove": "Ne plus surveiller",
         "confirm-remove": "Ne plus surveiller {{domain}} ?",
+        "empty": {
+            "title": "Vous convoitez un nom de domaine déjà pris ?",
+            "intro": "De nombreux domaines ne sont pas renouvelés par leur titulaire. Ajoutez ceux que vous aimeriez posséder, et happyDomain les suit tout au long de leur cycle de vie.",
+            "add": {
+                "title": "Ajoutez un domaine",
+                "text": "Saisissez ci-dessus le domaine que vous convoitez, avec éventuellement une note pour vous rappeler pourquoi."
+            },
+            "follow": {
+                "title": "happyDomain le surveille",
+                "text": "Une fois par semaine tant qu'il est enregistré, puis deux fois par jour dès son expiration : période de grâce, rédemption, suppression."
+            },
+            "notify": {
+                "title": "Soyez prévenu",
+                "text": "Vous êtes informé à chaque étape, et dès que le domaine peut être enregistré."
+            }
+        },
         "errors": {
+            "load": "Impossible de charger vos domaines surveillés",
             "check": "Impossible de vérifier le domaine",
             "remove": "Impossible d'arrêter de surveiller le domaine",
             "note": "Impossible d'enregistrer la note"
@@ -376,6 +411,7 @@
         "my-domains": "Mes domaines",
         "dns-resolver": "Résolveur DNS",
         "whois": "Infos d'enregistrement d'un domaine",
+        "watchlist": "Domaines surveillés",
         "my-account": "Mon compte",
         "logout": "Se déconnecter",
         "provider-features": "Fournisseurs supportés",

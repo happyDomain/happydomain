@@ -248,8 +248,26 @@
         }
     },
     "watchlist": {
+        "title": "Domain watchlist",
+        "description": "Keep an eye on domain names you would like to own: happyDomain tells you when they are about to be released, and when you can register them.",
         "lifecycle": "Life cycle of the domain",
+        "loading": "Loading your watchlist…",
+        "retry": "Try again",
+        "sort": {
+            "label": "Sort by",
+            "urgency": "Urgency",
+            "name": "Name",
+            "expiration": "Expiration date",
+            "added": "Date added"
+        },
+        "no-match": "No watched domain matches “{{filter}}”.",
+        "domain-label": "Domain to watch",
+        "add": "Watch",
+        "adding": "Checking…",
+        "add-note": "Add a note",
         "note-placeholder": "Why do you want this domain?",
+        "notifications-hint": "You are notified at each step through your notification channels.",
+        "notifications-link": "Manage notifications",
         "steps": {
             "registered": "Registered",
             "grace": "Expired",
@@ -306,7 +324,24 @@
         "check-now": "Check now",
         "remove": "Stop watching",
         "confirm-remove": "Stop watching {{domain}}?",
+        "empty": {
+            "title": "Covet a domain name already taken?",
+            "intro": "Many domains are not renewed by their owner. Add the ones you would like to own, and happyDomain follows them through their whole life cycle.",
+            "add": {
+                "title": "Add a domain",
+                "text": "Type the domain you covet above, optionally with a note to remember why."
+            },
+            "follow": {
+                "title": "happyDomain keeps an eye on it",
+                "text": "Once a week while it is registered, then twice a day from its expiration on: grace period, redemption, pending deletion."
+            },
+            "notify": {
+                "title": "Get notified",
+                "text": "You are told at each step, and as soon as the domain is available to register."
+            }
+        },
         "errors": {
+            "load": "Unable to load your watchlist",
             "check": "Unable to check the domain",
             "remove": "Unable to stop watching the domain",
             "note": "Unable to save the note"
@@ -376,6 +411,7 @@
         "my-providers": "My domain providers",
         "dns-resolver": "DNS resolver",
         "whois": "Registration Data Lookup",
+        "watchlist": "Domain watchlist",
         "checkers": "Configure Checkers",
         "my-account": "My account",
         "logout": "Sign out",
