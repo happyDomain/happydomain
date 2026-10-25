@@ -29,7 +29,25 @@ const DAY_MS = 86400000;
  */
 export function statusColor(code: string): string {
     const lc = code.toLowerCase();
-    if (lc === "ok" || lc === "active") return "success";
+    switch (lc) {
+        case "ok":
+        case "active":
+        case "connect":
+            return "success";
+        case "inactive":
+            return "warning";
+        case "locked":
+            return "info";
+        // The statuses of an expired domain are colored after how close its
+        // release is.
+        case "pendingdelete":
+            return "danger";
+        case "redemptionperiod":
+        case "pendingrestore":
+            return "warning";
+        case "autorenewperiod":
+            return "info";
+    }
     if (lc.includes("hold")) return "danger";
     if (lc.includes("prohibited") || lc.includes("pending")) return "info";
     return "secondary";

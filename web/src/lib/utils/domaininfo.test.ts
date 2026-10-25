@@ -49,6 +49,20 @@ describe("domaininfo helpers", () => {
         expect(statusColor("renewPeriod")).toBe("secondary");
     });
 
+    it("colors the statuses of an expired domain after how close its release is", () => {
+        expect(statusColor("pendingDelete")).toBe("danger");
+        expect(statusColor("redemptionPeriod")).toBe("warning");
+        expect(statusColor("pendingRestore")).toBe("warning");
+        expect(statusColor("autoRenewPeriod")).toBe("info");
+    });
+
+    it("colors the statuses some registries use outside EPP", () => {
+        expect(statusColor("connect")).toBe("success");
+        expect(statusColor("inactive")).toBe("warning");
+        expect(statusColor("locked")).toBe("info");
+        expect(statusColor("OK")).toBe("success");
+    });
+
     it("counts days until a date", () => {
         expect(daysUntil(inDays(10))).toBe(10);
         expect(daysUntil(inDays(-3))).toBe(-3);
