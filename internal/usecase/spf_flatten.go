@@ -32,6 +32,7 @@ import (
 
 	"github.com/miekg/dns"
 
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/internal/netguard"
 	"git.happydns.org/happyDomain/model"
 )
@@ -152,7 +153,7 @@ func queryTXT(client dns.Client, resolver, name string) ([]string, bool, error) 
 	m.RecursionDesired = true
 	m.SetEdns0(4096, true)
 
-	r, _, err := client.Exchange(m, resolver)
+	r, err := helpers.Exchange(context.Background(), &client, m, resolver)
 	if err != nil {
 		return nil, false, err
 	}

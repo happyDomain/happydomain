@@ -29,6 +29,7 @@ import (
 
 	"github.com/miekg/dns"
 
+	"git.happydns.org/happyDomain/internal/helpers"
 	"git.happydns.org/happyDomain/internal/netguard"
 	"git.happydns.org/happyDomain/model"
 )
@@ -59,7 +60,7 @@ func NewResolverUsecase(cfg *happydns.Options, resolverGuard, outboundGuard *net
 	}
 }
 
-func resolverANYQuestion(client dns.Client, resolver string, dn string) (r *dns.Msg, err error) {
+func resolverANYQuestion(client *dns.Client, resolver string, dn string) (r *dns.Msg, err error) {
 	var response *dns.Msg
 
 	for _, rrType := range RRToAskForANY {
@@ -72,7 +73,7 @@ func resolverANYQuestion(client dns.Client, resolver string, dn string) (r *dns.
 		m.RecursionDesired = true
 		m.SetEdns0(4096, true)
 
-		response, _, err = client.Exchange(m, resolver)
+		response, err = helpers.Exchange(context.Background(), client, m, resolver)
 		if err != nil {
 			return
 		}
@@ -95,13 +96,13 @@ func resolverANYQuestion(client dns.Client, resolver string, dn string) (r *dns.
 	return
 }
 
-func resolverQuestion(client dns.Client, resolver string, dn string, rrType uint16) (*dns.Msg, error) {
+func resolverQuestion(client *dns.Client, resolver string, dn string, rrType uint16) (*dns.Msg, error) {
 	m := new(dns.Msg)
 	m.SetQuestion(dn, rrType)
 	m.RecursionDesired = true
 	m.SetEdns0(4096, true)
 
-	r, _, err := client.Exchange(m, resolver)
+	r, err := helpers.Exchange(context.Background(), client, m, resolver)
 
 	return r, err
 }
@@ -128,9 +129,9 @@ func (ru *resolverUsecase) ResolveQuestion(request happydns.ResolverRequest) (*d
 	}
 
 	if rrType == dns.TypeANY {
-		r, err = resolverANYQuestion(client, resolver, request.DomainName)
+		r, err = resolverANYQuestion(&client, resolver, request.DomainName)
 	} else {
-		r, err = resolverQuestion(client, resolver, request.DomainName, rrType)
+		r, err = resolverQuestion(&client, resolver, request.DomainName, rrType)
 	}
 	if err != nil {
 		return nil, happydns.ValidationError{Msg: err.Error()}
