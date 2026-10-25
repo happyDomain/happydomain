@@ -84,6 +84,59 @@ func TestDomainExpiryRule_EvaluateNoExpiry(t *testing.T) {
 	}
 }
 
+func TestDomainExpiryRule_EvaluateLifecycle(t *testing.T) {
+	rule := &domainExpiryRule{}
+	now := time.Now()
+
+	cases := []struct {
+		name string
+		data *WHOISData
+		want happydns.Status
+		code string
+	}{
+		{"redemption", &WHOISData{ExpiryDate: now.AddDate(0, 0, -50), Status: []string{"redemptionPeriod"}}, happydns.StatusCrit, "expiry_redemption"},
+		{"pending delete", &WHOISData{ExpiryDate: now.AddDate(0, 0, -80), Status: []string{"pendingDelete"}}, happydns.StatusCrit, "expiry_pending_delete"},
+		{"redemption before its expiration date", &WHOISData{ExpiryDate: now.AddDate(0, 6, 0), Status: []string{"redemptionPeriod"}}, happydns.StatusCrit, "expiry_redemption"},
+		{"redemption without expiration date", &WHOISData{Status: []string{"redemptionPeriod"}}, happydns.StatusCrit, "expiry_redemption"},
+		{"pending restore", &WHOISData{ExpiryDate: now.AddDate(0, 0, -60), Status: []string{"pendingRestore"}}, happydns.StatusCrit, "expiry_redemption"},
+		{"auto-renewed by the registry", &WHOISData{ExpiryDate: now.AddDate(1, 0, 0), Status: []string{"autoRenewPeriod"}}, happydns.StatusOK, "expiry_ok"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			states := rule.Evaluate(context.Background(), newWhoisObs(tc.data), nil)
+			if len(states) != 1 {
+				t.Fatalf("expected 1 state, got %d", len(states))
+			}
+			if states[0].Status != tc.want || states[0].Code != tc.code {
+				t.Errorf("got %v / %q, want %v / %q (msg=%q)", states[0].Status, states[0].Code, tc.want, tc.code, states[0].Message)
+			}
+		})
+	}
+}
+
+func TestDomainExpiryRule_EvaluateExpiredMessage(t *testing.T) {
+	rule := &domainExpiryRule{}
+	cases := []struct {
+		expiredFor time.Duration
+		want       string
+	}{
+		{12 * time.Hour, "Domain expired less than a day ago"},
+		{36 * time.Hour, "Domain expired 1 day ago"},
+		{5 * 24 * time.Hour, "Domain expired 5 days ago"},
+	}
+	for _, tc := range cases {
+		obs := newWhoisObs(&WHOISData{ExpiryDate: time.Now().Add(-tc.expiredFor)})
+		states := rule.Evaluate(context.Background(), obs, nil)
+		if len(states) != 1 {
+			t.Fatalf("expected 1 state, got %d", len(states))
+		}
+		if states[0].Code != "expiry_critical" || states[0].Message != tc.want {
+			t.Errorf("expired for %v: got %q / %q, want expiry_critical / %q", tc.expiredFor, states[0].Code, states[0].Message, tc.want)
+		}
+	}
+}
+
 func TestDomainExpiryRule_EvaluateObservationError(t *testing.T) {
 	rule := &domainExpiryRule{}
 	obs := &stubObservationGetter{key: ObservationKeyWhois, err: errString("boom")}

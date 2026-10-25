@@ -13,9 +13,11 @@ whose minimum is 12 h).
 
 ## domain_expiry
 
-Checks whether a domain name is nearing its expiration date. Also exports a
-`domain_expiry_days_remaining` metric (gauge, unit: days, label: `registrar`),
-unless the registry does not publish the expiration date.
+Checks whether a domain name is nearing its expiration date, and, once it is
+past it, whether the registry is about to release it, as its registry statuses
+tell.
+Also exports a `domain_expiry_days_remaining` metric (gauge, unit: days, label:
+`registrar`), unless the registry does not publish the expiration date.
 
 ### Options
 
@@ -28,13 +30,15 @@ unless the registry does not publish the expiration date.
 
 ### Rules
 
-| Code              | Severity | Condition                                                  |
-|-------------------|----------|------------------------------------------------------------|
-| `whois_error`     | error    | WHOIS observation could not be retrieved.                  |
-| `expiry_unknown`  | info     | The registry does not publish the expiration date (e.g. `.de`). |
-| `expiry_critical` | critical | Days remaining ≤ `critical_days`.                          |
-| `expiry_warning`  | warning  | Days remaining ≤ `warning_days`.                           |
-| `expiry_ok`       | ok       | Domain is not near expiration.                             |
+| Code                    | Severity | Condition                                                                                                  |
+|-------------------------|----------|------------------------------------------------------------------------------------------------------------|
+| `whois_error`           | error    | WHOIS observation could not be retrieved.                                                                  |
+| `expiry_redemption`     | critical | The registry status is `redemptionPeriod` or `pendingRestore`: the domain can only be restored, for a fee. |
+| `expiry_pending_delete` | critical | The registry status is `pendingDelete`: the domain will be released within days.                           |
+| `expiry_unknown`        | info     | The registry does not publish the expiration date (e.g. `.de`).                                            |
+| `expiry_critical`       | critical | Days remaining ≤ `critical_days`, or already expired.                                                      |
+| `expiry_warning`        | warning  | Days remaining ≤ `warning_days`.                                                                           |
+| `expiry_ok`             | ok       | Domain is not near expiration.                                                                             |
 
 ---
 

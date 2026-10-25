@@ -162,6 +162,24 @@ func (r *domainExpiryRule) Evaluate(ctx context.Context, obs happydns.Observatio
 		}}
 	}
 
+	// The registry statuses tell how late a domain that was not renewed is,
+	// even when the registry publishes no expiration date.
+	phase, _ := domaininfo.PhaseOf(&domaininfo.DomainInfo{Status: whois.Status}, nil, time.Now())
+	switch phase {
+	case domaininfo.PhaseRedemption:
+		return []happydns.CheckState{{
+			Status:  happydns.StatusCrit,
+			Message: "Domain is in redemption period: it was not renewed and will be released unless it is restored, for a fee, through the registrar",
+			Code:    "expiry_redemption",
+		}}
+	case domaininfo.PhasePendingDelete:
+		return []happydns.CheckState{{
+			Status:  happydns.StatusCrit,
+			Message: "Domain is pending deletion: it can no longer be restored and will be released by the registry within days",
+			Code:    "expiry_pending_delete",
+		}}
+	}
+
 	if whois.ExpiryDate.IsZero() {
 		return []happydns.CheckState{{
 			Status:  happydns.StatusInfo,
@@ -174,8 +192,20 @@ func (r *domainExpiryRule) Evaluate(ctx context.Context, obs happydns.Observatio
 	warningDays := sdk.GetIntOption(opts, "warning_days", defaultWarningDays)
 	criticalDays := sdk.GetIntOption(opts, "critical_days", defaultCriticalDays)
 
-	daysRemaining := int(time.Until(whois.ExpiryDate).Hours() / 24)
+	until := time.Until(whois.ExpiryDate)
+	daysRemaining := int(until.Hours() / 24)
 	meta := map[string]any{"days_remaining": daysRemaining}
+
+	// Test the duration, not the days: a domain expired for less than a day
+	// has no day remaining either.
+	if until < 0 {
+		return []happydns.CheckState{{
+			Status:  happydns.StatusCrit,
+			Message: expiredMessage(-daysRemaining),
+			Code:    "expiry_critical",
+			Meta:    meta,
+		}}
+	}
 
 	if daysRemaining <= criticalDays {
 		return []happydns.CheckState{{
@@ -201,6 +231,17 @@ func (r *domainExpiryRule) Evaluate(ctx context.Context, obs happydns.Observatio
 		Code:    "expiry_ok",
 		Meta:    meta,
 	}}
+}
+
+// expiredMessage tells how many whole days ago a domain expired.
+func expiredMessage(days int) string {
+	switch days {
+	case 0:
+		return "Domain expired less than a day ago"
+	case 1:
+		return "Domain expired 1 day ago"
+	}
+	return fmt.Sprintf("Domain expired %d days ago", days)
 }
 
 func init() {
