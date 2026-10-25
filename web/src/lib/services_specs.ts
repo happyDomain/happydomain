@@ -559,7 +559,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             "nearAlone": true,
             "needTypes": [
                 16
-            ]
+            ],
+            "single": true
         }
     },
     "svcs.DMARCReport": {
@@ -614,7 +615,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             "nearAlone": true,
             "needTypes": [
                 16
-            ]
+            ],
+            "single": true
         }
     },
     "svcs.MXs": {
@@ -756,7 +758,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             "nearAlone": true,
             "needTypes": [
                 16
-            ]
+            ],
+            "single": true
         }
     },
     "svcs.TXT": {

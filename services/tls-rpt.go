@@ -136,6 +136,9 @@ func init() {
 			},
 			Restrictions: happydns.ServiceRestrictions{
 				NearAlone: true,
+				// A second policy on the name makes senders ignore both
+				// (RFC 8460 §3).
+				Single: true,
 				NeedTypes: []uint16{
 					dns.TypeTXT,
 				},
