@@ -209,18 +209,18 @@
         "domain-not-found": "Ce nom de domaine ne semble pas être enregistré.",
         "error": "Impossible de récupérer les informations du domaine.",
         "status-descriptions": {
-            "ok": "Le domaine est actif sans restrictions.",
             "active": "Le domaine est actif.",
-            "clientTransferProhibited": "Le transfert vers un autre registrar est verrouillé.",
-            "serverTransferProhibited": "Le transfert est interdit par le registre.",
-            "clientUpdateProhibited": "Les modifications du domaine sont verrouillées.",
-            "serverUpdateProhibited": "Les modifications du domaine sont interdites par le registre.",
             "clientDeleteProhibited": "La suppression du domaine est verrouillée.",
-            "serverDeleteProhibited": "La suppression du domaine est interdite par le registre.",
             "clientHold": "Le domaine est suspendu (ne résout pas).",
-            "serverHold": "Le domaine est suspendu par le registre.",
+            "clientTransferProhibited": "Le transfert vers un autre registrar est verrouillé.",
+            "clientUpdateProhibited": "Les modifications du domaine sont verrouillées.",
+            "ok": "Le domaine est actif sans restrictions.",
+            "pendingDelete": "Le domaine est en attente de suppression.",
             "pendingTransfer": "Un transfert vers un autre registrar est en cours.",
-            "pendingDelete": "Le domaine est en attente de suppression."
+            "serverDeleteProhibited": "La suppression du domaine est interdite par le registre.",
+            "serverHold": "Le domaine est suspendu par le registre.",
+            "serverTransferProhibited": "Le transfert est interdit par le registre.",
+            "serverUpdateProhibited": "Les modifications du domaine sont interdites par le registre."
         }
     },
     "errors": {
