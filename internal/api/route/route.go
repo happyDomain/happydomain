@@ -70,6 +70,7 @@ type Dependencies struct {
 	ZoneCorrectionApplier happydns.ZoneCorrectionApplierUsecase
 	ZoneImporter          happydns.ZoneImporterUsecase
 	ZoneService           happydns.ZoneServiceUsecase
+	ZoneTemplate          happydns.ZoneTemplateUsecase
 
 	CheckerEngine       happydns.CheckerEngine
 	CheckerOptionsUC    *checkerUC.CheckerOptionsUsecase
@@ -227,6 +228,9 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, dep Dependenc
 	)
 	if dep.DomainWatch != nil {
 		DeclareDomainWatchRoutes(apiAuthRoutes, lookupRL, dep.DomainWatch)
+	}
+	if dep.ZoneTemplate != nil {
+		DeclareZoneTemplateRoutes(apiAuthRoutes, dep.ZoneTemplate, dep.Domain, dep.Zone)
 	}
 	DeclareProviderRoutes(apiAuthRoutes, dep.Provider)
 	DeclareProviderSettingsRoutes(apiAuthRoutes, dep.ProviderSettings, dep.Provider)

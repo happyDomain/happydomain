@@ -100,6 +100,16 @@ type ZoneTemplateInput struct {
 	Description string `json:"description"`
 }
 
+// ZoneTemplateCreationForm creates a template, empty or from a zone of a
+// domain of the user.
+type ZoneTemplateCreationForm struct {
+	ZoneTemplateInput
+	// DomainId and ZoneId designate the zone to save as a template. A
+	// template without them starts empty.
+	DomainId *Identifier `json:"domain_id,omitempty" swaggertype:"string"`
+	ZoneId   *Identifier `json:"zone_id,omitempty" swaggertype:"string"`
+}
+
 // ApplyZoneTemplateForm tells which template to apply to a zone, and how.
 type ApplyZoneTemplateForm struct {
 	TemplateId Identifier            `json:"template_id" swaggertype:"string" binding:"required"`
