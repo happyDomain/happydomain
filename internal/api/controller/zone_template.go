@@ -33,11 +33,16 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
-// ZoneTemplateController handles the zone templates of the user logged in.
+// ZoneTemplateController handles the zone templates. On the API of the users,
+// it acts for the user logged in; on the administrative API, without user,
+// on the global templates.
 type ZoneTemplateController struct {
 	zoneTemplateService happydns.ZoneTemplateUsecase
 	domainService       happydns.DomainUsecase
 	zoneService         happydns.ZoneUsecase
+	// needUser refuses the requests made without user, which would act on
+	// the global templates.
+	needUser bool
 }
 
 // NewZoneTemplateController builds the controller of the API of the users.
@@ -46,14 +51,23 @@ func NewZoneTemplateController(zoneTemplateService happydns.ZoneTemplateUsecase,
 		zoneTemplateService: zoneTemplateService,
 		domainService:       domainService,
 		zoneService:         zoneService,
+		needUser:            true,
+	}
+}
+
+// NewAdminZoneTemplateController builds the controller of the administrative
+// API, which manages the global templates.
+func NewAdminZoneTemplateController(zoneTemplateService happydns.ZoneTemplateUsecase) *ZoneTemplateController {
+	return &ZoneTemplateController{
+		zoneTemplateService: zoneTemplateService,
 	}
 }
 
 // user is the user the request acts for; it answers the request itself when
-// there is none.
+// there is none and one is needed.
 func (tc *ZoneTemplateController) user(c *gin.Context) (*happydns.User, bool) {
 	user := middleware.MyUser(c)
-	if user == nil {
+	if user == nil && tc.needUser {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, happydns.ErrorResponse{Message: "User not defined."})
 		return nil, false
 	}
@@ -168,6 +182,10 @@ func (tc *ZoneTemplateController) CreateZoneTemplate(c *gin.Context) {
 // zoneOf finds a zone of a domain of the user: the one being edited when
 // zoneId is nil.
 func (tc *ZoneTemplateController) zoneOf(user *happydns.User, domainId happydns.Identifier, zoneId *happydns.Identifier) (*happydns.Domain, *happydns.Zone, error) {
+	if user == nil || tc.domainService == nil {
+		return nil, nil, happydns.ValidationError{Msg: "A global template cannot be made from a zone."}
+	}
+
 	domain, err := tc.domainService.GetUserDomain(user, domainId)
 	if err != nil {
 		return nil, nil, err

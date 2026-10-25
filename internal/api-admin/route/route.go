@@ -50,6 +50,7 @@ type Dependencies struct {
 	ZoneCorrectionApplier happydns.ZoneCorrectionApplierUsecase
 	ZoneImporter          happydns.ZoneImporterUsecase
 	ZoneService           happydns.ZoneServiceUsecase
+	ZoneTemplate          happydns.ZoneTemplateUsecase
 	CheckerOptionsUC      *checkerUC.CheckerOptionsUsecase
 	CheckScheduler        *checkerUC.Scheduler
 	TidyUp                happydns.TidyUpUseCase
@@ -80,5 +81,6 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.Engine, dep Dependencies) 
 	declareUsersRoutes(apiRoutes, dep)
 	declareTidyRoutes(apiRoutes, dep)
 	declareSecretsRoutes(apiRoutes, dep)
+	declareZoneTemplateRoutes(apiRoutes, dep)
 	api.DeclareVersionRoutes(apiRoutes)
 }

@@ -434,3 +434,18 @@ func TestZoneTemplateRoutesApex(t *testing.T) {
 		t.Errorf("DELETE a service of @: apex %v, want it empty", tpl.Services[""])
 	}
 }
+
+// Without user, the routes of the users would act on the global templates.
+func TestZoneTemplateRoutesNeedAUser(t *testing.T) {
+	api := newTemplateAPI(t, 0)
+	api.user = nil
+
+	api.json(http.MethodGet, "/templates", nil, http.StatusUnauthorized, nil)
+	api.json(http.MethodPost, "/templates", happydns.ZoneTemplateInput{Name: "Global"}, http.StatusUnauthorized, nil)
+	if w := api.importZone("Global", "example.com", templateZone); w.Code != http.StatusUnauthorized {
+		t.Errorf("import without user: status %d, want 401", w.Code)
+	}
+	if globals, err := api.store.ListGlobalZoneTemplates(); err != nil || len(globals) != 0 {
+		t.Errorf("global templates = %v, %v; want none made without user", globals, err)
+	}
+}
