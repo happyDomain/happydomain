@@ -46,7 +46,7 @@
         thisZone,
     } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
-        import { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
+    import { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
     import { controls as ctrlDomainWhois } from "./ModalDomainWhois.svelte";
     import { controls as ctrlUploadZone } from "./ModalUploadZone.svelte";
     import { controls as ctrlNewSubdomain } from "./NewSubdomainPath.svelte";
