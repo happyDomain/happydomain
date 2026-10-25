@@ -207,6 +207,11 @@
         "expires-in": "Expires in {{days}} days",
         "expired": "Expired {{days}} days ago",
         "expires-today": "Expires today",
+        "contact-roles": {
+            "registrant": "Registrant",
+            "admin": "Administrative contact",
+            "tech": "Technical contact"
+        },
         "domain-not-found": "This domain name does not appear to be registered.",
         "error": "Could not retrieve domain information.",
         "status-descriptions": {

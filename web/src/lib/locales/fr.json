@@ -201,6 +201,11 @@
         "expires-in": "Expire dans {{days}} jours",
         "expired": "Expiré il y a {{days}} jours",
         "expires-today": "Expire aujourd'hui",
+        "contact-roles": {
+            "registrant": "Titulaire",
+            "admin": "Contact administratif",
+            "tech": "Contact technique"
+        },
         "domain-not-found": "Ce nom de domaine ne semble pas être enregistré.",
         "error": "Impossible de récupérer les informations du domaine.",
         "status-descriptions": {

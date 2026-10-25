@@ -34,8 +34,8 @@
     } from "@sveltestrap/sveltestrap";
 
     import DomainStatusBadges from "$lib/components/DomainStatusBadges.svelte";
-    import type { DomainInfo } from "$lib/model/domaininfo";
-    import { t } from "$lib/translations";
+    import type { ContactInfo, DomainInfo } from "$lib/model/domaininfo";
+    import { t, tOr } from "$lib/translations";
     import {
         daysUntil,
         expirationColor,
@@ -50,6 +50,27 @@
     }
 
     let { info, domain }: Props = $props();
+
+    const CONTACT_ROLES = ["registrant", "admin", "tech"];
+
+    let contacts = $derived(
+        Object.entries(info.contacts ?? {})
+            .filter(([, c]) => Object.values(c).some((v) => v))
+            .sort(
+                ([a], [b]) =>
+                    (CONTACT_ROLES.indexOf(a) + 1 || 99) - (CONTACT_ROLES.indexOf(b) + 1 || 99),
+            ),
+    );
+
+    function addressLines(c: ContactInfo): string[] {
+        return [
+            c.street,
+            [[c.postal_code, c.city].filter((v) => v).join(" "), c.province]
+                .filter((v) => v)
+                .join(", "),
+            c.country,
+        ].filter((v): v is string => !!v);
+    }
 </script>
 
 <h2 class="display-7 fw-bold mt-3 mb-1 font-monospace">
@@ -162,4 +183,42 @@
             </Card>
         </Col>
     {/if}
+
+    <!-- Contacts cards -->
+    {#each contacts as [role, contact] (role)}
+        {@const address = addressLines(contact)}
+        <Col md={6}>
+            <Card class="mb-4">
+                <CardHeader>
+                    <CardTitle class="h6 mb-0 fw-bold">
+                        <i class="bi bi-person-vcard me-1"></i>
+                        {$tOr(`domaininfo.contact-roles.${role}`, role)}
+                    </CardTitle>
+                </CardHeader>
+                <CardBody class="small">
+                    {#if contact.name}
+                        <div class="fw-semibold">{contact.name}</div>
+                    {/if}
+                    {#if contact.organization}
+                        <div>{contact.organization}</div>
+                    {/if}
+                    {#if address.length}
+                        <address class="mb-0 mt-1 text-muted">
+                            {#each address as line, i (i)}
+                                {#if i}<br />{/if}{line}
+                            {/each}
+                        </address>
+                    {/if}
+                    {#if contact.email}
+                        <div class="mt-1 text-break">
+                            <i class="bi bi-envelope me-1"></i>{contact.email}
+                        </div>
+                    {/if}
+                    {#if contact.phone}
+                        <div class="mt-1"><i class="bi bi-telephone me-1"></i>{contact.phone}</div>
+                    {/if}
+                </CardBody>
+            </Card>
+        </Col>
+    {/each}
 </Row>

@@ -19,6 +19,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import type { TypesDomainInfo } from "$lib/api-base/types.gen";
+import type { TypesContactInfo, TypesDomainInfo } from "$lib/api-base/types.gen";
 
+export type ContactInfo = TypesContactInfo;
 export type DomainInfo = TypesDomainInfo;
