@@ -64,4 +64,17 @@ describe("DomainStatusBadges", () => {
 
         expect(screen.getAllByText("ok")).toHaveLength(2);
     });
+
+    it("leaves the single status undescribed when asked to", () => {
+        const { container } = render(DomainStatusBadges, {
+            status: ["clientTransferProhibited"],
+            describeSingle: false,
+        });
+
+        expect(screen.getByText("clientTransferProhibited")).toHaveAttribute(
+            "title",
+            "Transfer to another registrar is locked.",
+        );
+        expect(container.querySelector("p")).toBeNull();
+    });
 });

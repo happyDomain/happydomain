@@ -247,6 +247,71 @@
             "updateProhibited": "Domain updates are prohibited."
         }
     },
+    "watchlist": {
+        "lifecycle": "Life cycle of the domain",
+        "note-placeholder": "Why do you want this domain?",
+        "steps": {
+            "registered": "Registered",
+            "grace": "Expired",
+            "redemption": "Redemption",
+            "pending_delete": "Pending delete",
+            "available": "Available"
+        },
+        "auto-renew": "Auto-renewed",
+        "phases": {
+            "unknown": "Not checked yet",
+            "registered": "Registered",
+            "expiring": "Expiring soon",
+            "grace": "Expired",
+            "redemption": "Redemption",
+            "pending_delete": "Pending delete",
+            "available": "Available"
+        },
+        "phase-descriptions": {
+            "registered": "Someone holds the domain.",
+            "grace": "The expiration date has passed, but the owner can still renew the domain as usual, often for up to 45 days.",
+            "redemption": "The registrar deleted the domain. Its owner can only restore it, for a fee, during about 30 days.",
+            "pending_delete": "Nothing can stop the release anymore: the registry frees the domain within about 5 days.",
+            "available": "The registry no longer knows the domain: anyone can register it."
+        },
+        "headline": {
+            "available": "Available now!",
+            "release-soon": "Released soon",
+            "release-imminent": "Released any moment now",
+            "release-in": "Released within {{days:eq; 1:1 day; default:{{days}} days}}",
+            "expired": "Expired",
+            "expired-ago": "Expired {{days:eq; 1:1 day; default:{{days}} days}} ago",
+            "no-expiration": "Expiration date not published",
+            "expires-today": "Expires today",
+            "expires-in": "Expires in {{days:eq; 1:1 day; default:{{days}} days}}",
+            "lookup-failed": "Registration data unavailable",
+            "not-checked": "Not checked yet"
+        },
+        "hints": {
+            "available": "Register it now with the registrar of your choice, before someone else does.",
+            "release-by": "By {{date}} at the latest.",
+            "redemption": "Its owner can still restore it, for a fee.",
+            "pending_delete": "It can no longer be restored: be ready to register it.",
+            "grace": "Its owner can still renew it.",
+            "expires-on": "On {{date}}.",
+            "auto-renew": "The registry renewed it automatically: its registrar still has to confirm the renewal, or may delete the domain within 45 days."
+        },
+        "last-check": "Checked {{when}}",
+        "next-check": "Next check {{when}}",
+        "never-checked": "Never checked",
+        "last-error": "Last check failed: {{error}}",
+        "history": "History",
+        "edit-note": "Edit the note",
+        "details": "Registration details",
+        "check-now": "Check now",
+        "remove": "Stop watching",
+        "confirm-remove": "Stop watching {{domain}}?",
+        "errors": {
+            "check": "Unable to check the domain",
+            "remove": "Unable to stop watching the domain",
+            "note": "Unable to save the note"
+        }
+    },
     "errors": {
         "404": {
             "title": "Page not found",

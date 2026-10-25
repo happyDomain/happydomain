@@ -241,6 +241,71 @@
             "updateProhibited": "Les modifications du domaine sont interdites."
         }
     },
+    "watchlist": {
+        "lifecycle": "Cycle de vie du domaine",
+        "note-placeholder": "Pourquoi voulez-vous ce domaine ?",
+        "steps": {
+            "registered": "Enregistré",
+            "grace": "Expiré",
+            "redemption": "Rédemption",
+            "pending_delete": "Suppression",
+            "available": "Disponible"
+        },
+        "auto-renew": "Renouvelé d'office",
+        "phases": {
+            "unknown": "Pas encore vérifié",
+            "registered": "Enregistré",
+            "expiring": "Expire bientôt",
+            "grace": "Expiré",
+            "redemption": "Rédemption",
+            "pending_delete": "Suppression imminente",
+            "available": "Disponible"
+        },
+        "phase-descriptions": {
+            "registered": "Quelqu'un détient le domaine.",
+            "grace": "La date d'expiration est passée, mais le titulaire peut encore renouveler le domaine normalement, souvent jusqu'à 45 jours.",
+            "redemption": "Le bureau d'enregistrement a supprimé le domaine. Son titulaire peut seulement le restaurer, moyennant des frais, pendant environ 30 jours.",
+            "pending_delete": "Plus rien ne peut empêcher la libération : le registre libère le domaine sous 5 jours environ.",
+            "available": "Le registre ne connaît plus le domaine : n'importe qui peut l'enregistrer."
+        },
+        "headline": {
+            "available": "Disponible !",
+            "release-soon": "Bientôt libéré",
+            "release-imminent": "Libéré d'un instant à l'autre",
+            "release-in": "Libéré d'ici {{days:eq; 1:1 jour; default:{{days}} jours}}",
+            "expired": "Expiré",
+            "expired-ago": "Expiré depuis {{days:eq; 1:1 jour; default:{{days}} jours}}",
+            "no-expiration": "Date d'expiration non publiée",
+            "expires-today": "Expire aujourd'hui",
+            "expires-in": "Expire dans {{days:eq; 1:1 jour; default:{{days}} jours}}",
+            "lookup-failed": "Données d'enregistrement indisponibles",
+            "not-checked": "Pas encore vérifié"
+        },
+        "hints": {
+            "available": "Enregistrez-le dès maintenant auprès du bureau d'enregistrement de votre choix, avant quelqu'un d'autre.",
+            "release-by": "Au plus tard le {{date}}.",
+            "redemption": "Son titulaire peut encore le restaurer, moyennant des frais.",
+            "pending_delete": "Il ne peut plus être restauré : tenez-vous prêt à l'enregistrer.",
+            "grace": "Son titulaire peut encore le renouveler.",
+            "expires-on": "Le {{date}}.",
+            "auto-renew": "Le registre l'a renouvelé automatiquement : son bureau d'enregistrement doit encore confirmer le renouvellement, ou peut supprimer le domaine sous 45 jours."
+        },
+        "last-check": "Vérifié {{when}}",
+        "next-check": "Prochaine vérification {{when}}",
+        "never-checked": "Jamais vérifié",
+        "last-error": "La dernière vérification a échoué : {{error}}",
+        "history": "Historique",
+        "edit-note": "Modifier la note",
+        "details": "Détails de l'enregistrement",
+        "check-now": "Vérifier maintenant",
+        "remove": "Ne plus surveiller",
+        "confirm-remove": "Ne plus surveiller {{domain}} ?",
+        "errors": {
+            "check": "Impossible de vérifier le domaine",
+            "remove": "Impossible d'arrêter de surveiller le domaine",
+            "note": "Impossible d'enregistrer la note"
+        }
+    },
     "errors": {
         "404": {
             "title": "Page introuvable",

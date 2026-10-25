@@ -29,9 +29,11 @@
 
     interface Props {
         status: string[];
+        // Describe the status below the badge when there is only one.
+        describeSingle?: boolean;
     }
 
-    let { status }: Props = $props();
+    let { status, describeSingle = true }: Props = $props();
 
     function description(code: string): string | undefined {
         return $tOr(`domaininfo.status-descriptions.${code}`, undefined);
@@ -45,6 +47,6 @@
         </Badge>
     {/each}
 </div>
-{#if status.length === 1 && description(status[0])}
+{#if describeSingle && status.length === 1 && description(status[0])}
     <p class="text-muted small mt-1 mb-0">{description(status[0])}</p>
 {/if}
