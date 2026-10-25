@@ -59,9 +59,17 @@
         },
     ];
 
-    let provider_specs: ProviderInfos | null = $state(null);
+    // undefined while loading; null for an origin without provider, as a
+    // zone template, whose services are not limited to what one supports.
+    let provider_specs: ProviderInfos | null | undefined = $state(undefined);
     $effect(() => {
-        getProviderSpec($providers_idx[origin.id_provider]._srctype).then((prvdspecs) => {
+        if (!origin.id_provider) {
+            provider_specs = null;
+            return;
+        }
+        const provider = $providers_idx[origin.id_provider];
+        if (!provider) return;
+        getProviderSpec(provider._srctype).then((prvdspecs) => {
             provider_specs = prvdspecs;
         });
     });
@@ -69,7 +77,7 @@
     let filtered_family: string | null = $state(null);
 
     let filteredServicesResult = $derived(
-        provider_specs !== null
+        provider_specs !== undefined
             ? filterServices(
                   $servicesSpecsList,
                   provider_specs,
@@ -88,7 +96,7 @@
         }
 
         // Only handle if we have a filtered result
-        if (!provider_specs || !$servicesSpecsLoaded) return;
+        if (provider_specs === undefined || !$servicesSpecsLoaded) return;
 
         event.preventDefault();
 
@@ -118,7 +126,7 @@
 
 <svelte:document on:keydown={handleKeyDown} />
 
-{#if !provider_specs || !$servicesSpecsLoaded}
+{#if provider_specs === undefined || !$servicesSpecsLoaded}
     <div class="d-flex justify-content-center">
         <Spinner color="primary" />
     </div>

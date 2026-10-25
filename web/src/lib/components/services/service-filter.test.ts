@@ -118,6 +118,39 @@ describe("filterServices: available vs disabled split", () => {
         expect(result.disabled).toEqual([]);
     });
 
+    it("allows any record type without provider, as in a zone template", () => {
+        const svc = makeSvc({ restrictions: { needTypes: [16] } });
+        const result = filterServices([svc], null, NO_SERVICES, "", "");
+        expect(result.available).toEqual([svc]);
+        expect(result.disabled).toEqual([]);
+    });
+
+    it("refuses the origin of a zone without provider, as in a zone template", () => {
+        const origin = makeSvc({ _svctype: "abstract.Origin", restrictions: { rootOnly: true } });
+        const result = filterServices([origin], null, NO_SERVICES, "", "");
+        expect(result.available).toEqual([]);
+        expect(result.disabled).toEqual([
+            { svc: origin, reason: "belongs to the domain the template is applied to." },
+        ]);
+    });
+
+    it("refuses the NS of a zone without provider, as in a zone template", () => {
+        const ns = makeSvc({ _svctype: "abstract.NSOnlyOrigin", restrictions: { rootOnly: true } });
+        const result = filterServices([ns], null, NO_SERVICES, "", "");
+        expect(result.available).toEqual([]);
+        expect(result.disabled).toEqual([
+            { svc: ns, reason: "belongs to the domain the template is applied to." },
+        ]);
+    });
+
+    it("keeps the other root-only services to the root without provider", () => {
+        const svc = makeSvc({ _svctype: "svcs.Root", restrictions: { rootOnly: true } });
+        expect(filterServices([svc], null, NO_SERVICES, "", "").available).toEqual([svc]);
+        expect(filterServices([svc], null, NO_SERVICES, "www", "").disabled).toEqual([
+            { svc, reason: "can only be present at the root of your domain." },
+        ]);
+    });
+
     it("splits a mixed list into available and disabled", () => {
         const ok = makeSvc({ _svctype: "svcs.Ok", name: "ok" });
         const restricted = makeSvc({

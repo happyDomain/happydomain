@@ -11,7 +11,8 @@ export interface FilteredServices {
 
 export function filterServices(
     servicesList: ServiceInfos[],
-    providerSpecs: ProviderInfos,
+    // null for an origin without provider, as a zone template.
+    providerSpecs: ProviderInfos | null,
     zservices: Record<string, Array<HappydnsService>>,
     dn: string,
     filteredName: string,

@@ -81,9 +81,12 @@
     function submitFilter(e: SubmitEvent) {
         e.preventDefault();
 
-        // Get provider specs and find the first available matching service
-        getProviderSpec($providers_idx[origin.id_provider]._srctype).then((prvdspecs) => {
-            if (!prvdspecs || !$servicesSpecsLoaded) return;
+        // Get provider specs and find the first available matching service;
+        // an origin without provider, as a zone template, has none.
+        const provider = origin.id_provider ? $providers_idx[origin.id_provider] : undefined;
+        if (origin.id_provider && !provider) return;
+        (provider ? getProviderSpec(provider._srctype) : Promise.resolve(null)).then((prvdspecs) => {
+            if ((provider && !prvdspecs) || !$servicesSpecsLoaded) return;
 
             // Use the shared filter function to get available services
             const { available } = filterServices(

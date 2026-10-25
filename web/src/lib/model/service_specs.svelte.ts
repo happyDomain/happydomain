@@ -91,15 +91,27 @@ export class ServiceSpec {
     }
 }
 
+// The services holding the SOA and the NS records of a zone, which belong to
+// its domain and its provider.
+const originServices = ["abstract.Origin", "abstract.NSOnlyOrigin"];
+
+// passRestrictions tells why a service cannot be added under dn, or null when
+// it can. Without provider_specs, as in a zone template, which is applied to
+// domains of any provider, the records it needs are not checked, but the
+// origin of the zone is refused.
 export function passRestrictions(
     svcinfo: ServiceInfos,
-    provider_specs: ProviderInfos,
+    provider_specs: ProviderInfos | null,
     zservices: Record<string, Array<HappydnsService>>,
     dn: string,
 ): null | string {
+    if (provider_specs === null && originServices.includes(svcinfo._svctype)) {
+        return "belongs to the domain the template is applied to.";
+    }
+
     if (svcinfo.restrictions) {
         // Handle NeedTypes restriction: hosting provider need to support given types.
-        if (svcinfo.restrictions.needTypes) {
+        if (provider_specs !== null && svcinfo.restrictions.needTypes) {
             const availableResourceTypes = getAvailableResourceTypes(provider_specs);
 
             for (const needType of svcinfo.restrictions.needTypes) {
