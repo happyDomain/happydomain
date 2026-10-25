@@ -22,6 +22,7 @@
 package app
 
 import (
+	"context"
 	"log"
 	"strings"
 
@@ -34,6 +35,7 @@ import (
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
 	domainUC "git.happydns.org/happyDomain/internal/usecase/domain"
 	domainlogUC "git.happydns.org/happyDomain/internal/usecase/domain_log"
+	"git.happydns.org/happyDomain/internal/usecase/domainwatch"
 	emailAutoconfigUC "git.happydns.org/happyDomain/internal/usecase/emailautoconfig"
 	mtastsUC "git.happydns.org/happyDomain/internal/usecase/mtasts"
 	notifUC "git.happydns.org/happyDomain/internal/usecase/notification"
@@ -226,6 +228,16 @@ func (app *App) initUsecases() {
 	if cb, ok := app.usecases.checkerEngine.(checkerUC.ExecutionCallbackSetter); ok {
 		cb.SetExecutionCallback(app.usecases.notificationDispatcher.OnExecutionComplete)
 	}
+
+	// Domain watchlist: follows domains users do not manage, through the
+	// same lookup chain as the WHOIS page.
+	app.usecases.domainWatch = domainwatch.NewService(
+		app.store,
+		func(ctx context.Context, name string) (*domaininfo.DomainInfo, error) {
+			return app.usecases.domainInfo.GetDomainInfo(ctx, happydns.Origin(name))
+		},
+		app.cfg.DomainWatchMaxPerUser,
+	)
 }
 
 // initFaviconService builds the icon fetching chain from the configuration. As

@@ -213,6 +213,10 @@ type Options struct {
 	// through the admin API.
 	DisableCheckerScheduler bool
 
+	// DomainWatchMaxPerUser caps the number of domains a user can watch.
+	// 0 means unlimited.
+	DomainWatchMaxPerUser int
+
 	// CaptchaProvider selects the captcha provider ("hcaptcha", "recaptchav2", "turnstile", or "").
 	CaptchaProvider string
 

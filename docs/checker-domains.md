@@ -15,7 +15,7 @@ whose minimum is 12 h).
 
 Checks whether a domain name is nearing its expiration date, and, once it is
 past it, whether the registry is about to release it, as its registry statuses
-tell.
+tell, the same way as the [domain watchlist](domain-watchlist.md) does.
 Also exports a `domain_expiry_days_remaining` metric (gauge, unit: days, label:
 `registrar`), unless the registry does not publish the expiration date.
 

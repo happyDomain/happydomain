@@ -22,6 +22,7 @@
 package happydns
 
 import (
+	"context"
 	"time"
 )
 
@@ -99,4 +100,25 @@ type DomainWatchEvent struct {
 	At   time.Time        `json:"at"`
 	From DomainWatchPhase `json:"from"`
 	To   DomainWatchPhase `json:"to"`
+}
+
+// DomainWatchInput is what a user tells about a domain to watch.
+type DomainWatchInput struct {
+	// Domain to watch; a subdomain or a URL is reduced to the registrable
+	// domain. Ignored on update.
+	Domain string `json:"domain,omitempty"`
+	Note   string `json:"note"`
+}
+
+// DomainWatchUsecase manages the domains a user watches.
+type DomainWatchUsecase interface {
+	ListDomainWatches(user *User) ([]*DomainWatch, error)
+	GetDomainWatch(user *User, id Identifier) (*DomainWatch, error)
+	// CreateDomainWatch starts watching a domain, looking it up at once.
+	CreateDomainWatch(ctx context.Context, user *User, input DomainWatchInput) (*DomainWatch, error)
+	// UpdateDomainWatch changes the note of a watch.
+	UpdateDomainWatch(user *User, id Identifier, input DomainWatchInput) (*DomainWatch, error)
+	DeleteDomainWatch(user *User, id Identifier) error
+	// CheckDomainWatch looks the domain up now.
+	CheckDomainWatch(ctx context.Context, user *User, id Identifier) (*DomainWatch, error)
 }
