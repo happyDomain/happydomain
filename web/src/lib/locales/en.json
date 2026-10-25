@@ -356,6 +356,13 @@
             "note": "Unable to save the note"
         }
     },
+    "zone-templates": {
+        "title": "Zone templates",
+        "global": "Offered to everyone",
+        "global-hint": "Set up by the administrators: you can apply this template to your domains, not change it.",
+        "services": "{{count:eq; 0:No service; 1:1 service; default:{{count}} services}}",
+        "mine": "My templates"
+    },
     "errors": {
         "404": {
             "title": "Page not found",

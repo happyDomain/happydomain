@@ -350,6 +350,13 @@
             "note": "Impossible d'enregistrer la note"
         }
     },
+    "zone-templates": {
+        "title": "Modèles de zone",
+        "global": "Proposé à tous",
+        "global-hint": "Mis en place par les administrateurs : vous pouvez appliquer ce modèle à vos domaines, mais pas le modifier.",
+        "services": "{{count:eq; 0:Aucun service; 1:1 service; default:{{count}} services}}",
+        "mine": "Mes modèles"
+    },
     "errors": {
         "404": {
             "title": "Page introuvable",

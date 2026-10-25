@@ -99,6 +99,14 @@ export function domainLinks() {
     };
 }
 
+export function templateLinks() {
+    return {
+        template: (tid: string) => resolve("/templates/[tid]", { tid }),
+        service: (tid: string, subdomain: string, serviceid: string) =>
+            resolve("/templates/[tid]/[subdomain]/[serviceid]", { tid, subdomain, serviceid }),
+    };
+}
+
 export function providerLinks() {
     return {
         provider: (prvid: string) => resolve("/providers/[prvid]", { prvid }),

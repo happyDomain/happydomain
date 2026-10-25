@@ -57,6 +57,14 @@ export function serviceCheckerLinks(
     };
 }
 
+// The global zone templates have no pages here yet.
+export function templateLinks() {
+    return {
+        template: (_tid: string) => resolve("/"),
+        service: (_tid: string, _subdomain: string, _serviceid: string) => resolve("/"),
+    };
+}
+
 export function providerLinks() {
     return {
         provider: (_prvid: string) => resolve("/providers"),

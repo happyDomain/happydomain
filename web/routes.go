@@ -219,6 +219,7 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, captchaVerifi
 	router.GET("/services/*_", serveIndex)
 	router.GET("/tools/*_", serveIndex)
 	router.GET("/resolver/*_", serveIndex)
+	router.GET("/templates/*_", serveIndex)
 	router.GET("/watchlist/*_", serveIndex)
 	router.GET("/zones/*_", serveIndex)
 }
