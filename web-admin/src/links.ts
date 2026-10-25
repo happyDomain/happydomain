@@ -57,12 +57,13 @@ export function serviceCheckerLinks(
     };
 }
 
-// The global zone templates have no pages here yet.
+// Unlike the links above, the global templates have pages of their own here.
 export function templateLinks() {
     return {
-        list: resolve("/"),
-        template: (_tid: string) => resolve("/"),
-        service: (_tid: string, _subdomain: string, _serviceid: string) => resolve("/"),
+        list: resolve("/templates"),
+        template: (tid: string) => resolve("/templates/[tid]", { tid }),
+        service: (tid: string, subdomain: string, serviceid: string) =>
+            resolve("/templates/[tid]/[subdomain]/[serviceid]", { tid, subdomain, serviceid }),
     };
 }
 
