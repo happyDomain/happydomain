@@ -60,6 +60,7 @@ export function serviceCheckerLinks(
 // The global zone templates have no pages here yet.
 export function templateLinks() {
     return {
+        list: resolve("/"),
         template: (_tid: string) => resolve("/"),
         service: (_tid: string, _subdomain: string, _serviceid: string) => resolve("/"),
     };

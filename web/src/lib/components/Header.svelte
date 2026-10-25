@@ -126,6 +126,13 @@
                         <Icon name="clock-history" class="me-2" />
                         {$t("menu.watchlist")}
                     </DropdownItem>
+                    <DropdownItem
+                        active={page.route && page.route.id?.startsWith("/templates")}
+                        href="/templates"
+                    >
+                        <Icon name="files" class="me-2" />
+                        {$t("menu.zone-templates")}
+                    </DropdownItem>
                     <DropdownItem divider />
                     <DropdownItem
                         active={page.route && page.route.id == "/providers/features"}

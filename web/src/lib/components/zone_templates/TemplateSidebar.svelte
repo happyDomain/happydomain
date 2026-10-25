@@ -49,18 +49,18 @@
     const origin = templateOrigin();
 </script>
 
-<!-- Header: back to the template + template selector -->
+<!-- Header: back to the templates + template selector -->
 <div class="d-flex">
-    {#if service}
-        <Button
-            href={templateLinks().template(encodeURIComponent(template.id))}
-            class="fw-bolder"
-            color="link"
-            title={$t("zones.return-to")}
-        >
-            <Icon name="chevron-left" />
-        </Button>
-    {/if}
+    <Button
+        href={service
+            ? templateLinks().template(encodeURIComponent(template.id))
+            : templateLinks().list}
+        class="fw-bolder"
+        color="link"
+        title={service ? $t("zones.return-to") : $t("zone-templates.back")}
+    >
+        <Icon name={service ? "chevron-left" : "chevron-up"} />
+    </Button>
     <SelectTemplate templates={$zoneTemplates} current={template} {onselect} />
 </div>
 

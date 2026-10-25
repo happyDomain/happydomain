@@ -108,6 +108,8 @@ describe("TemplateSidebar", () => {
     it("lists the subdomains of the template", () => {
         setup(mine, false);
 
+        expect(screen.getByTitle("All my templates")).toHaveAttribute("href", "/templates");
+
         expect(screen.getByRole("link", { name: "example.com." })).toHaveAttribute("href", "#@");
         expect(screen.getByRole("link", { name: "mail.example.com." })).toHaveAttribute(
             "href",

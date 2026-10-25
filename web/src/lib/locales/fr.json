@@ -352,10 +352,37 @@
     },
     "zone-templates": {
         "title": "Modèles de zone",
+        "description": "Enregistrez une fois les services d'une zone, et remplissez-en vos nouveaux domaines en quelques clics.",
+        "loading": "Chargement de vos modèles…",
+        "retry": "Réessayer",
         "global": "Proposé à tous",
         "global-hint": "Mis en place par les administrateurs : vous pouvez appliquer ce modèle à vos domaines, mais pas le modifier.",
+        "services-title": "Services",
+        "last-modified": "Dernière modification",
         "services": "{{count:eq; 0:Aucun service; 1:1 service; default:{{count}} services}}",
-        "mine": "Mes modèles"
+        "origin": "Écrit pour {{origin}}",
+        "back": "Tous mes modèles",
+        "errors": {
+            "load": "Impossible de charger les modèles"
+        },
+        "empty": {
+            "title": "Aucun modèle pour l'instant",
+            "intro": "Un modèle contient les services d'une zone : serveurs de messagerie, site web, enregistrements de vérification… Appliquez-le à un nouveau domaine plutôt que de tout reconfigurer.",
+            "save": {
+                "title": "Enregistrez une zone",
+                "text": "Depuis les actions d'un domaine, enregistrez sa zone comme modèle. Vous pouvez aussi importer un fichier de zone, ou partir de zéro."
+            },
+            "edit": {
+                "title": "Ajustez-le",
+                "text": "Ajoutez, modifiez ou supprimez des services, comme dans la zone d'un domaine."
+            },
+            "apply": {
+                "title": "Appliquez-le",
+                "text": "Depuis les actions d'un autre domaine, appliquez le modèle, relisez les changements, puis publiez-les."
+            }
+        },
+        "mine": "Mes modèles",
+        "modified": "Modifié {{when}}"
     },
     "errors": {
         "404": {
@@ -435,7 +462,8 @@
         "signin": "S'identifier",
         "quick-menu": "Accès rapide",
         "my-providers": "Les hébergeurs de mes domaines",
-        "report-problem": "Signaler un problème"
+        "report-problem": "Signaler un problème",
+        "zone-templates": "Modèles de zone"
     },
     "report": {
         "title": "Signaler un problème",

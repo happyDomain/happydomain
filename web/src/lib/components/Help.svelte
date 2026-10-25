@@ -110,6 +110,9 @@
                         return "/pages/domain-abstract/";
                 }
 
+            case "templates":
+                return "/pages/zone-templates/";
+
             case "availability":
             case "whois":
                 return "/pages/domain-availability/";

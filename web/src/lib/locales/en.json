@@ -358,10 +358,37 @@
     },
     "zone-templates": {
         "title": "Zone templates",
+        "description": "Save the services of a zone once, and fill your new domains with them in a few clicks.",
+        "loading": "Loading your templates…",
+        "retry": "Try again",
         "global": "Offered to everyone",
         "global-hint": "Set up by the administrators: you can apply this template to your domains, not change it.",
+        "services-title": "Services",
+        "last-modified": "Last modified",
         "services": "{{count:eq; 0:No service; 1:1 service; default:{{count}} services}}",
-        "mine": "My templates"
+        "origin": "Written for {{origin}}",
+        "back": "All my templates",
+        "errors": {
+            "load": "Unable to load the templates"
+        },
+        "empty": {
+            "title": "No template yet",
+            "intro": "A template holds the services of a zone: mail servers, website, verification records… Apply it to a new domain instead of setting everything up again.",
+            "save": {
+                "title": "Save a zone",
+                "text": "From the actions of a domain, save its zone as a template. You can also import a zone file, or start from scratch."
+            },
+            "edit": {
+                "title": "Adjust it",
+                "text": "Add, change or remove services, as in the zone of a domain."
+            },
+            "apply": {
+                "title": "Apply it",
+                "text": "From the actions of another domain, apply the template, review the changes, then publish them."
+            }
+        },
+        "mine": "My templates",
+        "modified": "Changed {{when}}"
     },
     "errors": {
         "404": {
@@ -435,7 +462,8 @@
         "signup": "Sign up",
         "signin": "Sign in",
         "quick-menu": "Quick Access",
-        "report-problem": "Report a problem"
+        "report-problem": "Report a problem",
+        "zone-templates": "Zone templates"
     },
     "report": {
         "title": "Report a problem",

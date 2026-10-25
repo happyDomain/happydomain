@@ -101,6 +101,7 @@ export function domainLinks() {
 
 export function templateLinks() {
     return {
+        list: resolve("/templates"),
         template: (tid: string) => resolve("/templates/[tid]", { tid }),
         service: (tid: string, subdomain: string, serviceid: string) =>
             resolve("/templates/[tid]/[subdomain]/[serviceid]", { tid, subdomain, serviceid }),
