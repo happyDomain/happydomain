@@ -46,6 +46,7 @@ var (
 	ErrUserNotFound                   = errors.New("user not found")
 	ErrUserAlreadyExist               = errors.New("user already exists")
 	ErrZoneNotFound                   = errors.New("zone not found")
+	ErrZoneTemplateNotFound           = errors.New("zone template not found")
 	ErrNotFound                       = errors.New("not found")
 )
 
