@@ -153,7 +153,7 @@ func mapRDAPDomain(domainInfo *rdap.Domain) (*DomainInfo, error) {
 		ExpirationDate: expiration,
 		Registrar:      registrar,
 		RegistrarURL:   registrarURL,
-		Status:         domainInfo.Status,
+		Status:         normalizeStatuses(domainInfo.Status),
 		Contacts:       contactsPtr,
 	}, nil
 }

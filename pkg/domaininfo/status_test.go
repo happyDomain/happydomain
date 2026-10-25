@@ -25,6 +25,27 @@ import (
 	"testing"
 )
 
+func TestNormalizeStatus(t *testing.T) {
+	for in, want := range map[string]string{
+		"client transfer prohibited": "clientTransferProhibited",
+		"pending delete":             "pendingDelete",
+		"redemption period":          "redemptionPeriod",
+		"pending restore":            "pendingRestore",
+		"auto renew period":          "autoRenewPeriod",
+		"Server Hold":                "serverHold",
+		"  pending   delete ":        "pendingDelete",
+		"pendingDelete":              "pendingDelete",
+		"client-transfer-prohibited": "client-transfer-prohibited",
+		"active":                     "active",
+		"ok":                         "ok",
+		"":                           "",
+	} {
+		if got := NormalizeStatus(in); got != want {
+			t.Errorf("NormalizeStatus(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
 func TestStatusKey(t *testing.T) {
 	cases := []struct {
 		in, want string
@@ -40,5 +61,16 @@ func TestStatusKey(t *testing.T) {
 		if got := StatusKey(tc.in); got != tc.want {
 			t.Errorf("StatusKey(%q) = %q, want %q", tc.in, got, tc.want)
 		}
+	}
+}
+
+func TestNormalizeStatuses(t *testing.T) {
+	if got := normalizeStatuses(nil); got != nil {
+		t.Errorf("normalizeStatuses(nil) = %#v, want nil", got)
+	}
+
+	got := normalizeStatuses([]string{"client transfer prohibited", "ok"})
+	if len(got) != 2 || got[0] != "clientTransferProhibited" || got[1] != "ok" {
+		t.Errorf("normalizeStatuses() = %#v", got)
 	}
 }

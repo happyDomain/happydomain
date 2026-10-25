@@ -56,7 +56,7 @@ func TestMapRDAPDomain_Full(t *testing.T) {
 	in := &rdap.Domain{
 		LDHName:     "example.com",
 		UnicodeName: "",
-		Status:      []string{"clientTransferProhibited"},
+		Status:      []string{"client transfer prohibited"},
 		Nameservers: []rdap.Nameserver{
 			{LDHName: "ns1.example.com"},
 			{UnicodeName: "ns2.exämple.com", LDHName: "ns2.xn--exmple-cua.com"},
@@ -178,6 +178,9 @@ func TestMapRDAPDomain_NoEntities(t *testing.T) {
 	}
 	if out.Contacts != nil {
 		t.Errorf("Contacts = %v, want nil", out.Contacts)
+	}
+	if out.Status != nil {
+		t.Errorf("Status = %#v, want nil", out.Status)
 	}
 	if out.ExpirationDate != nil || out.CreationDate != nil {
 		t.Error("dates should be nil with no events")

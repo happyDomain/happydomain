@@ -25,6 +25,28 @@ import (
 	"strings"
 )
 
+// NormalizeStatus joins the words of a registry status in camel case, as EPP
+// (RFC 5731) and WHOIS servers spell it. RDAP spells with spaced words what
+// EPP writes in camel case (RFC 8056, section 2): "client transfer
+// prohibited" is clientTransferProhibited. A status already in camel case, or
+// made of a single word, is only trimmed: the RDAP "active", which EPP calls
+// ok, stays "active".
+func NormalizeStatus(status string) string {
+	words := strings.Fields(status)
+	if len(words) < 2 {
+		return strings.TrimSpace(status)
+	}
+
+	var b strings.Builder
+	b.WriteString(strings.ToLower(words[0]))
+	for _, w := range words[1:] {
+		w = strings.ToLower(w)
+		b.WriteString(strings.ToUpper(w[:1]))
+		b.WriteString(w[1:])
+	}
+	return b.String()
+}
+
 var statusKeyReplacer = strings.NewReplacer(" ", "", "-", "", "_", "")
 
 // StatusKey reduces a registry status to a comparison key: lowercased,
@@ -33,4 +55,18 @@ var statusKeyReplacer = strings.NewReplacer(" ", "", "-", "", "_", "")
 // compare equal.
 func StatusKey(s string) string {
 	return statusKeyReplacer.Replace(strings.ToLower(s))
+}
+
+// normalizeStatuses applies NormalizeStatus to each status, keeping a nil
+// list nil.
+func normalizeStatuses(status []string) []string {
+	if status == nil {
+		return nil
+	}
+
+	out := make([]string, len(status))
+	for i, s := range status {
+		out[i] = NormalizeStatus(s)
+	}
+	return out
 }
