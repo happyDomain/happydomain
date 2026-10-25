@@ -73,6 +73,17 @@ func TestDomainExpiryRule_Evaluate(t *testing.T) {
 	}
 }
 
+func TestDomainExpiryRule_EvaluateNoExpiry(t *testing.T) {
+	rule := &domainExpiryRule{}
+	states := rule.Evaluate(context.Background(), newWhoisObs(&WHOISData{Status: []string{"active"}}), nil)
+	if len(states) != 1 {
+		t.Fatalf("expected 1 state, got %d", len(states))
+	}
+	if states[0].Status != happydns.StatusInfo || states[0].Code != "expiry_unknown" {
+		t.Errorf("got %v / %q, want info / expiry_unknown", states[0].Status, states[0].Code)
+	}
+}
+
 func TestDomainExpiryRule_EvaluateObservationError(t *testing.T) {
 	rule := &domainExpiryRule{}
 	obs := &stubObservationGetter{key: ObservationKeyWhois, err: errString("boom")}
@@ -141,5 +152,20 @@ func TestWhoisProvider_ExtractMetrics(t *testing.T) {
 	}
 	if m.Labels["registrar"] != "Acme" {
 		t.Errorf("registrar label = %q", m.Labels["registrar"])
+	}
+}
+
+func TestWhoisProvider_ExtractMetricsNoExpiry(t *testing.T) {
+	p := &whoisProvider{}
+	raw, err := json.Marshal(WHOISData{Registrar: "Acme"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	metrics, err := p.ExtractMetrics(sdk.StaticReportContext(raw), time.Now())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(metrics) != 0 {
+		t.Errorf("expected no metric without expiration date, got %v", metrics)
 	}
 }

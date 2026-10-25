@@ -44,6 +44,7 @@ const (
 
 // WHOISData represents WHOIS observation data.
 type WHOISData struct {
+	// ExpiryDate is zero when the registry does not publish it.
 	ExpiryDate time.Time                          `json:"expiryDate"`
 	Registrar  string                             `json:"registrar"`
 	Contacts   map[string]*domaininfo.ContactInfo `json:"contacts,omitempty"`
@@ -68,21 +69,23 @@ func (p *whoisProvider) Collect(ctx context.Context, opts happydns.CheckerOption
 		return nil, fmt.Errorf("failed to retrieve domain info: %w", err)
 	}
 
-	if info.ExpirationDate == nil {
-		return nil, fmt.Errorf("expiration date not available for %s", domainName)
-	}
-
 	registrar := info.Registrar
 	if registrar == "" {
 		registrar = "Unknown"
 	}
 
-	return &WHOISData{
-		ExpiryDate: *info.ExpirationDate,
-		Registrar:  registrar,
-		Contacts:   info.Contacts,
-		Status:     info.Status,
-	}, nil
+	data := &WHOISData{
+		Registrar: registrar,
+		Contacts:  info.Contacts,
+		Status:    info.Status,
+	}
+	// Some registries (e.g. DENIC) do not publish the expiration date; the
+	// other facts remain useful to the rules sharing this observation.
+	if info.ExpirationDate != nil {
+		data.ExpiryDate = *info.ExpirationDate
+	}
+
+	return data, nil
 }
 
 // ExtractMetrics implements happydns.CheckerMetricsReporter.
@@ -90,6 +93,10 @@ func (p *whoisProvider) ExtractMetrics(ctx happydns.ReportContext, collectedAt t
 	var data WHOISData
 	if err := json.Unmarshal(ctx.Data(), &data); err != nil {
 		return nil, err
+	}
+
+	if data.ExpiryDate.IsZero() {
+		return nil, nil
 	}
 
 	daysRemaining := data.ExpiryDate.Sub(collectedAt).Hours() / 24
@@ -152,6 +159,14 @@ func (r *domainExpiryRule) Evaluate(ctx context.Context, obs happydns.Observatio
 			Status:  happydns.StatusError,
 			Message: fmt.Sprintf("Failed to get WHOIS data: %v", err),
 			Code:    "whois_error",
+		}}
+	}
+
+	if whois.ExpiryDate.IsZero() {
+		return []happydns.CheckState{{
+			Status:  happydns.StatusInfo,
+			Message: "The registry does not publish the expiration date of this domain",
+			Code:    "expiry_unknown",
 		}}
 	}
 
