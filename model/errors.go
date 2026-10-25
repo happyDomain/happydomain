@@ -33,6 +33,7 @@ var (
 	ErrCheckerNotFound                = errors.New("checker not found")
 	ErrDomainNotFound                 = errors.New("domain not found")
 	ErrDomainLogNotFound              = errors.New("domain log not found")
+	ErrDomainWatchNotFound            = errors.New("domain watch not found")
 	ErrExecutionNotFound              = errors.New("execution not found")
 	ErrNotificationChannelNotFound    = errors.New("notification channel not found")
 	ErrNotificationPreferenceNotFound = errors.New("notification preference not found")

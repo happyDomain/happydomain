@@ -160,6 +160,16 @@ func TestExecutionDomainIndexKeySize(t *testing.T) {
 	assertKeySize(t, "executionDomainIndexKey", executionDomainIndexKey(maxID.String(), worstTime, maxID.String()))
 }
 
+// --- domain watch ---
+
+func TestDomwatchPrimaryKeySize(t *testing.T) {
+	assertKeySize(t, "domwatchPrimaryKey", domwatchPrimaryKey(maxID))
+}
+
+func TestDomwatchUserKeySize(t *testing.T) {
+	assertKeySize(t, "domwatchUserKey", domwatchUserKey(maxID, maxID))
+}
+
 // --- notification channel ---
 
 func TestNotifchPrimaryKeySize(t *testing.T) {

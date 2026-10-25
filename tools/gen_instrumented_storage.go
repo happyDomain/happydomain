@@ -53,6 +53,7 @@ var entityMap = map[string]string{
 	"SchedulerStateStorage":    "scheduler_state",
 	"DomainStorage":            "domain",
 	"DomainLogStorage":         "domain_log",
+	"DomainWatchStorage":       "domain_watch",
 	"InsightStorage":           "insight",
 	"NotificationChannelStorage":    "notification_channel",
 	"NotificationPreferenceStorage": "notification_preference",

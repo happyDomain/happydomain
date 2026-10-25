@@ -166,6 +166,11 @@ func (s *instrumentedStorage) CreateDomainLog(domain *happydns.Domain, log *happ
 	return s.inner.CreateDomainLog(domain, log)
 }
 
+func (s *instrumentedStorage) CreateDomainWatch(w *happydns.DomainWatch) (err error) {
+	defer observe("CreateDomainWatch", "create", "domain_watch")(&err)
+	return s.inner.CreateDomainWatch(w)
+}
+
 func (s *instrumentedStorage) CreateEvaluation(eval *happydns.CheckEvaluation) (err error) {
 	defer observe("CreateEvaluation", "create", "check_evaluation")(&err)
 	return s.inner.CreateEvaluation(eval)
@@ -254,6 +259,11 @@ func (s *instrumentedStorage) DeleteDomain(domainid happydns.Identifier) (err er
 func (s *instrumentedStorage) DeleteDomainLog(domain *happydns.Domain, log *happydns.DomainLog) (err error) {
 	defer observe("DeleteDomainLog", "delete", "domain_log")(&err)
 	return s.inner.DeleteDomainLog(domain, log)
+}
+
+func (s *instrumentedStorage) DeleteDomainWatch(id happydns.Identifier) (err error) {
+	defer observe("DeleteDomainWatch", "delete", "domain_watch")(&err)
+	return s.inner.DeleteDomainWatch(id)
 }
 
 func (s *instrumentedStorage) DeleteEvaluation(evalID happydns.Identifier) (err error) {
@@ -379,6 +389,11 @@ func (s *instrumentedStorage) GetDomain(domainid happydns.Identifier) (ret *happ
 func (s *instrumentedStorage) GetDomainByDN(user *happydns.User, fqdn string) (ret []*happydns.Domain, err error) {
 	defer observe("GetDomainByDN", "get", "domain")(&err)
 	return s.inner.GetDomainByDN(user, fqdn)
+}
+
+func (s *instrumentedStorage) GetDomainWatch(id happydns.Identifier) (ret *happydns.DomainWatch, err error) {
+	defer observe("GetDomainWatch", "get", "domain_watch")(&err)
+	return s.inner.GetDomainWatch(id)
 }
 
 func (s *instrumentedStorage) GetEvaluation(evalID happydns.Identifier) (ret *happydns.CheckEvaluation, err error) {
@@ -511,6 +526,11 @@ func (s *instrumentedStorage) ListAllDomainLogs() (ret happydns.Iterator[happydn
 	return s.inner.ListAllDomainLogs()
 }
 
+func (s *instrumentedStorage) ListAllDomainWatches() (ret happydns.Iterator[happydns.DomainWatch], err error) {
+	defer observe("ListAllDomainWatches", "list", "domain_watch")(&err)
+	return s.inner.ListAllDomainWatches()
+}
+
 func (s *instrumentedStorage) ListAllDomains() (ret happydns.Iterator[happydns.Domain], err error) {
 	defer observe("ListAllDomains", "list", "domain")(&err)
 	return s.inner.ListAllDomains()
@@ -624,6 +644,11 @@ func (s *instrumentedStorage) ListDiscoveryObservationRefs(producerID string, ta
 func (s *instrumentedStorage) ListDomainLogs(domain *happydns.Domain) (ret []*happydns.DomainLog, err error) {
 	defer observe("ListDomainLogs", "list", "domain_log")(&err)
 	return s.inner.ListDomainLogs(domain)
+}
+
+func (s *instrumentedStorage) ListDomainWatchesByUser(userId happydns.Identifier) (ret []*happydns.DomainWatch, err error) {
+	defer observe("ListDomainWatchesByUser", "list", "domain_watch")(&err)
+	return s.inner.ListDomainWatchesByUser(userId)
 }
 
 func (s *instrumentedStorage) ListDomains(user *happydns.User) (ret []*happydns.Domain, err error) {
@@ -748,6 +773,11 @@ func (s *instrumentedStorage) RestoreDiscoveryObservationRef(ref *happydns.Disco
 	return s.inner.RestoreDiscoveryObservationRef(ref)
 }
 
+func (s *instrumentedStorage) RestoreDomainWatch(w *happydns.DomainWatch) (err error) {
+	defer observe("RestoreDomainWatch", "restore", "domain_watch")(&err)
+	return s.inner.RestoreDomainWatch(w)
+}
+
 func (s *instrumentedStorage) RestoreEvaluation(eval *happydns.CheckEvaluation) (err error) {
 	defer observe("RestoreEvaluation", "restore", "check_evaluation")(&err)
 	return s.inner.RestoreEvaluation(eval)
@@ -848,6 +878,11 @@ func (s *instrumentedStorage) UpdateDomain(domain *happydns.Domain) (err error) 
 func (s *instrumentedStorage) UpdateDomainLog(domain *happydns.Domain, log *happydns.DomainLog) (err error) {
 	defer observe("UpdateDomainLog", "update", "domain_log")(&err)
 	return s.inner.UpdateDomainLog(domain, log)
+}
+
+func (s *instrumentedStorage) UpdateDomainWatch(w *happydns.DomainWatch) (err error) {
+	defer observe("UpdateDomainWatch", "update", "domain_watch")(&err)
+	return s.inner.UpdateDomainWatch(w)
 }
 
 func (s *instrumentedStorage) UpdateExecution(exec *happydns.Execution) (err error) {
