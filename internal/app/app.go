@@ -38,6 +38,7 @@ import (
 
 	"git.happydns.org/happyDomain/internal/usecase"
 	checkerUC "git.happydns.org/happyDomain/internal/usecase/checker"
+	"git.happydns.org/happyDomain/internal/usecase/domainwatch"
 	notifUC "git.happydns.org/happyDomain/internal/usecase/notification"
 	"git.happydns.org/happyDomain/internal/usecase/orchestrator"
 
@@ -88,6 +89,8 @@ type Usecases struct {
 
 	notificationDispatcher *notifUC.Dispatcher
 	notificationRegistry   *notifPkg.Registry
+
+	domainWatchWorker *domainwatch.Worker
 }
 
 type App struct {

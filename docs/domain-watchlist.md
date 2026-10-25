@@ -21,9 +21,9 @@ for contributors.
   to miss one.
 - **Never lose what is known.** A failed lookup keeps what is known of the
   domain.
-- **Stay small.** The watchlist is a standalone entity. It does not go through
-  the checker engine: a watched domain is not a happyDomain domain, and has no
-  checker plan, quota, nor execution history.
+- **Stay small.** The watchlist is a standalone entity with its own background
+  worker. It does not go through the checker engine: a watched domain is not a
+  happyDomain domain, and has no checker plan, quota, nor execution history.
 
 ## Life cycle
 
@@ -60,6 +60,15 @@ Lookups go through the same RDAP then WHOIS chain as the registration data
 page, each bounded to 20 seconds. Adding a domain and "check now" look it up
 while the user waits; "check now" returns the last result when the domain was
 checked less than a minute ago.
+
+The worker (`internal/usecase/domainwatch/worker.go`) wakes up every 15 minutes
+and looks up the watches that are due, 4 at a time. A domain watched by several
+users is looked up once. A lookup cut short by the shutdown is not recorded:
+the watch stays due. With the cadence above, a watched domain costs about one
+lookup a week while registered, and two a day once expired or available.
+
+The watches are not paused for inactive users, unlike checks: the point of a
+watch is to wait, sometimes for months, without logging in.
 
 ### Options
 

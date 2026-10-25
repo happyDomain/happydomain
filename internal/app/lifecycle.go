@@ -72,6 +72,10 @@ func (app *App) Start() {
 		app.usecases.notificationDispatcher.Start()
 	}
 
+	if app.usecases.domainWatchWorker != nil {
+		app.usecases.domainWatchWorker.Start(context.Background())
+	}
+
 	log.Printf("Loaded %d providers, %d services, %d checkers",
 		len(providerregistry.GetProviders()),
 		len(*serviceanalyzer.ListServices()),
@@ -98,6 +102,10 @@ func (app *App) Stop() {
 
 	if app.usecases.checkerUserGater != nil {
 		app.usecases.checkerUserGater.Stop()
+	}
+
+	if app.usecases.domainWatchWorker != nil {
+		app.usecases.domainWatchWorker.Stop()
 	}
 
 	// Drain in-flight notification sends after the scheduler is stopped

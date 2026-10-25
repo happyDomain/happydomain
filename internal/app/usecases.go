@@ -231,13 +231,15 @@ func (app *App) initUsecases() {
 
 	// Domain watchlist: follows domains users do not manage, through the
 	// same lookup chain as the WHOIS page.
-	app.usecases.domainWatch = domainwatch.NewService(
+	domainWatch := domainwatch.NewService(
 		app.store,
 		func(ctx context.Context, name string) (*domaininfo.DomainInfo, error) {
 			return app.usecases.domainInfo.GetDomainInfo(ctx, happydns.Origin(name))
 		},
 		app.cfg.DomainWatchMaxPerUser,
 	)
+	app.usecases.domainWatch = domainWatch
+	app.usecases.domainWatchWorker = domainwatch.NewWorker(domainWatch)
 }
 
 // initFaviconService builds the icon fetching chain from the configuration. As

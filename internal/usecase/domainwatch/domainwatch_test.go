@@ -90,6 +90,7 @@ type fixture struct {
 	db       storage.Storage
 	registry *registry
 	service  *domainwatch.Service
+	worker   *domainwatch.Worker
 	now      time.Time
 	alice    *happydns.User
 	bob      *happydns.User
@@ -118,6 +119,7 @@ func newFixture(t *testing.T, maxPerUser int) *fixture {
 
 	f.service = domainwatch.NewService(db, f.registry.lookup, maxPerUser)
 	f.service.SetClock(func() time.Time { return f.now }, func() time.Duration { return 0 })
+	f.worker = domainwatch.NewWorker(f.service)
 	return f
 }
 
@@ -318,6 +320,99 @@ func TestLookupKeepsTheNoteEditedMeanwhile(t *testing.T) {
 	if got, err := f.service.CheckDomainWatch(ctx, f.alice, w.Id); err != nil || got.Note != "+" {
 		t.Errorf("CheckDomainWatch = %+v, %v; want the note edited during the lookup", got, err)
 	}
+
+	f.now = f.now.Add(8 * day)
+	if n := f.worker.RunOnce(ctx); n != 1 {
+		t.Fatalf("worker checked %d watches, want 1", n)
+	}
+	if got, _ := f.service.GetDomainWatch(f.alice, w.Id); got.Note != "++" {
+		t.Errorf("note = %q after the worker, want the one edited during its lookup", got.Note)
+	}
+}
+
+// The whole life of a domain, from expiring to available, as the worker sees
+// it.
+func TestWorkerFollowsTheLifeOfADomain(t *testing.T) {
+	f := newFixture(t, 0)
+	ctx := context.Background()
+
+	f.registry.set("example.com", f.expiresIn(40*day), nil)
+	if _, err := f.service.CreateDomainWatch(ctx, f.alice, happydns.DomainWatchInput{Domain: "example.com"}); err != nil {
+		t.Fatal(err)
+	}
+
+	// Nothing due yet.
+	if n := f.worker.RunOnce(ctx); n != 0 {
+		t.Fatalf("worker checked %d watches, want 0", n)
+	}
+
+	steps := []struct {
+		after time.Duration
+		info  *domaininfo.DomainInfo
+		err   error
+		want  happydns.DomainWatchPhase
+	}{
+		// Due when it starts expiring, 10 days later.
+		{10 * day, f.expiresIn(40 * day), nil, happydns.DomainWatchExpiring},
+		{41 * day, f.expiresIn(40 * day), nil, happydns.DomainWatchGrace},
+		{45 * day, f.expiresIn(40*day, "redemption period"), nil, happydns.DomainWatchRedemption},
+		{75 * day, f.expiresIn(40*day, "pending delete"), nil, happydns.DomainWatchPendingDelete},
+		{80 * day, nil, types.ErrDomainDoesNotExist, happydns.DomainWatchAvailable},
+		{81 * day, f.expiresIn(445 * day), nil, happydns.DomainWatchRegistered},
+	}
+
+	start := f.now
+	for i, st := range steps {
+		f.now = start.Add(st.after)
+		f.registry.set("example.com", st.info, st.err)
+
+		if n := f.worker.RunOnce(ctx); n != 1 {
+			t.Fatalf("step %d: worker checked %d watches, want 1", i, n)
+		}
+		list, _ := f.service.ListDomainWatches(f.alice)
+		if len(list) != 1 || list[0].Phase != st.want {
+			t.Fatalf("step %d: watches %+v, want phase %q", i, list, st.want)
+		}
+
+		// Checked again right away: not due anymore.
+		if n := f.worker.RunOnce(ctx); n != 0 {
+			t.Fatalf("step %d: worker checked %d watches again, want 0", i, n)
+		}
+	}
+
+	list, _ := f.service.ListDomainWatches(f.alice)
+	if len(list[0].History) != len(steps) {
+		t.Errorf("history holds %d events, want %d", len(list[0].History), len(steps))
+	}
+}
+
+func TestWorkerSharesLookupsAndSurvivesFailures(t *testing.T) {
+	f := newFixture(t, 0)
+	ctx := context.Background()
+
+	f.registry.set("example.com", f.expiresIn(200*day), nil)
+	for _, u := range []*happydns.User{f.alice, f.bob} {
+		if _, err := f.service.CreateDomainWatch(ctx, u, happydns.DomainWatchInput{Domain: "example.com"}); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	f.now = f.now.Add(8 * day)
+	f.registry.set("example.com", nil, errors.New("RDAP unreachable"))
+	before := f.registry.count("example.com")
+	if n := f.worker.RunOnce(ctx); n != 2 {
+		t.Fatalf("worker checked %d watches, want 2", n)
+	}
+	if n := f.registry.count("example.com") - before; n != 1 {
+		t.Errorf("%d lookups for 2 watches of the same domain, want 1", n)
+	}
+
+	for _, u := range []*happydns.User{f.alice, f.bob} {
+		list, _ := f.service.ListDomainWatches(u)
+		if list[0].Phase != happydns.DomainWatchRegistered || list[0].LastError == "" {
+			t.Errorf("a failed lookup changed the watch: %+v", list[0])
+		}
+	}
 }
 
 func TestNoteIsBounded(t *testing.T) {
@@ -336,5 +431,74 @@ func TestNoteIsBounded(t *testing.T) {
 	}
 	if _, err := f.service.UpdateDomainWatch(f.alice, w.Id, happydns.DomainWatchInput{Note: long}); !errors.As(err, &ve) {
 		t.Errorf("update with a long note: got %v, want a validation error", err)
+	}
+}
+
+func TestWorkerSkipsAWatchRemovedDuringTheLookup(t *testing.T) {
+	f := newFixture(t, 0)
+	ctx := context.Background()
+
+	f.registry.set("example.com", f.expiresIn(200*day), nil)
+	w, err := f.service.CreateDomainWatch(ctx, f.alice, happydns.DomainWatchInput{Domain: "example.com"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	f.now = f.now.Add(8 * day)
+	f.registry.onLookup = func(string) {
+		if err := f.service.DeleteDomainWatch(f.alice, w.Id); err != nil {
+			t.Errorf("delete during the lookup: %v", err)
+		}
+	}
+	if n := f.worker.RunOnce(ctx); n != 0 {
+		t.Errorf("worker checked %d watches, want 0: the only one was removed", n)
+	}
+	if list, _ := f.service.ListDomainWatches(f.alice); len(list) != 0 {
+		t.Errorf("the removed watch came back: %+v", list)
+	}
+}
+
+func TestWorkerLeavesDueTheWatchesStoppedDuringTheLookup(t *testing.T) {
+	f := newFixture(t, 0)
+
+	f.registry.set("example.com", f.expiresIn(200*day), nil)
+	if _, err := f.service.CreateDomainWatch(context.Background(), f.alice, happydns.DomainWatchInput{Domain: "example.com"}); err != nil {
+		t.Fatal(err)
+	}
+	f.now = f.now.Add(8 * day)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	f.registry.onLookup = func(string) { cancel() }
+	if n := f.worker.RunOnce(ctx); n != 0 {
+		t.Errorf("worker checked %d watches stopped during their lookup, want 0", n)
+	}
+	list, _ := f.service.ListDomainWatches(f.alice)
+	if list[0].LastError != "" {
+		t.Errorf("the lookup cut short was recorded as a failure: %q", list[0].LastError)
+	}
+
+	f.registry.onLookup = nil
+	if n := f.worker.RunOnce(context.Background()); n != 1 {
+		t.Errorf("worker checked %d watches, want 1: the watch is still due", n)
+	}
+}
+
+func TestWorkerLeavesDueTheWatchesNotLookedUp(t *testing.T) {
+	f := newFixture(t, 0)
+
+	f.registry.set("example.com", f.expiresIn(200*day), nil)
+	if _, err := f.service.CreateDomainWatch(context.Background(), f.alice, happydns.DomainWatchInput{Domain: "example.com"}); err != nil {
+		t.Fatal(err)
+	}
+	f.now = f.now.Add(8 * day)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if n := f.worker.RunOnce(ctx); n != 0 {
+		t.Errorf("worker checked %d watches once stopped, want 0", n)
+	}
+
+	if n := f.worker.RunOnce(context.Background()); n != 1 {
+		t.Errorf("worker checked %d watches, want 1: the watch is still due", n)
 	}
 }
