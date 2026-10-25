@@ -34,6 +34,7 @@ import (
 	"git.happydns.org/happyDomain/internal/usecase/session"
 	"git.happydns.org/happyDomain/internal/usecase/user"
 	"git.happydns.org/happyDomain/internal/usecase/zone"
+	"git.happydns.org/happyDomain/internal/usecase/zonetemplate"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -69,6 +70,7 @@ type Storage interface {
 	session.SessionStorage
 	user.UserStorage
 	zone.ZoneStorage
+	zonetemplate.ZoneTemplateStorage
 
 	// SchemaVersion returns the version of the migration currently in use.
 	SchemaVersion() int

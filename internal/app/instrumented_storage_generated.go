@@ -216,6 +216,11 @@ func (s *instrumentedStorage) CreateZone(zone *happydns.Zone) (err error) {
 	return s.inner.CreateZone(zone)
 }
 
+func (s *instrumentedStorage) CreateZoneTemplate(t *happydns.ZoneTemplate) (err error) {
+	defer observe("CreateZoneTemplate", "create", "zone_template")(&err)
+	return s.inner.CreateZoneTemplate(t)
+}
+
 func (s *instrumentedStorage) DeleteAuthUser(user *happydns.UserAuth) (err error) {
 	defer observe("DeleteAuthUser", "delete", "authuser")(&err)
 	return s.inner.DeleteAuthUser(user)
@@ -339,6 +344,11 @@ func (s *instrumentedStorage) DeleteUser(userid happydns.Identifier) (err error)
 func (s *instrumentedStorage) DeleteZone(zoneid happydns.Identifier) (err error) {
 	defer observe("DeleteZone", "delete", "zone")(&err)
 	return s.inner.DeleteZone(zoneid)
+}
+
+func (s *instrumentedStorage) DeleteZoneTemplate(id happydns.Identifier) (err error) {
+	defer observe("DeleteZoneTemplate", "delete", "zone_template")(&err)
+	return s.inner.DeleteZoneTemplate(id)
 }
 
 func (s *instrumentedStorage) FindDomainsByName(fqdn string) (ret []*happydns.Domain, err error) {
@@ -476,6 +486,11 @@ func (s *instrumentedStorage) GetZoneMeta(zoneid happydns.Identifier) (ret *happ
 	return s.inner.GetZoneMeta(zoneid)
 }
 
+func (s *instrumentedStorage) GetZoneTemplate(id happydns.Identifier) (ret *happydns.ZoneTemplateMessage, err error) {
+	defer observe("GetZoneTemplate", "get", "zone_template")(&err)
+	return s.inner.GetZoneTemplate(id)
+}
+
 func (s *instrumentedStorage) InsightsRun() (err error) {
 	defer observe("InsightsRun", "run", "insight")(&err)
 	return s.inner.InsightsRun()
@@ -586,6 +601,11 @@ func (s *instrumentedStorage) ListAllUsers() (ret happydns.Iterator[happydns.Use
 	return s.inner.ListAllUsers()
 }
 
+func (s *instrumentedStorage) ListAllZoneTemplates() (ret happydns.Iterator[happydns.ZoneTemplateMessage], err error) {
+	defer observe("ListAllZoneTemplates", "list", "zone_template")(&err)
+	return s.inner.ListAllZoneTemplates()
+}
+
 func (s *instrumentedStorage) ListAllZones() (ret happydns.Iterator[happydns.ZoneMessage], err error) {
 	defer observe("ListAllZones", "list", "zone")(&err)
 	return s.inner.ListAllZones()
@@ -686,6 +706,11 @@ func (s *instrumentedStorage) ListExecutionsByUser(userId happydns.Identifier, l
 	return s.inner.ListExecutionsByUser(userId, limit, filter)
 }
 
+func (s *instrumentedStorage) ListGlobalZoneTemplates() (ret []*happydns.ZoneTemplateMessage, err error) {
+	defer observe("ListGlobalZoneTemplates", "list", "zone_template")(&err)
+	return s.inner.ListGlobalZoneTemplates()
+}
+
 func (s *instrumentedStorage) ListOwnerSafes(owner happydns.Identifier) (ret []*happydns.Safe, err error) {
 	defer observe("ListOwnerSafes", "list", "safe")(&err)
 	return s.inner.ListOwnerSafes(owner)
@@ -714,6 +739,11 @@ func (s *instrumentedStorage) ListStatesByUser(userId happydns.Identifier) (ret 
 func (s *instrumentedStorage) ListUserSessions(userid happydns.Identifier) (ret []*happydns.Session, err error) {
 	defer observe("ListUserSessions", "list", "session")(&err)
 	return s.inner.ListUserSessions(userid)
+}
+
+func (s *instrumentedStorage) ListZoneTemplatesByUser(userId happydns.Identifier) (ret []*happydns.ZoneTemplateMessage, err error) {
+	defer observe("ListZoneTemplatesByUser", "list", "zone_template")(&err)
+	return s.inner.ListZoneTemplatesByUser(userId)
 }
 
 func (s *instrumentedStorage) MigrateSchema() error { return s.inner.MigrateSchema() }
@@ -801,6 +831,11 @@ func (s *instrumentedStorage) RestoreRecord(rec *happydns.NotificationRecord) (e
 func (s *instrumentedStorage) RestoreSnapshot(snap *happydns.ObservationSnapshot) (err error) {
 	defer observe("RestoreSnapshot", "restore", "observation_snapshot")(&err)
 	return s.inner.RestoreSnapshot(snap)
+}
+
+func (s *instrumentedStorage) RestoreZoneTemplate(t *happydns.ZoneTemplateMessage) (err error) {
+	defer observe("RestoreZoneTemplate", "restore", "zone_template")(&err)
+	return s.inner.RestoreZoneTemplate(t)
 }
 
 func (s *instrumentedStorage) SchemaVersion() int { return s.inner.SchemaVersion() }
@@ -918,4 +953,9 @@ func (s *instrumentedStorage) UpdateSession(session *happydns.Session) (err erro
 func (s *instrumentedStorage) UpdateZone(zone *happydns.Zone) (err error) {
 	defer observe("UpdateZone", "update", "zone")(&err)
 	return s.inner.UpdateZone(zone)
+}
+
+func (s *instrumentedStorage) UpdateZoneTemplate(t *happydns.ZoneTemplate) (err error) {
+	defer observe("UpdateZoneTemplate", "update", "zone_template")(&err)
+	return s.inner.UpdateZoneTemplate(t)
 }

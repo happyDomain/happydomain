@@ -170,6 +170,20 @@ func TestDomwatchUserKeySize(t *testing.T) {
 	assertKeySize(t, "domwatchUserKey", domwatchUserKey(maxID, maxID))
 }
 
+// --- zone template ---
+
+func TestZonetplPrimaryKeySize(t *testing.T) {
+	assertKeySize(t, "zonetplPrimaryKey", zonetplPrimaryKey(maxID))
+}
+
+func TestZonetplUserKeySize(t *testing.T) {
+	assertKeySize(t, "zonetplUserKey", zonetplUserKey(maxID, maxID))
+}
+
+func TestZonetplGlobalKeySize(t *testing.T) {
+	assertKeySize(t, "zonetplGlobalKey", zonetplGlobalKey(maxID))
+}
+
 // --- notification channel ---
 
 func TestNotifchPrimaryKeySize(t *testing.T) {

@@ -66,6 +66,7 @@ var entityMap = map[string]string{
 	"SessionStorage":           "session",
 	"UserStorage":              "user",
 	"ZoneStorage":              "zone",
+	"ZoneTemplateStorage":      "zone_template",
 }
 
 // operationOverrides maps method names that don't follow the prefix convention.
