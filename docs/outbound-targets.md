@@ -70,9 +70,10 @@ It is a separate list because it opens DNS servers rather than HTTP endpoints,
 and because the resolver tool needs no account at all, so opening it up is a
 broader decision than opening up an action a registered user takes.
 
-It does **not** cover `-default-ns`, nor the "Local resolver" choice that reads
-`/etc/resolv.conf`. Those are operator-chosen and routinely point at loopback,
-so they keep working with no configuration.
+It does **not** cover `-default-resolver` (or `/etc/resolv.conf` when it is not set),
+which the "Local resolver" choice uses, as does a request naming no resolver.
+It is operator-chosen and routinely points at loopback, so it keeps working with
+no configuration.
 
 ## Syntax
 

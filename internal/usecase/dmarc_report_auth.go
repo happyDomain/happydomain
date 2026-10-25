@@ -49,18 +49,13 @@ func (ru *resolverUsecase) CheckDMARCReportAuth(req happydns.DMARCReportAuthRequ
 	queried := dns.Fqdn(owner + "._report._dmarc." + external)
 	resp := &happydns.DMARCReportAuthResponse{QueriedName: strings.TrimSuffix(queried, ".")}
 
-	resolver, err := ru.pickResolver(context.Background(), req.Resolver, req.Custom)
-	if err != nil {
-		return nil, err
-	}
-
 	client := dns.Client{Timeout: dmarcReportAuthTimeout}
 	m := new(dns.Msg)
 	m.SetQuestion(queried, dns.TypeTXT)
 	m.RecursionDesired = true
 	m.SetEdns0(4096, true)
 
-	r, err := helpers.Exchange(context.Background(), &client, m, resolver)
+	r, err := helpers.Exchange(context.Background(), &client, m, ru.config.DefaultResolvers[0])
 	if err != nil {
 		resp.Status = "resolver-error"
 		resp.ErrorMsg = err.Error()

@@ -46,15 +46,14 @@ func ConsolidateConfig() (opts *happydns.Options, err error) {
 
 	// Define defaults options
 	opts = &happydns.Options{
-		AdminBind:         "./happydomain.sock",
-		BasePath:          "/",
-		Bind:              ":8081",
-		DefaultNameServer: "127.0.0.1:53",
-		ExternalURL:       *u,
-		JWTSigningMethod:  "HS512",
-		MailFrom:          mail.Address{Name: "happyDomain", Address: "happydomain@localhost"},
-		MailSMTPPort:      587,
-		StorageEngine:     "leveldb",
+		AdminBind:        "./happydomain.sock",
+		BasePath:         "/",
+		Bind:             ":8081",
+		ExternalURL:      *u,
+		JWTSigningMethod: "HS512",
+		MailFrom:         mail.Address{Name: "happyDomain", Address: "happydomain@localhost"},
+		MailSMTPPort:     587,
+		StorageEngine:    "leveldb",
 	}
 
 	declareFlags(opts)
@@ -156,6 +155,17 @@ func ConsolidateConfig() (opts *happydns.Options, err error) {
 	}
 	if len(opts.ResolverAllowedTargets) > 0 {
 		log.Printf("The resolver tool may query public addresses, plus: %s\n", strings.Join(opts.ResolverAllowedTargets, ", "))
+	}
+
+	// Read once here, so that every component asking the default resolvers
+	// gets a list that cannot fail.
+	if len(opts.DefaultResolvers) == 0 {
+		opts.DefaultResolvers, err = systemResolversFrom("/etc/resolv.conf")
+		if err != nil {
+			err = fmt.Errorf("no -default-resolver given, and %w", err)
+			return
+		}
+		log.Printf("Using the resolvers of /etc/resolv.conf: %s\n", strings.Join(opts.DefaultResolvers, ", "))
 	}
 
 	// FaviconSources defaults to DefaultSourceList, but only once flags, the

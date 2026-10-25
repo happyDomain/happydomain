@@ -27,7 +27,8 @@ import (
 
 // ResolverRequest holds the resolution parameters
 type ResolverRequest struct {
-	// Resolver is the name of the resolver to use (or local or custom).
+	// Resolver is the name of the resolver to use (or local or custom). Empty
+	// asks the default resolvers, like local.
 	Resolver string `json:"resolver"`
 
 	// Custom is the address to the recursive server to use.
@@ -149,12 +150,6 @@ type SSHHostKeysResponse struct {
 // authorizes receiving DMARC reports for Owner, by resolving the TXT record
 // at <Owner>._report._dmarc.<ExternalDomain> per RFC 7489 sec. 7.1.
 type DMARCReportAuthRequest struct {
-	// Resolver is the name of the resolver to use (or local or custom).
-	Resolver string `json:"resolver,omitempty"`
-
-	// Custom is the address to the recursive server to use.
-	Custom string `json:"custom,omitempty"`
-
 	// Owner is the protected domain whose DMARC record references the
 	// external reporting destination (e.g. "example.com").
 	Owner string `json:"owner"`
@@ -191,12 +186,6 @@ type DMARCReportAuthResponse struct {
 // as the root record (useful while editing) instead of looking up the TXT
 // record at Domain.
 type SPFFlattenRequest struct {
-	// Resolver is the name of the resolver to use (or local or custom).
-	Resolver string `json:"resolver,omitempty"`
-
-	// Custom is the address to the recursive server to use.
-	Custom string `json:"custom,omitempty"`
-
 	// Domain is the FQDN to resolve. It is also used as the apex when the
 	// optional Record field is provided.
 	Domain string `json:"domain"`

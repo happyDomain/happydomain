@@ -23,6 +23,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -164,4 +165,48 @@ func (ru *resolverUsecase) ResolveQuestion(request happydns.ResolverRequest) (*d
 	}
 
 	return r, nil
+}
+
+// pickResolver turns the resolver a request to the resolver tool asked for
+// into a dialable "ip:port", the default resolver when it asked for none or
+// for "local".
+//
+// Everything the request supplies goes through the resolver guard, and that
+// includes the plain `name` form: the frontend sends "8.8.8.8" or "9.9.9.10"
+// straight in that field (see web/src/lib/resolver.ts), so it is exactly as
+// caller-controlled as `custom` is. Only the default resolver is exempt,
+// because the operator chose it, routinely on loopback.
+func (ru *resolverUsecase) pickResolver(ctx context.Context, name, custom string) (string, error) {
+	resolver := name
+	switch resolver {
+	case "", "local":
+		return ru.config.DefaultResolvers[0], nil
+	case "custom":
+		if custom == "" {
+			return "", happydns.ValidationError{Msg: "custom resolver address required"}
+		}
+		resolver = custom
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, resolverLookupTimeout)
+	defer cancel()
+
+	// ResolveAddrPort hands back an IP literal, never the name it was given:
+	// miekg/dns would otherwise resolve it a second time, and the second answer
+	// is the one an attacker gets to choose.
+	target, err := ru.resolverGuard.ResolveAddrPort(ctx, resolver, 53)
+	if err != nil {
+		// Our own resolver failing to answer says nothing about the server the
+		// caller asked for, so it must not be reported as a refused one.
+		if errors.Is(err, netguard.ErrTemporary) {
+			return "", happydns.InternalError{
+				Err:         fmt.Errorf("unable to check the requested resolver: %w", err),
+				UserMessage: ru.resolverGuard.Unavailable("The requested DNS server"),
+			}
+		}
+
+		return "", happydns.ValidationError{Msg: ru.resolverGuard.Refusal("The requested DNS server")}
+	}
+
+	return target, nil
 }

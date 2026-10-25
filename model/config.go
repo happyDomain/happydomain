@@ -54,8 +54,10 @@ type Options struct {
 	// DevProxy is the URL that override static assets.
 	DevProxy string
 
-	// DefaultNameServer is the NS server suggested by default.
-	DefaultNameServer string
+	// DefaultResolvers are the "ip:port" of the resolvers happyDomain asks
+	// on its own behalf, to try in turn. When none is set, they are read from
+	// /etc/resolv.conf at startup.
+	DefaultResolvers []string
 
 	// DisableProviders should disallow all actions on provider (add/edit/delete) through public API.
 	DisableProviders bool
@@ -150,9 +152,8 @@ type Options struct {
 	// resolver at an internal DNS server is reasonable in a way that letting a
 	// webhook reach the same network is not.
 	//
-	// It does not apply to DefaultNameServer nor to the "local" resolver read
-	// from /etc/resolv.conf: those are operator-chosen, and both routinely
-	// point at loopback.
+	// It does not apply to DefaultResolvers, which the "local" resolver also
+	// uses: they are operator-chosen, and routinely point at loopback.
 	ResolverAllowedTargets []string
 
 	ListmonkURL url.URL

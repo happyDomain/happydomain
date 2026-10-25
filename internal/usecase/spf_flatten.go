@@ -23,17 +23,13 @@ package usecase
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"math/rand"
-	"net"
 	"strings"
 	"time"
 
 	"github.com/miekg/dns"
 
 	"git.happydns.org/happyDomain/internal/helpers"
-	"git.happydns.org/happyDomain/internal/netguard"
 	"git.happydns.org/happyDomain/model"
 )
 
@@ -328,15 +324,10 @@ func (ru *resolverUsecase) FlattenSPF(req happydns.SPFFlattenRequest) (*happydns
 		return nil, happydns.ValidationError{Msg: "domain is required"}
 	}
 
-	resolver, err := ru.pickResolver(context.Background(), req.Resolver, req.Custom)
-	if err != nil {
-		return nil, err
-	}
-
 	client := dns.Client{Timeout: spfPerLookupTimeout}
 
 	fc := &flattenContext{
-		resolver: resolver,
+		resolver: ru.config.DefaultResolvers[0],
 		deadline: time.Now().Add(spfTotalDeadline),
 		visited:  map[string]struct{}{},
 	}
@@ -353,62 +344,4 @@ func (ru *resolverUsecase) FlattenSPF(req happydns.SPFFlattenRequest) (*happydns
 		Tree:         root.export(),
 	}
 	return resp, nil
-}
-
-// pickResolver turns the resolver a request asked for into a dialable
-// "ip:port". It is the single place that decides which DNS server happyDomain
-// talks to on a caller's behalf, for every resolver endpoint.
-//
-// Everything the request supplies goes through the resolver guard, and that
-// includes the plain `name` form: the frontend sends "8.8.8.8" or "9.9.9.10"
-// straight in that field (see web/src/lib/resolver.ts), so it is exactly as
-// caller-controlled as `custom` is. Only the "local" branch is exempt, because
-// /etc/resolv.conf is operator-chosen and routinely points at loopback.
-func (ru *resolverUsecase) pickResolver(ctx context.Context, name, custom string) (string, error) {
-	resolver := name
-	switch resolver {
-	case "":
-		// Default to a public, well-known resolver when the caller did not
-		// specify one. Use Cloudflare's 1.1.1.1 as a sane default.
-		resolver = "1.1.1.1"
-	case "custom":
-		if custom == "" {
-			return "", happydns.ValidationError{Msg: "custom resolver address required"}
-		}
-		resolver = custom
-	case "local":
-		cConf, err := dns.ClientConfigFromFile("/etc/resolv.conf")
-		if err != nil {
-			return "", happydns.InternalError{
-				Err:         fmt.Errorf("unable to load ClientConfigFromFile: %s", err.Error()),
-				UserMessage: "Sorry, we are currently unable to perform the request. Please try again later.",
-			}
-		}
-		if len(cConf.Servers) == 0 {
-			return "", happydns.InternalError{Err: errors.New("no resolver in /etc/resolv.conf")}
-		}
-		return net.JoinHostPort(cConf.Servers[rand.Intn(len(cConf.Servers))], "53"), nil
-	}
-
-	ctx, cancel := context.WithTimeout(ctx, resolverLookupTimeout)
-	defer cancel()
-
-	// ResolveAddrPort hands back an IP literal, never the name it was given:
-	// miekg/dns would otherwise resolve it a second time, and the second answer
-	// is the one an attacker gets to choose.
-	target, err := ru.resolverGuard.ResolveAddrPort(ctx, resolver, 53)
-	if err != nil {
-		// Our own resolver failing to answer says nothing about the server the
-		// caller asked for, so it must not be reported as a refused one.
-		if errors.Is(err, netguard.ErrTemporary) {
-			return "", happydns.InternalError{
-				Err:         fmt.Errorf("unable to check the requested resolver: %w", err),
-				UserMessage: ru.resolverGuard.Unavailable("The requested DNS server"),
-			}
-		}
-
-		return "", happydns.ValidationError{Msg: ru.resolverGuard.Refusal("The requested DNS server")}
-	}
-
-	return target, nil
 }

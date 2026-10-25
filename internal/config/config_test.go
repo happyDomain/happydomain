@@ -53,14 +53,14 @@ func TestParseLine(t *testing.T) {
 		t.Fatalf(`parseLine("EXTERNAL_URL=https://happydomain.org") = %q, want "https://happydomain.org"`, cfg.ExternalURL.String())
 	}
 
-	parseLine(cfg, "DEFAULT-NS=42.42.42.42:5353")
-	if cfg.DefaultNameServer != "42.42.42.42:5353" {
-		t.Fatalf(`parseLine("DEFAULT-NS=42.42.42.42:5353") = %q, want "42.42.42.42:5353"`, cfg.DefaultNameServer)
+	parseLine(cfg, "DEFAULT-RESOLVER=42.42.42.42:5353")
+	if len(cfg.DefaultResolvers) != 1 || cfg.DefaultResolvers[0] != "42.42.42.42:5353" {
+		t.Fatalf(`parseLine("DEFAULT-RESOLVER=42.42.42.42:5353") = %q, want ["42.42.42.42:5353"]`, cfg.DefaultResolvers)
 	}
 
-	parseLine(cfg, "DEFAULT_NS=42.42.42.42:3535")
-	if cfg.DefaultNameServer != "42.42.42.42:3535" {
-		t.Fatalf(`parseLine("DEFAULT_NS=42.42.42.42:3535") = %q, want "42.42.42.42:3535"`, cfg.DefaultNameServer)
+	parseLine(cfg, "DEFAULT_RESOLVER=none,42.42.42.42:3535,2001:db8::53")
+	if len(cfg.DefaultResolvers) != 2 || cfg.DefaultResolvers[0] != "42.42.42.42:3535" || cfg.DefaultResolvers[1] != "[2001:db8::53]:53" {
+		t.Fatalf(`parseLine("DEFAULT_RESOLVER=none,42.42.42.42:3535,2001:db8::53") = %q, want ["42.42.42.42:3535" "[2001:db8::53]:53"]`, cfg.DefaultResolvers)
 	}
 
 	err = parseLine(cfg, "HAPPYDOMAIN_TRUSTED_PROXY=10.0.0.0/8,192.168.1.1")

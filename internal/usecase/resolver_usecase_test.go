@@ -40,10 +40,6 @@ func TestPickResolver(t *testing.T) {
 		wantErr  bool
 	}{
 		{
-			name: "no resolver requested falls back to a public one",
-			want: "1.1.1.1:53",
-		},
-		{
 			// The frontend puts the address straight in `resolver`, so this
 			// path is exactly as caller-controlled as `custom` is.
 			name:     "a public resolver named directly",
@@ -130,5 +126,29 @@ func TestPickResolver(t *testing.T) {
 				t.Errorf("pickResolver(%q, %q) = %q, want %q", tt.resolver, tt.custom, got, tt.want)
 			}
 		})
+	}
+}
+
+// -default-resolver is operator-chosen: the "local" choice, like no choice at
+// all, uses it as is, loopback included.
+func TestPickResolverLocal(t *testing.T) {
+	guard, err := netguard.New("resolver", "-resolver-allowed-target", nil)
+	if err != nil {
+		t.Fatalf("netguard.New => %v", err)
+	}
+
+	ru := &resolverUsecase{
+		config:        &happydns.Options{DefaultResolvers: []string{"127.0.0.1:5353"}},
+		resolverGuard: guard,
+	}
+
+	for _, name := range []string{"", "local"} {
+		got, err := ru.pickResolver(t.Context(), name, "")
+		if err != nil {
+			t.Fatalf("pickResolver(%q): %v", name, err)
+		}
+		if got != "127.0.0.1:5353" {
+			t.Errorf("pickResolver(%q) = %q, want %q", name, got, "127.0.0.1:5353")
+		}
 	}
 }
