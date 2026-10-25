@@ -39,6 +39,10 @@
     import DomainInfoLookupForm from "$lib/components/DomainInfoLookupForm.svelte";
     import { t } from "$lib/translations";
     import PageTitle from "$lib/components/PageTitle.svelte";
+    import WatchCard from "$lib/components/watchlist/WatchCard.svelte";
+    import { ensureWatchlist, watchlist } from "$lib/stores/watchlist";
+    import { userSession } from "$lib/stores/usersession";
+    import { findWatch, updatedWatch, watchOfDomainInfo } from "$lib/utils/watchlist";
 
     interface Props {
         data: { domain?: string };
@@ -50,6 +54,25 @@
     let inputDomain = $state("");
 
     let lookup: DomainInfoState = $state(createDomainInfoState());
+
+    $effect(() => {
+        if ($userSession.id) {
+            // Without the list, the page shows what the lookup tells.
+            ensureWatchlist().catch(() => {});
+        }
+    });
+
+    // The watch of the domain when it is in the watchlist, updated with what
+    // the lookup tells, else what the lookup tells alone.
+    let watch = $derived.by(() => {
+        const lookedUp =
+            lookup.info !== null || lookup.notFound
+                ? watchOfDomainInfo(domain, lookup.info)
+                : undefined;
+        const saved = findWatch($watchlist, domain);
+        if (!saved) return lookedUp;
+        return lookedUp ? updatedWatch(saved, domain, lookedUp) : saved;
+    });
 
     $effect(() => {
         if (domain) {
@@ -112,21 +135,19 @@
                 </div>
             {:else if lookup.notFound}
                 <div class="col-md-8 pt-3 pb-5" in:fly={{ y: 20, duration: 350, easing: cubicOut }}>
-                    <h2 class="display-7 fw-bold mt-3">
-                        <i class="bi bi-question-circle"></i>
-                        {domain}
-                    </h2>
-                    <div class="card border-warning mt-3">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <i class="bi bi-exclamation-triangle text-warning fs-3 me-3"></i>
-                                <p class="card-text mb-0">{$t("domaininfo.domain-not-found")}</p>
-                            </div>
+                    {#if watch}
+                        <div class="mt-3">
+                            <WatchCard {watch} showDetails={false} />
                         </div>
-                    </div>
+                    {/if}
                 </div>
             {:else if lookup.error !== null}
                 <div class="col-md-8 pt-3 pb-5" in:fly={{ y: 20, duration: 350, easing: cubicOut }}>
+                    {#if watch}
+                        <div class="mt-3">
+                            <WatchCard {watch} showDetails={false} />
+                        </div>
+                    {/if}
                     <h2 class="display-7 fw-bold mt-3">
                         <i class="bi bi-exclamation-triangle"></i>
                         {$t("domaininfo.error")}
@@ -145,7 +166,12 @@
                     class="col-md-8 pt-3 pb-5"
                     in:fly={{ y: 20, duration: 400, delay: 100, easing: cubicOut }}
                 >
-                    <DomainInfoDisplay info={lookup.info} {domain} />
+                    {#if watch}
+                        <div class="mt-3 mb-4">
+                            <WatchCard {watch} showDetails={false} />
+                        </div>
+                    {/if}
+                    <DomainInfoDisplay info={lookup.info} {domain} summary={false} />
                 </div>
             {/if}
         </Row>

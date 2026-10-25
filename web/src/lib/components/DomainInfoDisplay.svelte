@@ -42,14 +42,18 @@
         expirationLabel,
         expirationProgress,
         formatDate,
+        statusColor,
     } from "$lib/utils/domaininfo";
 
     interface Props {
         info: DomainInfo;
         domain: string;
+        // Show the name and the statuses of the domain at the top; else list
+        // the statuses, with their description, among the cards.
+        summary?: boolean;
     }
 
-    let { info, domain }: Props = $props();
+    let { info, domain, summary = true }: Props = $props();
 
     const CONTACT_ROLES = ["registrant", "admin", "tech"];
 
@@ -73,16 +77,18 @@
     }
 </script>
 
-<h2 class="display-7 fw-bold mt-3 mb-1 font-monospace">
-    {info.name ?? domain}
-</h2>
+{#if summary}
+    <h2 class="display-7 fw-bold mt-3 mb-1 font-monospace">
+        {info.name ?? domain}
+    </h2>
 
-<!-- Status badges -->
-{#if info.status && info.status.length > 0}
-    <div class="mb-4">
-        <p class="text-muted small mb-1">{$t("domaininfo.status")}</p>
-        <DomainStatusBadges status={info.status} />
-    </div>
+    <!-- Status badges -->
+    {#if info.status && info.status.length > 0}
+        <div class="mb-4">
+            <p class="text-muted small mb-1">{$t("domaininfo.status")}</p>
+            <DomainStatusBadges status={info.status} />
+        </div>
+    {/if}
 {/if}
 
 <!-- Dates card -->
@@ -178,6 +184,31 @@
                 <ListGroup flush>
                     {#each info.nameservers as ns, i (i)}
                         <ListGroupItem class="font-monospace py-2">{ns}</ListGroupItem>
+                    {/each}
+                </ListGroup>
+            </Card>
+        </Col>
+    {/if}
+
+    <!-- Status card -->
+    {#if !summary && info.status && info.status.length > 0}
+        <Col md={6}>
+            <Card class="mb-4">
+                <CardHeader>
+                    <CardTitle class="h6 mb-0 fw-bold">
+                        <i class="bi bi-shield-lock me-1"></i>
+                        {$t("domaininfo.status")}
+                    </CardTitle>
+                </CardHeader>
+                <ListGroup flush>
+                    {#each info.status as code, i (i)}
+                        {@const desc = $tOr(`domaininfo.status-descriptions.${code}`, "")}
+                        <ListGroupItem class="py-2">
+                            <span class="badge bg-{statusColor(code)}">{code}</span>
+                            {#if desc}
+                                <div class="small text-muted mt-1">{desc}</div>
+                            {/if}
+                        </ListGroupItem>
                     {/each}
                 </ListGroup>
             </Card>

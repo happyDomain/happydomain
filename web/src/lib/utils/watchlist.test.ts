@@ -26,8 +26,11 @@ import {
     findWatch,
     isAutoRenewPending,
     lifecycleStep,
+    phaseOfDomainInfo,
+    updatedWatch,
     watchComparator,
     watchHeadline,
+    watchOfDomainInfo,
 } from "./watchlist";
 
 const NOW = new Date("2026-10-24T12:00:00Z");
@@ -163,6 +166,45 @@ describe("watchlist helpers", () => {
         expect(watchHeadline({ phase: "unknown" })).toEqual(["watchlist.headline.not-checked", {}]);
     });
 
+    it("tells the phase of a domain from its lookup", () => {
+        expect(phaseOfDomainInfo(null)).toBe("available");
+        expect(phaseOfDomainInfo({ expiration: inDays(100) })).toBe("registered");
+        expect(phaseOfDomainInfo({})).toBe("registered");
+        expect(phaseOfDomainInfo({ expiration: inDays(10) })).toBe("expiring");
+        expect(phaseOfDomainInfo({ expiration: inDays(30) })).toBe("expiring");
+        expect(phaseOfDomainInfo({ expiration: inDays(31) })).toBe("registered");
+        // Not rounded to days: the server would tell it registered too.
+        expect(phaseOfDomainInfo({ expiration: inDays(30.25) })).toBe("registered");
+        expect(phaseOfDomainInfo({ expiration: inDays(-2) })).toBe("grace");
+        expect(phaseOfDomainInfo({ expiration: inDays(-2), status: ["redemption period"] })).toBe(
+            "redemption",
+        );
+        expect(phaseOfDomainInfo({ status: ["pendingRestore"] })).toBe("redemption");
+        expect(phaseOfDomainInfo({ status: ["redemptionPeriod", "pendingDelete"] })).toBe(
+            "pending_delete",
+        );
+    });
+
+    it("describes a domain looked up as an unsaved watch", () => {
+        const w = watchOfDomainInfo("example.com", {
+            name: "EXAMPLE.com.",
+            expiration: inDays(100),
+            registrar: "Registrar",
+            status: ["ok"],
+        });
+        expect(w.id).toBeUndefined();
+        expect(w.domain).toBe("EXAMPLE.com");
+        expect(w.phase).toBe("registered");
+        expect(w.registrar).toBe("Registrar");
+        expect(watchOfDomainInfo("example.org", null)).toEqual({
+            domain: "example.org",
+            phase: "available",
+            expiration: undefined,
+            registrar: undefined,
+            status: undefined,
+        });
+    });
+
     it("finds the watch of a domain or of its parent", () => {
         const list: DomainWatch[] = [
             { id: "1", domain: "example.com" },
@@ -181,5 +223,41 @@ describe("watchlist helpers", () => {
         expect(isAutoRenewPending({ status: ["auto renew period"] })).toBe(true);
         expect(isAutoRenewPending({ status: ["renewPeriod"] })).toBe(false);
         expect(isAutoRenewPending({})).toBe(false);
+    });
+
+    it("updates a watch with what a lookup of its domain tells", () => {
+        const w: DomainWatch = {
+            id: "1",
+            domain: "example.com",
+            note: "mine",
+            phase: "pending_delete",
+            estimatedRelease: inDays(2),
+            status: ["pendingDelete"],
+        };
+
+        const freed = updatedWatch(w, "Example.com.", {
+            domain: "example.com",
+            phase: "available",
+        });
+        expect(freed).toEqual({
+            id: "1",
+            domain: "example.com",
+            note: "mine",
+            phase: "available",
+            estimatedRelease: undefined,
+            expiration: undefined,
+            registrar: undefined,
+            status: undefined,
+        });
+
+        const same = updatedWatch(w, "example.com", {
+            domain: "example.com",
+            phase: "pending_delete",
+            status: ["pendingDelete"],
+        });
+        expect(same.estimatedRelease).toBe(w.estimatedRelease);
+
+        // The lookup of a subdomain tells nothing of the watched domain.
+        expect(updatedWatch(w, "www.example.com", { phase: "available" })).toBe(w);
     });
 });

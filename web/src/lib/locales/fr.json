@@ -206,7 +206,6 @@
             "admin": "Contact administratif",
             "tech": "Contact technique"
         },
-        "domain-not-found": "Ce nom de domaine ne semble pas être enregistré.",
         "error": "Impossible de récupérer les informations du domaine.",
         "status-descriptions": {
             "active": "Le domaine est actif.",

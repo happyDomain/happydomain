@@ -212,7 +212,6 @@
             "admin": "Administrative contact",
             "tech": "Technical contact"
         },
-        "domain-not-found": "This domain name does not appear to be registered.",
         "error": "Could not retrieve domain information.",
         "status-descriptions": {
             "active": "The domain is active.",

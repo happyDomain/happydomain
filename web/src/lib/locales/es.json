@@ -184,7 +184,6 @@
         "expires-in": "Expira en {{days}} días",
         "expired": "Expiró hace {{days}} días",
         "expires-today": "Expira hoy",
-        "domain-not-found": "Este nombre de dominio no parece estar registrado.",
         "error": "No se pudo recuperar la información del dominio.",
         "status-descriptions": {
             "ok": "El dominio está activo sin restricciones.",

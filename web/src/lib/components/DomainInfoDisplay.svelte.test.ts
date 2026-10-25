@@ -117,4 +117,27 @@ describe("DomainInfoDisplay", () => {
         expect(registrant).toHaveTextContent("+33.123456789");
         expect(addressLines(tech)).toEqual(["DE"]);
     });
+
+    it("tells the name and the statuses of the domain at the top", () => {
+        const { container } = render(DomainInfoDisplay, {
+            domain: "example.com",
+            info: { name: "example.com", status: ["clientTransferProhibited"] },
+        });
+
+        expect(container.querySelector("h2")).toHaveTextContent("example.com");
+        expect(screen.getByText("clientTransferProhibited")).toBeVisible();
+    });
+
+    it("lists the statuses with their description among the cards, without summary", () => {
+        const { container } = render(DomainInfoDisplay, {
+            domain: "example.com",
+            summary: false,
+            info: { name: "example.com", status: ["clientTransferProhibited", "someStatus"] },
+        });
+
+        expect(container.querySelector("h2")).toBeNull();
+        expect(screen.getByText("Transfer to another registrar is locked.")).toBeVisible();
+        const unknown = screen.getByText("someStatus").closest(".list-group-item");
+        expect(unknown?.querySelector(".text-muted")).toBeNull();
+    });
 });

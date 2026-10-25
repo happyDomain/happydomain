@@ -207,7 +207,6 @@
         "expires-in": "{{days}} 天后到期",
         "expired": "已于 {{days}} 天前到期",
         "expires-today": "今日到期",
-        "domain-not-found": "该域名似乎未被注册。",
         "error": "无法获取域名信息。",
         "status-descriptions": {
             "ok": "域名处于活跃状态，无任何限制。",

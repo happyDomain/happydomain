@@ -21,6 +21,7 @@
 // Helpers of the domain watchlist: how each phase looks, how urgent it is,
 // and what to say about a watched domain.
 
+import type { DomainInfo } from "$lib/model/domaininfo";
 import type { DomainWatch, DomainWatchPhase } from "$lib/model/watchlist";
 import { daysUntil } from "./domaininfo";
 
@@ -79,6 +80,64 @@ export function isAutoRenewPending(w: DomainWatch): boolean {
 function hasStatus(status: string[] | undefined, code: string): boolean {
     const want = code.toLowerCase();
     return (status ?? []).some((s) => s.toLowerCase().replace(/[^a-z]/g, "") === want);
+}
+
+/**
+ * How close to its expiration date a registered domain is said to be expiring,
+ * as expiringWithin of internal/usecase/domainwatch.
+ */
+const EXPIRING_WITHIN_MS = 30 * 86400000;
+
+/**
+ * Phase of a domain from its registration data, info being null when it is not
+ * registered. Mirrors domaininfo.PhaseOf (pkg/domaininfo/lifecycle.go) and
+ * phaseOf of internal/usecase/domainwatch, which tells the expiring domains
+ * apart: keep them in sync.
+ */
+export function phaseOfDomainInfo(info: DomainInfo | null): DomainWatchPhase {
+    if (!info) return "available";
+    if (hasStatus(info.status, "pendingDelete")) return "pending_delete";
+    if (hasStatus(info.status, "redemptionPeriod") || hasStatus(info.status, "pendingRestore"))
+        return "redemption";
+    if (info.expiration) {
+        const left = new Date(info.expiration).getTime() - Date.now();
+        if (left < 0) return "grace";
+        if (left <= EXPIRING_WITHIN_MS) return "expiring";
+    }
+    return "registered";
+}
+
+/**
+ * A watch, not saved, describing a domain from a single lookup: info is its
+ * registration data, null when it is not registered.
+ */
+export function watchOfDomainInfo(domain: string, info: DomainInfo | null): DomainWatch {
+    return {
+        domain: info?.name?.replace(/\.$/, "") || domain,
+        phase: phaseOfDomainInfo(info),
+        expiration: info?.expiration,
+        registrar: info?.registrar,
+        status: info?.status,
+    };
+}
+
+/**
+ * The watch w of domain, updated with what a lookup of domain just told: the
+ * watch is only checked so often. The lookup of a subdomain tells nothing of
+ * the watched domain.
+ */
+export function updatedWatch(w: DomainWatch, domain: string, lookedUp: DomainWatch): DomainWatch {
+    const name = domain.toLowerCase().replace(/\.$/, "");
+    if (name !== w.domain && name !== w.displayName) return w;
+    return {
+        ...w,
+        phase: lookedUp.phase,
+        expiration: lookedUp.expiration,
+        registrar: lookedUp.registrar,
+        status: lookedUp.status,
+        // Estimated from when the phase was first seen.
+        estimatedRelease: lookedUp.phase === w.phase ? w.estimatedRelease : undefined,
+    };
 }
 
 /**
