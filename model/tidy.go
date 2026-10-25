@@ -47,4 +47,5 @@ type TidyUpUseCase interface {
 	TidySessions(dropInvalid bool) error
 	TidyUsers(dropInvalid bool) error
 	TidyZones(dropInvalid bool) error
+	TidyZoneTemplates(dropInvalid bool) error
 }

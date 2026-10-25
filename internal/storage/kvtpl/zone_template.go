@@ -134,3 +134,21 @@ func (s *KVStorage) RestoreZoneTemplate(t *happydns.ZoneTemplateMessage) error {
 	}
 	return batch.Commit()
 }
+
+func (s *KVStorage) zoneTemplateExists(id happydns.Identifier) bool {
+	_, err := s.GetZoneTemplate(id)
+	return err == nil
+}
+
+// TidyZoneTemplateIndexes removes the zonetpl-user|{userId}|{templateId} and
+// zonetpl-global|{templateId} index entries whose user or template no longer
+// exists.
+func (s *KVStorage) TidyZoneTemplateIndexes() error {
+	s.tidyTwoPartIndex(zonetplUserPrefix, "zone template user", func(id happydns.Identifier) bool {
+		_, err := s.GetUser(id)
+		return err == nil
+	}, s.zoneTemplateExists)
+	s.tidyLastSegmentIndex(zonetplGlobalPrefix, "global zone template", s.zoneTemplateExists)
+
+	return nil
+}

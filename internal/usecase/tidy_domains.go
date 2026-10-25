@@ -23,6 +23,7 @@ package usecase
 
 import (
 	"errors"
+	"fmt"
 	"log"
 
 	"git.happydns.org/happyDomain/model"
@@ -98,4 +99,41 @@ func (tu *tidyUpUsecase) TidyDomainWatches(dropInvalid bool) error {
 	}
 
 	return tu.store.TidyDomainWatchIndexes()
+}
+
+// TidyZoneTemplates deletes the zone templates whose user no longer exists,
+// then the index entries left pointing to a missing user or template. The
+// global templates have no user: they are never orphans.
+func (tu *tidyUpUsecase) TidyZoneTemplates(dropInvalid bool) error {
+	iter, err := tu.store.ListAllZoneTemplates()
+	if err != nil {
+		return err
+	}
+
+	// Not tidyUserOrphans: a global template has no user to look up.
+	var orphans []*happydns.ZoneTemplateMessage
+	err = iterateTidy(iter, dropInvalid, func(t *happydns.ZoneTemplateMessage) error {
+		if t.IsGlobal() {
+			return nil
+		}
+		_, err := tu.store.GetUser(*t.UserId)
+		if errors.Is(err, happydns.ErrUserNotFound) {
+			orphans = append(orphans, t)
+			return nil
+		}
+		return err
+	})
+	iter.Close()
+	if err != nil {
+		return err
+	}
+
+	for _, t := range orphans {
+		log.Printf("Deleting orphan zone template %s (%s): user not found", t.Id.String(), t.Name)
+		if err := tu.store.DeleteZoneTemplate(t.Id); err != nil && !errors.Is(err, happydns.ErrZoneTemplateNotFound) {
+			return fmt.Errorf("unable to delete orphan zone template %s: %w", t.Id.String(), err)
+		}
+	}
+
+	return tu.store.TidyZoneTemplateIndexes()
 }

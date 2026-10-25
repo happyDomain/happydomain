@@ -44,4 +44,6 @@ type ZoneTemplateStorage interface {
 	// RestoreZoneTemplate stores t under its identifier, replacing any
 	// template stored under it, as a backup restore does.
 	RestoreZoneTemplate(t *happydns.ZoneTemplateMessage) error
+	// TidyZoneTemplateIndexes removes stale index entries.
+	TidyZoneTemplateIndexes() error
 }

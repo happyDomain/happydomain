@@ -166,6 +166,19 @@ func (u *Usecase) Backup() happydns.Backup {
 		}
 	}
 
+	// Zone templates, of the users and global.
+	if tplIter, err := u.store.ListAllZoneTemplates(); err != nil {
+		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve ZoneTemplates: %s", err.Error()))
+	} else {
+		defer tplIter.Close()
+		for tplIter.Next() {
+			ret.ZoneTemplates = append(ret.ZoneTemplates, tplIter.Item())
+		}
+		if err := tplIter.Err(); err != nil {
+			ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve every ZoneTemplate: %s", err.Error()))
+		}
+	}
+
 	// Notification preferences.
 	if prefIter, err := u.store.ListAllPreferences(); err != nil {
 		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve NotificationPreferences: %s", err.Error()))
@@ -382,6 +395,12 @@ func (u *Usecase) BackupUser(user *happydns.User) happydns.Backup {
 	} else {
 		ret.DomainWatches = append(ret.DomainWatches, watches...)
 	}
+	// Only their own: the global templates belong to no one.
+	if templates, err := u.store.ListZoneTemplatesByUser(user.Id); err != nil {
+		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve ZoneTemplates: %s", err.Error()))
+	} else {
+		ret.ZoneTemplates = append(ret.ZoneTemplates, templates...)
+	}
 	if prefs, err := u.store.ListPreferencesByUser(user.Id); err != nil {
 		ret.Errors = append(ret.Errors, fmt.Sprintf("unable to retrieve NotificationPreferences: %s", err.Error()))
 	} else {
@@ -555,6 +574,13 @@ func (u *Usecase) Restore(ctx context.Context, backup *happydns.Backup) error {
 			continue
 		}
 		errs = errors.Join(errs, u.store.RestoreDomainWatch(w))
+	}
+
+	for _, t := range backup.ZoneTemplates {
+		if t == nil {
+			continue
+		}
+		errs = errors.Join(errs, u.store.RestoreZoneTemplate(t))
 	}
 
 	// Notification channels, then the preferences pointing at them, under

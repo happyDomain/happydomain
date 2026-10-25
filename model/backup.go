@@ -36,6 +36,7 @@ type Backup struct {
 	Users                    []*User
 	UsersAuth                UserAuths
 	Zones                    []*ZoneMessage
+	ZoneTemplates            []*ZoneTemplateMessage `json:",omitempty"`
 	NotificationChannels     []*NotificationChannel
 	NotificationPreferences  []*NotificationPreference
 	NotificationStates       []*NotificationState

@@ -890,6 +890,11 @@ func (s *instrumentedStorage) TidyUserIndexes() (err error) {
 	return s.inner.TidyUserIndexes()
 }
 
+func (s *instrumentedStorage) TidyZoneTemplateIndexes() (err error) {
+	defer observe("TidyZoneTemplateIndexes", "tidy", "zone_template")(&err)
+	return s.inner.TidyZoneTemplateIndexes()
+}
+
 func (s *instrumentedStorage) UpdateAuthUser(user *happydns.UserAuth) (err error) {
 	defer observe("UpdateAuthUser", "update", "authuser")(&err)
 	return s.inner.UpdateAuthUser(user)
