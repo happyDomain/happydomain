@@ -92,7 +92,7 @@
     <div class="mb-4">
         <p class="text-muted small mb-1">{$t("domaininfo.status")}</p>
         <div class="d-flex flex-wrap gap-2">
-            {#each info.status as code}
+            {#each info.status as code, i (i)}
                 <Badge
                     color={statusColor(code)}
                     title={$t(`domaininfo.status-descriptions.${code}`) || code}
@@ -102,9 +102,7 @@
             {/each}
         </div>
         {#if info.status.length === 1}
-            {@const desc = $t(
-                `domaininfo.status-descriptions.${info.status[0]}`,
-            )}
+            {@const desc = $t(`domaininfo.status-descriptions.${info.status[0]}`)}
             {#if desc && !desc.startsWith("domaininfo.")}
                 <p class="text-muted small mt-1 mb-0">{desc}</p>
             {/if}
@@ -137,15 +135,16 @@
                 {#if info.expiration}
                     {@const days = daysUntilExpiration(info.expiration)}
                     {@const color = expirationColor(info.expiration)}
-                    {@const expiresLabel = days < 0 ? $t("domaininfo.expired", { days: Math.abs(days) }) : days === 0 ? $t("domaininfo.expires-today") : $t("domaininfo.expires-in", { days })}
+                    {@const expiresLabel =
+                        days < 0
+                            ? $t("domaininfo.expired", { days: Math.abs(days) })
+                            : days === 0
+                              ? $t("domaininfo.expires-today")
+                              : $t("domaininfo.expires-in", { days })}
                     <p class="fw-semibold mb-1">
                         {formatDate(info.expiration)}
                     </p>
-                    <div
-                        class="progress mb-1"
-                        style="height: 6px;"
-                        title={expiresLabel}
-                    >
+                    <div class="progress mb-1" style="height: 6px;" title={expiresLabel}>
                         <div
                             class="progress-bar bg-{color}"
                             role="progressbar"
@@ -215,10 +214,8 @@
                     </CardTitle>
                 </CardHeader>
                 <ListGroup flush>
-                    {#each info.nameservers as ns}
-                        <ListGroupItem class="font-monospace py-2"
-                            >{ns}</ListGroupItem
-                        >
+                    {#each info.nameservers as ns, i (i)}
+                        <ListGroupItem class="font-monospace py-2">{ns}</ListGroupItem>
                     {/each}
                 </ListGroup>
             </Card>
