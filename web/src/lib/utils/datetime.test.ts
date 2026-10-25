@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { formatDuration, formatRelative } from "./datetime";
+import { formatDuration, formatRelative, formatRelativeTime } from "./datetime";
 
 describe("formatDuration", () => {
     it("returns em dash for undefined", () => {
@@ -109,5 +109,33 @@ describe("formatRelative", () => {
         // 50 seconds should still show as seconds, not round up to 1m
         vi.useFakeTimers({ now: new Date("2026-01-01T12:00:50Z") });
         expect(formatRelative("2026-01-01T12:00:00Z")).toBe("50s ago");
+    });
+});
+
+describe("formatRelativeTime", () => {
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    it("returns an em dash without date", () => {
+        expect(formatRelativeTime(undefined, "en")).toBe("—");
+    });
+
+    it("picks the largest unit, in the locale", () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date("2026-10-24T12:00:00Z"));
+
+        expect(formatRelativeTime("2026-10-27T12:00:00Z", "en")).toBe("in 3 days");
+        expect(formatRelativeTime("2026-10-24T10:00:00Z", "en")).toBe("2 hours ago");
+        expect(formatRelativeTime("2026-10-24T12:05:00Z", "en")).toBe("in 5 minutes");
+        expect(formatRelativeTime("2026-10-25T12:00:00Z", "fr")).toBe("demain");
+    });
+
+    it("tells past days, and seconds under a minute", () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date("2026-10-24T12:00:00Z"));
+
+        expect(formatRelativeTime("2026-10-21T12:00:00Z", "en")).toBe("3 days ago");
+        expect(formatRelativeTime("2026-10-24T12:00:30Z", "en")).toBe("in 30 seconds");
     });
 });

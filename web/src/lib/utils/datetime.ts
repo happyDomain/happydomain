@@ -107,3 +107,26 @@ export function formatCountdown(date: Date): string {
         return `${seconds}s`;
     }
 }
+
+/**
+ * Format a date relatively to now, in the given locale (e.g. "in 3 days",
+ * "il y a 2 heures").
+ * @param date ISO 8601 date string or Date
+ * @param locale BCP 47 language tag; the browser's when undefined
+ * @returns Localized relative time, or "—" when there is no date
+ */
+export function formatRelativeTime(date: string | Date | undefined, locale?: string): string {
+    if (!date) return "—";
+    const diff = new Date(date).getTime() - Date.now();
+    const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+
+    const units: [Intl.RelativeTimeFormatUnit, number][] = [
+        ["day", 86400000],
+        ["hour", 3600000],
+        ["minute", 60000],
+    ];
+    for (const [unit, ms] of units) {
+        if (Math.abs(diff) >= ms) return rtf.format(Math.round(diff / ms), unit);
+    }
+    return rtf.format(Math.round(diff / 1000), "second");
+}
