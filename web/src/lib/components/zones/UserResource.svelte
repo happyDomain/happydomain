@@ -61,7 +61,7 @@
     }
 </script>
 
-{#if $userSession.settings.zoneview === ZoneViewRecords || $userSession.settings.zoneview === ZoneViewList}
+{#if $userSession.settings?.zoneview === ZoneViewRecords || $userSession.settings?.zoneview === ZoneViewList}
     {#if !services || services.length == 0}
         <div class="d-flex justify-content-center align-items-center">
             {$t("common.no-content")}
@@ -70,7 +70,7 @@
         <table class="table table-bordered table-hover table-striped" style="table-layout: fixed;">
             <tbody>
                 {#each services as service}
-                    {#if $userSession.settings.zoneview === ZoneViewRecords}
+                    {#if $userSession.settings?.zoneview === ZoneViewRecords}
                         {#await getServiceSpec(service._svctype)}
                             <tr>
                                 <td class="text-center">

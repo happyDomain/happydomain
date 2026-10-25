@@ -64,4 +64,13 @@ describe("UserResource", () => {
         const { container } = render(UserResource, setup(true));
         expect(container.querySelector(".new-service-card")).toBeNull();
     });
+
+    // As the session of an administrator, who has no settings.
+    it("shows the services as cards to a session without settings", () => {
+        const props = setup(false);
+        userSession.set({} as User);
+
+        const { container } = render(UserResource, props);
+        expect(container.querySelector(".new-service-card")).not.toBeNull();
+    });
 });
