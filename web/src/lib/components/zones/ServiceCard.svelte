@@ -34,7 +34,7 @@
     } from "@sveltestrap/sveltestrap";
 
     import ServiceBadges from "./ServiceBadges.svelte";
-    import { controls as ctrlServiceDetails } from "../ServiceDetailsOffcanvas.svelte";
+    import { controls as ctrlServiceDetails } from "./ServiceDetailsOffcanvas.svelte";
     import { controls as ctrlServicePath } from "$lib/components/services/NewServicePath.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { ServiceWithValue } from "$lib/model/service.svelte";

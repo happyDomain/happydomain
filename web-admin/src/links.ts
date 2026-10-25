@@ -21,6 +21,8 @@
 
 import { resolve } from "$app/paths";
 
+import type { CheckerLinks } from "$lib/checker_links";
+
 /**
  * The counterpart of web/src/links.ts.
  *
@@ -38,6 +40,20 @@ export function domainLinks() {
         checks: (_dn: string) => resolve("/domains"),
         service: (_dn: string, _historyid: string, _subdomain: string, _serviceid: string) =>
             resolve("/domains"),
+    };
+}
+
+// The global zone templates show services, which have no checks.
+export function serviceCheckerLinks(
+    _dn: string,
+    _historyid: string,
+    _subdomain: string,
+    _serviceid: string,
+): CheckerLinks {
+    return {
+        list: resolve("/checkers"),
+        checker: (checkerId) => resolve("/checkers/[checkerId]", { checkerId }),
+        back: resolve("/domains"),
     };
 }
 

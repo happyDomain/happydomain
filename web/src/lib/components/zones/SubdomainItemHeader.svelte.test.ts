@@ -30,7 +30,7 @@ import { ZoneViewList } from "$lib/model/usersettings";
 import { providers } from "$lib/stores/providers";
 import { userSession } from "$lib/stores/usersession";
 import { loadTranslations } from "$lib/translations";
-import { controls as ctrlServiceDetails } from "../ServiceDetailsOffcanvas.svelte";
+import { controls as ctrlServiceDetails } from "./ServiceDetailsOffcanvas.svelte";
 import SubdomainItemHeader from "./SubdomainItemHeader.svelte";
 
 beforeAll(async () => {

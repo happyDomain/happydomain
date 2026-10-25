@@ -49,7 +49,7 @@
     import { getServiceSpec } from "$lib/api/service_specs";
     import { deleteZoneService, updateZoneService } from "$lib/api/zone";
     import { notifyServiceChange, zoneWasForked } from "$lib/stores/zonefeedback";
-    import ServiceBadges from "./[[historyid]]/ServiceBadges.svelte";
+    import ServiceBadges from "./ServiceBadges.svelte";
     import PropagationStatus from "$lib/components/services/PropagationStatus.svelte";
     import RecordLine from "$lib/components/services/RecordLine.svelte";
     import { collectRRs } from "$lib/dns";

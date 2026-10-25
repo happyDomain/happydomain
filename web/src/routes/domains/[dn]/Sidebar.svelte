@@ -36,7 +36,7 @@
     import { thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
     import ButtonZonePublish from "./ButtonZonePublish.svelte";
-    import ServiceSidebar from "./ServiceSidebar.svelte";
+    import ServiceSidebar from "$lib/components/zones/ServiceSidebar.svelte";
     import ZoneSidebar from "./ZoneSidebar.svelte";
 
     interface Props {

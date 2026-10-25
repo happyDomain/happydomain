@@ -28,9 +28,9 @@
     import AliasModal from "$lib/components/modals/Alias.svelte";
     import ChecksSummaryBadge from "$lib/components/checkers/ChecksSummaryBadge.svelte";
     import PageTitle from "$lib/components/PageTitle.svelte";
-    import SubdomainItem from "./SubdomainItem.svelte";
-    import SubdomainList from "./SubdomainList.svelte";
-    import UserResource from "./UserResource.svelte";
+    import SubdomainItem from "$lib/components/zones/SubdomainItem.svelte";
+    import SubdomainList from "$lib/components/zones/SubdomainList.svelte";
+    import UserResource from "$lib/components/zones/UserResource.svelte";
     import type { HappydnsDomainWithCheckStatus } from "$lib/api-base/types.gen";
     import { domainLink } from "$lib/stores/domains";
     import { sortedDomains, sortedDomainsWithIntermediate, thisZone } from "$lib/stores/thiszone";

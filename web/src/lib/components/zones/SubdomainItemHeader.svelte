@@ -27,7 +27,7 @@
     import { controls as ctrlNewAlias } from "$lib/components/modals/Alias.svelte";
     import { controls as ctrlRecord } from "$lib/components/modals/Record.svelte";
     import { controls as ctrlNewService } from "$lib/components/services/NewServicePath.svelte";
-    import { controls as ctrlServiceDetails } from "../ServiceDetailsOffcanvas.svelte";
+    import { controls as ctrlServiceDetails } from "./ServiceDetailsOffcanvas.svelte";
     import { fqdn, unreverseDomain } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { HappydnsService } from "$lib/api-base/types.gen";

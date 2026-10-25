@@ -36,8 +36,8 @@
     import ModalDomainDelete, { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
     import ModalDomainWhois from "./ModalDomainWhois.svelte";
     import ModalUploadZone from "./ModalUploadZone.svelte";
-    import NewSubdomainPath from "./NewSubdomainPath.svelte";
-    import ServiceDetailsOffcanvas from "./ServiceDetailsOffcanvas.svelte";
+    import NewSubdomainPath from "$lib/components/zones/NewSubdomainPath.svelte";
+    import ServiceDetailsOffcanvas from "$lib/components/zones/ServiceDetailsOffcanvas.svelte";
     import Sidebar from "./Sidebar.svelte";
 
     interface Props {

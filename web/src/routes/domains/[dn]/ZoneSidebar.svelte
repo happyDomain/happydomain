@@ -49,8 +49,8 @@
     import { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
     import { controls as ctrlDomainWhois } from "./ModalDomainWhois.svelte";
     import { controls as ctrlUploadZone } from "./ModalUploadZone.svelte";
-    import { controls as ctrlNewSubdomain } from "./NewSubdomainPath.svelte";
-    import SubdomainListTiny from "./SubdomainListTiny.svelte";
+    import { controls as ctrlNewSubdomain } from "$lib/components/zones/NewSubdomainPath.svelte";
+    import SubdomainListTiny from "$lib/components/zones/SubdomainListTiny.svelte";
 
     interface Props {
         origin: Domain;
