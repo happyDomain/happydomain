@@ -273,6 +273,9 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             5
         ],
         "restrictions": {
+            "exclusive": [
+                "svcs.MTA_STS"
+            ],
             "nearAlone": true,
             "needTypes": [
                 16,
@@ -605,6 +608,9 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             16
         ],
         "restrictions": {
+            "exclusive": [
+                "abstract.MTASTS"
+            ],
             "nearAlone": true,
             "needTypes": [
                 16

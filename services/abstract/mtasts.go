@@ -224,9 +224,12 @@ func init() {
 			Categories:  []string{"email"},
 			RecordTypes: []uint16{dns.TypeTXT, dns.TypeCNAME},
 			Restrictions: happydns.ServiceRestrictions{
-				NearAlone: true,
-				Single:    true,
-				NeedTypes: []uint16{dns.TypeTXT, dns.TypeCNAME},
+				// Both publish the `_mta-sts` TXT record: a second policy on
+				// the name makes senders ignore both (RFC 8461 §3.1).
+				ExclusiveRR: []string{"svcs.MTA_STS"},
+				NearAlone:   true,
+				Single:      true,
+				NeedTypes:   []uint16{dns.TypeTXT, dns.TypeCNAME},
 			},
 		},
 		1,

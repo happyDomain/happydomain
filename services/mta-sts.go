@@ -130,7 +130,10 @@ func init() {
 				dns.TypeTXT,
 			},
 			Restrictions: happydns.ServiceRestrictions{
-				NearAlone: true,
+				// Both publish the `_mta-sts` TXT record: a second policy on
+				// the name makes senders ignore both (RFC 8461 §3.1).
+				ExclusiveRR: []string{"abstract.MTASTS"},
+				NearAlone:   true,
 				NeedTypes: []uint16{
 					dns.TypeTXT,
 				},
