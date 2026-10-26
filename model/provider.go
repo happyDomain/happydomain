@@ -47,7 +47,7 @@ type ProviderInfos struct {
 	Description string `json:"description" binding:"required"`
 
 	// Capabilites is a list of special ability of the provider (automatically filled).
-	Capabilities []string `json:"capabilities,omitempty"`
+	Capabilities []string `json:"capabilities"`
 
 	// HelpLink is the link to the documentation of the provider configuration.
 	HelpLink string `json:"helplink,omitempty"`

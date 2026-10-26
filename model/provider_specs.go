@@ -28,7 +28,7 @@ type ProviderSpecs struct {
 	Fields []*Field `json:"fields,omitempty"`
 
 	// Capabilities exposes what the provider can do.
-	Capabilities []string `json:"capabilities,omitempty"`
+	Capabilities []string `json:"capabilities"`
 }
 
 type ProviderSpecsUsecase interface {

@@ -38,6 +38,11 @@ func RegisterProvider(creator happydns.ProviderCreatorFunc, infos happydns.Provi
 	baseType := reflect.Indirect(reflect.ValueOf(provider)).Type()
 	name := baseType.Name()
 
+	// Always expose a list, even empty, rather than null.
+	if infos.Capabilities == nil {
+		infos.Capabilities = []string{}
+	}
+
 	providerRegistry[name] = happydns.ProviderCreator{
 		Creator: creator,
 		Infos:   infos,
