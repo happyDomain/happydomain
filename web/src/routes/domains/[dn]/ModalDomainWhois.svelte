@@ -65,7 +65,7 @@
         {#if lookup.pending}
             <div class="text-center text-muted py-4">
                 <Spinner />
-                <p class="mt-3">{$t("common.spinning")}…</p>
+                <p class="mt-3">{$t("wait.wait")}…</p>
             </div>
         {:else if lookup.error !== null}
             <div class="card border-danger">

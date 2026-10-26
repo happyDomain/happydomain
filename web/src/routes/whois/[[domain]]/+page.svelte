@@ -130,7 +130,7 @@
                 >
                     <div class="text-center text-muted">
                         <Spinner />
-                        <p class="mt-3">{$t("common.spinning")}…</p>
+                        <p class="mt-3">{$t("wait.wait")}…</p>
                     </div>
                 </div>
             {:else if lookup.notFound}
