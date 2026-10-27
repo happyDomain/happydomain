@@ -115,6 +115,13 @@
         "add-now": "Add it now!",
         "search-placeholder": "Search domains…",
         "create-on-provider": "Create on {{provider}}",
+        "invalid-reason": {
+            "too-long": "A domain name cannot exceed 253 characters.",
+            "empty-label": "A domain name cannot contain two consecutive dots, nor start with one.",
+            "label-too-long": "Each part between dots is limited to 63 characters, “{{label}}” is longer.",
+            "invalid-char": "The character “{{char}}” is unusual in a domain name, which is normally made of letters, digits and hyphens.",
+            "bad-edge": "“{{label}}” does not start and end with a letter or a digit, which is unusual."
+        },
         "added-success": "Great! {{domain}} has been added. You can manage it right now.",
         "apply": {
             "additions": "{{count:eq; 0:no additions; 1:{{count}} addition; default:{{count}} additions}}",

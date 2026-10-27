@@ -20,7 +20,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { describe, it, expect } from "vitest";
-import { domainCompare, fqdn, fqdnCompare, isReverseZone, nsttl, reverseDomain, unreverseDomain, validateDomain } from "./dns";
+import { domainCompare, domainNameIssue, domainNameIssueBlocks, fqdn, fqdnCompare, isReverseZone, nsttl, reverseDomain, unreverseDomain, validateDomain } from "./dns";
 
 describe('fqdn', () => {
   const origin = 'example.com.';
@@ -301,5 +301,63 @@ describe("validateDomain", () => {
 
   it("accepts labels starting with a digit (per RFC allowance)", () => {
     expect(validateDomain("3example.com")).toBe(true);
+  });
+});
+
+describe("domainNameIssue", () => {
+  it("finds nothing wrong with a valid or empty name", () => {
+    expect(domainNameIssue("")).toBe(null);
+    expect(domainNameIssue("example.com")).toBe(null);
+    expect(domainNameIssue("example.com.")).toBe(null);
+    expect(domainNameIssue("*.example.com")).toBe(null);
+    expect(domainNameIssue("_dmarc.example.com")).toBe(null);
+  });
+
+  it("points at the first invalid character", () => {
+    expect(domainNameIssue("test@pomail.fr")).toEqual({ kind: "invalid-char", char: "@" });
+    expect(domainNameIssue("exam ple.com")).toEqual({ kind: "invalid-char", char: " " });
+    expect(domainNameIssue("exam_ple.com")).toEqual({ kind: "invalid-char", char: "_" });
+    expect(domainNameIssue("www.*.example.com")).toEqual({ kind: "invalid-char", char: "*" });
+    expect(domainNameIssue("@")).toEqual({ kind: "invalid-char", char: "@" });
+  });
+
+  it("reports an empty label", () => {
+    expect(domainNameIssue("example..com")).toEqual({ kind: "empty-label" });
+    expect(domainNameIssue(".example.com")).toEqual({ kind: "empty-label" });
+  });
+
+  it("reports a label that is too long", () => {
+    const label = "a".repeat(64);
+    expect(domainNameIssue(label + ".com")).toEqual({ kind: "label-too-long", label });
+  });
+
+  it("reports a name that is too long", () => {
+    const label = "a".repeat(63);
+    expect(domainNameIssue(`${label}.${label}.${label}.${label}.com`)).toEqual({ kind: "too-long" });
+  });
+
+  it("reports a label starting or ending with a hyphen", () => {
+    expect(domainNameIssue("-example.com")).toEqual({ kind: "bad-edge", label: "-example" });
+    expect(domainNameIssue("example-.com")).toEqual({ kind: "bad-edge", label: "example-" });
+  });
+
+  it("agrees with validateDomain", () => {
+    for (const dn of [
+      "example.com", "test@pomail.fr", "-a.com", "a..b", "_", "_.com", "a._b", "*", "*.com",
+      "www.*.com", "@", ".", "a".repeat(64), "é.fr", "x-y.z", "a.", "..",
+    ]) {
+      expect(domainNameIssue(dn) === null, dn).toBe(validateDomain(dn) === true);
+    }
+  });
+});
+
+describe("domainNameIssueBlocks", () => {
+  it("blocks only what the DNS wire format cannot encode", () => {
+    expect(domainNameIssueBlocks(null)).toBe(false);
+    expect(domainNameIssueBlocks({ kind: "too-long" })).toBe(true);
+    expect(domainNameIssueBlocks({ kind: "label-too-long", label: "a".repeat(64) })).toBe(true);
+    expect(domainNameIssueBlocks({ kind: "empty-label" })).toBe(true);
+    expect(domainNameIssueBlocks({ kind: "invalid-char", char: "_" })).toBe(false);
+    expect(domainNameIssueBlocks({ kind: "bad-edge", label: "-a" })).toBe(false);
   });
 });

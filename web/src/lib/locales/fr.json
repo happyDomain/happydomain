@@ -73,6 +73,13 @@
         }
     },
     "domains": {
+        "invalid-reason": {
+            "too-long": "Un nom de domaine ne peut pas dépasser 253 caractères.",
+            "empty-label": "Un nom de domaine ne peut pas contenir deux points consécutifs, ni commencer par un point.",
+            "label-too-long": "Chaque partie entre deux points est limitée à 63 caractères, « {{label}} » est plus longue.",
+            "invalid-char": "Le caractère « {{char}} » est inhabituel dans un nom de domaine, normalement composé de lettres, de chiffres et de tirets.",
+            "bad-edge": "« {{label}} » ne commence pas et ne finit pas par une lettre ou un chiffre, ce qui est inhabituel."
+        },
         "monitor-elsewhere": {
             "button": "Surveiller un domaine hébergé ailleurs",
             "hint": "Votre domaine est hébergé là où happyDomain ne peut pas se connecter ? happyDomain peut tout de même le surveiller : sa zone est recomposée, en lecture seule, à partir de ce que ses serveurs de noms répondent publiquement.",

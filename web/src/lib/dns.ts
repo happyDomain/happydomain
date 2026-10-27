@@ -289,6 +289,60 @@ export function validateDomain(
     return ret;
 }
 
+export type DomainNameIssue =
+    | { kind: "too-long" }
+    | { kind: "empty-label" }
+    | { kind: "label-too-long"; label: string }
+    | { kind: "invalid-char"; char: string }
+    | { kind: "bad-edge"; label: string };
+
+/**
+ * Explains why `validateDomain(dn)` rejects a name, to tell the user what to
+ * fix. Returns `null` when the name is valid or empty.
+ *
+ * @param dn - Domain name, absolute or relative to the root.
+ */
+export function domainNameIssue(dn: string): DomainNameIssue | null {
+    if (dn.length === 0) return null;
+
+    if (dn.length + (dn.endsWith(".") ? 0 : 1) > 254) {
+        return { kind: "too-long" };
+    }
+
+    const labels = (dn.endsWith(".") ? dn.slice(0, -1) : dn).split(".");
+    if (labels[0] === "*") labels.shift();
+
+    for (const label of labels) {
+        if (label.length === 0) return { kind: "empty-label" };
+        if (label.length > 63) return { kind: "label-too-long", label };
+
+        const bad = label.replace(/^_/, "").match(/[^a-zA-Z0-9-]/);
+        if (bad) return { kind: "invalid-char", char: bad[0] };
+
+        if (!/^_?[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(label)) {
+            return { kind: "bad-edge", label };
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Tells whether an issue makes the name impossible to encode in DNS, rather
+ * than merely unusual: DNS labels may hold any byte (RFC 2181), but no label
+ * can be empty nor exceed 63 octets, and a name cannot exceed 255 octets.
+ *
+ * @param issue - Issue found by `domainNameIssue`.
+ */
+export function domainNameIssueBlocks(issue: DomainNameIssue | null): boolean {
+    return (
+        issue !== null &&
+        (issue.kind === "too-long" ||
+            issue.kind === "label-too-long" ||
+            issue.kind === "empty-label")
+    );
+}
+
 /**
  * Returns `true` when the given FQDN is a reverse DNS zone.
  *

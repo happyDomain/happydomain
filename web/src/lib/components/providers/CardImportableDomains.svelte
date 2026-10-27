@@ -38,7 +38,7 @@
     import { addDomain } from "$lib/api/domains";
     import { createDomain, listImportableDomains } from "$lib/api/provider";
     import DomainWithProvider from "$lib/components/domains/DomainWithProvider.svelte";
-    import { fqdn, fqdnCompare, validateDomain } from "$lib/dns";
+    import { domainNameIssue, domainNameIssueBlocks, fqdn, fqdnCompare } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { Provider } from "$lib/model/provider";
     import { appConfig } from "$lib/stores/config";
@@ -141,6 +141,9 @@
             refreshDomains();
         }
     }
+
+    let newDomainIssue = $derived(domainNameIssue($filteredName));
+    let newDomainBlocked = $derived(domainNameIssueBlocks(newDomainIssue));
 
     let createDomainInProgress = $state(false);
     async function createDomainOnProvider() {
@@ -275,13 +278,25 @@
                         class="text-muted fst-italic"
                         domain={{ domain: fqdn($filteredName, ""), id_provider: provider._id }}
                     />
-                    <div>
+                    <div class="d-flex align-items-center">
+                        {#if newDomainIssue}
+                            <Icon
+                                name={newDomainBlocked
+                                    ? "exclamation-circle"
+                                    : "exclamation-triangle"}
+                                class={newDomainBlocked ? "text-danger" : "text-warning-emphasis"}
+                                title={$t(
+                                    "domains.invalid-reason." + newDomainIssue.kind,
+                                    newDomainIssue,
+                                )}
+                            />
+                        {/if}
                         <Button
                             type="button"
                             class="ms-1"
                             color="warning"
                             size="sm"
-                            disabled={createDomainInProgress || !validateDomain($filteredName)}
+                            disabled={createDomainInProgress || newDomainBlocked}
                             on:click={createDomainOnProvider}
                         >
                             {#if createDomainInProgress}

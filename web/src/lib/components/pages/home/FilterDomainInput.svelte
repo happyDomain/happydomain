@@ -37,7 +37,7 @@
 
     import { addDomain } from "$lib/api/domains";
     import { controls as newDomainControls } from "$lib/components/modals/NewDomain.svelte";
-    import { fqdn, validateDomain } from "$lib/dns";
+    import { domainNameIssue, domainNameIssueBlocks, fqdn, validateDomain } from "$lib/dns";
     import { domains, refreshDomains } from "$lib/stores/domains";
     import { filterDomains, filteredName, filteredProvider } from "$lib/stores/home";
     import type { Provider } from "$lib/model/provider";
@@ -57,7 +57,7 @@
         e.preventDefault();
 
         if (actionAddDomain) {
-            addDomainToProvider();
+            if (!newDomainBlocked) addDomainToProvider();
         } else if (matchingDomains.length > 0) {
             goto(domainLinks().zone(encodeURIComponent(matchingDomains[0].id)));
         }
@@ -95,6 +95,8 @@
     function validateNewDomain(val: string): boolean | undefined {
         return validateDomain(val, "", false);
     }
+    let newDomainIssue = $derived(domainNameIssue($filteredName));
+    let newDomainBlocked = $derived(domainNameIssueBlocks(newDomainIssue));
 
     let filteredDomains = $derived(filterDomains($domains, $filteredName, $filteredProvider, null));
     let matchingDomains = $derived(
@@ -103,8 +105,8 @@
     let actionAddDomain = $derived($filteredName && matchingDomains.length == 0);
 </script>
 
-<form onsubmit={submitFilterDomainInput}>
-    <ListGroup {...rest}>
+<form onsubmit={submitFilterDomainInput} {...rest}>
+    <ListGroup>
         <ListGroupItem class="d-flex justify-content-between align-items-center p-0">
             <InputGroup>
                 <label
@@ -137,7 +139,7 @@
                         type="submit"
                         outline
                         color={actionAddDomain ? "primary" : "secondary"}
-                        disabled={addingNewDomain}
+                        disabled={addingNewDomain || newDomainBlocked}
                     >
                         {#if addingNewDomain}
                             <Spinner size="sm" class="me-1" />
@@ -152,4 +154,14 @@
             </InputGroup>
         </ListGroupItem>
     </ListGroup>
+    {#if newDomainIssue}
+        <div
+            class="form-text ms-2"
+            class:text-danger={newDomainBlocked}
+            class:text-warning-emphasis={!newDomainBlocked}
+        >
+            <Icon name={newDomainBlocked ? "exclamation-circle" : "exclamation-triangle"} />
+            {$t("domains.invalid-reason." + newDomainIssue.kind, newDomainIssue)}
+        </div>
+    {/if}
 </form>
