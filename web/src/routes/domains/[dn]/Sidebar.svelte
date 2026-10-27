@@ -38,6 +38,7 @@
     import { isReverseZone } from "$lib/dns";
     import { sortedDomains, sortedDomainsWithIntermediate } from "$lib/stores/thiszone";
     import ButtonZonePublish from "./ButtonZonePublish.svelte";
+    import HistoryTimeline from "$lib/components/zones/HistoryTimeline.svelte";
     import ServiceSidebar from "$lib/components/zones/ServiceSidebar.svelte";
     import SubdomainListTiny from "$lib/components/zones/SubdomainListTiny.svelte";
     import ZoneSidebar from "./ZoneSidebar.svelte";
@@ -89,7 +90,26 @@
             {domain}
             links={domainCheckerLinks(encodeURIComponent(domainLink(selectedDomain)))}
         />
-    {:else if page.route.id && (page.route.id.startsWith("/domains/[dn]/checks") || page.route.id.startsWith("/domains/[dn]/history") || page.route.id.startsWith("/domains/[dn]/logs") || page.route.id.startsWith("/domains/[dn]/[[historyid]]/export"))}
+    {:else if page.route.id && page.route.id.startsWith("/domains/[dn]/history")}
+        <a
+            href={resolve("/domains/[dn]/[[historyid]]", {
+                dn: encodeURIComponent(domainLink(selectedDomain)),
+            })}
+            class="sidebar-back d-flex align-items-center gap-1 mt-3 text-muted text-decoration-none fw-semibold"
+        >
+            <Icon name="chevron-left" />
+            {$t("zones.return-to")}
+        </a>
+        {#if page.data.historyDomain}
+            <div class="min-h-0 overflow-y-auto">
+                <HistoryTimeline
+                    domain={page.data.historyDomain}
+                    selected={page.params.zid}
+                    dn={encodeURIComponent(domainLink(selectedDomain))}
+                />
+            </div>
+        {/if}
+    {:else if page.route.id && (page.route.id.startsWith("/domains/[dn]/checks") || page.route.id.startsWith("/domains/[dn]/logs") || page.route.id.startsWith("/domains/[dn]/[[historyid]]/export"))}
         <a
             href={resolve("/domains/[dn]/[[historyid]]", {
                 dn: encodeURIComponent(domainLink(selectedDomain)),

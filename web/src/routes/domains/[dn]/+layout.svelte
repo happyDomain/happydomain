@@ -32,6 +32,8 @@
     import type { Domain } from "$lib/model/domain";
     import type { ZoneMeta } from "$lib/model/zone";
     import { domainLink, domains_idx, refreshDomains } from "$lib/stores/domains";
+    import { getZone, thisZone } from "$lib/stores/thiszone";
+    import { invalidateZoneDiff } from "$lib/stores/zonediff";
     import ModalDiffZone from "./ModalDiffZone.svelte";
     import ModalDomainDelete, { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
     import ModalDomainWhois from "./ModalDomainWhois.svelte";
@@ -79,6 +81,25 @@
                 invalidateAll();
             });
         }
+    }
+
+    // Each publication adds a snapshot to the history: refresh what the
+    // current page shows of it.
+    function zoneApplied(zm: ZoneMeta): void {
+        refreshDomains().then(() => {
+            if (page.route.id?.startsWith("/domains/[dn]/history")) {
+                goto(
+                    resolve("/domains/[dn]/history/[zid]", {
+                        dn: encodeURIComponent(domainLink(selectedDomain)),
+                        zid: encodeURIComponent(zm.id),
+                    }),
+                    { invalidateAll: true },
+                );
+            } else if ($thisZone) {
+                // The diff summaries compare against the zone reloaded here.
+                getZone(data.domain, $thisZone.id).then(() => invalidateZoneDiff());
+            }
+        });
     }
 
     let deleteInProgress = $state(false);
@@ -170,6 +191,6 @@
 
 <ModalDomainWhois domain={data.domain.domain} />
 
-<ModalDiffZone domain={data.domain} {selectedHistory} />
+<ModalDiffZone domain={data.domain} {selectedHistory} onapplied={zoneApplied} />
 
 <ServiceDetailsOffcanvas domain={data.domain} {selectedHistory} />

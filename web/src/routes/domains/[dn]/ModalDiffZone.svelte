@@ -47,6 +47,7 @@
     import { notifyZonePublished } from "$lib/stores/zonefeedback";
     import type { FullCorrection } from "$lib/model/correction";
     import type { Domain } from "$lib/model/domain";
+    import type { ZoneMeta } from "$lib/model/zone";
     import {
         ApplyConfirmUnexpected,
         ApplyConfirmAlways,
@@ -58,16 +59,18 @@
     import { isReadOnlyProvider, providers_idx } from "$lib/stores/providers";
     import { invalidateZoneDiff } from "$lib/stores/zonediff";
     import { userSession } from "$lib/stores/usersession";
-    import { getZone, thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
 
     interface Props {
         domain: Domain;
         selectedHistory?: string;
+        // Tells the page the changes went live, with the published
+        // snapshot the server added to the history.
+        onapplied?: (zm: ZoneMeta) => void;
         isOpen?: boolean;
     }
 
-    let { domain, selectedHistory = "", isOpen = $bindable(false) }: Props = $props();
+    let { domain, selectedHistory = "", onapplied, isOpen = $bindable(false) }: Props = $props();
 
     let zoneDiffLength = $state(0);
     let diffComputed = $state(false);
@@ -140,14 +143,12 @@
 
         propagationInProgress = true;
         try {
-            await APIApplyZone(domain, selectedHistory, selectedDiff, diffCommitMsg);
+            const zm = await APIApplyZone(domain, selectedHistory, selectedDiff, diffCommitMsg);
             // Inside the try: a failed apply must not claim success.
             notifyZonePublished(selectedDiff.length);
+            // Every diff against the provider is now stale, on any page.
             invalidateZoneDiff();
-            if ($thisZone)
-                getZone(domain, $thisZone.id).then(() => {
-                    invalidateZoneDiff();
-                });
+            onapplied?.(zm);
         } finally {
             isOpen = false;
         }

@@ -22,152 +22,23 @@
 -->
 
 <script lang="ts">
-    import { Accordion, AccordionItem, Button, Icon } from "@sveltestrap/sveltestrap";
-
-    import { getDomain } from "$lib/api/domains";
-    import DiffZone from "$lib/components/zones/DiffZone.svelte";
     import PageTitle from "$lib/components/PageTitle.svelte";
-    import TileLoader from "$lib/components/TileLoader.svelte";
     import type { Domain } from "$lib/model/domain";
-    import { getUser } from "$lib/stores/users";
     import { t } from "$lib/translations";
 
     interface Props {
-        data: { domain: Domain; history: string };
+        data: { domain: Domain };
     }
 
-    // The shape is what load() returns; a page reading part of it is not a
-    // reason to describe it any less accurately.
-    // eslint-disable-next-line svelte/no-unused-props
+    // Reached only without any version: the load redirects to the latest one.
     let { data }: Props = $props();
-
-    let isOpen: Record<string, boolean> = $state({});
-    $effect(() => {
-        if (data.domain.zone_history && data.domain.zone_history.length > 0) {
-            isOpen[data.domain.zone_history[0]] = true;
-        }
-    });
-
-    function isSameMonth(a: Date, b: Date): boolean {
-        return a.getMonth() === b.getMonth();
-    }
 </script>
 
 <div class="flex-fill pb-4 pt-2">
-    <PageTitle title={$t("history.title")} domain={data.domain.domain} subtitle={$t("history.subtitle")} />
-    {#await getDomain(data.domain.id)}
-        <div class="mt-5 text-center flex-fill">
-            <TileLoader class="mb-2" />
-            <p>{$t("wait.loading")}</p>
-        </div>
-    {:then domain}
-      {#if domain.zone_history && domain.zone_meta}
-        {#each domain.zone_history as zid, idx}
-            {@const history = domain.zone_meta[zid]}
-            {@const moddate = new Intl.DateTimeFormat(undefined, {
-                dateStyle: "long",
-                timeStyle: "medium",
-            }).format(new Date(history.last_modified))}
-            {#if idx === 0 || !isSameMonth(new Date(domain.zone_meta[domain.zone_history[idx - 1]].last_modified), new Date(history.last_modified))}
-                <h3 class="mt-4 fw-bolder">
-                    <Icon name="calendar2-month" />
-                    {new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" }).format(
-                        new Date(history.last_modified),
-                    )}
-                </h3>
-            {/if}
-            <h4 class="mt-4 d-flex gap-2 align-items-center">
-                {#await getUser(history.id_author)}
-                    <img
-                        src={"/api/users/" + encodeURIComponent(history.id_author) + "/avatar.png"}
-                        alt={history.id_author}
-                        style="height: 1.1em; border-radius: .1em"
-                    />{moddate}
-                {:then user}
-                    <img
-                        src={"/api/users/" + encodeURIComponent(history.id_author) + "/avatar.png"}
-                        alt={user.email}
-                        title={user.email}
-                        style="height: 1.1em; border-radius: .1em"
-                    />{moddate} <span class="text-muted">{$t("by")} {user.email}</span>
-                {:catch}
-                    {moddate}
-                {/await}
-                <Button
-                    color="primary"
-                    outline
-                    href={"/domains/" + encodeURIComponent(data.domain.id) + "/" + history.id}
-                    size="sm"
-                    title={$t("history.see")}
-                >
-                    <Icon name="eye-fill" />
-                </Button>
-            </h4>
-            <div class="row row-cols-3 text-center">
-                {#if history.published}
-                    <div class="col">
-                        {$t("history.published-on")}<br />
-                        <strong>
-                            {new Intl.DateTimeFormat(undefined, { dateStyle: "long" }).format(
-                                new Date(history.published),
-                            )}<br />
-                            {new Intl.DateTimeFormat(undefined, { timeStyle: "medium" }).format(
-                                new Date(history.published),
-                            )}
-                        </strong>
-                    </div>
-                {/if}
-                {#if history.commit_date}
-                    <div class="col">
-                        {$t("history.committed-on")}<br />
-                        {new Intl.DateTimeFormat(undefined, { dateStyle: "long" }).format(
-                            new Date(history.commit_date),
-                        )}<br />
-                        {new Intl.DateTimeFormat(undefined, { timeStyle: "medium" }).format(
-                            new Date(history.commit_date),
-                        )}
-                    </div>
-                {/if}
-                {#if history.last_modified}
-                    <div class="col">
-                        {$t("history.modified-on")}<br />
-                        {new Intl.DateTimeFormat(undefined, { dateStyle: "long" }).format(
-                            new Date(history.last_modified),
-                        )}<br />
-                        {new Intl.DateTimeFormat(undefined, { timeStyle: "medium" }).format(
-                            new Date(history.last_modified),
-                        )}
-                    </div>
-                {/if}
-            </div>
-            {#if history.commit_message}
-                <p class="mb-1">
-                    {history.commit_message}
-                </p>
-            {/if}
-
-            {#if idx < domain.zone_history.length - 1}
-                <Accordion class="mt-3">
-                    <AccordionItem
-                        active={isOpen[history.id]}
-                        header={$t("history.diff")}
-                        on:toggle={(evt) => {
-                            isOpen[history.id] = evt.detail;
-                        }}
-                    >
-                        {#if isOpen[history.id]}
-                            <DiffZone
-                                {domain}
-                                zoneFrom={history.id}
-                                zoneTo={domain.zone_history[idx + 1]}
-                            />
-                        {/if}
-                    </AccordionItem>
-                </Accordion>
-            {/if}
-        {/each}
-      {:else}
-        No history yet.
-      {/if}
-    {/await}
+    <PageTitle
+        title={$t("history.title")}
+        domain={data.domain.domain}
+        subtitle={$t("history.subtitle")}
+    />
+    <p class="text-center text-muted mt-5">{$t("history.empty")}</p>
 </div>
