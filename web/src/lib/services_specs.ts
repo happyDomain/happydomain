@@ -13,7 +13,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
         "record_types": null,
         "restrictions": {
             "nearAlone": true
-        }
+        },
+        "weight": 2
     },
     "abstract.BIMI": {
         "name": "BIMI (hosted logo)",
@@ -33,7 +34,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
                 5
             ],
             "single": true
-        }
+        },
+        "weight": 1
     },
     "abstract.CalDAV": {
         "name": "CalDAV (Calendar)",
@@ -51,7 +53,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
                 16
             ],
             "single": true
-        }
+        },
+        "weight": 1
     },
     "abstract.CardDAV": {
         "name": "CardDAV (Address Book)",
@@ -69,7 +72,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
                 16
             ],
             "single": true
-        }
+        },
+        "weight": 1
     },
     "abstract.Delegation": {
         "name": "Delegation",
@@ -93,7 +97,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
                 2
             ],
             "single": true
-        }
+        },
+        "weight": 1
     },
     "abstract.DomainVerification": {
         "name": "Domain Verification",
@@ -185,7 +190,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
         "record_types": null,
         "restrictions": {
             "nearAlone": true
-        }
+        },
+        "weight": 2
     },
     "abstract.EmailAutoConfig": {
         "name": "Email Auto-configuration",
@@ -204,7 +210,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
                 33
             ],
             "single": true
-        }
+        },
+        "weight": 1
     },
     "abstract.GithubOrgVerif": {
         "name": "GitHub Verification",
@@ -216,7 +223,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
         "record_types": null,
         "restrictions": {
             "nearAlone": true
-        }
+        },
+        "weight": 2
     },
     "abstract.Kerberos": {
         "name": "Kerberos",
@@ -233,7 +241,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
                 33
             ],
             "single": true
-        }
+        },
+        "weight": 1
     },
     "abstract.LDAP": {
         "name": "LDAP Directory",
@@ -249,7 +258,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
                 33
             ],
             "single": true
-        }
+        },
+        "weight": 1
     },
     "abstract.LibravatarServer": {
         "name": "Federated Avatar",
@@ -259,7 +269,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             "service"
         ],
         "record_types": null,
-        "restrictions": {}
+        "restrictions": {},
+        "weight": 2
     },
     "abstract.MTASTS": {
         "name": "MTA-STS (hosted policy)",
@@ -282,7 +293,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
                 5
             ],
             "single": true
-        }
+        },
+        "weight": 1
     },
     "abstract.MatrixIM": {
         "name": "Matrix IM",
@@ -298,7 +310,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
                 33
             ],
             "single": true
-        }
+        },
+        "weight": 1
     },
     "abstract.NSOnlyOrigin": {
         "name": "Origin",
@@ -316,7 +329,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             ],
             "rootOnly": true,
             "single": true
-        }
+        },
+        "weight": 0
     },
     "abstract.OpenPGP": {
         "name": "PGP Key",
@@ -333,7 +347,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             "needTypes": [
                 61
             ]
-        }
+        },
+        "weight": 1
     },
     "abstract.Origin": {
         "name": "Origin",
@@ -352,7 +367,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             ],
             "rootOnly": true,
             "single": true
-        }
+        },
+        "weight": 0
     },
     "abstract.RFC6186": {
         "name": "E-Mail Services Discovery",
@@ -368,7 +384,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
                 33
             ],
             "single": true
-        }
+        },
+        "weight": 5
     },
     "abstract.SIP": {
         "name": "SIP / VoIP",
@@ -385,7 +402,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
                 33
             ],
             "single": true
-        }
+        },
+        "weight": 1
     },
     "abstract.SMimeCert": {
         "name": "SMimeCert",
@@ -402,7 +420,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             "needTypes": [
                 53
             ]
-        }
+        },
+        "weight": 1
     },
     "abstract.Server": {
         "name": "Server",
@@ -418,7 +437,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
         ],
         "restrictions": {
             "glue": true
-        }
+        },
+        "weight": 100
     },
     "abstract.XMPP": {
         "name": "XMPP IM",
@@ -434,7 +454,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
                 33
             ],
             "single": true
-        }
+        },
+        "weight": 1
     },
     "google.GSuite": {
         "name": "G Suite",
@@ -454,7 +475,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
                 15
             ],
             "single": true
-        }
+        },
+        "weight": 0
     },
     "svcs.Alias": {
         "name": "Alias",
@@ -475,7 +497,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
         ],
         "restrictions": {
             "single": true
-        }
+        },
+        "weight": 99999998
     },
     "svcs.BIMI": {
         "name": "BIMI",
@@ -492,7 +515,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             "needTypes": [
                 16
             ]
-        }
+        },
+        "weight": 5
     },
     "svcs.CAAPolicy": {
         "name": "Certification Authority Authorization",
@@ -509,7 +533,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
                 257
             ],
             "single": true
-        }
+        },
+        "weight": 1
     },
     "svcs.DKIMRecord": {
         "name": "DKIM",
@@ -526,7 +551,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             "needTypes": [
                 16
             ]
-        }
+        },
+        "weight": 1
     },
     "svcs.DKIMRedirection": {
         "name": "DKIM external",
@@ -543,7 +569,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             "needTypes": [
                 5
             ]
-        }
+        },
+        "weight": 1
     },
     "svcs.DMARC": {
         "name": "DMARC",
@@ -561,7 +588,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
                 16
             ],
             "single": true
-        }
+        },
+        "weight": 1
     },
     "svcs.DMARCReport": {
         "name": "DMARC allow receiving reports",
@@ -578,7 +606,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             "needTypes": [
                 16
             ]
-        }
+        },
+        "weight": 1
     },
     "svcs.ForSale": {
         "name": "Domain For Sale",
@@ -596,7 +625,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
                 16
             ],
             "single": true
-        }
+        },
+        "weight": 1
     },
     "svcs.MTA_STS": {
         "name": "MTA-STS",
@@ -617,7 +647,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
                 16
             ],
             "single": true
-        }
+        },
+        "weight": 5
     },
     "svcs.MXs": {
         "name": "E-Mail servers",
@@ -634,7 +665,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
                 15
             ],
             "single": true
-        }
+        },
+        "weight": 1
     },
     "svcs.NAPTR": {
         "name": "Naming Authority Pointer",
@@ -650,7 +682,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             "needTypes": [
                 35
             ]
-        }
+        },
+        "weight": 100
     },
     "svcs.Orphan": {
         "name": "Orphan Record",
@@ -658,7 +691,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
         "family": "",
         "categories": [],
         "record_types": null,
-        "restrictions": {}
+        "restrictions": {},
+        "weight": 99999999
     },
     "svcs.PTR": {
         "name": "Pointer",
@@ -676,7 +710,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
                 12
             ],
             "single": true
-        }
+        },
+        "weight": 99999998
     },
     "svcs.SPF": {
         "name": "SPF",
@@ -693,7 +728,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             "needTypes": [
                 16
             ]
-        }
+        },
+        "weight": 1
     },
     "svcs.SSHFPs": {
         "name": "SSHFP",
@@ -709,7 +745,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             "needTypes": [
                 44
             ]
-        }
+        },
+        "weight": 1000
     },
     "svcs.SpecialCNAME": {
         "name": "SubAlias",
@@ -724,7 +761,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             "needTypes": [
                 5
             ]
-        }
+        },
+        "weight": 99999997
     },
     "svcs.TLSAs": {
         "name": "TLSA records",
@@ -742,7 +780,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
                 52
             ],
             "single": true
-        }
+        },
+        "weight": 100
     },
     "svcs.TLS_RPT": {
         "name": "TLS-RPT",
@@ -760,7 +799,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
                 16
             ],
             "single": true
-        }
+        },
+        "weight": 1
     },
     "svcs.TXT": {
         "name": "Text Record",
@@ -774,7 +814,8 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             "needTypes": [
                 16
             ]
-        }
+        },
+        "weight": 100
     },
     "svcs.UnknownSRV": {
         "name": "Service Record",
@@ -791,6 +832,7 @@ export const servicesSpecs: Record<string, ServiceInfos> = {
             "needTypes": [
                 33
             ]
-        }
+        },
+        "weight": 99999
     }
 }

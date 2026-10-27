@@ -64,6 +64,9 @@ type ServiceInfos struct {
 	RecordTypes  []uint16            `json:"record_types" binding:"required"`
 	Tabs         bool                `json:"tabs,omitempty"`
 	Restrictions ServiceRestrictions `json:"restrictions"`
+	// Weight is the analysis order of the service: the generic services,
+	// analyzed last to collect what the others left, weigh the most.
+	Weight uint32 `json:"weight"`
 }
 
 type ServiceNotFoundError struct {

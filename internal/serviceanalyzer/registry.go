@@ -66,6 +66,7 @@ func RegisterService(creator happydns.ServiceCreator, analyzer ServiceAnalyzer, 
 
 	// Override given parameters by true one
 	infos.Type = name
+	infos.Weight = weight
 
 	svc := &Svc{
 		creator,
