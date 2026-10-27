@@ -22,12 +22,18 @@
 -->
 
 <script lang="ts">
+    import { Icon } from "@sveltestrap/sveltestrap";
+
+    import { page } from "$app/state";
     import type { ResolvedPathname } from "$app/types";
-    import { fqdn } from "$lib/dns";
+    import { controls as ctrlNewService } from "$lib/components/services/NewServicePath.svelte";
     import type { Domain } from "$lib/model/domain";
     import { serviceName } from "$lib/services/infos";
+    import { isReadOnlyProvider, providers_idx } from "$lib/stores/providers";
     import { servicesSpecs } from "$lib/stores/services";
     import { thisZone } from "$lib/stores/thiszone";
+    import { t } from "$lib/translations";
+    import DomainTreeLink from "./DomainTreeLink.svelte";
     import { useZoneEditor } from "./editor";
 
     interface Props {
@@ -40,6 +46,10 @@
     let { origin, subdomain, serviceid, historyId }: Props = $props();
 
     const editor = useZoneEditor(() => origin);
+
+    let readOnly = $derived(
+        editor.readOnly || isReadOnlyProvider($providers_idx, origin.id_provider),
+    );
 
     // Ancestors from shallowest to deepest:
     // "" → [], "www" → [], "a.b" → ["b"], "a.b.c" → ["c", "b.c"]
@@ -55,15 +65,15 @@
         })(),
     );
 
+    // Each level of the tree, from the apex down to the current subdomain.
+    let levels = $derived(["", ...ancestors, ...(subdomain ? [subdomain] : [])]);
+
     let services = $derived($thisZone?.services[subdomain] ?? []);
 
-    function subdomainPadding(dn: string): string {
-        return (dn === "" ? 0 : dn.split(".").length * 10) + "px";
-    }
-
-    let servicesPadding = $derived(
-        (subdomain === "" ? 0 : subdomain.split(".").length * 10) + 20 + "px",
-    );
+    // The service being created is not in the zone yet, but it is the page
+    // the user is on.
+    let isNew = $derived(serviceid === "new");
+    let newSvcType = $derived(page.url.searchParams.get("type") ?? "");
 
     function subdomainLink(dn: string): ResolvedPathname {
         // The fragment is what scrolls the zone to that subdomain.
@@ -77,74 +87,105 @@
 
 <div class="mt-4"></div>
 
-<!-- Root domain: bold if editing root subdomain, muted link otherwise -->
-<a
-    href={subdomainLink("")}
-    title={fqdn("", origin.domain)}
-    class="d-block text-truncate text-body font-monospace text-decoration-none"
-    class:fw-bold={subdomain === ""}
-    style="max-width: none; padding-left: 0px"
->
-    {fqdn("", origin.domain)}
-</a>
-
-<!-- Ancestor subdomains -->
-{#each ancestors as ancestor}
-    <a
-        href={subdomainLink(ancestor)}
-        title={fqdn(ancestor, origin.domain)}
-        class="d-block text-truncate font-monospace text-muted text-decoration-none"
-        style={"max-width: none; padding-left: " + subdomainPadding(ancestor)}
-    >
-        {ancestor}<span style="opacity: 0.6;">.{origin.domain}</span>
-    </a>
+<!-- From the apex down to the current subdomain, in bold -->
+{#each levels as dn (dn)}
+    <DomainTreeLink
+        href={subdomainLink(dn)}
+        {dn}
+        {origin}
+        current={dn === subdomain}
+        muted={dn !== subdomain && dn !== ""}
+    />
 {/each}
 
-<!-- Current subdomain in bold (only when not root, root is handled above) -->
-{#if subdomain !== ""}
-    <a
-        href={subdomainLink(subdomain)}
-        title={fqdn(subdomain, origin.domain)}
-        class="d-block text-truncate font-monospace text-body text-decoration-none fw-bold"
-        style={"max-width: none; padding-left: " + subdomainPadding(subdomain)}
-    >
-        {subdomain}<span class="text-muted" style="opacity: 0.6;">.{origin.domain}</span>
-    </a>
-{/if}
-
 <!-- Sibling services at current subdomain -->
-<ul class="list-unstyled mt-2 mb-0 overflow-y-auto" style:padding-left={servicesPadding}>
-    {#each services as service}
-        {@const isActive = service._id === serviceid}
-        <li class="mb-1">
-            <a
-                href={serviceLink(service)}
-                class="service-item d-flex align-items-center gap-2 py-2 px-2 rounded text-truncate text-decoration-none {isActive
-                    ? 'fw-bold text-primary active'
-                    : 'text-muted'}"
-                style="max-width: none;"
-            >
-                {$serviceName($servicesSpecs[service._svctype], service._svctype)}
-                {#if service._comment}
-                    <span class="fst-italic text-muted" style="opacity: 0.6;">
-                        {service._comment}
+<div class="tree-services mt-1" style:--depth={levels.length - 1}>
+    <div class="d-flex align-items-center gap-2 px-2 pt-1 mb-1">
+        <span class="small text-uppercase fw-semibold text-body-secondary">
+            {$t("zones.sidebar-services")}
+        </span>
+        {#if services.length}
+            <span class="badge rounded-pill text-bg-light border">{services.length}</span>
+        {/if}
+    </div>
+
+    {#if services.length || isNew}
+        <ul class="list-group list-group-sidebar gap-1 mb-0 overflow-y-auto">
+            {#each services as service (service._id)}
+                {@const isActive = service._id === serviceid}
+                <li class="d-grid">
+                    <a
+                        href={serviceLink(service)}
+                        class="list-group-item list-group-item-action p-2 border-0 rounded"
+                        class:active={isActive}
+                        aria-current={isActive ? "page" : undefined}
+                    >
+                        <span class="d-block text-truncate">
+                            {$serviceName($servicesSpecs[service._svctype], service._svctype)}
+                        </span>
+                        {#if service._comment}
+                            <span
+                                class="d-block text-truncate small fst-italic text-body-secondary"
+                                title={service._comment}
+                            >
+                                {service._comment}
+                            </span>
+                        {/if}
+                    </a>
+                </li>
+            {/each}
+            {#if isNew}
+                <li class="d-grid">
+                    <span
+                        class="service-new list-group-item active p-2 border border-primary rounded"
+                        aria-current="page"
+                    >
+                        <span class="d-block text-truncate">
+                            {newSvcType
+                                ? $serviceName($servicesSpecs[newSvcType], newSvcType)
+                                : $t("service.new")}
+                        </span>
+                        {#if newSvcType}
+                            <span
+                                class="d-block text-truncate small fst-italic text-body-secondary"
+                            >
+                                {$t("service.new")}
+                            </span>
+                        {/if}
                     </span>
-                {/if}
-            </a>
-        </li>
-    {/each}
-</ul>
+                </li>
+            {/if}
+        </ul>
+    {:else}
+        <p class="small fst-italic text-body-secondary px-2 mb-1">
+            {$t("zones.sidebar-no-service")}
+        </p>
+    {/if}
+
+    {#if !readOnly && !isNew}
+        <button
+            type="button"
+            class="service-add btn btn-link btn-sm d-flex align-items-center gap-1 px-2 text-decoration-none"
+            onclick={() => ctrlNewService.Open(subdomain)}
+        >
+            <Icon name="plus" />
+            {$t("domains.add-a-service")}
+        </button>
+    {/if}
+</div>
 
 <style>
-    .service-item {
-        transition: background-color 0.15s;
+    /* Hangs from the current subdomain, aligned on DomainTreeLink rails */
+    .tree-services {
+        --indent: 1.25rem;
+        --stem: 0.35rem;
+        margin-left: calc(var(--depth) * var(--indent) + var(--stem));
+        padding-left: 0.4rem;
+        border-left: 1px solid var(--bs-border-color);
     }
 
-    .service-item:hover {
-        background-color: var(--hd-bg-hover);
-    }
-
-    .service-item.active {
-        background-color: rgba(var(--bs-primary-rgb), 0.1);
+    /* Not saved yet: outlined, as a placeholder for the service to come */
+    .service-new {
+        border-style: dashed !important;
     }
 </style>

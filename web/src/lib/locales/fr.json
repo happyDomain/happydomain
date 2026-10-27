@@ -892,6 +892,8 @@
         "import-text": "Depuis du texte",
         "import-file": "Depuis un fichier de zone",
         "return-to": "Retour à la zone",
+        "sidebar-services": "Services",
+        "sidebar-no-service": "Aucun service sur ce nom pour l'instant.",
         "feedback": {
             "service-added": "Service {{service}} ajouté",
             "service-updated": "Service {{service}} mis à jour",

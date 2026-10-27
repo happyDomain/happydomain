@@ -1743,6 +1743,10 @@ footer a:focus-visible,
 .list-group-item-action {
     transition: background-color 0.15s;
 }
+// In a sidebar, the rows sit on its background until hovered.
+.list-group-sidebar {
+    --bs-list-group-bg: transparent;
+}
 
 // ── Alerts ───────────────────────────────────────────────────────────────────
 .alert-primary {

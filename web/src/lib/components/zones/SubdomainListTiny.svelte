@@ -23,7 +23,7 @@
 
 <script lang="ts">
     import type { Domain } from "$lib/model/domain";
-    import { fqdn } from "$lib/dns";
+    import DomainTreeLink, { treeRails } from "./DomainTreeLink.svelte";
 
     interface Props {
         domains: Array<string>;
@@ -31,6 +31,8 @@
     }
 
     let { domains, origin }: Props = $props();
+
+    let rails = $derived(treeRails(domains));
 
     let activeDn = $state("");
     let containerEl: HTMLElement | null = $state(null);
@@ -82,18 +84,15 @@
 </script>
 
 <div bind:this={containerEl}>
-    {#each domains as dn}
+    {#each domains as dn, i}
         {@const id = dn ? dn : "@"}
-        <a
+        <DomainTreeLink
             href={"#" + id}
-            title={fqdn(dn, origin.domain)}
-            class="d-block text-truncate font-monospace text-body text-decoration-none"
-            class:fw-bold={activeDn === id}
-            style="max-width: none; scroll-margin-block: 2em;"
-            style:padding-left={(dn === "" ? 0 : dn.split(".").length * 10) + "px"}
-        >
-            {#if dn}{dn}<span class="text-muted" style="opacity: 0.6;">.{origin.domain}</span
-                >{:else}{origin.domain}{/if}
-        </a>
+            {dn}
+            {origin}
+            rails={rails[i]}
+            current={activeDn === id}
+            style="scroll-margin-block: 2em;"
+        />
     {/each}
 </div>

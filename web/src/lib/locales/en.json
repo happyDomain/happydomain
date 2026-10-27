@@ -1034,6 +1034,8 @@
         "import-file": "Import from file",
         "return-to": "Go to the zone",
         "return-to-results": "Back to results",
+        "sidebar-services": "Services",
+        "sidebar-no-service": "No service on this name yet.",
         "feedback": {
             "service-added": "{{service}} service added",
             "service-updated": "{{service}} service updated",
