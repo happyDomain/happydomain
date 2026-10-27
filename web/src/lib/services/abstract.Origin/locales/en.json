@@ -1,4 +1,52 @@
 {
+    "compliance": {
+        "soa": {
+            "empty-mname": {
+                "title": "The SOA has no primary name server",
+                "detail": "Fill in the host name of the name server holding the original copy of the zone."
+            },
+            "invalid-mname": {
+                "title": "Invalid primary name server \"{{mname}}\"",
+                "detail": "The primary name server must be given as a valid host name, as defined by RFC 1035."
+            },
+            "mname-is-cname": {
+                "title": "The primary name server \"{{mname}}\" is an alias",
+                "detail": "A name server must be designated by a host name, never by a CNAME (RFC 2181 sec. 10.3)."
+            },
+            "empty-rname": {
+                "title": "The SOA has no contact address",
+                "detail": "Fill in the mailbox of the person responsible for the zone, written as a domain name."
+            },
+            "rname-has-at": {
+                "title": "The contact \"{{rname}}\" contains an \"@\"",
+                "detail": "In a SOA, the \"@\" of the address is replaced by a dot: write \"{{suggestion}}\" instead. Dots of the part before the \"@\" have to be escaped with a backslash."
+            },
+            "invalid-rname": {
+                "title": "Invalid contact \"{{rname}}\"",
+                "detail": "The contact is an address written as a domain name: its first label is the part before the \"@\", the following ones must form a valid domain."
+            },
+            "invalid-timer": {
+                "title": "Invalid duration \"{{value}}\"",
+                "detail": "The SOA timers are durations in seconds, between 0 and 4294967295."
+            },
+            "refresh-too-short": {
+                "title": "The refresh time of {{refresh}} s is very short",
+                "detail": "Secondary name servers check the zone for changes at this pace. RFC 1912 advises at least {{min}} seconds: below that, they mostly poll for nothing."
+            },
+            "retry-not-below-refresh": {
+                "title": "The retry interval is not shorter than the refresh time",
+                "detail": "After a failed refresh, a secondary name server tries again after {{retry}} s, which should be quicker than its regular {{refresh}} s check."
+            },
+            "expire-too-short": {
+                "title": "The zone expires after {{expire}} s only",
+                "detail": "A secondary name server failing a single refresh would stop answering for the zone before even retrying. The expiry should be much longer than the refresh and retry times added together, RFC 1912 suggests 2 to 4 weeks."
+            },
+            "negative-ttl-too-long": {
+                "title": "Negative answers are cached for {{minttl}} s",
+                "detail": "Resolvers remember that a name does not exist for that long: a name created afterwards stays invisible to them in the meantime. RFC 2308 advises one to three hours, and no more than {{max}} seconds."
+            }
+        }
+    },
     "svcinfo": {
         "abstract": {
             "Origin": {

@@ -1,0 +1,50 @@
+{
+    "compliance": {
+        "soa": {
+            "empty-mname": {
+                "title": "Le SOA n'indique pas de serveur de noms primaire",
+                "detail": "Renseignez le nom d'hôte du serveur de noms qui détient la copie originale de la zone."
+            },
+            "invalid-mname": {
+                "title": "Serveur de noms primaire « {{mname}} » invalide",
+                "detail": "Le serveur de noms primaire doit être indiqué par un nom d'hôte valide, au sens de la RFC 1035."
+            },
+            "mname-is-cname": {
+                "title": "Le serveur de noms primaire « {{mname}} » est un alias",
+                "detail": "Un serveur de noms doit être désigné par un nom d'hôte, jamais par un CNAME (RFC 2181 § 10.3)."
+            },
+            "empty-rname": {
+                "title": "Le SOA n'indique pas d'adresse de contact",
+                "detail": "Renseignez la boîte aux lettres du responsable de la zone, écrite sous forme de nom de domaine."
+            },
+            "rname-has-at": {
+                "title": "Le contact « {{rname}} » contient un « @ »",
+                "detail": "Dans un SOA, le « @ » de l'adresse est remplacé par un point : écrivez plutôt « {{suggestion}} ». Les points de la partie avant le « @ » doivent être échappés par une barre oblique inverse."
+            },
+            "invalid-rname": {
+                "title": "Contact « {{rname}} » invalide",
+                "detail": "Le contact est une adresse écrite sous forme de nom de domaine : son premier label est la partie avant le « @ », les suivants doivent former un domaine valide."
+            },
+            "invalid-timer": {
+                "title": "Durée « {{value}} » invalide",
+                "detail": "Les délais du SOA sont des durées en secondes, comprises entre 0 et 4294967295."
+            },
+            "refresh-too-short": {
+                "title": "Le délai de rafraîchissement de {{refresh}} s est très court",
+                "detail": "Les serveurs de noms secondaires vérifient à ce rythme si la zone a changé. La RFC 1912 conseille au moins {{min}} secondes : en dessous, ils interrogent le primaire pour rien la plupart du temps."
+            },
+            "retry-not-below-refresh": {
+                "title": "Le délai de nouvel essai n'est pas plus court que le rafraîchissement",
+                "detail": "Après un rafraîchissement raté, un serveur de noms secondaire réessaie au bout de {{retry}} s, ce qui devrait être plus rapide que sa vérification habituelle toutes les {{refresh}} s."
+            },
+            "expire-too-short": {
+                "title": "La zone expire au bout de {{expire}} s seulement",
+                "detail": "Un serveur de noms secondaire qui rate un seul rafraîchissement cesserait de répondre pour la zone avant même de réessayer. L'expiration devrait être bien plus longue que les délais de rafraîchissement et de nouvel essai réunis, la RFC 1912 suggère 2 à 4 semaines."
+            },
+            "negative-ttl-too-long": {
+                "title": "Les réponses négatives sont gardées en cache {{minttl}} s",
+                "detail": "Les résolveurs retiennent aussi longtemps qu'un nom n'existe pas : un nom créé entre-temps leur reste invisible. La RFC 2308 conseille une à trois heures, et pas plus de {{max}} secondes."
+            }
+        }
+    }
+}
