@@ -166,7 +166,13 @@ func RRRelative(rr happydns.Record, origin string) happydns.Record {
 	return RDataRelative(rr, origin)
 }
 
-// RRRelativeSubdomain strips the end of the given RR if it is relative to origin.
+// RRRelativeSubdomain strips the end of the given RR, as the services store
+// it. Mind the two references: the owner name is made relative to subdomain
+// (the domain the service is attached to), whereas the names in the rdata are
+// made relative to origin (the zone), like RDataRelative does. So, in the zone
+// "example.com.", the MX of "mail.example.com." pointing to
+// "smtp.mail.example.com." is stored under the subdomain "mail" with "" as
+// owner name, but "smtp.mail" as target, not "smtp".
 func RRRelativeSubdomain(rr happydns.Record, origin, subdomain string) happydns.Record {
 	if !strings.HasSuffix(origin, ".") {
 		origin += "."
