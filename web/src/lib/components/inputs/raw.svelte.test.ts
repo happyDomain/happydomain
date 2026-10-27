@@ -191,21 +191,60 @@ describe("Raw input", () => {
         expect(state.current()).toBe(REDACTED_SECRET_B64);
     });
 
-    it("allows non-numeric duration shorthand like 1m", async () => {
+    it("turns a BIND duration into seconds", async () => {
         const user = userEvent.setup();
         const specs = field({ id: "timeout", type: "time.Duration" });
-        const state = mount({ specs, value: "" });
+        const state = mount({ specs, value: undefined });
 
-        await user.type(screen.getByRole("textbox"), "1m");
+        await user.type(screen.getByRole("textbox"), "1h30m");
 
-        expect(state.current()).toBe("1m");
+        expect(state.current()).toBe(5400);
+        expect(screen.getByText("= 1 hour, 30 minutes")).toBeVisible();
     });
 
-    it("shows the unit suffix for a duration field", () => {
-        const specs = field({ id: "timeout", type: "time.Duration" });
-        mount({ specs, value: 30 });
+    it("shows a duration in its largest units", () => {
+        const specs = field({ id: "expire", type: "time.Duration" });
+        mount({ specs, value: 604800 });
 
-        expect(screen.getByText("s")).toBeVisible();
+        expect(screen.getByDisplayValue("1w")).toBeVisible();
+        expect(screen.getByText("= 1 week")).toBeVisible();
+    });
+
+    it("tidies up the typed duration on blur", async () => {
+        const user = userEvent.setup();
+        const specs = field({ id: "retry", type: "common.Duration" });
+        const state = mount({ specs, value: 60 });
+
+        const input = screen.getByRole("textbox");
+        await user.clear(input);
+        await user.type(input, "90m");
+        expect(input).toHaveValue("90m");
+
+        await user.tab();
+
+        expect(input).toHaveValue("1h30m");
+        expect(state.current()).toBe(5400);
+    });
+
+    it("flags a duration it cannot read and keeps the last valid one", async () => {
+        const user = userEvent.setup();
+        const specs = field({ id: "retry", type: "time.Duration" });
+        const state = mount({ specs, value: 60 });
+
+        const input = screen.getByRole("textbox");
+        await user.clear(input);
+        await user.type(input, "one day");
+
+        expect(input).toHaveClass("is-invalid");
+        expect(state.current()).toBe(60);
+    });
+
+    it("reads an older shorthand string value", () => {
+        const specs = field({ id: "timeout", type: "time.Duration" });
+        mount({ specs, value: "1m" });
+
+        expect(screen.getByDisplayValue("1m")).toBeVisible();
+        expect(screen.getByText("= 1 minute")).toBeVisible();
     });
 
     it("reveals a secret's value when the eye toggle is clicked", async () => {

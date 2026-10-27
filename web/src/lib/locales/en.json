@@ -471,6 +471,7 @@
         "settings-change": "Unable to change your settings",
         "account-no-auth": "You're using happyDomain without authentication. You cannot manage other account properties.",
         "domain-all-imported": "This account on {{provider}} doesn't have any more domain to import.",
+        "duration": "Invalid duration: use for example 3600, 30m, 1h30m or 1w2d.",
         "too-high": "Number too high, max: {{max}}",
         "too-low": "Number too low, min: {{min}}",
         "base64": "Invalid base64 string.",

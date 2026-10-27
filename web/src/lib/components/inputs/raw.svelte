@@ -41,6 +41,7 @@
     import { effectiveKeystore, keystores } from "$lib/stores/keystores";
     import { t } from "$lib/translations";
 
+    import DurationInput from "./Duration.svelte";
     import KeystoreSelect from "./KeystoreSelect.svelte";
     import { useKeystoreChoice } from "./keystoreChoice.svelte";
 
@@ -68,8 +69,8 @@
     }: Props = $props();
     let val: any = $derived(value);
 
-    let unit: string | null = $derived(
-        specs.type === "time.Duration" || specs.type === "common.Duration" ? "s" : null,
+    let isDuration: boolean = $derived(
+        specs.type === "time.Duration" || specs.type === "common.Duration",
     );
 
     // svelte-ignore state_referenced_locally
@@ -249,21 +250,12 @@
             const target = e.target as HTMLInputElement;
             val = target.value;
 
-            if (
-                specs.type &&
-                (specs.type.startsWith("int") ||
-                    specs.type.startsWith("uint") ||
-                    specs.type == "time.Duration" ||
-                    specs.type == "common.Duration")
-            ) {
+            if (specs.type && (specs.type.startsWith("int") || specs.type.startsWith("uint"))) {
                 if (
                     target.value.length != 0 &&
                     target.value == parseInt(target.value, 10).toString()
                 ) {
                     value = parseInt(target.value, 10);
-                } else if (specs.type == "time.Duration" || specs.type == "common.Duration") {
-                    // Allow 1m, 1s, ...
-                    value = val;
                 }
             } else {
                 value = val;
@@ -301,6 +293,17 @@
             on:focus={() => dispatch("focus")}
             on:blur={() => dispatch("blur")}
         />
+    {:else if isDuration}
+        <DurationInput
+            id={"spec-" + index + "-" + specs.id}
+            max={inputmax}
+            placeholder={displayPlaceholder}
+            plaintext={!edit || readonly}
+            required={specs.required}
+            bind:value
+            onfocus={() => dispatch("focus")}
+            onblur={() => dispatch("blur")}
+        />
     {:else}
         <Input
             id={"spec-" + index + "-" + specs.id}
@@ -318,10 +321,6 @@
             on:blur={() => dispatch("blur")}
             on:input={parseValue}
         />
-    {/if}
-
-    {#if unit !== null}
-        <InputGroupText>{unit}</InputGroupText>
     {/if}
 
     {#if specs.secret}
