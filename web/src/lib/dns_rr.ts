@@ -2523,3 +2523,37 @@ export function rdatafields(input: number | string): Array<string> {
     }
 }
 
+export function rdatanamefields(input: number | string): Array<string> {
+    switch (input) {
+        case 2: case "NS": return ["Ns"]; // NS
+        case 3: case "MD": return ["Md"]; // MD
+        case 4: case "MF": return ["Mf"]; // MF
+        case 5: case "CNAME": return ["Target"]; // CNAME
+        case 6: case "SOA": return ["Ns", "Mbox"]; // SOA
+        case 7: case "MB": return ["Mb"]; // MB
+        case 8: case "MG": return ["Mg"]; // MG
+        case 9: case "MR": return ["Mr"]; // MR
+        case 12: case "PTR": return ["Ptr"]; // PTR
+        case 14: case "MINFO": return ["Rmail", "Email"]; // MINFO
+        case 15: case "MX": return ["Mx"]; // MX
+        case 17: case "RP": return ["Mbox", "Txt"]; // RP
+        case 18: case "AFSDB": return ["Hostname"]; // AFSDB
+        case 21: case "RT": return ["Host"]; // RT
+        case 23: case "NSAP-PTR": return ["Ptr"]; // NSAP-PTR
+        case 24: case "SIG": return ["SignerName"]; // SIG
+        case 26: case "PX": return ["Map822", "Mapx400"]; // PX
+        case 30: case "NXT": return ["NextDomain"]; // NXT
+        case 33: case "SRV": return ["Target"]; // SRV
+        case 35: case "NAPTR": return ["Replacement"]; // NAPTR
+        case 36: case "KX": return ["Exchanger"]; // KX
+        case 39: case "DNAME": return ["Target"]; // DNAME
+        case 46: case "RRSIG": return ["SignerName"]; // RRSIG
+        case 47: case "NSEC": return ["NextDomain"]; // NSEC
+        case 58: case "TALINK": return ["PreviousName", "NextName"]; // TALINK
+        case 64: case "SVCB": return ["Target"]; // SVCB
+        case 65: case "HTTPS": return ["Target"]; // HTTPS
+        case 107: case "LP": return ["Fqdn"]; // LP
+        default: return [];
+    }
+}
+

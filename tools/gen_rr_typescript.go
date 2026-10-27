@@ -36,6 +36,7 @@ import (
 
 	"github.com/miekg/dns"
 
+	"git.happydns.org/happyDomain/internal/helpers"
 	happydns "git.happydns.org/happyDomain/model"
 )
 
@@ -331,6 +332,33 @@ func rdataFields(fd io.Writer) {
 	fmt.Fprint(fd, "        default: return [];\n    }\n")
 }
 
+// rdataNameFields lists, for each type, the rdata fields happyDomain stores
+// relative to the zone, as helpers.RDataNameFields finds them.
+func rdataNameFields(fd io.Writer) {
+	fmt.Fprint(fd, "    switch (input) {\n")
+	for _, ty := range getSortedTypes() {
+		rr, ok := dns.TypeToRR[ty]
+		if !ok {
+			continue
+		}
+
+		if _, isPrivate := privateRdata(ty); isPrivate {
+			continue
+		}
+
+		var names []string
+		for _, name := range helpers.RDataNameFields(rr()) {
+			names = append(names, fmt.Sprintf("%q", name))
+		}
+		if len(names) == 0 {
+			continue
+		}
+
+		fmt.Fprintf(fd, "        case %d: case %q: return [%s]; // %s\n", ty, dns.TypeToString[ty], strings.Join(names, ", "), dns.TypeToString[ty])
+	}
+	fmt.Fprint(fd, "        default: return [];\n    }\n")
+}
+
 func dnsrr(fd io.Writer) {
 	var seen []string
 	var alltypes [][]reflect.Type
@@ -513,5 +541,10 @@ func main() {
 	// rdataFields
 	fmt.Fprint(fd, "export function rdatafields(input: number | string): Array<string> {\n")
 	rdataFields(fd)
+	fmt.Fprint(fd, "}\n\n")
+
+	// rdataNameFields
+	fmt.Fprint(fd, "export function rdatanamefields(input: number | string): Array<string> {\n")
+	rdataNameFields(fd)
 	fmt.Fprint(fd, "}\n\n")
 }
