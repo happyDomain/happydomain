@@ -48,7 +48,7 @@
         zoneWasForked,
     } from "$lib/stores/zonefeedback";
     import { ServiceCombined } from "$lib/model/service.svelte";
-    import DomainInput from "$lib/components/inputs/Domain.svelte";
+    import DomainNameInput from "$lib/components/inputs/DomainName.svelte";
     import { fqdn } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import { thisZone } from "$lib/stores/thiszone";
@@ -157,11 +157,14 @@
                     domain: `<span class="font-monospace">${escape(fqdn(dn, origin.domain))}</span>`,
                 })}
             </p>
-            <DomainInput
+            <DomainNameInput
                 autofocus
-                {origin}
+                origin={origin.domain}
+                placeholder={$t("domains.placeholder-new-sub")}
+                size="md"
+                within
+                bind:valid={validDomain}
                 bind:value
-                on:validity-changed={(e) => validDomain = e.detail}
             />
             {#if validSubDomain}
                 <div class="mt-3 text-center">

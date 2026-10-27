@@ -36,6 +36,7 @@
     } from "@sveltestrap/sveltestrap";
 
     import { addDomain } from "$lib/api/domains";
+    import DomainNameIssue from "$lib/components/inputs/DomainNameIssue.svelte";
     import { controls as newDomainControls } from "$lib/components/modals/NewDomain.svelte";
     import { domainNameIssue, domainNameIssueBlocks, fqdn, validateDomain } from "$lib/dns";
     import { domains, refreshDomains } from "$lib/stores/domains";
@@ -155,13 +156,6 @@
         </ListGroupItem>
     </ListGroup>
     {#if newDomainIssue}
-        <div
-            class="form-text ms-2"
-            class:text-danger={newDomainBlocked}
-            class:text-warning-emphasis={!newDomainBlocked}
-        >
-            <Icon name={newDomainBlocked ? "exclamation-circle" : "exclamation-triangle"} />
-            {$t("domains.invalid-reason." + newDomainIssue.kind, newDomainIssue)}
-        </div>
+        <DomainNameIssue class="ms-2" issue={newDomainIssue} />
     {/if}
 </form>

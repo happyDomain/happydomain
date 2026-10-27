@@ -35,7 +35,7 @@
     import { escape } from "html-escaper";
     import { Modal, ModalBody } from "@sveltestrap/sveltestrap";
 
-    import DomainInput from "$lib/components/inputs/Domain.svelte";
+    import DomainNameInput from "$lib/components/inputs/DomainName.svelte";
     import ModalFooter from "$lib/components/modals/Footer.svelte";
     import ModalHeader from "$lib/components/modals/Header.svelte";
     import type { Domain } from "$lib/model/domain";
@@ -83,10 +83,13 @@
                 })}
             </p>
 
-            <DomainInput
-                {origin}
+            <DomainNameInput
+                origin={origin.domain}
+                placeholder={$t("domains.placeholder-new-sub")}
+                size="md"
+                within
+                bind:valid={validDomain}
                 bind:value
-                on:validity-changed={(e) => validDomain = e.detail}
             />
         </form>
     </ModalBody>

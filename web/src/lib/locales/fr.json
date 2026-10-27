@@ -73,6 +73,13 @@
         }
     },
     "domains": {
+        "input": {
+            "outside-zone": "hors de votre zone",
+            "did-you-mean": "Sans point final, le nom est relatif à votre zone. Vouliez-vous dire {{suggestion}} ?",
+            "use": "L'utiliser",
+            "must-be-within": "Le nom doit appartenir à {{zone}}.",
+            "root": "la racine du DNS, c'est-à-dire aucun nom"
+        },
         "invalid-reason": {
             "too-long": "Un nom de domaine ne peut pas dépasser 253 caractères.",
             "empty-label": "Un nom de domaine ne peut pas contenir deux points consécutifs, ni commencer par un point.",
