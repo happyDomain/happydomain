@@ -1047,6 +1047,7 @@
         }
     },
     "checkers": {
+        "sidebar-no-checker": "No checker applies here.",
         "run-check": {
             "title": "Run Check",
             "loading-options": "Loading checker options...",

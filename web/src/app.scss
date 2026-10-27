@@ -1984,9 +1984,9 @@ footer {
     border-top: 2px solid rgba($hd-info-solid, 0.3);
 }
 
-a.text-body:not(.list-group-item-action),
-a.text-dark:not(.list-group-item-action),
-a.text-muted:not(.list-group-item-action) {
+a.text-body:not(.list-group-item-action, .sidebar-back),
+a.text-dark:not(.list-group-item-action, .sidebar-back),
+a.text-muted:not(.list-group-item-action, .sidebar-back) {
     &:hover {
         font-weight: bold;
     }

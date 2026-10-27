@@ -28,6 +28,7 @@
     import { Icon, Spinner } from "@sveltestrap/sveltestrap";
 
     import { checkers } from "$lib/stores/checkers";
+    import { t } from "$lib/translations";
 
     interface Props {
         class?: ClassValue;
@@ -47,7 +48,15 @@
         serviceType = undefined,
     }: Props = $props();
 
-    let onResults = $derived(page.route.id?.includes("/executions") === true && !page.params.execId);
+    let visibleCheckers = $derived(
+        Object.entries($checkers ?? {})
+            .filter(([, checkerInfo]) => isCheckVisible(checkerInfo))
+            .sort(([, a], [, b]) => (a.name || "").localeCompare(b.name || "")),
+    );
+
+    let onResults = $derived(
+        page.route.id?.includes("/executions") === true && !page.params.execId,
+    );
 
     function isCheckVisible(checkerInfo: NonNullable<typeof $checkers>[string]): boolean {
         const avail = checkerInfo.availability;
@@ -68,71 +77,57 @@
         <div class="d-flex gap-2 align-items-center justify-content-center my-3 text-muted">
             <Spinner size="sm" color="primary" />
         </div>
+    {:else if visibleCheckers.length === 0}
+        <p class="small fst-italic text-body-secondary px-2 mb-0">
+            {$t("checkers.sidebar-no-checker")}
+        </p>
     {:else}
-        <ul class="list-unstyled mb-0 flex-fill overflow-auto">
-            {#each Object.entries($checkers).sort(([, a], [, b]) => (a.name || "").localeCompare(b.name || "")) as [checkerName, checkerInfo]}
-                {#if isCheckVisible(checkerInfo)}
-                    {@const isActive = checkerName === currentCheckerName}
-                    <li>
-                        <div
-                            class="checker-item d-flex align-items-center gap-1 py-2 px-2 rounded {isActive
-                                ? 'fw-bold text-primary active'
-                                : 'text-muted'}"
+        <ul class="list-group list-group-sidebar gap-1 mb-0 flex-fill overflow-auto">
+            {#each visibleCheckers as [checkerName, checkerInfo] (checkerName)}
+                {@const isActive = checkerName === currentCheckerName}
+                <li class="d-grid">
+                    <div
+                        class="checker-item list-group-item list-group-item-action d-flex align-items-center gap-1 p-2 border-0 rounded"
+                        class:active={isActive}
+                    >
+                        <a
+                            href={onResults && links.executions
+                                ? links.executions(checkerName)
+                                : links.checker(checkerName)}
+                            class="text-truncate flex-fill text-body text-decoration-none"
+                            aria-current={isActive ? "page" : undefined}
                         >
+                            <span>{checkerInfo.name || checkerName}</span>
+                        </a>
+                        {#if onResults}
                             <a
-                                href={onResults && links.executions
-                                    ? links.executions(checkerName)
-                                    : links.checker(checkerName)}
-                                class="text-truncate flex-fill text-decoration-none {isActive
-                                    ? 'text-primary'
-                                    : 'text-muted'}"
+                                href={links.checker(checkerName)}
+                                class="checker-action flex-shrink-0 lh-1 text-muted text-decoration-none"
+                                title="Configure"
                             >
-                                {checkerInfo.name || checkerName}
+                                <Icon name="gear" />
                             </a>
-                            {#if onResults}
-                                <a
-                                    href={links.checker(checkerName)}
-                                    class="checker-action text-muted"
-                                    title="Configure"
-                                >
-                                    <Icon name="gear" />
-                                </a>
-                            {:else}
-                                <a
-                                    href={links.executions!(checkerName)}
-                                    class="checker-action text-muted"
-                                    title="Results"
-                                >
-                                    <Icon name="bar-chart-fill" />
-                                </a>
-                            {/if}
-                        </div>
-                    </li>
-                {/if}
+                        {:else}
+                            <a
+                                href={links.executions!(checkerName)}
+                                class="checker-action flex-shrink-0 lh-1 text-muted text-decoration-none"
+                                title="Results"
+                            >
+                                <Icon name="bar-chart-fill" />
+                            </a>
+                        {/if}
+                    </div>
+                </li>
             {/each}
         </ul>
     {/if}
 </nav>
 
 <style>
-    .checker-item {
-        transition: background-color 0.15s;
-    }
-
-    .checker-item:hover {
-        background-color: var(--hd-bg-hover);
-    }
-
+    /* The other page of the checker shows up on the hovered or active row. */
     .checker-action {
-        flex-shrink: 0;
         opacity: 0;
-        text-decoration: none;
-        line-height: 1;
         transition: opacity 0.15s;
-    }
-
-    .checker-action.always-visible {
-        opacity: 0.6;
     }
 
     .checker-item:hover .checker-action,
@@ -142,9 +137,5 @@
 
     .checker-action:hover {
         opacity: 1 !important;
-    }
-
-    .checker-item.active {
-        background-color: rgba(var(--bs-primary-rgb), 0.1);
     }
 </style>

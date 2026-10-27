@@ -53,32 +53,39 @@
             <Spinner size="sm" color="primary" />
         </div>
     {:else}
-        <ul class="list-unstyled mb-0 flex-fill overflow-auto">
-            {#each $providers as provider}
+        <ul class="list-group list-group-sidebar gap-1 mb-0 flex-fill overflow-auto">
+            {#each $providers as provider (provider._id)}
                 {@const isActive = provider._id === currentProviderId}
+                {@const typeName = $providersSpecs[provider._srctype]?.name ?? provider._srctype}
                 <li class="d-flex align-items-center">
                     <a
                         href={providerLinks().provider(encodeURIComponent(provider._id))}
-                        class="provider-item d-flex align-items-center gap-2 py-2 px-2 rounded text-decoration-none flex-fill {isActive
-                            ? 'fw-bold text-primary active'
-                            : 'text-muted'}"
+                        class="list-group-item list-group-item-action d-flex align-items-center gap-2 flex-fill min-w-0 p-2 border-0 rounded"
+                        class:active={isActive}
+                        aria-current={isActive ? "page" : undefined}
                     >
-                        <span class="provider-icon flex-shrink-0">
+                        <span class="flex-shrink-0">
                             <ImgProvider
                                 ptype={provider._srctype}
                                 style="width: 1.5em; height: 1.5em; object-fit: contain;"
                             />
                         </span>
-                        <span class="text-truncate flex-fill">
-                            {provider._comment ||
-                                ($providersSpecs[provider._srctype]?.name ?? provider._srctype)}
+                        <span class="flex-fill min-w-0">
+                            <span class="d-block text-truncate">
+                                {provider._comment || typeName}
+                            </span>
+                            {#if provider._comment}
+                                <span class="d-block text-truncate small text-body-secondary">
+                                    {typeName}
+                                </span>
+                            {/if}
                         </span>
                     </a>
                     {#if isActive && $providersSpecs[provider._srctype]?.website}
                         <a
                             href={$providersSpecs[provider._srctype].website}
                             target="_blank"
-                            rel="noopener noreferrer"
+                            rel="external noopener noreferrer"
                             class="text-muted flex-shrink-0 px-2"
                             title={$t("provider.website")}
                             aria-label={$t("provider.website")}
@@ -91,17 +98,3 @@
         </ul>
     {/if}
 </nav>
-
-<style>
-    .provider-item {
-        transition: background-color 0.15s;
-    }
-
-    .provider-item:hover {
-        background-color: var(--hd-bg-hover);
-    }
-
-    .provider-item.active {
-        background-color: var(--hd-bg-tint);
-    }
-</style>
