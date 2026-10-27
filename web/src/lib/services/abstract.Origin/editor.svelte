@@ -39,7 +39,7 @@
 
 <div>
     <h4 class="text-primary pb-1 border-bottom border-1">Start Of Authority (SOA record)</h4>
-    <SOA class="mt-3" bind:value={value["soa"]} />
+    <SOA class="mt-3" origin={origin.domain} bind:value={value["soa"]} />
 </div>
 <hr />
 <div>

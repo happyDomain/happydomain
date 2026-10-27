@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, type Snippet } from "svelte";
 
     import { Col, Row } from "@sveltestrap/sveltestrap";
 
@@ -39,11 +39,14 @@
         specs: Field;
         readonly?: boolean;
         value: any;
+        // Replaces the input guessed from specs.type, under the same label.
+        children?: Snippet;
         [key: string]: unknown;
     }
 
     let {
         alwaysShow = false,
+        children,
         edit = false,
         index,
         showDescription = true,
@@ -69,15 +72,19 @@
         </label>
         <Col md="8" class="d-flex flex-column">
             <div class="flex-fill d-flex align-items-center">
-                <ResourceRawInput
-                    {edit}
-                    {index}
-                    {specs}
-                    {readonly}
-                    bind:value
-                    on:focus={() => dispatch("focus")}
-                    on:blur={() => dispatch("blur")}
-                />
+                {#if children}
+                    {@render children()}
+                {:else}
+                    <ResourceRawInput
+                        {edit}
+                        {index}
+                        {specs}
+                        {readonly}
+                        bind:value
+                        on:focus={() => dispatch("focus")}
+                        on:blur={() => dispatch("blur")}
+                    />
+                {/if}
             </div>
             {#if specs.description && (showDescription || (specs.choices && specs.choices.length > 0))}
                 <p class="text-justify" style="line-height: 1.1">

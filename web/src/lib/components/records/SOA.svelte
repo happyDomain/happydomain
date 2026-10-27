@@ -25,14 +25,17 @@
     import type { ClassValue } from "svelte/elements";
 
     import BasicInput from "$lib/components/inputs/basic.svelte";
+    import MboxInput from "$lib/components/inputs/Mbox.svelte";
     import type { dnsTypeSOA } from "$lib/dns_rr";
 
     interface Props {
         class?: ClassValue;
+        // Origin of the zone, the names of the record being relative to it.
+        origin: string;
         value?: dnsTypeSOA;
     }
 
-    let { class: className, value = $bindable({} as dnsTypeSOA) }: Props = $props();
+    let { class: className, origin, value = $bindable({} as dnsTypeSOA) }: Props = $props();
 </script>
 
 <div class={className}>
@@ -57,10 +60,12 @@
               label: "Contact Email",
               placeholder: "dnsmaster",
               type: "string",
-              description: "A <domain-name> which specifies the mailbox of the person responsible for this zone.",
+              description: "The e-mail address of the person responsible for this zone.",
               }}
         bind:value={value.Mbox}
-    />
+    >
+        <MboxInput id="spec-soa_rname-rname" {origin} placeholder="dnsmaster" bind:value={value.Mbox} />
+    </BasicInput>
 
     <BasicInput
         edit
