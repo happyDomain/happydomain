@@ -157,8 +157,9 @@ func (rr *TXT) ToRR() dns.RR {
 type SVCB struct {
 	Hdr      dns.RR_Header
 	Priority uint16
-	Target   string
-	Value    []dns.SVCBKeyValue
+	// Tagged like in miekg/dns, for the helpers making it relative to the zone.
+	Target string `dns:"domain-name"`
+	Value  []dns.SVCBKeyValue
 }
 
 func NewSVCB(rr *dns.SVCB) *SVCB {

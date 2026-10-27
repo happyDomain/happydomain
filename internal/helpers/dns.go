@@ -23,6 +23,7 @@ package helpers
 
 import (
 	"log"
+	"reflect"
 	"strings"
 
 	"github.com/miekg/dns"
@@ -181,78 +182,95 @@ func RRRelativeSubdomain(rr happydns.Record, origin, subdomain string) happydns.
 	return RDataRelative(rr, origin)
 }
 
-// RDataRelative strips the end of the given RData if it is relative to origin.
-func RDataRelative(rr happydns.Record, origin string) happydns.Record {
-	// Make RData relative
-	if ns, ok := rr.(*dns.NS); ok {
-		ns.Ns = DomainRelative(ns.Ns, origin)
-	} else if md, ok := rr.(*dns.MD); ok {
-		md.Md = DomainRelative(md.Md, origin)
-	} else if mf, ok := rr.(*dns.MF); ok {
-		mf.Mf = DomainRelative(mf.Mf, origin)
-	} else if cname, ok := rr.(*dns.CNAME); ok {
-		cname.Target = DomainRelative(cname.Target, origin)
-	} else if soa, ok := rr.(*dns.SOA); ok {
-		soa.Ns = DomainRelative(soa.Ns, origin)
-		soa.Mbox = DomainRelative(soa.Mbox, origin)
-	} else if mb, ok := rr.(*dns.MB); ok {
-		mb.Mb = DomainRelative(mb.Mb, origin)
-	} else if mg, ok := rr.(*dns.MG); ok {
-		mg.Mg = DomainRelative(mg.Mg, origin)
-	} else if mr, ok := rr.(*dns.MR); ok {
-		mr.Mr = DomainRelative(mr.Mr, origin)
-	} else if ptr, ok := rr.(*dns.PTR); ok {
-		ptr.Ptr = DomainRelative(ptr.Ptr, origin)
-	} else if minfo, ok := rr.(*dns.MINFO); ok {
-		minfo.Rmail = DomainRelative(minfo.Rmail, origin)
-		minfo.Email = DomainRelative(minfo.Email, origin)
-	} else if mx, ok := rr.(*dns.MX); ok {
-		mx.Mx = DomainRelative(mx.Mx, origin)
-	} else if rp, ok := rr.(*dns.RP); ok {
-		rp.Mbox = DomainRelative(rp.Mbox, origin)
-		rp.Txt = DomainRelative(rp.Txt, origin)
-	} else if afsdb, ok := rr.(*dns.AFSDB); ok {
-		afsdb.Hostname = DomainRelative(afsdb.Hostname, origin)
-	} else if rt, ok := rr.(*dns.RT); ok {
-		rt.Host = DomainRelative(rt.Host, origin)
-	} else if ptr, ok := rr.(*dns.NSAPPTR); ok {
-		ptr.Ptr = DomainRelative(ptr.Ptr, origin)
-	} else if sig, ok := rr.(*dns.SIG); ok {
-		sig.SignerName = DomainRelative(sig.SignerName, origin)
-	} else if px, ok := rr.(*dns.PX); ok {
-		px.Map822 = DomainRelative(px.Map822, origin)
-		px.Mapx400 = DomainRelative(px.Mapx400, origin)
-	} else if nxt, ok := rr.(*dns.NXT); ok {
-		nxt.NextDomain = DomainRelative(nxt.NextDomain, origin)
-	} else if srv, ok := rr.(*dns.SRV); ok {
-		srv.Target = DomainRelative(srv.Target, origin)
-	} else if ptr, ok := rr.(*dns.NAPTR); ok {
-		ptr.Replacement = DomainRelative(ptr.Replacement, origin)
-	} else if kx, ok := rr.(*dns.KX); ok {
-		kx.Exchanger = DomainRelative(kx.Exchanger, origin)
-	} else if dname, ok := rr.(*dns.DNAME); ok {
-		dname.Target = DomainRelative(dname.Target, origin)
-	} else if sig, ok := rr.(*dns.RRSIG); ok {
-		sig.SignerName = DomainRelative(sig.SignerName, origin)
-	} else if nxt, ok := rr.(*dns.NSEC); ok {
-		nxt.NextDomain = DomainRelative(nxt.NextDomain, origin)
-	} else if hip, ok := rr.(*dns.HIP); ok {
-		for i := range hip.RendezvousServers {
-			hip.RendezvousServers[i] = DomainRelative(hip.RendezvousServers[i], origin)
-		}
-	} else if talink, ok := rr.(*dns.TALINK); ok {
-		talink.PreviousName = DomainRelative(talink.PreviousName, origin)
-		talink.NextName = DomainRelative(talink.NextName, origin)
-	} else if lp, ok := rr.(*dns.LP); ok {
-		lp.Fqdn = DomainRelative(lp.Fqdn, origin)
-	} else if prr, ok := rr.(*dns.PrivateRR); ok {
+// rdataFields returns the struct holding the rdata of rr, or false when rr is
+// not one whose rdata is described by miekg/dns tags.
+func rdataFields(rr happydns.Record) (reflect.Value, bool) {
+	switch rr.(type) {
+	case *dns.PrivateRR:
+		// Its rdata is opaque to miekg/dns.
+		return reflect.Value{}, false
+	case *dns.TSIG, *dns.TKEY:
+		// Their Algorithm is the name of an algorithm, not of the zone.
+		return reflect.Value{}, false
+	}
+
+	v := reflect.ValueOf(rr)
+	if v.Kind() != reflect.Pointer || v.Elem().Kind() != reflect.Struct {
+		return reflect.Value{}, false
+	}
+	v = v.Elem()
+	if v.NumField() == 1 && v.Type().Field(0).Anonymous {
+		// This is a redirection to another type, like HTTPS to SVCB
+		v = v.Field(0)
+	}
+
+	return v, true
+}
+
+// isDomainNameField tells whether miekg/dns tags the field as a domain name.
+func isDomainNameField(f reflect.StructField) bool {
+	tag := f.Tag.Get("dns")
+	return tag == "domain-name" || tag == "cdomain-name"
+}
+
+// rdataNames replaces each domain name held in the rdata of rr by f(name).
+func rdataNames(rr happydns.Record, f func(string) string) {
+	if prr, ok := rr.(*dns.PrivateRR); ok {
 		// Pseudo-types (ALIAS, R53_ALIAS, ...): their rdata is opaque to
 		// miekg/dns, so ask it for its target itself. The ones whose target is
 		// not a domain name (AZURE_ALIAS carries a resource id) are left alone.
 		if rdata, ok := prr.Data.(happydns.TargetRdata); ok && rdata.TargetIsHostname() {
-			rdata.SetTarget(DomainRelative(rdata.GetTarget(), origin))
+			rdata.SetTarget(f(rdata.GetTarget()))
+		}
+		return
+	}
+
+	v, ok := rdataFields(rr)
+	if !ok {
+		return
+	}
+
+	for i := 0; i < v.NumField(); i++ {
+		if !isDomainNameField(v.Type().Field(i)) {
+			continue
+		}
+
+		switch field := v.Field(i); field.Kind() {
+		case reflect.String:
+			field.SetString(f(field.String()))
+		case reflect.Slice:
+			if field.Type().Elem().Kind() == reflect.String {
+				for j := 0; j < field.Len(); j++ {
+					field.Index(j).SetString(f(field.Index(j).String()))
+				}
+			}
 		}
 	}
+}
+
+// RDataNameFields lists the rdata fields of rr holding a single domain name,
+// the ones RDataRelative makes relative to the zone. Lists of names, like the
+// rendezvous servers of HIP, are made relative too but are not listed.
+func RDataNameFields(rr happydns.Record) (names []string) {
+	v, ok := rdataFields(rr)
+	if !ok {
+		return nil
+	}
+
+	for i := 0; i < v.NumField(); i++ {
+		if f := v.Type().Field(i); isDomainNameField(f) && f.Type.Kind() == reflect.String {
+			names = append(names, f.Name)
+		}
+	}
+
+	return
+}
+
+// RDataRelative strips the end of the given RData if it is relative to origin.
+func RDataRelative(rr happydns.Record, origin string) happydns.Record {
+	rdataNames(rr, func(name string) string {
+		return DomainRelative(name, origin)
+	})
 
 	return rr
 }
@@ -268,73 +286,9 @@ func RRAbsolute(rr happydns.Record, origin string) happydns.Record {
 		rr.Header().Name = DomainFQDN(rr.Header().Name, origin)
 	}
 
-	// Make RData absolute
-	if ns, ok := rr.(*dns.NS); ok {
-		ns.Ns = DomainFQDN(ns.Ns, origin)
-	} else if md, ok := rr.(*dns.MD); ok {
-		md.Md = DomainFQDN(md.Md, origin)
-	} else if mf, ok := rr.(*dns.MF); ok {
-		mf.Mf = DomainFQDN(mf.Mf, origin)
-	} else if cname, ok := rr.(*dns.CNAME); ok {
-		cname.Target = DomainFQDN(cname.Target, origin)
-	} else if soa, ok := rr.(*dns.SOA); ok {
-		soa.Ns = DomainFQDN(soa.Ns, origin)
-		soa.Mbox = DomainFQDN(soa.Mbox, origin)
-	} else if mb, ok := rr.(*dns.MB); ok {
-		mb.Mb = DomainFQDN(mb.Mb, origin)
-	} else if mg, ok := rr.(*dns.MG); ok {
-		mg.Mg = DomainFQDN(mg.Mg, origin)
-	} else if mr, ok := rr.(*dns.MR); ok {
-		mr.Mr = DomainFQDN(mr.Mr, origin)
-	} else if ptr, ok := rr.(*dns.PTR); ok {
-		ptr.Ptr = DomainFQDN(ptr.Ptr, origin)
-	} else if minfo, ok := rr.(*dns.MINFO); ok {
-		minfo.Rmail = DomainFQDN(minfo.Rmail, origin)
-		minfo.Email = DomainFQDN(minfo.Email, origin)
-	} else if mx, ok := rr.(*dns.MX); ok {
-		mx.Mx = DomainFQDN(mx.Mx, origin)
-	} else if rp, ok := rr.(*dns.RP); ok {
-		rp.Mbox = DomainFQDN(rp.Mbox, origin)
-		rp.Txt = DomainFQDN(rp.Txt, origin)
-	} else if afsdb, ok := rr.(*dns.AFSDB); ok {
-		afsdb.Hostname = DomainFQDN(afsdb.Hostname, origin)
-	} else if rt, ok := rr.(*dns.RT); ok {
-		rt.Host = DomainFQDN(rt.Host, origin)
-	} else if ptr, ok := rr.(*dns.NSAPPTR); ok {
-		ptr.Ptr = DomainFQDN(ptr.Ptr, origin)
-	} else if sig, ok := rr.(*dns.SIG); ok {
-		sig.SignerName = DomainFQDN(sig.SignerName, origin)
-	} else if px, ok := rr.(*dns.PX); ok {
-		px.Map822 = DomainFQDN(px.Map822, origin)
-		px.Mapx400 = DomainFQDN(px.Mapx400, origin)
-	} else if nxt, ok := rr.(*dns.NXT); ok {
-		nxt.NextDomain = DomainFQDN(nxt.NextDomain, origin)
-	} else if srv, ok := rr.(*dns.SRV); ok {
-		srv.Target = DomainFQDN(srv.Target, origin)
-	} else if ptr, ok := rr.(*dns.NAPTR); ok {
-		ptr.Replacement = DomainFQDN(ptr.Replacement, origin)
-	} else if kx, ok := rr.(*dns.KX); ok {
-		kx.Exchanger = DomainFQDN(kx.Exchanger, origin)
-	} else if dname, ok := rr.(*dns.DNAME); ok {
-		dname.Target = DomainFQDN(dname.Target, origin)
-	} else if sig, ok := rr.(*dns.RRSIG); ok {
-		sig.SignerName = DomainFQDN(sig.SignerName, origin)
-	} else if nxt, ok := rr.(*dns.NSEC); ok {
-		nxt.NextDomain = DomainFQDN(nxt.NextDomain, origin)
-	} else if hip, ok := rr.(*dns.HIP); ok {
-		for i := range hip.RendezvousServers {
-			hip.RendezvousServers[i] = DomainFQDN(hip.RendezvousServers[i], origin)
-		}
-	} else if talink, ok := rr.(*dns.TALINK); ok {
-		talink.PreviousName = DomainFQDN(talink.PreviousName, origin)
-		talink.NextName = DomainFQDN(talink.NextName, origin)
-	} else if lp, ok := rr.(*dns.LP); ok {
-		lp.Fqdn = DomainFQDN(lp.Fqdn, origin)
-	} else if prr, ok := rr.(*dns.PrivateRR); ok {
-		if rdata, ok := prr.Data.(happydns.TargetRdata); ok && rdata.TargetIsHostname() {
-			rdata.SetTarget(DomainFQDN(rdata.GetTarget(), origin))
-		}
-	}
+	rdataNames(rr, func(name string) string {
+		return DomainFQDN(name, origin)
+	})
 
 	return rr
 }

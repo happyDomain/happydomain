@@ -22,7 +22,12 @@
 package helpers
 
 import (
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"io/fs"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/miekg/dns"
@@ -1063,5 +1068,183 @@ func TestPseudoTypeTargetAbsolute(t *testing.T) {
 	azure = RDataRelative(azure, origin)
 	if got := azure.(*dns.PrivateRR).Data.(*happydns.AzureAliasRdata).Target; got != resourceID {
 		t.Errorf("the AZURE_ALIAS target came back as %q after relativization, want it untouched", got)
+	}
+}
+
+// TestRDataNamesRoundTrip checks that every rdata field miekg/dns tags as a
+// domain name is made relative to the zone by RDataRelative, and absolute
+// again by RRAbsolute. TSIG and TKEY carry an algorithm name instead, kept as
+// is.
+func TestRDataNamesRoundTrip(t *testing.T) {
+	const origin = "example.com."
+	const name = "target.example.com."
+
+	for rrtype, newRR := range dns.TypeToRR {
+		if rrtype == dns.TypeTSIG || rrtype == dns.TypeTKEY {
+			continue
+		}
+
+		rr := newRR()
+		v := reflect.ValueOf(rr).Elem()
+		if v.NumField() == 1 && v.Type().Field(0).Anonymous {
+			// This is a redirection to another type
+			v = v.Field(0)
+		}
+
+		var fields []int
+		for i := 0; i < v.NumField(); i++ {
+			tag := v.Type().Field(i).Tag.Get("dns")
+			if tag != "domain-name" && tag != "cdomain-name" {
+				continue
+			}
+			switch v.Field(i).Kind() {
+			case reflect.String:
+				v.Field(i).SetString(name)
+			case reflect.Slice:
+				v.Field(i).Set(reflect.ValueOf([]string{name}))
+			default:
+				continue
+			}
+			fields = append(fields, i)
+		}
+		if len(fields) == 0 {
+			continue
+		}
+
+		value := func(i int) string {
+			if f := v.Field(i); f.Kind() == reflect.Slice {
+				return f.Index(0).String()
+			} else {
+				return f.String()
+			}
+		}
+
+		rr.Header().Rrtype = rrtype
+		RDataRelative(rr, origin)
+		for _, i := range fields {
+			if got := value(i); got != "target" {
+				t.Errorf("%s.%s was made %q, want %q", dns.TypeToString[rrtype], v.Type().Field(i).Name, got, "target")
+			}
+		}
+
+		RRAbsolute(rr, origin)
+		for _, i := range fields {
+			if got := value(i); got != name {
+				t.Errorf("%s.%s came back as %q, want %q", dns.TypeToString[rrtype], v.Type().Field(i).Name, got, name)
+			}
+		}
+	}
+}
+
+// TestSVCBTargetRelative checks the SVCB and HTTPS records as happyDomain
+// stores them, and not as miekg/dns parses them.
+func TestSVCBTargetRelative(t *testing.T) {
+	const origin = "example.com."
+	const name = "svc.example.com."
+
+	svcb := &happydns.SVCB{Hdr: dns.RR_Header{Name: "@", Rrtype: dns.TypeSVCB}, Priority: 1, Target: name}
+	RDataRelative(svcb, origin)
+	if svcb.Target != "svc" {
+		t.Errorf("the SVCB target was made %q, want %q", svcb.Target, "svc")
+	}
+	RRAbsolute(svcb, origin)
+	if svcb.Target != name {
+		t.Errorf("the SVCB target came back as %q, want %q", svcb.Target, name)
+	}
+
+	https := &happydns.HTTPS{SVCB: happydns.SVCB{Hdr: dns.RR_Header{Name: "@", Rrtype: dns.TypeHTTPS}, Priority: 1, Target: name}}
+	RDataRelative(https, origin)
+	if https.Target != "svc" {
+		t.Errorf("the HTTPS target was made %q, want %q", https.Target, "svc")
+	}
+	RRAbsolute(https, origin)
+	if https.Target != name {
+		t.Errorf("the HTTPS target came back as %q, want %q", https.Target, name)
+	}
+}
+
+func TestRDataKeepsAlgorithmNames(t *testing.T) {
+	const origin = "example.com."
+	const algorithm = "hmac-sha256.example.com."
+
+	tsig := &dns.TSIG{Hdr: dns.RR_Header{Rrtype: dns.TypeTSIG}, Algorithm: algorithm}
+	RDataRelative(tsig, origin)
+	if tsig.Algorithm != algorithm {
+		t.Errorf("the TSIG algorithm was made %q, want it untouched", tsig.Algorithm)
+	}
+
+	tkey := &dns.TKEY{Hdr: dns.RR_Header{Rrtype: dns.TypeTKEY}, Algorithm: algorithm}
+	RDataRelative(tkey, origin)
+	if tkey.Algorithm != algorithm {
+		t.Errorf("the TKEY algorithm was made %q, want it untouched", tkey.Algorithm)
+	}
+}
+
+func TestRDataNameFields(t *testing.T) {
+	tests := []struct {
+		rr   happydns.Record
+		want []string
+	}{
+		{new(dns.SOA), []string{"Ns", "Mbox"}},
+		{new(dns.MX), []string{"Mx"}},
+		{new(dns.SVCB), []string{"Target"}},
+		{new(dns.HTTPS), []string{"Target"}},
+		{new(happydns.HTTPS), []string{"Target"}},
+		{new(dns.TSIG), nil},
+		{new(dns.A), nil},
+		// Lists of names are made relative, but are not single fields.
+		{new(dns.HIP), nil},
+	}
+
+	for _, tt := range tests {
+		if got := RDataNameFields(tt.rr); !reflect.DeepEqual(got, tt.want) {
+			t.Errorf("RDataNameFields(%T) = %v, want %v", tt.rr, got, tt.want)
+		}
+	}
+}
+
+// TestConvertibleRecordNameFields checks that the records happyDomain stores in
+// its own types tag their names like miekg/dns does, else RDataRelative would
+// silently skip them. The types are found in the sources of the model, so a
+// new one cannot be left out of this test.
+func TestConvertibleRecordNameFields(t *testing.T) {
+	records := map[string]happydns.ConvertibleRecord{
+		"SPF":   new(happydns.SPF),
+		"TXT":   new(happydns.TXT),
+		"SVCB":  new(happydns.SVCB),
+		"HTTPS": new(happydns.HTTPS),
+	}
+
+	fset := token.NewFileSet()
+	pkgs, err := parser.ParseDir(fset, "../../model", func(fi fs.FileInfo) bool {
+		return !strings.HasSuffix(fi.Name(), "_test.go")
+	}, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, pkg := range pkgs {
+		for _, file := range pkg.Files {
+			for _, decl := range file.Decls {
+				fn, ok := decl.(*ast.FuncDecl)
+				if !ok || fn.Recv == nil || fn.Name.Name != "ToRR" {
+					continue
+				}
+				recv := fn.Recv.List[0].Type
+				if star, ok := recv.(*ast.StarExpr); ok {
+					recv = star.X
+				}
+				if name := recv.(*ast.Ident).Name; records[name] == nil {
+					t.Errorf("happydns.%s converts to a miekg/dns record, add it to this test", name)
+				}
+			}
+		}
+	}
+
+	for name, rr := range records {
+		got := RDataNameFields(rr.(happydns.Record))
+		want := RDataNameFields(rr.ToRR())
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("happydns.%s holds the names %v, want %v like miekg/dns", name, got, want)
+		}
 	}
 }
