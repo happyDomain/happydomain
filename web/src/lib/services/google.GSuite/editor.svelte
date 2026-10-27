@@ -26,6 +26,7 @@
     import type { GoogleGSuiteBody } from "$lib/services_bodies";
     import RecordLine from "$lib/components/services/RecordLine.svelte";
     import TableRecords from "$lib/components/records/TableRecords.svelte";
+    import DomainNameInput from "$lib/components/inputs/DomainName.svelte";
     import RawInput from "$lib/components/inputs/raw.svelte";
     import BasicInput from "$lib/components/inputs/basic.svelte";
     import type { dnsTypeMX } from "$lib/dns_rr";
@@ -139,9 +140,10 @@
                                 bind:value={(value["mx"] as dnsTypeMX[])[idx].Preference}
                             />
                         {:else if field == "Mx"}
-                            <RawInput
-                                edit={!readonly}
-                                index={field + idx.toString()}
+                            <DomainNameInput
+                                id={"mx-" + idx}
+                                origin={origin.domain}
+                                {readonly}
                                 bind:value={(value["mx"] as dnsTypeMX[])[idx].Mx}
                             />
                         {/if}

@@ -23,6 +23,7 @@
 
 <script lang="ts">
     import BasicInput from "$lib/components/inputs/basic.svelte";
+    import DomainNameInput from "$lib/components/inputs/DomainName.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { SvcsNAPTRBody } from "$lib/services_bodies";
     import { getRrtype, newRR } from "$lib/dns_rr";
@@ -117,5 +118,12 @@
             placeholder: "example.com.",
         }}
         bind:value={value["naptr"]!.Replacement}
-    />
+    >
+        <DomainNameInput
+            id="spec-replacement-replacement"
+            origin={origin.domain}
+            placeholder="example.com."
+            bind:value={value["naptr"]!.Replacement}
+        />
+    </BasicInput>
 </div>

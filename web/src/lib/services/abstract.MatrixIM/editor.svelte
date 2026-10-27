@@ -23,6 +23,7 @@
 
 <script lang="ts">
     import TableRecords from "$lib/components/records/TableRecords.svelte";
+    import DomainNameInput from "$lib/components/inputs/DomainName.svelte";
     import RawInput from "$lib/components/inputs/raw.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { AbstractMatrixIMBody } from "$lib/services_bodies";
@@ -77,15 +78,24 @@
     {/snippet}
     {#snippet field(idx: number, field: string)}
         {#if recordsArray && recordsArray[idx]}
-            <RawInput
-                edit
-                index={field + idx.toString()}
-                specs={{
-                      id: field,
-                      type: field == "Target" ? "string" : "uint16",
-                }}
-                bind:value={recordsArray[idx][field as keyof dnsTypeSRV]}
-            />
+            {#if field == "Target"}
+                <DomainNameInput
+                    id={"target-" + field + idx.toString()}
+                    origin={origin.domain}
+                    {readonly}
+                    bind:value={recordsArray[idx].Target}
+                />
+            {:else}
+                <RawInput
+                    edit
+                    index={field + idx.toString()}
+                    specs={{
+                          id: field,
+                          type: "uint16",
+                    }}
+                    bind:value={recordsArray[idx][field as keyof dnsTypeSRV]}
+                />
+            {/if}
         {/if}
     {/snippet}
 </TableRecords>

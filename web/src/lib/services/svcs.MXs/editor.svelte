@@ -25,6 +25,7 @@
     import type { Domain } from "$lib/model/domain";
     import type { SvcsMXsBody } from "$lib/services_bodies";
     import TableRecords from "$lib/components/records/TableRecords.svelte";
+    import DomainNameInput from "$lib/components/inputs/DomainName.svelte";
     import RawInput from "$lib/components/inputs/raw.svelte";
     import type { dnsTypeMX } from "$lib/dns_rr";
 
@@ -65,9 +66,9 @@
                             bind:value={(value["mx"] as dnsTypeMX[])[idx].Preference}
                         />
                     {:else if field == "Mx"}
-                        <RawInput
-                            edit
-                            index={field + idx.toString()}
+                        <DomainNameInput
+                            id={"mx-" + idx}
+                            origin={origin.domain}
                             bind:value={(value["mx"] as dnsTypeMX[])[idx].Mx}
                         />
                     {/if}

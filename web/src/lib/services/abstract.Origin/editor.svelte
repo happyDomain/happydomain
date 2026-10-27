@@ -26,7 +26,7 @@
     import type { AbstractOriginBody } from "$lib/services_bodies";
     import SOA from "$lib/components/records/SOA.svelte";
     import TableRecords from "$lib/components/records/TableRecords.svelte";
-    import RawInput from "$lib/components/inputs/raw.svelte";
+    import DomainNameInput from "$lib/components/inputs/DomainName.svelte";
 
     interface Props {
         dn: string;
@@ -44,18 +44,20 @@
 <hr />
 <div>
     <h4 class="text-primary pb-1 border-bottom border-1">Zone's Name Servers (NS records)</h4>
-    <TableRecords class="mt-3" {dn} edit rrs={value["ns"]} rrtype="NS">
+    <TableRecords class="mt-3" {dn} edit bind:rrs={value["ns"]} rrtype="NS">
         {#snippet header(field: string)}
             {#if field == "Ns"}
                 Name Servers
             {/if}
         {/snippet}
         {#snippet field(idx: number, field: string)}
-            <RawInput
-                edit
-                index={idx.toString()}
-                bind:value={(value["ns"][idx] as Record<string, any>)[field]}
-            />
+            {#if value["ns"] && value["ns"][idx]}
+                <DomainNameInput
+                    id={"ns-" + idx}
+                    origin={origin.domain}
+                    bind:value={(value["ns"][idx] as Record<string, any>)[field]}
+                />
+            {/if}
         {/snippet}
     </TableRecords>
 </div>

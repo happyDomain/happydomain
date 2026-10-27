@@ -30,6 +30,7 @@
     import type { AbstractEmailAutoConfigBody } from "$lib/services_bodies";
     import type { dnsTypeSRV, dnsTypeCNAME } from "$lib/dns_rr";
     import BasicInput from "$lib/components/inputs/basic.svelte";
+    import DomainNameInput from "$lib/components/inputs/DomainName.svelte";
     import { appConfig } from "$lib/stores/config";
     import { ensureTrailingDot, isStubRecord } from "$lib/services/records";
     import { t } from "$lib/translations";
@@ -308,7 +309,16 @@
             }),
         }}
         bind:value={incomingHost}
-    />
+    >
+        <!-- Stored as a full name: the record gets its final dot when saved. -->
+        <DomainNameInput
+            id="spec-incomingHost-incomingHost"
+            origin=""
+            placeholder="imap.example.com"
+            required
+            bind:value={incomingHost}
+        />
+    </BasicInput>
 
     <BasicInput
         edit
@@ -367,7 +377,16 @@
             }),
         }}
         bind:value={outgoingHost}
-    />
+    >
+        <!-- Stored as a full name: the record gets its final dot when saved. -->
+        <DomainNameInput
+            id="spec-outgoingHost-outgoingHost"
+            origin=""
+            placeholder="smtp.example.com"
+            required
+            bind:value={outgoingHost}
+        />
+    </BasicInput>
 
     <BasicInput
         edit

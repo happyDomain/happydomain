@@ -23,6 +23,7 @@
 
 <script lang="ts">
     import TableRecords from "$lib/components/records/TableRecords.svelte";
+    import DomainNameInput from "$lib/components/inputs/DomainName.svelte";
     import RawInput from "$lib/components/inputs/raw.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { AbstractKerberosBody } from "$lib/services_bodies";
@@ -95,15 +96,24 @@
             {#snippet field(idx: number, field: string)}
                 {@const bucketArray = (value as any)[bucket.key] as Array<dnsTypeSRV>}
                 {#if bucketArray && bucketArray[idx]}
-                    <RawInput
-                        edit
-                        index={bucket.key + idx.toString()}
-                        specs={{
-                            id: field,
-                            type: field == "Target" ? "string" : "uint16",
-                        }}
-                        bind:value={bucketArray[idx][field as keyof dnsTypeSRV]}
-                    />
+                    {#if field == "Target"}
+                        <DomainNameInput
+                            id={"target-" + bucket.key + idx.toString()}
+                            origin={origin.domain}
+                            {readonly}
+                            bind:value={bucketArray[idx].Target}
+                        />
+                    {:else}
+                        <RawInput
+                            edit
+                            index={bucket.key + idx.toString()}
+                            specs={{
+                                id: field,
+                                type: "uint16",
+                            }}
+                            bind:value={bucketArray[idx][field as keyof dnsTypeSRV]}
+                        />
+                    {/if}
                 {/if}
             {/snippet}
         </TableRecords>

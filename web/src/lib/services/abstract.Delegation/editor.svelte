@@ -23,6 +23,7 @@
 
 <script lang="ts">
     import TableRecords from "$lib/components/records/TableRecords.svelte";
+    import DomainNameInput from "$lib/components/inputs/DomainName.svelte";
     import RawInput from "$lib/components/inputs/raw.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { AbstractDelegationBody } from "$lib/services_bodies";
@@ -53,9 +54,10 @@
         {/snippet}
         {#snippet field(idx: number, field: string)}
             {#if value["ns"] && Array.isArray(value["ns"]) && value["ns"][idx]}
-                <RawInput
-                    edit
-                    index={field + idx.toString()}
+                <DomainNameInput
+                    id={"ns-" + idx}
+                    origin={origin.domain}
+                    {readonly}
                     bind:value={value["ns"][idx].Ns}
                 />
             {/if}

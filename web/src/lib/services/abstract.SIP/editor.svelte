@@ -23,6 +23,7 @@
 
 <script lang="ts">
     import TableRecords from "$lib/components/records/TableRecords.svelte";
+    import DomainNameInput from "$lib/components/inputs/DomainName.svelte";
     import RawInput from "$lib/components/inputs/raw.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { AbstractSIPBody } from "$lib/services_bodies";
@@ -104,15 +105,24 @@
             {/snippet}
             {#snippet field(idx: number, field: string)}
                 {#if valueData[service.key] && valueData[service.key][idx]}
-                    <RawInput
-                        edit
-                        index={service.key + idx.toString()}
-                        specs={{
-                            id: field,
-                            type: field == "Target" ? "string" : "uint16",
-                        }}
-                        bind:value={valueData[service.key][idx][field]}
-                    />
+                    {#if field == "Target"}
+                        <DomainNameInput
+                            id={"target-" + service.key + idx.toString()}
+                            origin={origin.domain}
+                            {readonly}
+                            bind:value={valueData[service.key][idx].Target}
+                        />
+                    {:else}
+                        <RawInput
+                            edit
+                            index={service.key + idx.toString()}
+                            specs={{
+                                id: field,
+                                type: "uint16",
+                            }}
+                            bind:value={valueData[service.key][idx][field]}
+                        />
+                    {/if}
                 {/if}
             {/snippet}
         </TableRecords>

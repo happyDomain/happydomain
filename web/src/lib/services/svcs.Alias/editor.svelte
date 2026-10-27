@@ -23,6 +23,7 @@
 
 <script lang="ts">
     import BasicInput from "$lib/components/inputs/basic.svelte";
+    import DomainNameInput from "$lib/components/inputs/DomainName.svelte";
     import { getProviderSpec } from "$lib/api/provider_specs";
     import type { dnsRR } from "$lib/dns_rr";
     import type { SvcsAliasBody } from "$lib/services_bodies";
@@ -250,20 +251,46 @@
             bind:value={atype}
         />
     {/if}
-    <BasicInput
-        class="mt-3"
-        edit
-        index="target"
-        specs={{
-            id: "target",
-            label: "Target",
-            description: targetHint.description,
-            type: "string",
-            placeholder: targetHint.placeholder,
-        }}
-        {readonly}
-        bind:value={target}
-    />
+    <!-- An Azure alias points to a resource id, not to a name. -->
+    {#if kind === "AZURE_ALIAS"}
+        <BasicInput
+            class="mt-3"
+            edit
+            index="target"
+            specs={{
+                id: "target",
+                label: "Target",
+                description: targetHint.description,
+                type: "string",
+                placeholder: targetHint.placeholder,
+            }}
+            {readonly}
+            bind:value={target}
+        />
+    {:else}
+        <BasicInput
+            class="mt-3"
+            edit
+            index="target"
+            specs={{
+                id: "target",
+                label: "Target",
+                description: targetHint.description,
+                type: "string",
+                placeholder: targetHint.placeholder,
+            }}
+            {readonly}
+            bind:value={target}
+        >
+            <DomainNameInput
+                id="spec-target-target"
+                origin={origin.domain}
+                placeholder={targetHint.placeholder}
+                {readonly}
+                bind:value={target}
+            />
+        </BasicInput>
+    {/if}
     {#if kind === "AKAMAITLC"}
         <BasicInput
             class="mt-3"

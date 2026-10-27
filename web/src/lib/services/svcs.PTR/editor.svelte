@@ -23,6 +23,7 @@
 
 <script lang="ts">
     import BasicInput from "$lib/components/inputs/basic.svelte";
+    import DomainNameInput from "$lib/components/inputs/DomainName.svelte";
     import type { Domain } from "$lib/model/domain";
     import type { SvcsPTRBody } from "$lib/services_bodies";
     import type { dnsTypePTR } from "$lib/dns_rr";
@@ -60,5 +61,13 @@
             placeholder: "example.com.",
         }}
         bind:value={service.Record.Ptr}
-    />
+    >
+        <DomainNameInput
+            id="spec-ptr-ptr"
+            origin={origin.domain}
+            placeholder="example.com."
+            {readonly}
+            bind:value={service.Record.Ptr}
+        />
+    </BasicInput>
 </div>
