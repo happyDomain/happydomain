@@ -168,8 +168,13 @@
                         id={issueDomId(issue)}
                         class="alert {severityClass[issue.severity]} py-2 px-3 mb-2"
                     >
-                        <div class="d-flex align-items-start gap-2">
-                            <Icon name={severityIcon[issue.severity]} />
+                        <div class="d-flex align-items-start gap-3">
+                            <!-- Large enough to tell the octagon from the triangle at a
+                                 glance, and level with the line of the title. -->
+                            <Icon
+                                name={severityIcon[issue.severity]}
+                                class="fs-4 lh-1 flex-shrink-0"
+                            />
                             <div class="flex-fill">
                                 <div class="fw-semibold">
                                     {$t(`compliance.${issue.id}.title`, issue.params ?? {})}
