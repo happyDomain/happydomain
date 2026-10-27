@@ -29,6 +29,7 @@
         Row,
     } from "@sveltestrap/sveltestrap";
 
+    import DurationInput from "$lib/components/inputs/Duration.svelte";
     import { fqdn, nsclass, nsrrtype } from "$lib/dns";
     import { rdatafields, type dnsRR } from "$lib/dns_rr";
     import type { Domain } from "$lib/model/domain";
@@ -126,13 +127,7 @@
     <Col md="8" class="d-flex flex-column">
         <div class="flex-fill d-flex align-items-center">
             <InputGroup size="sm">
-                <Input
-                    id="rr-hdr-ttl"
-                    type="number"
-                    required
-                    bind:value={record.Hdr.Ttl}
-                />
-                <InputGroupText>s</InputGroupText>
+                <DurationInput id="rr-hdr-ttl" required bind:value={record.Hdr.Ttl} />
             </InputGroup>
         </div>
     </Col>

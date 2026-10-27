@@ -645,7 +645,8 @@
         "default-ttl": "TTL par défaut",
         "ttl": "TTL",
         "ttl-long": "Time-To-Live",
-        "ttl-tip": "0 correspond au TTL par défaut, les autres valeurs sont exprimées en secondes",
+        "ttl-tip": "0 correspond au TTL par défaut ; sinon par exemple 300, 5m, 1h ou 1d",
+        "ttl-zero": "TTL par défaut",
         "propagating": "Propagation {{countdown}}",
         "propagation-in-progress": "Propagation DNS en cours",
         "propagation-remaining": "Propagation complète dans {{countdown}}"

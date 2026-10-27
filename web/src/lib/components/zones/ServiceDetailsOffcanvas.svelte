@@ -35,7 +35,7 @@
         Badge,
         Button,
         Icon,
-        Input,
+        InputGroup,
         Label,
         Offcanvas,
         OffcanvasBody,
@@ -53,7 +53,8 @@
     import RecordLine from "$lib/components/services/RecordLine.svelte";
     import { collectRRs } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
-        import { checkers } from "$lib/stores/checkers";
+    import DurationInput from "$lib/components/inputs/Duration.svelte";
+    import { checkers } from "$lib/stores/checkers";
     import { refreshDomains } from "$lib/stores/domains";
     import { isReadOnlyProvider, providers_idx } from "$lib/stores/providers";
     import { serviceDescription, serviceName } from "$lib/services/infos";
@@ -266,23 +267,22 @@
         <div class="flex-fill"></div>
         {#if service._id}
             <div class="d-flex align-items-center gap-2 mt-2">
-                <Label for="offcanvas_svc_ttl" title={$t("service.ttl-long")} class="mb-0"
+                <Label
+                    for="offcanvas_svc_ttl"
+                    title={$t("service.ttl-long")}
+                    class="mb-0 text-nowrap flex-shrink-0"
                     >{$t("service.default-ttl")}</Label
                 >
-                <Input
-                    id="offcanvas_svc_ttl"
-                    bsSize="sm"
-                    min="0"
-                    type="number"
-                    style="width: 8em"
-                    title={readOnly ? $t("domains.read-only-edit") : $t("service.ttl-tip")}
-                    disabled={readOnly}
-                    bind:value={service._ttl}
-                    on:change={(e: Event) => {
-                        service._ttl = parseInt((e.target as HTMLInputElement).value, 10) || 0;
-                        saveTtl();
-                    }}
-                />
+                <InputGroup size="sm" class="flex-fill">
+                    <DurationInput
+                        id="offcanvas_svc_ttl"
+                        title={readOnly ? $t("domains.read-only-edit") : $t("service.ttl-tip")}
+                        disabled={readOnly}
+                        zeroHint={$t("service.ttl-zero")}
+                        bind:value={service._ttl}
+                        onchange={saveTtl}
+                    />
+                </InputGroup>
                 {#if ttlSaveInProgress}
                     <Spinner size="sm" />
                 {/if}

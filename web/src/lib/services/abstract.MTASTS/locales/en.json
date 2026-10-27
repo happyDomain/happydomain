@@ -29,7 +29,7 @@
             "mode-enforce": "Enforce: refuse to deliver when TLS fails",
             "mode-none": "None: withdraw the policy",
             "max-age": "Max Age",
-            "max-age-desc": "How long (in seconds) senders cache this policy. One week is the recommended minimum; up to one year is allowed.",
+            "max-age-desc": "How long senders cache this policy. One week is the recommended minimum; up to one year is allowed.",
             "mx": "Authorized MX",
             "mx-desc": "Host names allowed to receive mail for this domain, as found in your MX records. A leading *. matches exactly one label.",
             "add-mx": "Add an MX host",

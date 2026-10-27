@@ -38,10 +38,16 @@
         readonly?: boolean;
         plaintext?: boolean;
         required?: boolean;
+        disabled?: boolean;
+        title?: string;
+        // Shown instead of "0 seconds", when zero stands for something else.
+        zeroHint?: string;
         // Seconds. A string is an older shorthand ("1m") still read as such.
         value: number | string | undefined;
         onfocus?: () => void;
         onblur?: () => void;
+        // The user committed a new valid value.
+        onchange?: () => void;
     }
 
     let {
@@ -51,9 +57,13 @@
         readonly = false,
         plaintext = false,
         required = false,
+        disabled = false,
+        title,
+        zeroHint,
         value = $bindable(),
         onfocus,
         onblur,
+        onchange,
     }: Props = $props();
 
     function toSeconds(v: unknown): number | null {
@@ -94,7 +104,11 @@
     );
 
     let hint: string | null = $derived(
-        seconds !== null && feedback === undefined ? formatHumanDuration(seconds, $locale) : null,
+        seconds === null || feedback !== undefined
+            ? null
+            : seconds === 0 && zeroHint !== undefined
+              ? zeroHint
+              : formatHumanDuration(seconds, $locale),
     );
 
     function oninput() {
@@ -119,10 +133,15 @@
     {plaintext}
     readonly={plaintext || readonly}
     {required}
+    {disabled}
+    {title}
     autocomplete="off"
     spellcheck="false"
     bind:value={text}
     on:input={oninput}
+    on:change={() => {
+        if (seconds !== null && feedback === undefined) onchange?.();
+    }}
     on:focus={() => onfocus?.()}
     on:blur={normalize}
 />

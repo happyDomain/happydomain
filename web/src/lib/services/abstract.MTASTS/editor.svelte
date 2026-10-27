@@ -154,12 +154,12 @@
         specs={{
             id: "maxAge",
             label: $t("services.mta-sts.max-age", { default: "Max Age" }),
-            placeholder: "604800",
-            type: "uint32",
+            placeholder: "1w",
+            type: "time.Duration",
             required: true,
             description: $t("services.mta-sts.max-age-desc", {
                 default:
-                    "How long (in seconds) senders cache this policy. One week is the recommended minimum; up to one year is allowed.",
+                    "How long senders cache this policy. One week is the recommended minimum; up to one year is allowed.",
             }),
         }}
         bind:value={value.maxAge}

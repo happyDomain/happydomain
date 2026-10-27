@@ -29,7 +29,7 @@
             "mode-enforce": "Strict : refuser de délivrer si TLS échoue",
             "mode-none": "Aucun : retirer la politique",
             "max-age": "Durée de validité",
-            "max-age-desc": "Durée (en secondes) pendant laquelle les expéditeurs gardent cette politique en cache. Une semaine est le minimum recommandé ; un an au maximum.",
+            "max-age-desc": "Durée pendant laquelle les expéditeurs gardent cette politique en cache. Une semaine est le minimum recommandé ; un an au maximum.",
             "mx": "Serveurs MX autorisés",
             "mx-desc": "Noms d'hôtes autorisés à recevoir le courrier de ce domaine, tels qu'ils figurent dans vos enregistrements MX. Un préfixe *. correspond à exactement un label.",
             "add-mx": "Ajouter un serveur MX",

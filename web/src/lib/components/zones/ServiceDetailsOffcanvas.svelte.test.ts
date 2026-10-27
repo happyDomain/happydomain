@@ -70,7 +70,7 @@ describe("ServiceDetailsOffcanvas", () => {
         open(false);
         expect(await screen.findByRole("button", { name: /Edit/ })).toBeEnabled();
         expect(screen.getByRole("button", { name: /Delete/ })).toBeEnabled();
-        expect(screen.getByRole("spinbutton")).toBeEnabled();
+        expect(screen.getByLabelText("Default TTL")).toBeEnabled();
         expect(checkers.listScopedCheckers).toHaveBeenCalled();
     });
 
@@ -80,7 +80,7 @@ describe("ServiceDetailsOffcanvas", () => {
         expect(edit).toBeDisabled();
         expect(edit.parentElement).toHaveAttribute("title", expect.stringMatching(/read-only/));
         expect(screen.queryByRole("button", { name: /Delete/ })).toBeNull();
-        expect(screen.getByRole("spinbutton")).toBeDisabled();
+        expect(screen.getByLabelText("Default TTL")).toBeDisabled();
     });
 
     it("changes nothing, and offers no check, in a zone the page made read-only", async () => {
@@ -94,7 +94,7 @@ describe("ServiceDetailsOffcanvas", () => {
         const edit = await screen.findByRole("button", { name: /Edit/ });
         expect(edit).toBeDisabled();
         expect(screen.queryByRole("button", { name: /Delete/ })).toBeNull();
-        expect(screen.getByRole("spinbutton")).toBeDisabled();
+        expect(screen.getByLabelText("Default TTL")).toBeDisabled();
         expect(checkers.listScopedCheckers).not.toHaveBeenCalled();
     });
 });
