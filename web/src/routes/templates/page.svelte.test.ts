@@ -18,7 +18,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
@@ -81,7 +81,7 @@ describe("zone templates page", () => {
         expect(screen.getByText("Save a zone")).toBeVisible();
     });
 
-    it("lists the templates of the user, then the global ones apart", async () => {
+    it("lists the templates of the user beside the global ones, marked as such", async () => {
         api.listZoneTemplates.mockResolvedValue([
             tpl("1", "Mail"),
             tpl("2", "Google Workspace", { userId: undefined }),
@@ -89,7 +89,10 @@ describe("zone templates page", () => {
         render(Page);
 
         await waitFor(() => expect(titles()).toContain("Mail"));
-        expect(titles()).toEqual(["Mail", "Offered to everyone", "Google Workspace"]);
+        expect(titles()).toEqual(["Mail", "Google Workspace"]);
+        const row = (name: string) => screen.getByRole("link", { name }).closest("tr")!;
+        expect(within(row("Google Workspace")).getByText("Offered to everyone")).toBeVisible();
+        expect(within(row("Mail")).queryByText("Offered to everyone")).toBeNull();
         expect(screen.getAllByText("1 service")).toHaveLength(2);
         expect(screen.getByRole("link", { name: "Mail" })).toHaveAttribute("href", "/templates/1");
     });
