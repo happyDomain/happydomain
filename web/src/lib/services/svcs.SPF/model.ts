@@ -26,15 +26,17 @@ export interface SPFValue {
     f: string[];
 }
 
+// SPF terms are space-separated (RFC 7208 sec. 4). Semicolons have no
+// syntactic role in SPF, but they are the separator used by DKIM, DMARC,
+// and other key=value TXT records. Splitting on both keeps an SPF parse
+// robust when foreign residue lands in the same TXT slot.
+const TERM_SEPARATOR = /[\s;]+/;
+
 export function parseSPF(val: string): SPFValue {
     const trimmed = val.trim();
     if (!trimmed) return { v: undefined, f: [] };
 
-    // SPF terms are space-separated (RFC 7208 sec. 4). Semicolons have no
-    // syntactic role in SPF, but they are the separator used by DKIM, DMARC,
-    // and other key=value TXT records. Splitting on both keeps an SPF parse
-    // robust when foreign residue lands in the same TXT slot.
-    const fields = trimmed.split(/[\s;]+/);
+    const fields = trimmed.split(TERM_SEPARATOR);
     const first = fields[0] ?? "";
     if (/^v=/i.test(first)) {
         return {
@@ -49,6 +51,21 @@ export function parseSPF(val: string): SPFValue {
 
 export function stringifySPF(val: SPFValue): string {
     return "v=" + (val.v ? val.v : "spf1") + (val.f.length ? " " + val.f.join(" ") : "");
+}
+
+/**
+ * The editor line each term of the record comes from. Compliance runs on the
+ * record once stringified, where an empty line leaves no term and a line
+ * holding "a mx" leaves two, so its indices are not the editor's.
+ */
+export function termOrigins(f: string[]): number[] {
+    const origins: number[] = [];
+    f.forEach((line, index) => {
+        for (const term of line.split(TERM_SEPARATOR)) {
+            if (term !== "") origins.push(index);
+        }
+    });
+    return origins;
 }
 
 // SPF mechanisms that consume a DNS lookup per RFC 7208 §4.6.4.

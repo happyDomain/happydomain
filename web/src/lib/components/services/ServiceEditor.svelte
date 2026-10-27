@@ -25,6 +25,7 @@
     import type { Component } from "svelte";
 
     import type { Domain } from "$lib/model/domain";
+    import type { ComplianceIssue } from "$lib/services/compliance";
     import type { ServiceBody } from "$lib/services_bodies";
     import OrphanEditor from '$lib/services/svcs.Orphan/editor.svelte';
     import EditorCompliance from '$lib/components/services/EditorCompliance.svelte';
@@ -42,7 +43,12 @@
     // Every editor takes these props, but the body it expects depends on the
     // service type, which is only known here as a string: the pairing of a
     // type with its body is what each editor declares for itself.
-    type ServiceEditorComponent = Component<Props & { readonly?: boolean }>;
+    type ServiceEditorComponent = Component<
+        Props & { readonly?: boolean; issues?: ComplianceIssue[] }
+    >;
+
+    // Reported by EditorCompliance, for editors to mark the fields at fault.
+    let issues: ComplianceIssue[] = $state([]);
 
     // Shown for a service type no editor claims, and when loading one fails.
     const FallbackEditor = OrphanEditor as ServiceEditorComponent;
@@ -85,10 +91,11 @@
             {dn}
             {origin}
             {type}
+            {issues}
             bind:value={value}
         />
     {/key}
-    <EditorCompliance {dn} {origin} {type} {value} {serviceId} />
+    <EditorCompliance {dn} {origin} {type} {value} {serviceId} bind:issues />
 {:catch error}
     <div class="alert alert-warning">
         <p>Failed to load editor for type: {type}</p>

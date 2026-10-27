@@ -100,6 +100,38 @@ export function hasValidators(svctype: string): boolean {
     return registry[svctype] !== undefined;
 }
 
+export const severityOrder: Record<Severity, number> = { error: 0, warning: 1, info: 2 };
+
+export const severityIcon: Record<Severity, string> = {
+    error: "exclamation-octagon-fill",
+    warning: "exclamation-triangle-fill",
+    info: "info-circle-fill",
+};
+
+/** What tells two issues apart: the same rule may fire on several fields. */
+export function issueKey(issue: ComplianceIssue): string {
+    return issue.id + (issue.field ?? "") + JSON.stringify(issue.params ?? {});
+}
+
+/** DOM id of the message of an issue, for an input to point at it. */
+export function issueDomId(issue: ComplianceIssue): string {
+    // djb2, enough to keep apart the handful of issues shown at once.
+    let hash = 5381;
+    for (const c of issueKey(issue)) hash = ((hash * 33) ^ c.charCodeAt(0)) >>> 0;
+    return "compliance-" + hash.toString(36);
+}
+
+/** The severity of the most severe of `issues`, if any. */
+export function worstSeverity(issues: ComplianceIssue[]): Severity | undefined {
+    let worst: Severity | undefined;
+    for (const issue of issues) {
+        if (worst === undefined || severityOrder[issue.severity] < severityOrder[worst]) {
+            worst = issue.severity;
+        }
+    }
+    return worst;
+}
+
 /**
  * Editor values usually come in as either a single record object or an array
  * of them, depending on the underlying ServiceBody. asArray normalizes them

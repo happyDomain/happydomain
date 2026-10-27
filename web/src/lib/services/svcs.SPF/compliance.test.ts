@@ -32,11 +32,15 @@ import { parseSPF } from "./model";
 import { makeDomain } from "$lib/test-utils/fixtures";
 import { flattenSPF } from "$lib/api/resolver";
 import type { HappydnsSpfFlattenResponse, HappydnsSpfNode } from "$lib/api-base/types.gen";
+import { forgetSPFWalk } from "./walk";
 
 const ORIGIN = makeDomain({ domain: "example.com." });
 const CTX: ComplianceContext = buildContext("@", ORIGIN, null);
 
 const ids = (issues: ComplianceIssue[]) => issues.map((i) => i.id);
+
+// Walks are shared between callers of the same record: each test mocks its own.
+beforeEach(() => forgetSPFWalk());
 
 // ---------------------------------------------------------------------------
 // registerValidators wiring
@@ -108,6 +112,12 @@ describe("validateSPF: all mechanism", () => {
         expect(issue!.field).toBe("f[1]");
     });
 
+    it("only warns about multiple all mechanisms, the later ones being unreachable", () => {
+        const issues = validateSPF(parseSPF("v=spf1 ~all -all"), CTX);
+        const issue = issues.find((i) => i.id === "spf.multiple-all");
+        expect(issue!.severity).toBe("warning");
+    });
+
     it("flags three all mechanisms with the correct count", () => {
         const issues = validateSPF(parseSPF("v=spf1 all ~all -all"), CTX);
         const issue = issues.find((i) => i.id === "spf.multiple-all");
@@ -135,11 +145,12 @@ describe("validateSPF: all mechanism", () => {
 });
 
 describe("validateSPF: redirect modifier", () => {
-    it("warns when redirect is combined with an all mechanism", () => {
+    it("warns when redirect is combined with an all mechanism, pointing at the all", () => {
+        // The redirect is most likely wanted, and the all left over.
         const issues = validateSPF(parseSPF("v=spf1 redirect=_spf.example.com -all"), CTX);
         const issue = issues.find((i) => i.id === "spf.redirect-with-all");
         expect(issue).toBeDefined();
-        expect(issue!.field).toBe("f[0]");
+        expect(issue!.field).toBe("f[1]");
     });
 
     it("does not warn about redirect-with-all when there is no all", () => {
@@ -221,7 +232,6 @@ describe("validateSPF: per-term checks", () => {
     it.each([
         ["include", "include"],
         ["exists", "exists"],
-        ["ptr", "ptr"],
         ["redirect=", "redirect"],
     ])("flags %s without a value", (raw, mech) => {
         const issues = validateSPF(parseSPF(`v=spf1 ${raw} -all`), CTX);
@@ -232,6 +242,12 @@ describe("validateSPF: per-term checks", () => {
 
     it("does not flag bare a without a value", () => {
         const issues = validateSPF(parseSPF("v=spf1 a -all"), CTX);
+        expect(ids(issues)).not.toContain("spf.mechanism-missing-value");
+    });
+
+    it("does not flag bare ptr without a value", () => {
+        // RFC 7208 sec. 5.5: the domain of ptr defaults to the checked domain.
+        const issues = validateSPF(parseSPF("v=spf1 ptr -all"), CTX);
         expect(ids(issues)).not.toContain("spf.mechanism-missing-value");
     });
 
@@ -365,15 +381,14 @@ describe("validateSPFRecursive: short-circuits", () => {
 describe("validateSPFRecursive: calls flattenSPF with the right arguments", () => {
     beforeEach(() => vi.mocked(flattenSPF).mockReset());
 
-    it("passes the resolved domain, stringified record and the abort signal", async () => {
+    it("passes the resolved domain and the stringified record", async () => {
         vi.mocked(flattenSPF).mockResolvedValueOnce(flattenResponse());
-        const controller = new AbortController();
         const val = parseSPF("v=spf1 include:_spf.example.com -all");
-        await validateSPFRecursive(val, CTX, controller.signal);
-        expect(flattenSPF).toHaveBeenCalledWith(
-            { domain: "example.com.", record: "v=spf1 include:_spf.example.com -all" },
-            controller.signal,
-        );
+        await validateSPFRecursive(val, CTX, new AbortController().signal);
+        expect(flattenSPF).toHaveBeenCalledWith({
+            domain: "example.com.",
+            record: "v=spf1 include:_spf.example.com -all",
+        });
     });
 
     it("resolves relative subdomains against the origin", async () => {
@@ -386,7 +401,6 @@ describe("validateSPFRecursive: calls flattenSPF with the right arguments", () =
         );
         expect(flattenSPF).toHaveBeenCalledWith(
             expect.objectContaining({ domain: "mail.example.com." }),
-            expect.anything(),
         );
     });
 });
@@ -396,33 +410,16 @@ describe("validateSPFRecursive: lookup budget thresholds", () => {
     const val = parseSPF("v=spf1 include:a.com -all");
     const signal = new AbortController().signal;
 
-    it("reports no issue when comfortably under the warning threshold", async () => {
-        vi.mocked(flattenSPF).mockResolvedValueOnce(
-            flattenResponse({ lookupCount: 3, exceeded: false }),
-        );
-        const issues = await validateSPFRecursive(val, CTX, signal);
-        expect(ids(issues)).toEqual([]);
-    });
-
-    it("warns at the warning threshold (8)", async () => {
-        vi.mocked(flattenSPF).mockResolvedValueOnce(
-            flattenResponse({ lookupCount: 8, exceeded: false }),
-        );
-        const issues = await validateSPFRecursive(val, CTX, signal);
-        const issue = issues.find((i) => i.id === "spf.recursive-many-lookups");
-        expect(issue).toBeDefined();
-        expect(issue!.severity).toBe("warning");
-        expect(issue!.params).toEqual({ count: 8, max: 10 });
-    });
-
-    it("warns just below the hard limit (9)", async () => {
-        vi.mocked(flattenSPF).mockResolvedValueOnce(
-            flattenResponse({ lookupCount: 9, exceeded: false }),
-        );
-        const issues = await validateSPFRecursive(val, CTX, signal);
-        expect(ids(issues)).toContain("spf.recursive-many-lookups");
-        expect(ids(issues)).not.toContain("spf.recursive-too-many-lookups");
-    });
+    it.each([3, 8, 9, 10])(
+        "reports no issue for %i lookups, the editor showing the count",
+        async (count) => {
+            vi.mocked(flattenSPF).mockResolvedValueOnce(
+                flattenResponse({ lookupCount: count, exceeded: false }),
+            );
+            const issues = await validateSPFRecursive(val, CTX, signal);
+            expect(ids(issues)).toEqual([]);
+        },
+    );
 
     it("errors when the resolver reports the budget exceeded", async () => {
         vi.mocked(flattenSPF).mockResolvedValueOnce(
@@ -433,8 +430,6 @@ describe("validateSPFRecursive: lookup budget thresholds", () => {
         expect(issue).toBeDefined();
         expect(issue!.severity).toBe("error");
         expect(issue!.params).toEqual({ count: 12, max: 10 });
-        // exceeded and many-lookups are mutually exclusive branches.
-        expect(ids(issues)).not.toContain("spf.recursive-many-lookups");
     });
 
     it("treats a missing lookupCount as zero", async () => {
@@ -442,7 +437,6 @@ describe("validateSPFRecursive: lookup budget thresholds", () => {
             flattenResponse({ lookupCount: undefined, exceeded: false }),
         );
         const issues = await validateSPFRecursive(val, CTX, signal);
-        expect(ids(issues)).not.toContain("spf.recursive-many-lookups");
         expect(ids(issues)).not.toContain("spf.recursive-too-many-lookups");
     });
 });
@@ -460,14 +454,14 @@ describe("validateSPFRecursive: void lookups", () => {
         expect(ids(issues)).not.toContain("spf.too-many-void-lookups");
     });
 
-    it("warns when the resolver reports void lookups exceeded", async () => {
+    it("flags exceeded void lookups as an error, since verifiers answer permerror", async () => {
         vi.mocked(flattenSPF).mockResolvedValueOnce(
             flattenResponse({ voidExceeded: true, voidLookups: 3 }),
         );
         const issues = await validateSPFRecursive(val, CTX, signal);
         const issue = issues.find((i) => i.id === "spf.too-many-void-lookups");
         expect(issue).toBeDefined();
-        expect(issue!.severity).toBe("warning");
+        expect(issue!.severity).toBe("error");
         expect(issue!.params).toEqual({ count: 3, max: 2 });
     });
 
@@ -502,8 +496,9 @@ describe("validateSPFRecursive: tree walk of include errors", () => {
 
     it.each([
         ["loop", "spf.include-loop", "warning"],
-        ["no-spf", "spf.include-no-spf", "warning"],
-        ["nxdomain", "spf.include-no-spf", "warning"],
+        // RFC 7208 sec. 5.2: an include whose target publishes no SPF is a permerror.
+        ["no-spf", "spf.include-no-spf", "error"],
+        ["nxdomain", "spf.include-no-spf", "error"],
         ["timeout", "spf.include-resolver-error", "info"],
         ["resolver", "spf.include-resolver-error", "info"],
         ["syntax", "spf.include-error", "warning"],
@@ -583,7 +578,7 @@ describe("validateSPFRecursive: tree walk of include errors", () => {
 describe("validateSPFRecursive: combined result", () => {
     beforeEach(() => vi.mocked(flattenSPF).mockReset());
 
-    it("can report a budget error, a void-lookup warning and an include error together", async () => {
+    it("can report a budget error, a void-lookup error and an include error together", async () => {
         vi.mocked(flattenSPF).mockResolvedValueOnce(
             flattenResponse({
                 lookupCount: 14,

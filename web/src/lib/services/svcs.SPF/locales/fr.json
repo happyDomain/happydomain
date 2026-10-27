@@ -15,19 +15,19 @@
             },
             "multiple-all": {
                 "title": "Plusieurs mécanismes « all » ({{count}})",
-                "detail": "Un seul mécanisme « all » est autorisé ; les suivants sont ignorés."
+                "detail": "Seul le premier « all » est atteint ; les suivants n'ont aucun effet. N'en gardez qu'un, à la fin."
             },
             "all-not-last": {
                 "title": "Le mécanisme « all » n'est pas en dernier",
                 "detail": "Les mécanismes placés après « all » sont inaccessibles. Déplacez « all » à la fin de l'enregistrement."
             },
             "redirect-with-all": {
-                "title": "Modificateur redirect= combiné avec un mécanisme « all »",
-                "detail": "Lorsque « all » est présent, le modificateur redirect est ignoré. Retirez l'un des deux."
+                "title": "Le mécanisme « all » annule le modificateur redirect=",
+                "detail": "Tant que « all » est présent, redirect= n'est jamais suivi. Retirez « all » pour que la redirection s'applique, ou la redirection si cet enregistrement doit se suffire à lui-même."
             },
             "multiple-redirect": {
                 "title": "Plusieurs modificateurs redirect=",
-                "detail": "Un seul modificateur redirect est autorisé par enregistrement SPF."
+                "detail": "Un seul modificateur redirect est autorisé par enregistrement SPF ; un second en fait un permerror."
             },
             "ptr-deprecated": {
                 "title": "Le mécanisme ptr est déprécié",
@@ -110,7 +110,7 @@
                 "detail": "Une longueur de préfixe {{mechanism}} doit être un nombre compris entre 0 et {{max}}."
             },
             "mechanism-missing-value": {
-                "title": "Le mécanisme « {{mechanism}} » requiert une valeur",
+                "title": "« {{mechanism}} » requiert un nom de domaine",
                 "detail": "include, exists et redirect doivent être suivis d'un nom de domaine (ex. include:_spf.example.com)."
             },
             "duplicate-mechanism": {
@@ -137,10 +137,6 @@
                 "title": "Le parcours SPF récursif dépasse la limite de {{max}} requêtes ({{count}})",
                 "detail": "Une fois tous les include et redirect résolus, cet enregistrement nécessite plus de 10 requêtes DNS. Les destinataires renverront PermError au lieu de l'évaluer."
             },
-            "recursive-many-lookups": {
-                "title": "Le parcours SPF récursif consomme {{count}}/{{max}} requêtes",
-                "detail": "Vous êtes dans le budget mais proche de la limite. Ajouter un include supplémentaire ou en étendre un existant fera probablement basculer au-delà."
-            },
             "too-many-void-lookups": {
                 "title": "Plus de {{max}} requêtes DNS « vides » ({{count}})",
                 "detail": "La RFC 7208 §4.6.4 interdit plus de deux réponses NXDOMAIN/NoData lors de l'évaluation SPF ; les destinataires renverront PermError."
@@ -150,8 +146,8 @@
                 "detail": "Un include ou redirect pointe vers un domaine déjà présent dans la chaîne d'évaluation. Cassez le cycle."
             },
             "include-no-spf": {
-                "title": "Aucun enregistrement SPF sur {{domain}}",
-                "detail": "Le mécanisme {{mechanism}} pointe vers un domaine qui ne publie pas v=spf1. La requête compte tout de même dans le budget."
+                "title": "{{domain}} ne publie aucun enregistrement SPF",
+                "detail": "{{mechanism}} pointe vers un domaine sans v=spf1. Les destinataires répondent permerror et ignorent toute votre politique SPF."
             },
             "include-resolver-error": {
                 "title": "Impossible de vérifier {{domain}}",
@@ -161,6 +157,11 @@
                 "title": "Problème lors de la résolution de {{domain}}",
                 "detail": "Le mécanisme {{mechanism}} n'a pas pu être totalement évalué."
             }
+        }
+    },
+    "resources": {
+        "SPF": {
+            "lookups": "{{count}} requêtes DNS sur les {{max}} autorisées, en comptant celles des enregistrements inclus."
         }
     }
 }

@@ -15,19 +15,19 @@
             },
             "multiple-all": {
                 "title": "Multiple 'all' mechanisms ({{count}})",
-                "detail": "Only one 'all' mechanism is allowed; subsequent ones are ignored."
+                "detail": "Only the first 'all' is ever reached; the following ones have no effect. Keep a single one, at the end."
             },
             "all-not-last": {
                 "title": "'all' mechanism is not the last term",
                 "detail": "Mechanisms after 'all' are unreachable. Move 'all' to the end of the record."
             },
             "redirect-with-all": {
-                "title": "redirect= modifier combined with an 'all' mechanism",
-                "detail": "When 'all' is present, the redirect modifier is ignored. Remove one of them."
+                "title": "The 'all' mechanism overrides the redirect= modifier",
+                "detail": "As long as 'all' is present, redirect= is never followed. Remove 'all' to let the redirect apply, or the redirect if this record is meant to stand on its own."
             },
             "multiple-redirect": {
                 "title": "Multiple redirect= modifiers",
-                "detail": "Only one redirect modifier is allowed per SPF record."
+                "detail": "Only one redirect modifier is allowed per SPF record; a second one makes it a permerror."
             },
             "ptr-deprecated": {
                 "title": "ptr mechanism is deprecated",
@@ -110,7 +110,7 @@
                 "detail": "A {{mechanism}} prefix length must be a number between 0 and {{max}}."
             },
             "mechanism-missing-value": {
-                "title": "Mechanism '{{mechanism}}' requires a value",
+                "title": "'{{mechanism}}' requires a domain",
                 "detail": "include, exists and redirect must be followed by a domain name (e.g. include:_spf.example.com)."
             },
             "duplicate-mechanism": {
@@ -137,10 +137,6 @@
                 "title": "Recursive SPF walk exceeds the {{max}}-lookup limit ({{count}})",
                 "detail": "After resolving every include and redirect, this record needs more than 10 DNS lookups. Receivers will return PermError instead of evaluating it."
             },
-            "recursive-many-lookups": {
-                "title": "Recursive SPF walk uses {{count}}/{{max}} lookups",
-                "detail": "You are within the budget but close to the limit. Adding another include or expanding an existing one is likely to push you over."
-            },
             "too-many-void-lookups": {
                 "title": "More than {{max}} void DNS lookups ({{count}})",
                 "detail": "RFC 7208 §4.6.4 forbids more than two NXDOMAIN/NoData responses while evaluating SPF; receivers will return PermError."
@@ -150,8 +146,8 @@
                 "detail": "An include or redirect points back to a domain already evaluated in the chain. Break the cycle."
             },
             "include-no-spf": {
-                "title": "No SPF record at {{domain}}",
-                "detail": "The mechanism {{mechanism}} resolves to a domain that does not publish v=spf1. The lookup still counts against the budget."
+                "title": "{{domain}} publishes no SPF record",
+                "detail": "{{mechanism}} points at a domain without v=spf1. Receivers answer permerror and discard your whole SPF policy."
             },
             "include-resolver-error": {
                 "title": "Could not check {{domain}}",
@@ -169,6 +165,11 @@
                 "name": "SPF",
                 "description": "Sender Policy Framework, to authenticate domain name on email sending."
             }
+        }
+    },
+    "resources": {
+        "SPF": {
+            "lookups": "{{count}} of the {{max}} allowed DNS lookups, counting those of included records."
         }
     }
 }

@@ -26,20 +26,31 @@
 
     import { Button, Icon, InputGroup, ListGroup, ListGroupItem } from "@sveltestrap/sveltestrap";
 
+    import { fqdn } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { SvcsSPFBody } from "$lib/services_bodies";
     import BasicInput from "$lib/components/inputs/basic.svelte";
+    import {
+        issueDomId,
+        severityIcon,
+        type ComplianceIssue,
+        type Severity,
+        worstSeverity,
+    } from "$lib/services/compliance";
     import type { dnsTypeTXT } from "$lib/dns_rr";
     import { newRR } from "$lib/dns_rr";
-    import { parseSPF, stringifySPF } from "./model";
+    import { t } from "$lib/translations";
+    import { countLocalLookups, parseSPF, stringifySPF, termOrigins } from "./model";
+    import { SPF_LOOKUP_MAX, walkSPF } from "./walk";
 
     interface Props {
         dn: string;
         origin: Domain;
         value: SvcsSPFBody;
+        issues?: ComplianceIssue[];
     }
 
-    let { dn, origin, value = $bindable() }: Props = $props();
+    let { dn, origin, value = $bindable(), issues = [] }: Props = $props();
 
     const DEFAULT_SPF = "v=spf1 -all";
     const ALL_RE = /^[-~?+]?all$/;
@@ -87,6 +98,67 @@
     function delDirective(idx: number) {
         f.splice(idx, 1);
     }
+
+    // Same colors as the compliance messages, so a line reads as the one a
+    // message is about. Warning text uses the emphasis shade for contrast.
+    const severityText: Record<Severity, string> = {
+        error: "text-danger",
+        warning: "text-warning-emphasis",
+        info: "text-info-emphasis",
+    };
+
+    // The lookup budget is shown whatever the count, so that it is known before
+    // it runs out: the compliance check only speaks up past the limit.
+    let lookups: { count: number; exceeded: boolean } | null = $state(null);
+
+    $effect(() => {
+        const val = { v, f: [...f] };
+        const domain = fqdn(dn || "@", origin?.domain ?? "");
+        if (v.toLowerCase() !== "spf1" || !domain) {
+            lookups = null;
+            return;
+        }
+        if (countLocalLookups(val).count === 0) {
+            lookups = { count: 0, exceeded: false };
+            return;
+        }
+
+        // Same delay as the compliance check, so that both share one walk.
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => {
+            walkSPF(domain, stringifySPF(val), ctrl.signal).then(
+                (resp) => {
+                    lookups = { count: resp.lookupCount ?? 0, exceeded: Boolean(resp.exceeded) };
+                },
+                () => {
+                    // A count from a previous record would be misleading.
+                    if (!ctrl.signal.aborted) lookups = null;
+                },
+            );
+        }, 400);
+
+        return () => {
+            ctrl.abort();
+            clearTimeout(timer);
+        };
+    });
+
+    // Issues point at the terms of the record once stringified, where empty
+    // lines are gone: bring each one back to the line it comes from.
+    let issuesByLine = $derived.by(() => {
+        const origins = termOrigins(f);
+        const byLine: ComplianceIssue[][] = f.map(() => []);
+        for (const issue of issues) {
+            const term = /^f\[(\d+)\]$/.exec(issue.field ?? "");
+            const line = term ? origins[Number(term[1])] : undefined;
+            if (line !== undefined) byLine[line].push(issue);
+        }
+        return byLine;
+    });
+
+    function describedBy(lineIssues: ComplianceIssue[]): string | undefined {
+        return lineIssues.length ? lineIssues.map(issueDomId).join(" ") : undefined;
+    }
 </script>
 
 <div>
@@ -108,13 +180,27 @@
     <h5 class="text-primary pb-1 border-bottom border-1">Directives</h5>
     <ListGroup>
         {#each f as _, i (i)}
-            <ListGroupItem class="p-0">
+            {@const lineIssues = issuesByLine[i] ?? []}
+            {@const severity = worstSeverity(lineIssues)}
+            <ListGroupItem class="p-0 {severity ? `directive-${severity}` : ''}">
                 <InputGroup>
                     <input
                         class="form-control border-0"
+                        aria-invalid={severity === "error" ? "true" : undefined}
+                        aria-describedby={describedBy(lineIssues)}
                         bind:value={f[i]}
                         bind:this={inputRefs[i]}
                     />
+                    {#if severity}
+                        <span
+                            class="input-group-text bg-transparent border-0 {severityText[
+                                severity
+                            ]}"
+                            aria-hidden="true"
+                        >
+                            <Icon name={severityIcon[severity]} />
+                        </span>
+                    {/if}
                     <Button
                         type="button"
                         color="link"
@@ -131,4 +217,31 @@
             Add directive
         </ListGroupItem>
     </ListGroup>
+    {#if lookups}
+        <p class="small mt-2 mb-0 {lookups.exceeded ? 'text-danger' : 'text-muted'}">
+            {$t("resources.SPF.lookups", { count: lookups.count, max: SPF_LOOKUP_MAX })}
+        </p>
+    {/if}
 </div>
+
+<style>
+    /* The line takes the tint of the alert it is about. The bar is an inset
+       shadow rather than a border, so that the line does not shift when an
+       issue appears or goes away. */
+    :global(.list-group-item.directive-error) {
+        background-color: var(--bs-danger-bg-subtle);
+        box-shadow: inset 4px 0 0 var(--bs-danger);
+    }
+    :global(.list-group-item.directive-warning) {
+        background-color: var(--bs-warning-bg-subtle);
+        box-shadow: inset 4px 0 0 var(--bs-warning);
+    }
+    :global(.list-group-item.directive-info) {
+        background-color: var(--bs-info-bg-subtle);
+        box-shadow: inset 4px 0 0 var(--bs-info);
+    }
+    /* The input would otherwise paint over both, focused or not. */
+    :global(.list-group-item[class*="directive-"] .form-control) {
+        background-color: transparent;
+    }
+</style>

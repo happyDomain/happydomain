@@ -19,7 +19,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { flattenSPF } from "$lib/api/resolver";
 import { fqdn } from "$lib/dns";
 import {
     isValidDnsName,
@@ -40,9 +39,8 @@ import {
     type ParsedTerm,
     type SPFValue,
 } from "./model";
+import { SPF_LOOKUP_MAX, walkSPF } from "./walk";
 
-const SPF_LOOKUP_WARN_THRESHOLD = 8;
-const SPF_LOOKUP_MAX = 10;
 const SPF_TXT_LENGTH_WARN = 255;
 
 const SPF_RFC_URL = "https://datatracker.ietf.org/doc/html/rfc7208";
@@ -373,7 +371,7 @@ export function validateSPF(val: SPFValue, _ctx: ComplianceContext): ComplianceI
     if (allTerms.length > 1) {
         issues.push({
             id: "spf.multiple-all",
-            severity: "error",
+            severity: "warning",
             params: { count: allTerms.length },
             field: `f[${allTerms[1].index}]`,
             docUrl: SPF_RFC_URL + "#section-5.1",
@@ -394,7 +392,8 @@ export function validateSPF(val: SPFValue, _ctx: ComplianceContext): ComplianceI
         issues.push({
             id: "spf.redirect-with-all",
             severity: "warning",
-            field: `f[${redirectTerms[0].index}]`,
+            // The redirect is most likely the intent, and the all a leftover.
+            field: `f[${allTerms[0].index}]`,
             docUrl: SPF_RFC_URL + "#section-6.1",
         });
     }
@@ -442,7 +441,8 @@ export function validateSPF(val: SPFValue, _ctx: ComplianceContext): ComplianceI
 
     // 5. Lookup budget: handled authoritatively by the async recursive walk
     // (validateSPFRecursive). Emitting a local warning here would duplicate
-    // its result.
+    // its result. Being close to the limit is no issue: the editor shows the
+    // count at all times.
 
     // 6. Per-term checks: empty terms, unknown names, missing values, duplicates.
     const seen = new Set<string>();
@@ -487,9 +487,9 @@ export function validateSPF(val: SPFValue, _ctx: ComplianceContext): ComplianceI
                 field: `f[${index}]`,
                 docUrl: SPF_RFC_URL + "#section-6",
             });
-        } else if (term.consumesLookup && !term.value && term.name !== "a" && term.name !== "mx") {
-            // include / exists / redirect / ptr require a domain. Bare "a" and
-            // "mx" mean "the current zone" so they are valid without value.
+        } else if (term.consumesLookup && !term.value && !["a", "mx", "ptr"].includes(term.name)) {
+            // include / exists / redirect require a domain. Bare "a", "mx" and
+            // "ptr" mean "the current zone" so they are valid without value.
             issues.push({
                 id: "spf.mechanism-missing-value",
                 severity: "error",
@@ -565,7 +565,7 @@ export async function validateSPFRecursive(
     if (!domain) return [];
 
     const record = stringifySPF(val);
-    const resp = await flattenSPF({ domain, record }, signal);
+    const resp = await walkSPF(domain, record, signal);
 
     const issues: ComplianceIssue[] = [];
     const total = resp.lookupCount ?? 0;
@@ -577,19 +577,12 @@ export async function validateSPFRecursive(
             params: { count: total, max: SPF_LOOKUP_MAX },
             docUrl: SPF_RFC_URL + "#section-4.6.4",
         });
-    } else if (total >= SPF_LOOKUP_WARN_THRESHOLD) {
-        issues.push({
-            id: "spf.recursive-many-lookups",
-            severity: "warning",
-            params: { count: total, max: SPF_LOOKUP_MAX },
-            docUrl: SPF_RFC_URL + "#section-4.6.4",
-        });
     }
 
     if (resp.voidExceeded) {
         issues.push({
             id: "spf.too-many-void-lookups",
-            severity: "warning",
+            severity: "error",
             params: { count: resp.voidLookups ?? 0, max: 2 },
             docUrl: SPF_RFC_URL + "#section-4.6.4",
         });
@@ -605,6 +598,13 @@ export async function validateSPFRecursive(
         timeout: "spf.include-resolver-error",
         resolver: "spf.include-resolver-error",
     };
+    // A target without SPF makes include and redirect themselves a permerror
+    // (RFC 7208 sec. 5.2 and 6.1), whereas a resolver failure says nothing
+    // about the record.
+    const severityOfNodeError: Record<string, ComplianceIssue["severity"]> = {
+        "spf.include-no-spf": "error",
+        "spf.include-resolver-error": "info",
+    };
     const walk = (
         node: { domain?: string; mechanism?: string; error?: string; children?: any[] } | undefined,
     ) => {
@@ -614,7 +614,7 @@ export async function validateSPFRecursive(
             const id = errorToId[err] ?? "spf.include-error";
             issues.push({
                 id,
-                severity: id === "spf.include-resolver-error" ? "info" : "warning",
+                severity: severityOfNodeError[id] ?? "warning",
                 params: { domain: node.domain ?? "", mechanism: node.mechanism ?? "" },
             });
         }

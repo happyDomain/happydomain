@@ -20,7 +20,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { describe, it, expect } from "vitest";
-import { countLocalLookups, isIPv4, isIPv6, parseSPF, stringifySPF } from "./model";
+import { countLocalLookups, isIPv4, isIPv6, parseSPF, stringifySPF, termOrigins } from "./model";
 import { validateSPF } from "./compliance";
 import type { ComplianceContext } from "$lib/services/compliance";
 import { makeDomain } from "$lib/test-utils/fixtures";
@@ -804,5 +804,26 @@ describe("validateSPF: ip4 / ip6", () => {
         expect(ids(validateSPF(parseSPF("v=spf1 -ip4:300.0.2.1 -all"), ctx))).toContain(
             "spf.invalid-ip",
         );
+    });
+});
+
+describe("termOrigins", () => {
+    // Each term of the record as validated, mapped back to its editor line.
+    const parsedTerms = (f: string[]) => parseSPF(stringifySPF({ v: "spf1", f })).f;
+
+    it("maps each term to its own line when every line holds one term", () => {
+        expect(termOrigins(["include:a.com", "-all"])).toEqual([0, 1]);
+    });
+
+    it("skips empty lines, which leave no term in the record", () => {
+        const f = ["redirect=a.com", "", "  ", "-all"];
+        expect(termOrigins(f)).toEqual([0, 3]);
+        expect(parsedTerms(f)).toEqual(["redirect=a.com", "-all"]);
+    });
+
+    it("maps every term of a line holding several to that line", () => {
+        const f = ["a mx", "include:a.com;", "-all"];
+        expect(termOrigins(f)).toEqual([0, 0, 1, 2]);
+        expect(parsedTerms(f)).toHaveLength(4);
     });
 });

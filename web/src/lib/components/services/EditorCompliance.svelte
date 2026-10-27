@@ -30,8 +30,12 @@
     import {
         buildContext,
         getValidators,
+        issueDomId,
+        issueKey,
         runAsyncValidators,
         runSyncValidators,
+        severityIcon,
+        severityOrder,
         type ComplianceIssue,
         type Severity,
     } from "$lib/services/compliance";
@@ -45,9 +49,11 @@
         type: string;
         value: Record<string, any>;
         serviceId?: string;
+        // The issues being shown, for the editor to mark the fields at fault.
+        issues?: ComplianceIssue[];
     }
 
-    let { dn, origin, type, value, serviceId }: Props = $props();
+    let { dn, origin, type, value, serviceId, issues = $bindable([]) }: Props = $props();
 
     const ASYNC_DEBOUNCE_MS = 400;
 
@@ -108,22 +114,13 @@
         };
     });
 
-    let issues = $derived<ComplianceIssue[]>([...syncIssues, ...asyncIssues]);
+    let allIssues = $derived<ComplianceIssue[]>([...syncIssues, ...asyncIssues]);
 
-    const severityOrder: Record<Severity, number> = { error: 0, warning: 1, info: 2 };
     const severityClass: Record<Severity, string> = {
         error: "alert-danger",
         warning: "alert-warning",
         info: "alert-info",
     };
-    const severityIcon: Record<Severity, string> = {
-        error: "exclamation-octagon-fill",
-        warning: "exclamation-triangle-fill",
-        info: "info-circle-fill",
-    };
-    function issueKey(issue: ComplianceIssue): string {
-        return issue.id + (issue.field ?? "") + JSON.stringify(issue.params ?? {});
-    }
 
     // Two occurrences of the same problem render as the very same message, so
     // only the first one is kept: repeating it adds no information, and a
@@ -133,7 +130,7 @@
         // eslint-disable-next-line svelte/prefer-svelte-reactivity
         const seen = new Set<string>();
 
-        return issues
+        return allIssues
             .filter((issue) => {
                 const key = issueKey(issue);
                 if (seen.has(key)) return false;
@@ -141,6 +138,10 @@
                 return true;
             })
             .sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
+    });
+
+    $effect(() => {
+        issues = sortedIssues;
     });
 
     function hasDetail(id: string): boolean {
@@ -163,7 +164,10 @@
         {#if sortedIssues.length > 0}
             <ul class="list-unstyled mb-0">
                 {#each sortedIssues as issue (issueKey(issue))}
-                    <li class="alert {severityClass[issue.severity]} py-2 px-3 mb-2">
+                    <li
+                        id={issueDomId(issue)}
+                        class="alert {severityClass[issue.severity]} py-2 px-3 mb-2"
+                    >
                         <div class="d-flex align-items-start gap-2">
                             <Icon name={severityIcon[issue.severity]} />
                             <div class="flex-fill">

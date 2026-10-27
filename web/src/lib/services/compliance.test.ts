@@ -29,6 +29,7 @@ import {
     hasValidators,
     inZoneSubdomain,
     isCnameOwner,
+    issueDomId,
     isUint16,
     isValidDnsName,
     isValidHostname,
@@ -38,6 +39,7 @@ import {
     registerValidators,
     runAsyncValidators,
     runSyncValidators,
+    worstSeverity,
     type ComplianceIssue,
 } from "./compliance";
 import { makeDomain, makeService, makeZone } from "$lib/test-utils/fixtures";
@@ -546,5 +548,38 @@ describe("checkDigest", () => {
 
     it("treats an empty digest as not hexadecimal", () => {
         expect(checkDigest("", 2, L)).toEqual({ status: "not-hex", expected: 64, got: 0 });
+    });
+});
+
+describe("issueDomId", () => {
+    const issue = { id: "spf.invalid-macro", severity: "error" as const, field: "f[0]" };
+
+    it("is stable for the same issue", () => {
+        expect(issueDomId({ ...issue, params: { macro: "%{x}" } })).toBe(
+            issueDomId({ ...issue, params: { macro: "%{x}" } }),
+        );
+    });
+
+    it("tells apart two issues of the same rule on the same field", () => {
+        expect(issueDomId({ ...issue, params: { macro: "%{x}" } })).not.toBe(
+            issueDomId({ ...issue, params: { macro: "%{y}" } }),
+        );
+    });
+
+    it("only holds characters valid in a DOM id", () => {
+        expect(issueDomId({ ...issue, params: { macro: "%{x}" } })).toMatch(/^[A-Za-z][\w-]*$/);
+    });
+});
+
+describe("worstSeverity", () => {
+    const issue = (severity: "error" | "warning" | "info") => ({ id: severity, severity });
+
+    it("returns the severity of the most severe issue", () => {
+        expect(worstSeverity([issue("info"), issue("warning")])).toBe("warning");
+        expect(worstSeverity([issue("warning"), issue("error"), issue("info")])).toBe("error");
+    });
+
+    it("returns undefined without any issue", () => {
+        expect(worstSeverity([])).toBeUndefined();
     });
 });
