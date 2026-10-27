@@ -166,7 +166,7 @@
     let percent = $derived(indeterminate ? 100 : shown);
 </script>
 
-<div class="flex-fill d-flex flex-column">
+<div class="flex-fill d-flex flex-column pb-5">
     <PageTitle
         title={$t("zones.retrieve")}
         domain={data.domain.domain}

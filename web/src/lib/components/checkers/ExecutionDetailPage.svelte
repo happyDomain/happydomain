@@ -215,7 +215,7 @@
         </Alert>
     </Container>
 {:else if $reportViewMode === "rules" && evaluationData}
-    <Container class="flex-fill d-flex flex-column mt-3">
+    <Container class="flex-fill d-flex flex-column mt-3 mb-5">
         <ExecutionResultsCard evaluation={evaluationData} />
     </Container>
 {:else if $currentObservations}

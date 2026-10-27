@@ -45,7 +45,7 @@
     <title>{$t("menu.provider-features")} - happyDomain</title>
 </svelte:head>
 
-<Container class="d-flex flex-column flex-fill py-3">
+<Container class="d-flex flex-column flex-fill my-5 pb-5">
     <PageTitle title={$t("menu.provider-features")} />
 
     {#await listProviders()}

@@ -47,7 +47,12 @@
             <ProviderSidebar currentProviderId={data.providerId ?? ""} />
         </Col>
         <Col sm={8} md={9} class="d-flex flex-column">
-            <ProviderFormPage ptype={data.ptype} state={data.state} providerId={data.providerId} />
+            <ProviderFormPage
+                class="mb-5"
+                ptype={data.ptype}
+                state={data.state}
+                providerId={data.providerId}
+            />
         </Col>
     </Row>
 </Container>

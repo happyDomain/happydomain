@@ -30,11 +30,7 @@
 
     import type { ServiceWithValue } from "$lib/model/service.svelte";
     import { initializeService } from "$lib/api/service_specs";
-    import {
-        newServiceIdIn,
-        notifyServiceChange,
-        zoneWasForked,
-    } from "$lib/stores/zonefeedback";
+    import { newServiceIdIn, notifyServiceChange, zoneWasForked } from "$lib/stores/zonefeedback";
     import PageTitle from "$lib/components/PageTitle.svelte";
     import ServiceEditor from "$lib/components/services/ServiceEditor.svelte";
     import { useZoneEditor } from "./editor";
@@ -46,7 +42,7 @@
     import { serviceDescription, serviceName } from "$lib/services/infos";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
     import { thisZone } from "$lib/stores/thiszone";
-        import { t } from "$lib/translations";
+    import { t } from "$lib/translations";
     import { refreshDomains } from "$lib/stores/domains";
 
     interface Props {
@@ -65,7 +61,9 @@
 
     let svcType: string = $derived(page.url.searchParams.get("type") ?? "");
 
-    let readOnly = $derived(editor.readOnly || isReadOnlyProvider($providers_idx, origin.id_provider));
+    let readOnly = $derived(
+        editor.readOnly || isReadOnlyProvider($providers_idx, origin.id_provider),
+    );
 
     let service: ServiceWithValue | undefined = $state();
     let serviceLoading = $state(false);
@@ -183,7 +181,7 @@
         <Spinner />
     </div>
 {:else if service}
-    <div class="flex-fill">
+    <div class="flex-fill pb-5 mb-5">
         <PageTitle
             title={serviceTitle}
             subtitle={$serviceDescription($servicesSpecs[service._svctype], service._svctype) ||
@@ -211,11 +209,7 @@
 
         <div class="d-flex justify-content-end align-items-center gap-2 mt-3">
             {#if service._id && editor.isDomain}
-                <Button
-                    color="info"
-                    outline
-                    href="checks"
-                >
+                <Button color="info" outline href="checks">
                     <Icon name="shield-check" />
                     {$t("checkers.title")}
                 </Button>
