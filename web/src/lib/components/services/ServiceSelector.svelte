@@ -22,7 +22,9 @@
 -->
 
 <script lang="ts">
-    import { ListGroup, NavItem, NavLink, Spinner } from "@sveltestrap/sveltestrap";
+    import { tick } from "svelte";
+
+    import { Spinner } from "@sveltestrap/sveltestrap";
 
     import { getProviderSpec } from "$lib/api/provider_specs";
     import ServiceSelectorItem from "./ServiceSelectorItem.svelte";
@@ -44,19 +46,11 @@
 
     let { dn, origin, value = $bindable(null), zservices }: Props = $props();
 
-    let families = [
-        {
-            label: "Services",
-            family: "abstract",
-        },
-        {
-            label: "Providers",
-            family: "provider",
-        },
-        {
-            label: "Raw DNS resources",
-            family: "",
-        },
+    const families: Array<{ label: string; family: string | null }> = [
+        { label: "service.all", family: null },
+        { label: "service.family.abstract", family: "abstract" },
+        { label: "service.family.provider", family: "provider" },
+        { label: "service.family.raw", family: "" },
     ];
 
     // undefined while loading; null for an origin without provider, as a
@@ -76,18 +70,28 @@
 
     let filtered_family: string | null = $state(null);
 
-    let filteredServicesResult = $derived(
-        provider_specs !== undefined
+    function filterFamily(family: string | null) {
+        return provider_specs !== undefined
             ? filterServices(
                   $servicesSpecsList,
                   provider_specs,
                   zservices,
                   dn,
                   $filteredName,
-                  filtered_family,
+                  family,
                   $t,
               )
-            : { available: [], disabled: [] },
+            : { available: [], disabled: [] };
+    }
+
+    let filteredServicesResult = $derived(filterFamily(filtered_family));
+
+    // How many services each family holds for the current search.
+    let familyCounts = $derived(
+        families.map(({ family }) => {
+            const { available, disabled } = filterFamily(family);
+            return available.length + disabled.length;
+        }),
     );
 
     function handleKeyDown(event: KeyboardEvent) {
@@ -100,11 +104,8 @@
 
         event.preventDefault();
 
-        // Combine available and disabled services into a single navigable list
-        const allServices = [
-            ...filteredServicesResult.available,
-            ...filteredServicesResult.disabled.map((d) => d.svc),
-        ];
+        // Unavailable services cannot be chosen, so they are skipped.
+        const allServices = filteredServicesResult.available;
 
         if (allServices.length === 0) return;
 
@@ -121,53 +122,53 @@
         }
 
         value = allServices[newIndex]._svctype;
+        tick().then(() =>
+            document.querySelector(".service-list .active")?.scrollIntoView({ block: "nearest" }),
+        );
     }
 </script>
 
 <svelte:document on:keydown={handleKeyDown} />
 
 {#if provider_specs === undefined || !$servicesSpecsLoaded}
-    <div class="d-flex justify-content-center">
+    <div class="d-flex justify-content-center py-4">
         <Spinner color="primary" />
     </div>
 {:else}
-    {#if !$filteredName || filtered_family}
-        <ul class="nav nav-tabs sticky-top" style="background: var(--bs-body-bg)">
-            <NavItem>
-                <NavLink active={filtered_family == null} on:click={() => (filtered_family = null)}>
-                    {$t("service.all")}
-                </NavLink>
-            </NavItem>
-            {#each families as family}
-                <NavItem>
-                    <NavLink
-                        active={filtered_family == family.family}
-                        on:click={() => (filtered_family = family.family)}
-                    >
-                        {family.label}
-                    </NavLink>
-                </NavItem>
+    <div class="d-flex flex-wrap gap-2 sticky-top py-3 border-bottom bg-body">
+        {#each families as family, i (family.label)}
+            <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary rounded-pill px-3"
+                class:active={filtered_family === family.family}
+                aria-pressed={filtered_family === family.family}
+                onclick={() => (filtered_family = family.family)}
+            >
+                {$t(family.label)}
+                <span class="opacity-75 ms-1">{familyCounts[i]}</span>
+            </button>
+        {/each}
+    </div>
+    <div class="service-list list-group gap-1 pt-2" role="listbox">
+        {#each filteredServicesResult.available as svc (svc._svctype)}
+            <ServiceSelectorItem
+                active={value === svc._svctype}
+                {svc}
+                on:click={() => (value = svc._svctype)}
+            />
+        {/each}
+        {#if filteredServicesResult.disabled.length}
+            <div class="small fw-semibold text-uppercase text-body-secondary px-2 pt-3 pb-1">
+                {$t("service.unavailable-here", { count: filteredServicesResult.disabled.length })}
+            </div>
+            {#each filteredServicesResult.disabled as { svc, reason } (svc._svctype)}
+                <ServiceSelectorItem disabled {reason} {svc} />
             {/each}
-        </ul>
-    {:else}
-        <div class="mb-3"></div>
-    {/if}
-    <ListGroup>
-        {#each filteredServicesResult.available as svc}
-            <ServiceSelectorItem
-                active={value === svc._svctype}
-                {svc}
-                on:click={() => (value = svc._svctype)}
-            />
-        {/each}
-        {#each filteredServicesResult.disabled as { svc, reason }}
-            <ServiceSelectorItem
-                active={value === svc._svctype}
-                disabled
-                {reason}
-                {svc}
-                on:click={() => (value = svc._svctype)}
-            />
-        {/each}
-    </ListGroup>
+        {/if}
+        {#if !filteredServicesResult.available.length && !filteredServicesResult.disabled.length}
+            <p class="text-center text-muted py-4 mb-0">
+                {$t("service.no-match", { query: $filteredName })}
+            </p>
+        {/if}
+    </div>
 {/if}

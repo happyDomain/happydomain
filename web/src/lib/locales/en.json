@@ -75,7 +75,8 @@
         "update-what": "Update {{what}}",
         "welcome": "Welcome to HappyDomain!",
         "help": "Help!",
-        "records": "{{count:eq; 0:no {{type}} record; 1:{{type}} record; default:{{type}} records}}"
+        "records": "{{count:eq; 0:no {{type}} record; 1:{{type}} record; default:{{type}} records}}",
+        "step-of": "Step {{step}} of {{count}}"
     },
     "domains": {
         "input": {
@@ -178,7 +179,8 @@
         "placeholder-search": "my.domain.",
         "placeholder-new": "my.new.domain.",
         "placeholder-new-sub": "new.subdomain",
-        "form-new-subdomain": "Add a new subdomain under {{domain}}:"
+        "form-new-subdomain": "Add a new subdomain under {{domain}}:",
+        "new-subdomain-of": "New subdomain of"
     },
     "domaingroups": {
         "all": "All groups",
@@ -691,7 +693,19 @@
         "ttl-zero": "default TTL",
         "propagating": "Propagating {{countdown}}",
         "propagation-in-progress": "DNS propagation in progress",
-        "propagation-remaining": "Propagation complete in {{countdown}}"
+        "propagation-remaining": "Propagation complete in {{countdown}}",
+        "new-on": "New service on",
+        "search": "Search a service or a record type (MX, TXT…)",
+        "family": {
+            "abstract": "Services",
+            "provider": "Providers",
+            "raw": "Raw DNS resources"
+        },
+        "unavailable-here": "Unavailable here ({{count}})",
+        "no-match": "No service matches “{{query}}”.",
+        "continue-with": "Continue with {{service}}",
+        "keys-browse": "browse",
+        "keys-continue": "continue"
     },
     "records": {
         "add": "Add record",

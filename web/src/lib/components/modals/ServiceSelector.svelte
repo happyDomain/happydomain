@@ -23,7 +23,7 @@
 
 <script module lang="ts">
     export const controls = {
-        Open(_domain: string): void { },
+        Open(_domain: string, _previousSteps?: number): void { },
     };
 </script>
 
@@ -41,8 +41,8 @@
     import FilterServiceSelectorInput from "$lib/components/services/FilterServiceSelectorInput.svelte";
     import ServiceSelector from "$lib/components/services/ServiceSelector.svelte";
     import { filterServices } from "$lib/components/services/service-filter";
+    import { serviceName } from "$lib/services/infos";
     import { t } from "$lib/translations";
-    import { fqdn } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { HappydnsService } from "$lib/api-base/types.gen";
     import { providers_idx } from "$lib/stores/providers";
@@ -54,6 +54,8 @@
     const toggle = () => (isOpen = !isOpen);
 
     let dn: string = $state("");
+    // Steps taken before this modal, as choosing the subdomain.
+    let previousSteps = $state(0);
 
     interface Props {
         isOpen?: boolean;
@@ -114,25 +116,54 @@
         });
     }
 
-    function Open(domain: string): void {
+    function Open(domain: string, previous = 0): void {
         $filteredName = "";
         dn = domain;
+        previousSteps = previous;
         isOpen = true;
         value = null;
     }
 
     controls.Open = Open;
+
+    let selectedName = $derived.by(() => {
+        const svc = $servicesSpecsList.find((svc) => svc._svctype === value);
+        return svc ? $serviceName(svc) : null;
+    });
 </script>
 
 <Modal {isOpen} scrollable {toggle}>
-    <ModalHeader {toggle} dn={fqdn(dn, origin.domain)} />
-    <ModalBody class="pt-0">
+    <ModalHeader
+        {toggle}
+        title={$t("service.new-on")}
+        {dn}
+        origin={origin.domain}
+        step={previousSteps + 1}
+        steps={previousSteps + 2}
+    >
         <form onsubmit={submitFilter}>
-            <FilterServiceSelectorInput class="my-2" />
+            <FilterServiceSelectorInput />
         </form>
+    </ModalHeader>
+    <ModalBody class="pt-0">
         <form id="selectServiceForm" onsubmit={submitSelectorForm}>
             <ServiceSelector {dn} {origin} bind:value {zservices} />
         </form>
     </ModalBody>
-    <ModalFooter canContinue={value !== null} form="selectServiceForm" step={1} {toggle} />
+    <ModalFooter
+        canContinue={value !== null}
+        continueLabel={selectedName ? $t("service.continue-with", { service: selectedName }) : undefined}
+        form="selectServiceForm"
+        step={1}
+        {toggle}
+    >
+        {#snippet hints()}
+            <span
+                ><kbd class="px-1 py-0 border bg-transparent text-reset">↑</kbd>
+                <kbd class="px-1 py-0 border bg-transparent text-reset">↓</kbd>
+                {$t("service.keys-browse")}</span
+            >
+            <span><kbd class="px-1 py-0 border bg-transparent text-reset">↵</kbd> {$t("service.keys-continue")}</span>
+        {/snippet}
+    </ModalFooter>
 </Modal>

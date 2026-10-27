@@ -24,7 +24,7 @@
 <script lang="ts">
     import { onMount, tick } from "svelte";
 
-    import { Input } from "@sveltestrap/sveltestrap";
+    import { Icon, Input, InputGroup, InputGroupText } from "@sveltestrap/sveltestrap";
 
     import { filteredName } from "$lib/stores/serviceSelector";
     import { t } from "$lib/translations";
@@ -44,10 +44,16 @@
     });
 </script>
 
-<Input
-    id="filterserviceinput"
-    autocomplete="off"
-    placeholder={$t("common.filter")}
-    bind:value={$filteredName}
-    {...rest}
-/>
+<InputGroup>
+    <InputGroupText>
+        <Icon name="search"></Icon>
+    </InputGroupText>
+    <Input
+        id="filterserviceinput"
+        autocomplete="off"
+        aria-label={$t("common.filter")}
+        placeholder={$t("service.search")}
+        bind:value={$filteredName}
+        {...rest}
+    />
+</InputGroup>

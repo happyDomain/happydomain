@@ -24,7 +24,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
 
-    import { Badge, ListGroupItem } from "@sveltestrap/sveltestrap";
+    import { Icon } from "@sveltestrap/sveltestrap";
 
     import { nsrrtype } from "$lib/dns";
     import type { ServiceInfos } from "$lib/model/service_specs.svelte";
@@ -43,36 +43,44 @@
     let { active = false, disabled = false, reason = "", svc }: Props = $props();
 </script>
 
-<ListGroupItem {active} class="d-flex" {disabled} tag="button" on:click={() => dispatch("click")}>
+<button
+    type="button"
+    class="list-group-item list-group-item-action d-flex gap-3 align-items-center px-3 py-2 border-0 rounded-3"
+    class:active
+    role="option"
+    aria-selected={active}
+    {disabled}
+    onclick={() => dispatch("click")}
+>
     {#if svc._svcicon}
-        <div class="d-inline-block align-self-center text-center" style="width: 75px;">
-            <img
-                src={svc._svcicon}
-                alt={$serviceName(svc)}
-                style="max-width: 100%; max-height: 2.5em; margin: -.6em .4em -.6em -.6em"
-            />
-        </div>
+        <img
+            class="icon object-fit-contain"
+            class:opacity-50={disabled}
+            src={svc._svcicon}
+            alt=""
+        />
     {/if}
-    <div class="flex-fill">
-        <strong class="text-body-emphasis">{$serviceName(svc)}</strong>
+    <span class="d-grid flex-fill min-w-0">
+        <span class="fw-semibold" class:opacity-50={disabled}>
+            {$serviceName(svc)}
+            {#if svc.record_types && $userSession.settings && $userSession.settings.showrrtypes}
+                <span class="ms-1 small fw-medium text-body-secondary font-monospace">
+                    {svc.record_types.map((rtype) => nsrrtype(rtype)).join(" ")}
+                </span>
+            {/if}
+        </span>
         {#if reason}
-            <small class="font-italic text-danger">{reason}</small>
+            <span class="small fw-normal text-danger">{reason}</span>
         {:else}
-            <small class="text-muted">{$serviceDescription(svc)}</small>
+            <span class="small fw-normal text-body-secondary">{$serviceDescription(svc)}</span>
         {/if}
-        {#if svc.categories}
-            {#each svc.categories as category}
-                <Badge color="secondary" class="float-end ms-1">
-                    {category}
-                </Badge>
-            {/each}
-        {/if}
-        {#if svc.record_types && $userSession.settings && $userSession.settings.showrrtypes}
-            {#each svc.record_types as rtype}
-                <Badge color="info" class="float-end ms-1">
-                    {nsrrtype(rtype)}
-                </Badge>
-            {/each}
-        {/if}
-    </div>
-</ListGroupItem>
+    </span>
+    <Icon name="check-lg" class="text-primary {active ? '' : 'invisible'}" />
+</button>
+
+<style>
+    .icon {
+        width: 2.25rem;
+        max-height: 2.25rem;
+    }
+</style>

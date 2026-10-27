@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, type Snippet } from "svelte";
 
     import { Button, Icon, Input, Label, ModalFooter, Spinner } from "@sveltestrap/sveltestrap";
 
@@ -44,6 +44,9 @@
         canContinue?: boolean;
         addServiceInProgress?: boolean;
         deleteServiceInProgress?: boolean;
+        continueLabel?: string;
+        // Shown on the left, as keyboard shortcuts.
+        hints?: Snippet;
     }
 
     let {
@@ -58,12 +61,20 @@
         canContinue = false,
         addServiceInProgress = false,
         deleteServiceInProgress = false,
+        continueLabel,
+        hints,
     }: Props = $props();
 
 </script>
 
-<ModalFooter>
-    <div class="ms-auto"></div>
+<ModalFooter class="flex-nowrap">
+    <div
+        class="hints d-flex flex-wrap column-gap-3 me-auto min-w-0 overflow-hidden text-nowrap small text-body-secondary"
+    >
+        {#if hints}
+            {@render hints()}
+        {/if}
+    </div>
     {#if origin && zoneId && service}
         <Label for="svc_ttl" title={$t("service.ttl-long")}>{$t("service.ttl")}</Label>
         <Input
@@ -113,8 +124,22 @@
             {$t("service.add")}
         </Button>
     {:else}
-        <Button disabled={!canContinue} {form} type="submit" color="primary">
-            {$t("common.continue")}
+        <Button
+            class="text-truncate"
+            disabled={!canContinue}
+            {form}
+            type="submit"
+            color="primary"
+        >
+            {continueLabel ?? $t("common.continue")}
         </Button>
     {/if}
 </ModalFooter>
+
+<style>
+    /* The hints stay on one line: a hint without room wraps onto a hidden
+       second line, rather than pushing the buttons below. */
+    .hints {
+        height: 1.5em;
+    }
+</style>

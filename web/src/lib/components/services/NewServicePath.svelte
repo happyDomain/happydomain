@@ -24,7 +24,7 @@
 <script module lang="ts">
     import { goto } from "$app/navigation";
     export const controls = {
-        Open (_domain: string): void { },
+        Open (_domain: string, _previousSteps?: number): void { },
     };
 </script>
 
@@ -46,8 +46,8 @@
 
     const editor = useZoneEditor(() => origin);
 
-    function Open(domain: string): void {
-        ctrlServiceSelector.Open(domain);
+    function Open(domain: string, previousSteps = 0): void {
+        ctrlServiceSelector.Open(domain, previousSteps);
     }
 
     controls.Open = Open;

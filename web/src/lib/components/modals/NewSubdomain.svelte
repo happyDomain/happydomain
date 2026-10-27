@@ -75,7 +75,14 @@
 </script>
 
 <Modal {isOpen} {toggle}>
-    <ModalHeader {toggle} dn={origin.domain} />
+    <ModalHeader
+        {toggle}
+        title={$t("domains.new-subdomain-of")}
+        dn=""
+        origin={origin.domain}
+        step={1}
+        steps={3}
+    />
     <ModalBody>
         <form id="addSubdomainForm" onsubmit={submitSubdomainForm}>
             <p>

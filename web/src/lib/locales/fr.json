@@ -73,7 +73,8 @@
         "no-content": "Aucun contenu",
         "no-thing": "Aucun {{thing}}",
         "new-row": "Nouvelle ligne",
-        "welcome": "Bienvenue sur HappyDomain !"
+        "welcome": "Bienvenue sur HappyDomain !",
+        "step-of": "Étape {{step}} sur {{count}}"
     },
     "domains": {
         "input": {
@@ -182,7 +183,8 @@
         "placeholder-new": "mon.nouveau.domaine.",
         "form-new-subdomain": "Ajout d'un sous-domaine sous {{domain}} :",
         "placeholder-new-sub": "new.subdomain",
-        "search-placeholder": "Rechercher des domaines…"
+        "search-placeholder": "Rechercher des domaines…",
+        "new-subdomain-of": "Nouveau sous-domaine de"
     },
     "email": {
         "address": "Adresse électronique",
@@ -700,7 +702,19 @@
         "ttl-zero": "TTL par défaut",
         "propagating": "Propagation {{countdown}}",
         "propagation-in-progress": "Propagation DNS en cours",
-        "propagation-remaining": "Propagation complète dans {{countdown}}"
+        "propagation-remaining": "Propagation complète dans {{countdown}}",
+        "new-on": "Nouveau service sur",
+        "search": "Rechercher un service ou un type d'enregistrement (MX, TXT…)",
+        "family": {
+            "abstract": "Services",
+            "provider": "Fournisseurs",
+            "raw": "Enregistrements DNS bruts"
+        },
+        "unavailable-here": "Indisponibles ici ({{count}})",
+        "no-match": "Aucun service ne correspond à « {{query}} ».",
+        "continue-with": "Continuer avec {{service}}",
+        "keys-browse": "parcourir",
+        "keys-continue": "continuer"
     },
     "upgrade": {
         "title": "Une mise à jour est disponible !",

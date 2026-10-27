@@ -49,4 +49,4 @@
     };
 </script>
 
-<NewSubdomainModal {origin} on:show-next-modal={(event) => ctrlServicePath.Open(event.detail)} />
+<NewSubdomainModal {origin} on:show-next-modal={(event) => ctrlServicePath.Open(event.detail, 1)} />

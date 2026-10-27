@@ -22,27 +22,64 @@
 -->
 
 <script lang="ts">
-    import { escape } from "html-escaper";
-    import { ModalHeader } from "@sveltestrap/sveltestrap";
+    import type { Snippet } from "svelte";
 
     import { t } from "$lib/translations";
 
     interface Props {
         toggle: () => void;
+        // What the modal does, shown above the domain name.
+        title: string;
+        // The name worked on, relative to origin; empty for the origin itself.
         dn: string;
-        update?: boolean;
+        origin: string;
+        step?: number;
+        steps?: number;
+        children?: Snippet;
     }
 
-    let { toggle, dn, update = false }: Props = $props();
+    let { toggle, title, dn, origin, step, steps, children }: Props = $props();
+
+    // The subdomain stands out, the origin it belongs to recedes.
+    let sub = $derived(dn === "@" ? "" : dn);
 </script>
 
-<ModalHeader class="bg-light" {toggle}>
-    {#if update}
-        {$t("service.update")}
-    {:else}
-        <!-- eslint-disable-next-line svelte/no-at-html-tags -- Translations ship with the app; interpolated values are literals or escaped -->
-        {@html $t("service.form-new", {
-            domain: `<span class="font-monospace">${escape(dn)}</span>`,
-        })}
+<div class="modal-header d-block bg-light">
+    <div class="d-flex align-items-start gap-3">
+        <div class="flex-fill min-w-0 text-break">
+            <div class="small fw-semibold text-uppercase text-body-secondary">{title}</div>
+            <h5 class="modal-title font-monospace">
+                {#if sub.endsWith(".")}
+                    <span class="text-primary">{sub}</span>
+                {:else if sub}
+                    <span class="text-primary">{sub}</span><span class="text-muted fw-normal"
+                        >.{origin}</span
+                    >
+                {:else}
+                    {origin}
+                {/if}
+            </h5>
+        </div>
+        {#if step && steps}
+            <div class="d-flex align-items-center gap-2 pt-1 small text-nowrap text-body-secondary">
+                {$t("common.step-of", { step, count: steps })}
+                <span class="d-flex gap-1" aria-hidden="true">
+                    {#each { length: steps } as _, i (i)}
+                        <span
+                            class="d-inline-block p-1 rounded-circle {i < step
+                                ? 'bg-primary'
+                                : 'bg-secondary-subtle'}"
+                        ></span>
+                    {/each}
+                </span>
+            </div>
+        {/if}
+        <button type="button" class="btn-close" aria-label={$t("common.close")} onclick={toggle}
+        ></button>
+    </div>
+    {#if children}
+        <div class="mt-3">
+            {@render children()}
+        </div>
     {/if}
-</ModalHeader>
+</div>
