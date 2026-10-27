@@ -25,13 +25,14 @@
         Col,
         Input,
         InputGroup,
-        InputGroupText,
         Row,
     } from "@sveltestrap/sveltestrap";
 
+    import DomainNameInput from "$lib/components/inputs/DomainName.svelte";
     import DurationInput from "$lib/components/inputs/Duration.svelte";
+    import MboxInput from "$lib/components/inputs/Mbox.svelte";
     import { fqdn, nsclass, nsrrtype } from "$lib/dns";
-    import { rdatafields, type dnsRR } from "$lib/dns_rr";
+    import { rdatafields, rdatanamefields, type dnsRR } from "$lib/dns_rr";
     import type { Domain } from "$lib/model/domain";
     import { t } from "$lib/translations";
 
@@ -57,15 +58,12 @@
     </label>
     <Col md="8" class="d-flex flex-column">
         <div class="flex-fill d-flex align-items-center">
-            <InputGroup size="sm">
-                <Input
-                    id="rr-hdr-name"
-                    type="text"
-                    class="fw-bold"
-                    bind:value={record.Hdr.Name}
-                />
-                <InputGroupText>.{#if dn}{fqdn(dn, origin.domain)}{:else}{origin.domain}{/if}</InputGroupText>
-            </InputGroup>
+            <DomainNameInput
+                id="rr-hdr-name"
+                origin={dn ? fqdn(dn, origin.domain) : origin.domain}
+                within
+                bind:value={record.Hdr.Name}
+            />
         </div>
     </Col>
 </Row>
@@ -145,7 +143,13 @@
                 </label>
                 <Col md="8" class="d-flex flex-column">
                     <div class="flex-fill d-flex align-items-center">
-                        <Input id="rr-{k}" bsSize="sm" type="text" bind:value={(record as any)[k]} />
+                        {#if k == "Mbox"}
+                            <MboxInput id="rr-{k}" origin={origin.domain} bind:value={(record as any)[k]} />
+                        {:else if rdatanamefields(record.Hdr.Rrtype).includes(k)}
+                            <DomainNameInput id="rr-{k}" origin={origin.domain} bind:value={(record as any)[k]} />
+                        {:else}
+                            <Input id="rr-{k}" bsSize="sm" type="text" bind:value={(record as any)[k]} />
+                        {/if}
                     </div>
                 </Col>
             </Row>

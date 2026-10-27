@@ -25,6 +25,7 @@
     import type { ClassValue } from "svelte/elements";
 
     import BasicInput from "$lib/components/inputs/basic.svelte";
+    import DomainNameInput from "$lib/components/inputs/DomainName.svelte";
     import MboxInput from "$lib/components/inputs/Mbox.svelte";
     import type { dnsTypeSOA } from "$lib/dns_rr";
 
@@ -50,7 +51,9 @@
               description: "The domain name of the name server that was the original or primary source of data for this zone.",
               }}
         bind:value={value.Ns}
-    />
+    >
+        <DomainNameInput id="spec-soa_mname-mname" {origin} placeholder="ns0" bind:value={value.Ns} />
+    </BasicInput>
 
     <BasicInput
         edit
