@@ -149,6 +149,7 @@
             "prepare-info": "Le fournisseur exécutera {{nbDiffs}} correction(s) pour vos {{nbSelected}} modification(s) sélectionnée(s) :",
             "prepare-warning": "Le nombre de corrections diffère de votre sélection. Veuillez vérifier avant de confirmer.",
             "read-only": "Cet hébergeur est en lecture seule : HappyDomain lit la zone publiée mais ne peut pas la modifier. Appliquez vous-même ces différences sur votre serveur.",
+            "refresh": "Comparer à nouveau avec l'hébergeur",
             "confirm": "Confirmer et appliquer",
             "back": "Retour"
         },

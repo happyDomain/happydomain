@@ -150,6 +150,7 @@
             "prepare-info": "The provider will execute {{nbDiffs}} correction(s) for your {{nbSelected}} selected change(s):",
             "prepare-warning": "The number of corrections differs from your selection. Please review before confirming.",
             "read-only": "This provider is read-only: HappyDomain reads the published zone but cannot change it. Apply these differences on your server yourself.",
+            "refresh": "Compare again with the provider",
             "confirm": "Confirm & Apply",
             "back": "Back"
         },

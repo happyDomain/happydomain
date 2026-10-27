@@ -117,6 +117,14 @@
         diffCommitMsg = "";
     }
 
+    // The provider may have changed since the comparison was cached: ask
+    // again, for the publish button as well.
+    function refreshDiff(): void {
+        diffComputed = false;
+        zoneDiffLength = 0;
+        invalidateZoneDiff();
+    }
+
     function receiveError(evt: CustomEvent): void {
         isOpen = false;
         throw evt.detail;
@@ -276,6 +284,19 @@
         {/if}
     </ModalBody>
     <ModalFooter>
+        {#if preparePhase === "select" && !propagationInProgress && !prepareInProgress}
+            <Button
+                color="secondary"
+                outline
+                class="me-auto"
+                title={$t("domains.apply.refresh")}
+                disabled={!diffComputed}
+                on:click={refreshDiff}
+            >
+                <Icon name="arrow-clockwise" aria-hidden="true" />
+                <span class="visually-hidden">{$t("domains.apply.refresh")}</span>
+            </Button>
+        {/if}
         {#if nothingToApply || readOnly}
             <!-- Nothing applicable: offer a way out, not a disabled apply button. -->
             <Button color="secondary" outline on:click={() => (isOpen = false)}>
@@ -285,6 +306,7 @@
             {#if zoneDiffLength > 0 && !(prepareInProgress || propagationInProgress)}
                 <Input
                     id="commitmsg"
+                    class="order-first"
                     placeholder={$t("domains.commit-msg")}
                     bsSize="sm"
                     bind:value={diffCommitMsg}

@@ -22,11 +22,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { get } from "svelte/store";
 
 const diffZoneMock = vi.fn();
-const diffZoneSummaryMock = vi.fn();
 
 vi.mock("$lib/api/zone", () => ({
     diffZone: (...args: unknown[]) => diffZoneMock(...args),
-    diffZoneSummary: (...args: unknown[]) => diffZoneSummaryMock(...args),
 }));
 
 import { thisZone } from "$lib/stores/thiszone";
@@ -38,114 +36,28 @@ import {
     zoneDiffVersion,
 } from "./zonediff";
 
+// Corrections of the given kinds: 1 addition, 2 update, 3 deletion, 99 other.
+function corrections(...kinds: number[]) {
+    return kinds.map((kind, i) => ({ id: `c${i}`, msg: `change ${i}`, kind }));
+}
+
 describe("zonediff store", () => {
     const domain = makeDomain();
 
     beforeEach(() => {
         diffZoneMock.mockReset();
-        diffZoneSummaryMock.mockReset();
         invalidateZoneDiff();
         thisZone.set(null);
     });
 
-    describe("getCachedDiffZoneSummary", () => {
-        it("fetches the summary from the API", async () => {
-            diffZoneSummaryMock.mockResolvedValue({ nbDiffs: 3 });
-
-            const result = await getCachedDiffZoneSummary(domain, "from", "to");
-
-            expect(result).toEqual({ nbDiffs: 3 });
-            expect(diffZoneSummaryMock).toHaveBeenCalledWith(domain, "from", "to");
-        });
-
-        it("caches identical requests instead of calling the API twice", async () => {
-            diffZoneSummaryMock.mockResolvedValue({ nbDiffs: 3 });
-
-            await getCachedDiffZoneSummary(domain, "from", "to");
-            await getCachedDiffZoneSummary(domain, "from", "to");
-
-            expect(diffZoneSummaryMock).toHaveBeenCalledTimes(1);
-        });
-
-        it("shares the in-flight promise between concurrent callers", async () => {
-            let resolve!: (v: { nbDiffs: number }) => void;
-            diffZoneSummaryMock.mockReturnValue(
-                new Promise((r) => {
-                    resolve = r;
-                }),
-            );
-
-            const p1 = getCachedDiffZoneSummary(domain, "from", "to");
-            const p2 = getCachedDiffZoneSummary(domain, "from", "to");
-
-            expect(diffZoneSummaryMock).toHaveBeenCalledTimes(1);
-            resolve({ nbDiffs: 7 });
-
-            expect(await p1).toEqual({ nbDiffs: 7 });
-            expect(await p2).toEqual({ nbDiffs: 7 });
-        });
-
-        it("distinguishes requests by domain id, zoneFrom, and zoneTo", async () => {
-            diffZoneSummaryMock.mockResolvedValue({ nbDiffs: 1 });
-
-            await getCachedDiffZoneSummary(domain, "from", "to");
-            await getCachedDiffZoneSummary(domain, "other-from", "to");
-            await getCachedDiffZoneSummary(domain, "from", "other-to");
-            await getCachedDiffZoneSummary(makeDomain({ id: "other-domain" }), "from", "to");
-
-            expect(diffZoneSummaryMock).toHaveBeenCalledTimes(4);
-        });
-
-        it("does not cache a rejected request, so a retry hits the API again", async () => {
-            diffZoneSummaryMock.mockRejectedValueOnce(new Error("network down"));
-            diffZoneSummaryMock.mockResolvedValueOnce({ nbDiffs: 2 });
-
-            await expect(getCachedDiffZoneSummary(domain, "from", "to")).rejects.toThrow(
-                "network down",
-            );
-            const result = await getCachedDiffZoneSummary(domain, "from", "to");
-
-            expect(result).toEqual({ nbDiffs: 2 });
-            expect(diffZoneSummaryMock).toHaveBeenCalledTimes(2);
-        });
-
-        it("does not evict a fresher entry when an older rejected promise settles late", async () => {
-            let rejectFirst!: (e: Error) => void;
-            diffZoneSummaryMock.mockReturnValueOnce(
-                new Promise((_, reject) => {
-                    rejectFirst = reject;
-                }),
-            );
-
-            const firstCall = getCachedDiffZoneSummary(domain, "from", "to");
-            firstCall.catch(() => {});
-
-            // A cache clear in between (e.g. zone switch) replaces the pending
-            // entry; when the stale request finally rejects it must not delete
-            // the newer promise sitting under the same key.
-            invalidateZoneDiff();
-
-            diffZoneSummaryMock.mockResolvedValueOnce({ nbDiffs: 9 });
-            const secondCall = getCachedDiffZoneSummary(domain, "from", "to");
-
-            rejectFirst(new Error("stale failure"));
-            await expect(firstCall).rejects.toThrow("stale failure");
-
-            expect(await secondCall).toEqual({ nbDiffs: 9 });
-            // The cache should still return the second promise's result afterwards.
-            expect(await getCachedDiffZoneSummary(domain, "from", "to")).toEqual({ nbDiffs: 9 });
-            expect(diffZoneSummaryMock).toHaveBeenCalledTimes(2);
-        });
-    });
-
     describe("getCachedDiffZone", () => {
         it("fetches the full diff from the API", async () => {
-            const corrections = [{ Type: "add" }];
-            diffZoneMock.mockResolvedValue(corrections);
+            const diff = corrections(1);
+            diffZoneMock.mockResolvedValue(diff);
 
             const result = await getCachedDiffZone(domain, "from", "to");
 
-            expect(result).toBe(corrections);
+            expect(result).toBe(diff);
             expect(diffZoneMock).toHaveBeenCalledWith(domain, "from", "to");
         });
 
@@ -158,32 +70,132 @@ describe("zonediff store", () => {
             expect(diffZoneMock).toHaveBeenCalledTimes(1);
         });
 
-        it("keeps the summary cache and the full diff cache independent", async () => {
-            diffZoneSummaryMock.mockResolvedValue({ nbDiffs: 1 });
-            diffZoneMock.mockResolvedValue([{ Type: "add" }]);
+        it("shares the in-flight promise between concurrent callers", async () => {
+            let resolve!: (v: unknown) => void;
+            diffZoneMock.mockReturnValue(
+                new Promise((r) => {
+                    resolve = r;
+                }),
+            );
 
-            await getCachedDiffZoneSummary(domain, "from", "to");
-            await getCachedDiffZone(domain, "from", "to");
+            const p1 = getCachedDiffZone(domain, "from", "to");
+            const p2 = getCachedDiffZone(domain, "from", "to");
 
-            expect(diffZoneSummaryMock).toHaveBeenCalledTimes(1);
             expect(diffZoneMock).toHaveBeenCalledTimes(1);
+            const diff = corrections(1, 3);
+            resolve(diff);
+
+            expect(await p1).toBe(diff);
+            expect(await p2).toBe(diff);
+        });
+
+        it("distinguishes requests by domain id, zoneFrom, and zoneTo", async () => {
+            diffZoneMock.mockResolvedValue([]);
+
+            await getCachedDiffZone(domain, "from", "to");
+            await getCachedDiffZone(domain, "other-from", "to");
+            await getCachedDiffZone(domain, "from", "other-to");
+            await getCachedDiffZone(makeDomain({ id: "other-domain" }), "from", "to");
+
+            expect(diffZoneMock).toHaveBeenCalledTimes(4);
         });
 
         it("does not cache a rejected request, so a retry hits the API again", async () => {
             diffZoneMock.mockRejectedValueOnce(new Error("boom"));
-            diffZoneMock.mockResolvedValueOnce([{ Type: "del" }]);
+            diffZoneMock.mockResolvedValueOnce(corrections(3));
 
             await expect(getCachedDiffZone(domain, "from", "to")).rejects.toThrow("boom");
             const result = await getCachedDiffZone(domain, "from", "to");
 
-            expect(result).toEqual([{ Type: "del" }]);
+            expect(result).toEqual(corrections(3));
+            expect(diffZoneMock).toHaveBeenCalledTimes(2);
+        });
+
+        it("does not evict a fresher entry when an older rejected promise settles late", async () => {
+            let rejectFirst!: (e: Error) => void;
+            diffZoneMock.mockReturnValueOnce(
+                new Promise((_, reject) => {
+                    rejectFirst = reject;
+                }),
+            );
+
+            const firstCall = getCachedDiffZone(domain, "from", "to");
+            firstCall.catch(() => {});
+
+            // A cache clear in between (e.g. zone switch) replaces the pending
+            // entry; when the stale request finally rejects it must not delete
+            // the newer promise sitting under the same key.
+            invalidateZoneDiff();
+
+            const fresh = corrections(1);
+            diffZoneMock.mockResolvedValueOnce(fresh);
+            const secondCall = getCachedDiffZone(domain, "from", "to");
+
+            rejectFirst(new Error("stale failure"));
+            await expect(firstCall).rejects.toThrow("stale failure");
+
+            expect(await secondCall).toBe(fresh);
+            // The cache should still return the second promise's result afterwards.
+            expect(await getCachedDiffZone(domain, "from", "to")).toBe(fresh);
+            expect(diffZoneMock).toHaveBeenCalledTimes(2);
+        });
+    });
+
+    describe("getCachedDiffZoneSummary", () => {
+        it("counts the changes of the full diff, leaving out the other messages", async () => {
+            diffZoneMock.mockResolvedValue(corrections(1, 2, 3, 99, 1));
+
+            const result = await getCachedDiffZoneSummary(domain, "from", "to");
+
+            expect(result).toEqual({ nbDiffs: 4 });
+            expect(diffZoneMock).toHaveBeenCalledWith(domain, "from", "to");
+        });
+
+        it("shares a pending request with the full diff", async () => {
+            let resolve!: (v: unknown) => void;
+            diffZoneMock.mockReturnValue(
+                new Promise((r) => {
+                    resolve = r;
+                }),
+            );
+
+            const summary = getCachedDiffZoneSummary(domain, "from", "to");
+            const full = getCachedDiffZone(domain, "from", "to");
+
+            expect(diffZoneMock).toHaveBeenCalledTimes(1);
+            const diff = corrections(1, 2);
+            resolve(diff);
+
+            expect(await summary).toEqual({ nbDiffs: 2 });
+            expect(await full).toBe(diff);
+        });
+
+        it("reuses a full diff already fetched", async () => {
+            diffZoneMock.mockResolvedValue(corrections(3));
+
+            await getCachedDiffZone(domain, "from", "to");
+            const result = await getCachedDiffZoneSummary(domain, "from", "to");
+
+            expect(result).toEqual({ nbDiffs: 1 });
+            expect(diffZoneMock).toHaveBeenCalledTimes(1);
+        });
+
+        it("rejects like the full diff, and a retry hits the API again", async () => {
+            diffZoneMock.mockRejectedValueOnce(new Error("network down"));
+            diffZoneMock.mockResolvedValueOnce(corrections(1, 1));
+
+            await expect(getCachedDiffZoneSummary(domain, "from", "to")).rejects.toThrow(
+                "network down",
+            );
+            const result = await getCachedDiffZoneSummary(domain, "from", "to");
+
+            expect(result).toEqual({ nbDiffs: 2 });
             expect(diffZoneMock).toHaveBeenCalledTimes(2);
         });
     });
 
     describe("invalidateZoneDiff", () => {
-        it("clears both caches so the next call refetches", async () => {
-            diffZoneSummaryMock.mockResolvedValue({ nbDiffs: 1 });
+        it("clears the cache so the next call refetches", async () => {
             diffZoneMock.mockResolvedValue([]);
 
             await getCachedDiffZoneSummary(domain, "from", "to");
@@ -194,7 +206,6 @@ describe("zonediff store", () => {
             await getCachedDiffZoneSummary(domain, "from", "to");
             await getCachedDiffZone(domain, "from", "to");
 
-            expect(diffZoneSummaryMock).toHaveBeenCalledTimes(2);
             expect(diffZoneMock).toHaveBeenCalledTimes(2);
         });
 
@@ -209,7 +220,7 @@ describe("zonediff store", () => {
 
     describe("auto-invalidation on thisZone changes", () => {
         it("clears the caches and bumps the version when the zone reference changes", async () => {
-            diffZoneSummaryMock.mockResolvedValue({ nbDiffs: 1 });
+            diffZoneMock.mockResolvedValue([]);
             await getCachedDiffZoneSummary(domain, "from", "to");
 
             const versionBefore = get(zoneDiffVersion);
@@ -219,14 +230,14 @@ describe("zonediff store", () => {
             expect(get(zoneDiffVersion)).toBe(versionBefore + 1);
 
             await getCachedDiffZoneSummary(domain, "from", "to");
-            expect(diffZoneSummaryMock).toHaveBeenCalledTimes(2);
+            expect(diffZoneMock).toHaveBeenCalledTimes(2);
         });
 
         it("does not invalidate when the same zone reference is set again", async () => {
             const zone = makeZone();
             thisZone.set(zone);
 
-            diffZoneSummaryMock.mockResolvedValue({ nbDiffs: 1 });
+            diffZoneMock.mockResolvedValue([]);
             await getCachedDiffZoneSummary(domain, "from", "to");
 
             const versionBefore = get(zoneDiffVersion);
@@ -236,13 +247,13 @@ describe("zonediff store", () => {
             expect(get(zoneDiffVersion)).toBe(versionBefore);
 
             await getCachedDiffZoneSummary(domain, "from", "to");
-            expect(diffZoneSummaryMock).toHaveBeenCalledTimes(1);
+            expect(diffZoneMock).toHaveBeenCalledTimes(1);
         });
 
         it("does invalidate when a different zone object with the same content is set", async () => {
             thisZone.set(makeZone());
 
-            diffZoneSummaryMock.mockResolvedValue({ nbDiffs: 1 });
+            diffZoneMock.mockResolvedValue([]);
             await getCachedDiffZoneSummary(domain, "from", "to");
 
             const versionBefore = get(zoneDiffVersion);

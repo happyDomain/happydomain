@@ -20,7 +20,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { writable } from "svelte/store";
-import { diffZone as APIDiffZone, diffZoneSummary as APIDiffZoneSummary } from "$lib/api/zone";
+import { diffZone as APIDiffZone } from "$lib/api/zone";
 import type { Correction } from "$lib/model/correction";
 import type { Domain } from "$lib/model/domain";
 import type { Zone } from "$lib/model/zone";
@@ -28,8 +28,7 @@ import { thisZone } from "$lib/stores/thiszone";
 
 export const zoneDiffVersion = writable(0);
 
-const summaryCache = new Map<string, Promise<{ nbDiffs: number }>>();
-const fullDiffCache = new Map<string, Promise<Array<Correction>>>();
+const diffCache = new Map<string, Promise<Array<Correction>>>();
 
 function makeCacheKey(domainId: string, zoneFrom: string, zoneTo: string): string {
     return `${domainId}:${zoneFrom}:${zoneTo}`;
@@ -39,33 +38,15 @@ function makeCacheKey(domainId: string, zoneFrom: string, zoneTo: string): strin
 let previousZone: Zone | null = null;
 thisZone.subscribe((zone) => {
     if (zone !== previousZone) {
-        summaryCache.clear();
-        fullDiffCache.clear();
+        diffCache.clear();
         previousZone = zone;
         zoneDiffVersion.update((v) => v + 1);
     }
 });
 
 export function invalidateZoneDiff(): void {
-    summaryCache.clear();
-    fullDiffCache.clear();
+    diffCache.clear();
     zoneDiffVersion.update((v) => v + 1);
-}
-
-export function getCachedDiffZoneSummary(
-    domain: Domain,
-    zoneFrom: string,
-    zoneTo: string,
-): Promise<{ nbDiffs: number }> {
-    const key = makeCacheKey(domain.id, zoneFrom, zoneTo);
-    if (!summaryCache.has(key)) {
-        const p = APIDiffZoneSummary(domain, zoneFrom, zoneTo);
-        summaryCache.set(key, p);
-        p.catch(() => {
-            if (summaryCache.get(key) === p) summaryCache.delete(key);
-        });
-    }
-    return summaryCache.get(key)!;
 }
 
 export function getCachedDiffZone(
@@ -74,12 +55,26 @@ export function getCachedDiffZone(
     zoneTo: string,
 ): Promise<Array<Correction>> {
     const key = makeCacheKey(domain.id, zoneFrom, zoneTo);
-    if (!fullDiffCache.has(key)) {
+    if (!diffCache.has(key)) {
         const p = APIDiffZone(domain, zoneFrom, zoneTo);
-        fullDiffCache.set(key, p);
+        diffCache.set(key, p);
         p.catch(() => {
-            if (fullDiffCache.get(key) === p) fullDiffCache.delete(key);
+            if (diffCache.get(key) === p) diffCache.delete(key);
         });
     }
-    return fullDiffCache.get(key)!;
+    return diffCache.get(key)!;
+}
+
+// Comparing with the provider ("@") costs the retrieval of the live zone,
+// whatever the server sends back: the summary is derived from the full diff,
+// so that the publish button and the diff modal share a single request.
+export function getCachedDiffZoneSummary(
+    domain: Domain,
+    zoneFrom: string,
+    zoneTo: string,
+): Promise<{ nbDiffs: number }> {
+    return getCachedDiffZone(domain, zoneFrom, zoneTo).then((corrections) => ({
+        // Other (99) carries informative messages, not changes.
+        nbDiffs: corrections ? corrections.filter((c) => c.kind !== 99).length : 0,
+    }));
 }

@@ -28,7 +28,7 @@
 
     import DiffZoneView from "./DiffZoneView.svelte";
     import type { Correction, FullCorrection } from "$lib/model/correction";
-    import { getCachedDiffZone } from "$lib/stores/zonediff";
+    import { getCachedDiffZone, zoneDiffVersion } from "$lib/stores/zonediff";
     import type { Domain } from "$lib/model/domain";
     import { t } from "$lib/translations";
 
@@ -58,9 +58,17 @@
 
     const correctionsIdx: Record<string, Correction> = {};
 
+    // Only the latest request may fill the view: an older one can settle last.
+    let lastRequest: Promise<Array<Correction>> | null = null;
+
     function computeDiff(domain: Domain, zoneTo: string, zoneFrom: string) {
-        getCachedDiffZone(domain, zoneTo, zoneFrom).then(
+        zoneDiff = null;
+        const request = getCachedDiffZone(domain, zoneTo, zoneFrom);
+        lastRequest = request;
+        request.then(
             (v: Array<Correction>) => {
+                if (request !== lastRequest) return;
+
                 let zoneDiffCreated = 0;
                 let zoneDiffDeleted = 0;
                 let zoneDiffModified = 0;
@@ -99,6 +107,7 @@
                 dispatchSelectionSummary();
             },
             (err: unknown) => {
+                if (request !== lastRequest) return;
                 dispatch("error", err);
             },
         );
@@ -118,6 +127,8 @@
         });
     }
     $effect(() => {
+        // An invalidated cache (a refresh, a publication) asks again.
+        void $zoneDiffVersion;
         computeDiff(domain, zoneTo, zoneFrom);
     });
 </script>

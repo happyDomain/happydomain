@@ -25,15 +25,19 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 // The network lives here: the tests decide what the backend answers.
 vi.mock("$lib/api/zone", () => ({
-    diffZone: vi.fn(async () => []),
-    diffZoneSummary: vi.fn(async () => ({ nbDiffs: 2 })),
+    // Two changes, and an informative message the summary does not count.
+    diffZone: vi.fn(async () => [
+        { id: "c1", msg: "+ CREATE a", kind: 1 },
+        { id: "c2", msg: "- DELETE b", kind: 3 },
+        { id: "c3", msg: "note", kind: 99 },
+    ]),
 }));
 vi.mock("$lib/api/domains", () => ({
     getDomain: vi.fn(async () => ({ id: "d1", zone_meta: {} })),
     listDomains: vi.fn(async () => []),
 }));
 
-import { diffZoneSummary } from "$lib/api/zone";
+import { diffZone } from "$lib/api/zone";
 import type { Domain } from "$lib/model/domain";
 import type { Provider } from "$lib/model/provider";
 import type { Zone } from "$lib/model/zone";
@@ -104,14 +108,14 @@ describe("ButtonZonePublish", () => {
         // Not the button waiting for the summary of the differences.
         expect(button.querySelector(".spinner-border")).toBeNull();
         expect(screen.queryByText("(2)")).toBeNull();
-        expect(diffZoneSummary).not.toHaveBeenCalled();
+        expect(diffZone).not.toHaveBeenCalled();
     });
 
     it("offers to publish a partial zone without computing its differences beforehand", async () => {
         render(ButtonZonePublish, { domain: setup(false, true), history: "z2" });
         const button = await screen.findByRole("button", { name: /Publish my changes/ });
         expect(button.querySelector(".spinner-border")).toBeNull();
-        expect(diffZoneSummary).not.toHaveBeenCalled();
+        expect(diffZone).not.toHaveBeenCalled();
     });
 
     it("opens the differences of a partial zone on demand", async () => {
