@@ -157,13 +157,13 @@
 
     // Placeholders (used to show an inherited value when the field is empty)
     // would otherwise leak secret values in plaintext, since the `placeholder`
-    // HTML attribute is not masked by type="password". Replace with bullets of
-    // the same length while the eye toggle is off.
+    // HTML attribute is not masked by type="password". Show none while the eye
+    // toggle is off: bullets would make the empty field look already filled.
     let displayPlaceholder: string | undefined = $derived(
         isReference
             ? referenceHint || specs.placeholder
-            : specs.secret && !secretVisible && specs.placeholder
-              ? "•".repeat(specs.placeholder.length)
+            : specs.secret && !secretVisible
+              ? undefined
               : specs.placeholder,
     );
 

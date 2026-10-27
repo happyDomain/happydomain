@@ -222,11 +222,18 @@ describe("Raw input", () => {
         expect(screen.getByRole("button", { name: "Hide" })).toBeInTheDocument();
     });
 
-    it("masks a secret's inherited placeholder while hidden", () => {
+    it("hides a secret's inherited placeholder until the secret is revealed", async () => {
+        const user = userEvent.setup();
         const specs = field({ id: "password", type: "string", secret: true, placeholder: "abc" });
         mount({ specs, value: "" });
 
-        expect(screen.getByPlaceholderText("•••")).toBeInTheDocument();
+        // Bullets would make the empty field look already filled.
+        const input = document.getElementById("spec-0-password") as HTMLInputElement;
+        expect(input.placeholder).toBe("");
+
+        await user.click(screen.getByRole("button", { name: "Show" }));
+
+        expect(input).toHaveAttribute("placeholder", "abc");
     });
 
     it("renders as plaintext and read-only when not editable", () => {

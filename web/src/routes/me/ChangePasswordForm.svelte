@@ -90,7 +90,6 @@
                     bind:value={form.current}
                     type="password"
                     required
-                    placeholder="••••••••"
                     autocomplete="current-password"
                 />
             </div>
@@ -108,7 +107,6 @@
                     autocomplete="new-password"
                     feedback={!passwordState ? $t("errors.password-weak") : null}
                     id="password-input"
-                    placeholder="••••••••"
                     required
                     type="password"
                     invalid={passwordState !== undefined && !passwordState}
@@ -129,7 +127,6 @@
                 <Input
                     feedback={!passwordConfirmState ? $t("errors.password-match") : null}
                     id="passwordconfirm-input"
-                    placeholder="••••••••"
                     required
                     type="password"
                     invalid={passwordConfirmState !== undefined && !passwordConfirmState}
