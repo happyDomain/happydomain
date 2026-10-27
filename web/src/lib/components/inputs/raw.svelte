@@ -291,7 +291,6 @@
         <Input
             id={"spec-" + index + "-" + specs.id}
             type={inputtype}
-            class="fw-bold"
             {feedback}
             invalid={feedback !== undefined}
             placeholder={displayPlaceholder}
@@ -306,7 +305,6 @@
         <Input
             id={"spec-" + index + "-" + specs.id}
             type={inputtype}
-            class="fw-bold"
             {feedback}
             invalid={feedback !== undefined}
             min={inputmin}
