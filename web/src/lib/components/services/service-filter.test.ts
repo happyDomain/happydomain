@@ -394,3 +394,163 @@ describe("filterServices: full scenario", () => {
         ]);
     });
 });
+
+describe("filterServices: relevance order", () => {
+    it("puts the exact name match before a description match", () => {
+        const caldav = makeSvc({ _svctype: "svcs.CalDAV", name: "CalDAV" });
+        const server = makeSvc({ _svctype: "abstract.Server", name: "Server" });
+        const translate = translator({
+            "svcinfo.svcs.CalDAV.description": "Locate your calendar server",
+        });
+        const result = filterServices(
+            [caldav, server],
+            makeProvider(),
+            NO_SERVICES,
+            "",
+            "server",
+            null,
+            translate,
+        );
+        expect(result.available).toEqual([server, caldav]);
+    });
+
+    it("puts the service holding a typed record type first, whatever its case", () => {
+        const caldav = makeSvc({ _svctype: "svcs.CalDAV", name: "CalDAV" });
+        const server = makeSvc({ _svctype: "abstract.Server", name: "Server", record_types: [1] });
+        for (const term of ["A", "a"]) {
+            const result = filterServices([caldav, server], makeProvider(), NO_SERVICES, "", term);
+            expect(result.available).toEqual([server, caldav]);
+        }
+    });
+
+    it("puts a name prefix before a match in the middle of the name", () => {
+        const middle = makeSvc({ _svctype: "svcs.Middle", name: "Big Widget" });
+        const prefix = makeSvc({ _svctype: "svcs.Prefix", name: "Widget Pro" });
+        const result = filterServices([middle, prefix], makeProvider(), NO_SERVICES, "", "widget");
+        expect(result.available).toEqual([prefix, middle]);
+    });
+
+    it("puts a name match before a keyword match", () => {
+        const keyword = makeSvc({ _svctype: "svcs.Keyword", name: "Pages", keywords: ["GitLab"] });
+        const named = makeSvc({ _svctype: "svcs.Named", name: "GitLab verification" });
+        const result = filterServices([keyword, named], makeProvider(), NO_SERVICES, "", "gitlab");
+        expect(result.available).toEqual([named, keyword]);
+    });
+
+    it("also orders the disabled list by relevance", () => {
+        const caldav = makeSvc({
+            _svctype: "svcs.CalDAV",
+            name: "CalDAV",
+            restrictions: { rootOnly: true },
+        });
+        const server = makeSvc({
+            _svctype: "abstract.Server",
+            name: "Server",
+            record_types: [1],
+            restrictions: { rootOnly: true },
+        });
+        const result = filterServices([caldav, server], makeProvider(), NO_SERVICES, "sub", "a");
+        expect(result.disabled.map((d) => d.svc)).toEqual([server, caldav]);
+    });
+
+    it("sorts alphabetically on the translated name without search term", () => {
+        const b = makeSvc({ _svctype: "svcs.B", name: "beta", weight: 1 });
+        const a = makeSvc({ _svctype: "svcs.A", name: "Alpha", record_types: [1], weight: 99999 });
+        const c = makeSvc({ _svctype: "svcs.C", name: "zeta" });
+        const translate = translator({ "svcinfo.svcs.C.name": "Gamma" });
+        const result = filterServices(
+            [c, b, a],
+            makeProvider(),
+            NO_SERVICES,
+            "",
+            "",
+            null,
+            translate,
+        );
+        expect(result.available).toEqual([a, b, c]);
+    });
+
+    it("puts the orphan record last without search term", () => {
+        const orphan = makeSvc({ _svctype: "svcs.Orphan", name: "Orphan Record" });
+        const srv = makeSvc({ _svctype: "svcs.UnknownSRV", name: "Service Record" });
+        const result = filterServices([srv, orphan], makeProvider(), NO_SERVICES, "", "");
+        expect(result.available).toEqual([srv, orphan]);
+    });
+});
+
+describe("filterServices: dashes", () => {
+    it("finds a dashed name without the dash", () => {
+        const a = makeSvc({ name: "E-mail sender" });
+        const result = filterServices([a], makeProvider(), NO_SERVICES, "", "email");
+        expect(result.available).toEqual([a]);
+    });
+
+    it("finds an undashed name with a dash", () => {
+        const a = makeSvc({ name: "Email sender" });
+        const result = filterServices([a], makeProvider(), NO_SERVICES, "", "e-mail");
+        expect(result.available).toEqual([a]);
+    });
+
+    it("drops dashes in keywords and descriptions too", () => {
+        const kw = makeSvc({ _svctype: "svcs.Kw", name: "kw", keywords: ["e-mail"] });
+        const desc = makeSvc({ _svctype: "svcs.Desc", name: "desc" });
+        const translate = translator({ "svcinfo.svcs.Desc.description": "Secures e-mail" });
+        const result = filterServices(
+            [kw, desc],
+            makeProvider(),
+            NO_SERVICES,
+            "",
+            "email",
+            null,
+            translate,
+        );
+        expect(result.available).toEqual([kw, desc]);
+    });
+});
+
+describe("filterServices: weight", () => {
+    it("puts the generic service before the specific ones holding the same record type", () => {
+        const autoconfig = makeSvc({
+            _svctype: "abstract.EMailAutoconfig",
+            name: "Email auto-configuration",
+            record_types: [33],
+            weight: 1,
+        });
+        const srv = makeSvc({
+            _svctype: "svcs.UnknownSRV",
+            name: "Service Record",
+            record_types: [33],
+            weight: 99999,
+        });
+        const result = filterServices([autoconfig, srv], makeProvider(), NO_SERVICES, "", "SRV");
+        expect(result.available).toEqual([srv, autoconfig]);
+    });
+
+    it("puts the orphan record last, despite its weight and a better match", () => {
+        const orphan = makeSvc({
+            _svctype: "svcs.Orphan",
+            name: "Orphan Record",
+            family: "",
+            weight: 99999999,
+        });
+        const srv = makeSvc({
+            _svctype: "svcs.UnknownSRV",
+            name: "Service Record",
+            family: "",
+            weight: 99999,
+        });
+        const result = filterServices([orphan, srv], makeProvider(), NO_SERVICES, "", "record");
+        expect(result.available).toEqual([srv, orphan]);
+
+        // "o" starts the orphan name, but only sits inside the other one.
+        const prefix = filterServices([orphan, srv], makeProvider(), NO_SERVICES, "", "o");
+        expect(prefix.available).toEqual([srv, orphan]);
+    });
+
+    it("does not let the weight beat a better match", () => {
+        const heavy = makeSvc({ _svctype: "svcs.Heavy", name: "Big Widget", weight: 99999 });
+        const light = makeSvc({ _svctype: "svcs.Light", name: "Widget", weight: 1 });
+        const result = filterServices([heavy, light], makeProvider(), NO_SERVICES, "", "widget");
+        expect(result.available).toEqual([light, heavy]);
+    });
+});

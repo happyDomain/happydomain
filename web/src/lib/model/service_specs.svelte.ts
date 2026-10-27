@@ -65,6 +65,7 @@ export class ServiceInfos {
     record_types?: Array<number> | null = $state([]);
     tabs?: boolean = $state(false);
     restrictions = $state(new ServiceRestrictions());
+    weight?: number = $state(0);
 
     constructor(data?: Partial<ServiceInfos>) {
         if (data) {
@@ -77,6 +78,7 @@ export class ServiceInfos {
             this.record_types = data.record_types ?? [];
             this.tabs = data.tabs ?? false;
             this.restrictions = data.restrictions ? new ServiceRestrictions(data.restrictions) : new ServiceRestrictions();
+            this.weight = data.weight ?? 0;
         }
     }
 }
