@@ -255,13 +255,9 @@
         "used-on": "Zuletzt verwendet am"
     },
     "logs": {
-        "date": "Datum",
-        "description": "Aktion/Beschreibung",
-        "level": "Stufe",
         "no-entry": "Kein Eintrag im Domain-Log.",
         "title": "Domain-Logs ",
-        "subtitle": "Vollständige Aufzeichnung aller Aktivitäten dieser Domain",
-        "user": "Benutzer"
+        "subtitle": "Vollständige Aufzeichnung aller Aktivitäten dieser Domain"
     },
     "menu": {
         "my-domains": "Meine Domains",

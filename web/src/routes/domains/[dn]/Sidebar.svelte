@@ -29,7 +29,9 @@
     import { Button, Icon, Spinner } from "@sveltestrap/sveltestrap";
 
     import ChecksSidebarContent from "$lib/components/checkers/ChecksSidebarContent.svelte";
+    import LogDaysTimeline from "$lib/components/domains/LogDaysTimeline.svelte";
     import SelectDomain from "$lib/components/domains/SelectDomain.svelte";
+    import { groupLogsByDay, isProblem } from "$lib/domain_logs";
     import type { Domain } from "$lib/model/domain";
     import type { ZoneMeta } from "$lib/model/zone";
     import { domainLink, domains_idx } from "$lib/stores/domains";
@@ -109,7 +111,32 @@
                 />
             </div>
         {/if}
-    {:else if page.route.id && (page.route.id.startsWith("/domains/[dn]/checks") || page.route.id.startsWith("/domains/[dn]/logs") || page.route.id.startsWith("/domains/[dn]/[[historyid]]/export"))}
+    {:else if page.route.id && page.route.id.startsWith("/domains/[dn]/logs")}
+        <a
+            href={resolve("/domains/[dn]/[[historyid]]", {
+                dn: encodeURIComponent(domainLink(selectedDomain)),
+            })}
+            class="sidebar-back d-flex align-items-center gap-1 mt-3 text-muted text-decoration-none fw-semibold"
+        >
+            <Icon name="chevron-left" />
+            {$t("zones.return-to")}
+        </a>
+        {#if page.data.logs}
+            {@const onlyProblems = page.url.searchParams.get("only") === "problems"}
+            <div class="min-h-0 overflow-y-auto">
+                <LogDaysTimeline
+                    days={groupLogsByDay(
+                        onlyProblems ? page.data.logs.filter(isProblem) : page.data.logs,
+                    )}
+                    {onlyProblems}
+                    filterHref={(only) =>
+                        resolve("/domains/[dn]/logs", {
+                            dn: encodeURIComponent(domainLink(selectedDomain)),
+                        }) + (only ? "?only=problems" : "")}
+                />
+            </div>
+        {/if}
+    {:else if page.route.id && (page.route.id.startsWith("/domains/[dn]/checks") || page.route.id.startsWith("/domains/[dn]/[[historyid]]/export"))}
         <a
             href={resolve("/domains/[dn]/[[historyid]]", {
                 dn: encodeURIComponent(domainLink(selectedDomain)),

@@ -553,13 +553,15 @@
         "used-on": "Last used on"
     },
     "logs": {
-        "date": "Date",
-        "description": "Action/description",
-        "level": "Level",
+        "filter": {
+            "all": "All",
+            "problems": "Problems"
+        },
         "no-entry": "No entry in the domain log.",
+        "no-problem": "No problem logged on this domain.",
+        "see-version": "Version of {{date}}",
         "title": "Domain's logs ",
-        "subtitle": "A full trace of all activity on this domain",
-        "user": "User"
+        "subtitle": "A full trace of all activity on this domain"
     },
     "menu": {
         "my-domains": "My domains",

@@ -243,13 +243,9 @@
         "used-on": "Laste uzita je"
     },
     "logs": {
-        "date": "Dato",
-        "description": "Ago/priskribo",
-        "level": "Nivelo",
         "no-entry": "Neniu eniro en la domajna protokolo.",
         "title": "Domajnaj protokoloj ",
-        "subtitle": "Plena spuro de ĉiu agado en ĉi tiu domajno",
-        "user": "Uzanto"
+        "subtitle": "Plena spuro de ĉiu agado en ĉi tiu domajno"
     },
     "menu": {
         "my-domains": "Miaj domajnoj",

@@ -552,13 +552,15 @@
         "used-on": "Dernière utilisation le"
     },
     "logs": {
-        "date": "Date",
-        "description": "Action/description",
-        "level": "Niveau",
+        "filter": {
+            "all": "Tout",
+            "problems": "Problèmes"
+        },
         "no-entry": "Aucune entrée dans le journal du domaine.",
+        "no-problem": "Aucun problème journalisé sur ce domaine.",
+        "see-version": "Version du {{date}}",
         "title": "Journal du domaine ",
-        "subtitle": "Trace complète de toutes les activités sur ce domaine",
-        "user": "Utilisateur"
+        "subtitle": "Trace complète de toutes les activités sur ce domaine"
     },
     "menu": {
         "my-domains": "Mes domaines",

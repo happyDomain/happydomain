@@ -255,13 +255,9 @@
         "used-on": "Último uso el"
     },
     "logs": {
-        "date": "Fecha",
-        "description": "Acción/descripción",
-        "level": "Nivel",
         "no-entry": "No hay entradas en el registro del dominio.",
         "title": "Registros del dominio ",
-        "subtitle": "Un registro completo de toda la actividad en este dominio",
-        "user": "Usuario"
+        "subtitle": "Un registro completo de toda la actividad en este dominio"
     },
     "menu": {
         "my-domains": "Mis dominios",

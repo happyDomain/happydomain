@@ -240,13 +240,9 @@
         "used-on": "Enenggi baitaha erin"
     },
     "logs": {
-        "date": "Inenggi",
-        "description": "Baitan/Gisun",
-        "level": "Necin",
         "no-entry": "域名 日志 de ejehe akū.",
         "title": "域名 日志",
-        "subtitle": "Ere 域名 i baitan i ejehe",
-        "user": "Baitalasi"
+        "subtitle": "Ere 域名 i baitan i ejehe"
     },
     "menu": {
         "my-domains": "Mini 域名",
