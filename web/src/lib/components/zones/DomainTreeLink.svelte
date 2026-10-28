@@ -47,6 +47,7 @@
 </script>
 
 <script lang="ts">
+    import type { Snippet } from "svelte";
     import type { HTMLAnchorAttributes } from "svelte/elements";
 
     import { fqdn } from "$lib/dns";
@@ -58,9 +59,11 @@
         rails?: boolean[];
         current?: boolean;
         muted?: boolean;
+        // Shown at the end of the row of dn, as a status or a count.
+        end?: Snippet<[string]>;
     }
 
-    let { dn, origin, rails = [], current = false, muted = false, ...rest }: Props = $props();
+    let { dn, origin, rails = [], current = false, muted = false, end, ...rest }: Props = $props();
 
     let depth = $derived(domainDepth(dn));
     let name = $derived(fqdn(dn, origin.domain));
@@ -71,7 +74,7 @@
 <a
     {...rest}
     title={name}
-    class="tree-level d-block text-truncate font-monospace text-decoration-none"
+    class="tree-level position-relative d-flex align-items-center gap-2 font-monospace text-decoration-none"
     class:tree-child={depth > 0}
     class:tree-tee={rails[depth - 1]}
     class:fw-bold={current}
@@ -83,7 +86,10 @@
     {#each rails.slice(0, -1) as rail, col}
         {#if rail}<span class="tree-rail" style:--col={col}></span>{/if}
     {/each}
-    {head}<span class="tree-parent">{name.slice(head.length)}</span>
+    <span class="flex-fill text-truncate"
+        >{head}<span class="fw-normal opacity-50">{name.slice(head.length)}</span></span
+    >
+    {@render end?.(dn)}
 </a>
 
 <style>
@@ -92,7 +98,6 @@
     .tree-level {
         --indent: 1.25rem;
         --stem: 0.35rem;
-        position: relative;
         max-width: none;
         padding-left: calc(var(--depth) * var(--indent));
     }
@@ -128,10 +133,5 @@
         top: 0;
         bottom: 0;
         left: calc(var(--col) * var(--indent) + var(--stem));
-    }
-
-    .tree-parent {
-        font-weight: normal;
-        opacity: 0.45;
     }
 </style>

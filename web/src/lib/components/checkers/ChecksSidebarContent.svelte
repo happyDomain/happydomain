@@ -47,7 +47,12 @@
 
     let scope: CheckerScope = $derived(
         serviceContext
-            ? { domainId: domain.id, zoneId: serviceContext.zoneId, subdomain: serviceContext.subdomain, serviceId: serviceContext.serviceid }
+            ? {
+                  domainId: domain.id,
+                  zoneId: serviceContext.zoneId,
+                  subdomain: serviceContext.subdomain,
+                  serviceId: serviceContext.serviceid,
+              }
             : { domainId: domain.id },
     );
 
@@ -92,11 +97,19 @@
     />
     <div class="flex-fill"></div>
 {:else}
-    <a
-        href={links.back}
+    <div
         class="sidebar-back d-flex align-items-center gap-1 mt-3 text-muted text-decoration-none fw-semibold"
     >
-        <Icon name="chevron-left" />
-        {$t("zones.return-to")}
-    </a>
+        <Icon class="opacity-0" name="chevron-left" />
+        {$t("checkers.title")}
+    </div>
+    <DomainCheckerSidebar
+        class="mt-3"
+        domainName={domain.domain}
+        currentCheckerName={page.params.checkerId}
+        {links}
+        scope={serviceContext ? "service" : "domain"}
+        {serviceType}
+    />
+    <div class="flex-fill"></div>
 {/if}

@@ -56,7 +56,11 @@ export function templateZoneEditor(
         deleteRecord: (id, subdomain, record) =>
             show(backend().deleteRecord(id, subdomain, record)),
 
-        zoneHref: (id) => templateLinks().template(encodeURIComponent(id)),
+        subdomainHref: (id, subdomain) =>
+            templateLinks().subdomain(
+                encodeURIComponent(id),
+                encodeURIComponent(subdomain === "" ? "@" : subdomain),
+            ),
         serviceHref: (id, subdomain, serviceId) =>
             templateLinks().service(
                 encodeURIComponent(id),

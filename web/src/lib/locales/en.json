@@ -166,6 +166,11 @@
         "please-fill-fields": "Please fill the following fields:",
         "removal": "Confirm Domain Removal",
         "save-modifications": "Save those modifications",
+        "sidebar": {
+            "overview": "Domain overview",
+            "overview-hint": "health · history · publish",
+            "subdomains": "Subdomains"
+        },
         "stop": "Stop managing this domain",
         "stop-named": "Stop managing the domain “{{name}}”",
         "view": {
@@ -404,6 +409,8 @@
         "import": "Import a zone file",
         "global": "Offered to everyone",
         "global-hint": "Set up by the administrators: you can apply this template to your domains, not change it.",
+        "overview": "Template overview",
+        "overview-hint": "details · subdomains",
         "actions": {
             "view": "View"
         },

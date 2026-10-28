@@ -53,14 +53,6 @@ const web = tpl("t2", "Web");
 beforeAll(async () => {
     await loadTranslations("en", "/");
     stubWebAnimations();
-    vi.stubGlobal(
-        "IntersectionObserver",
-        class {
-            observe() {}
-            unobserve() {}
-            disconnect() {}
-        },
-    );
 });
 
 afterEach(() => {

@@ -22,7 +22,7 @@
 -->
 
 <script lang="ts">
-    import TemplateZoneView from "$lib/components/zone_templates/TemplateZoneView.svelte";
+    import TemplateOverview from "$lib/components/zone_templates/TemplateOverview.svelte";
     import { isGlobalTemplate, type ZoneTemplate } from "$lib/model/zone_template";
 
     interface Props {
@@ -32,4 +32,4 @@
     let { data }: Props = $props();
 </script>
 
-<TemplateZoneView template={data.template} readOnly={isGlobalTemplate(data.template)} />
+<TemplateOverview template={data.template} readOnly={isGlobalTemplate(data.template)} />

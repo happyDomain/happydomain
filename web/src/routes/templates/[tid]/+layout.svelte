@@ -36,15 +36,9 @@
 
     let { data, children }: Props = $props();
 
-    // The service being edited, on its page.
-    let service = $derived(
-        page.params.serviceid
-            ? {
-                  subdomain: page.params.subdomain === "@" ? "" : (page.params.subdomain ?? ""),
-                  serviceid: page.params.serviceid,
-              }
-            : undefined,
-    );
+    // The subdomain and the service of the page, "" being the apex.
+    let subdomain = $derived(page.params.subdomain === "@" ? "" : page.params.subdomain);
+    let serviceid = $derived(page.params.serviceid);
 </script>
 
 <svelte:head>
@@ -55,7 +49,8 @@
     template={data.template}
     backend={userTemplateBackend}
     readOnly={isGlobalTemplate(data.template)}
-    {service}
+    {subdomain}
+    {serviceid}
 >
     {@render children?.()}
 </TemplateEditorLayout>

@@ -30,10 +30,11 @@
 
     import { deleteDomain as APIDeleteDomain } from "$lib/api/domains";
     import type { Domain } from "$lib/model/domain";
-    import type { ZoneMeta } from "$lib/model/zone";
+    import type { Zone, ZoneMeta } from "$lib/model/zone";
     import { domainLink, domains_idx, refreshDomains } from "$lib/stores/domains";
     import { getZone, thisZone } from "$lib/stores/thiszone";
     import { invalidateZoneDiff } from "$lib/stores/zonediff";
+    import { refreshDomainChecks } from "$lib/stores/domainchecks";
     import ModalDiffZone from "./ModalDiffZone.svelte";
     import ModalDomainDelete, { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
     import ModalDomainWhois from "./ModalDomainWhois.svelte";
@@ -41,6 +42,7 @@
     import ModalApplyTemplate from "./ModalApplyTemplate.svelte";
     import ModalSaveAsTemplate from "./ModalSaveAsTemplate.svelte";
     import NewSubdomainPath from "$lib/components/zones/NewSubdomainPath.svelte";
+    import NewServicePath from "$lib/components/services/NewServicePath.svelte";
     import { domainZoneEditor, provideZoneEditor } from "$lib/components/zones/editor";
     import ServiceDetailsOffcanvas from "$lib/components/zones/ServiceDetailsOffcanvas.svelte";
     import Sidebar from "./Sidebar.svelte";
@@ -52,7 +54,13 @@
 
     let { data, children }: Props = $props();
 
-    provideZoneEditor(domainZoneEditor(() => data.domain));
+    // Under a version of the history, the zone is only shown.
+    provideZoneEditor(
+        domainZoneEditor(
+            () => data.domain,
+            () => page.params.zid,
+        ),
+    );
 
     let selectedDomain = $derived(data.domain.id);
     function domainChange(dn: string) {
@@ -66,21 +74,25 @@
 
     let selectedHistory: string | undefined = $derived(page.data.history);
 
-    function retrieveZoneDone(zm: ZoneMeta): void {
-        if (page.data.definedhistory) {
-            refreshDomains().then(() => {
-                goto(
-                    resolve("/domains/[dn]/[[historyid]]", {
-                        dn: encodeURIComponent(domainLink(selectedDomain)),
-                        historyid: encodeURIComponent(zm.id),
-                    }),
-                );
-            });
-        } else {
-            refreshDomains().then(() => {
-                invalidateAll();
-            });
+    // The checks of the current zone, shared by the dashboard and the
+    // sidebars: loaded with each zone, and again on coming back to the
+    // dashboard, as they may have run meanwhile.
+    let checkedZone: Zone | null = null;
+    $effect(() => {
+        const zone = $thisZone;
+        const onDashboard = page.route.id === "/domains/[dn]";
+        if (!zone || page.params.zid || zone.id !== data.domain.zone_history?.[0]) return;
+        if (zone !== checkedZone || onDashboard) {
+            checkedZone = zone;
+            refreshDomainChecks(data.domain.id, zone);
         }
+    });
+
+    // The zone retrieved is the latest of the history: the current one.
+    function retrieveZoneDone(_zm: ZoneMeta): void {
+        refreshDomains().then(() => {
+            invalidateAll();
+        });
     }
 
     // Each publication adds a snapshot to the history: refresh what the
@@ -136,12 +148,11 @@
         const id = page.route.id ?? "";
         if (id.startsWith("/domains/[dn]/checkers"))
             return resolve("/domains/[dn]/checkers", { dn });
-        if (id.startsWith("/domains/[dn]/checks")) return resolve("/domains/[dn]/checks", { dn });
         if (id.startsWith("/domains/[dn]/logs")) return resolve("/domains/[dn]/logs", { dn });
         if (id.startsWith("/domains/[dn]/history")) return resolve("/domains/[dn]/history", { dn });
-        if (id.startsWith("/domains/[dn]/[[historyid]]/export"))
-            return resolve("/domains/[dn]/[[historyid]]/export", { dn });
-        return resolve("/domains/[dn]/[[historyid]]", { dn });
+        if (id.startsWith("/domains/[dn]/export")) return resolve("/domains/[dn]/export", { dn });
+        if (id.startsWith("/domains/[dn]/zone")) return resolve("/domains/[dn]/zone", { dn });
+        return resolve("/domains/[dn]", { dn });
     }
 </script>
 
@@ -172,7 +183,7 @@
             class:p-0={page.route &&
                 (page.route.id == "/domains/[dn]/checkers/[checkerId]/executions/[execId]" ||
                     page.route.id ==
-                        "/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]/checkers/[checkerId]/executions/[execId]")}
+                        "/domains/[dn]/zone/[subdomain]/[serviceid]/checkers/[checkerId]/executions/[execId]")}
         >
             {@render children?.()}
         </div>
@@ -180,6 +191,11 @@
 </Container>
 
 <NewSubdomainPath origin={data.domain} />
+
+<!-- Services are added to the current zone, from the dashboard as from the zone. -->
+{#if $thisZone && !page.params.zid && $thisZone.id === data.domain.zone_history?.[0]}
+    <NewServicePath origin={data.domain} zone={$thisZone} historyId={$thisZone.id} />
+{/if}
 
 <ModalUploadZone domain={data.domain} on:retrieveZoneDone={(ev) => retrieveZoneDone(ev.detail)} />
 

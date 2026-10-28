@@ -166,6 +166,11 @@
         "please-fill-fields": "Veuillez remplir les champs suivants :",
         "removal": "Confirmer la suppression du domaine",
         "save-modifications": "Enregistrer ces modifications",
+        "sidebar": {
+            "overview": "Vue d'ensemble du domaine",
+            "overview-hint": "santé · historique · publication",
+            "subdomains": "Sous-domaines"
+        },
         "stop": "Arrêter de gérer ce domaine",
         "view": {
             "abstract": "Zone abstraite",
@@ -396,6 +401,8 @@
         "import": "Importer un fichier de zone",
         "global": "Proposé à tous",
         "global-hint": "Mis en place par les administrateurs : vous pouvez appliquer ce modèle à vos domaines, mais pas le modifier.",
+        "overview": "Vue d'ensemble du modèle",
+        "overview-hint": "détails · sous-domaines",
         "actions": {
             "view": "Voir"
         },

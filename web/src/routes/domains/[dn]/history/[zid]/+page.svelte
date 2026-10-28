@@ -93,13 +93,25 @@
                 outline
                 size="sm"
                 class="ms-auto"
-                href={resolve("/domains/[dn]/[[historyid]]", {
+                href={resolve("/domains/[dn]/history/[zid]/zone", {
                     dn: encodeURIComponent(domainLink(data.domain.id)),
-                    historyid: encodeURIComponent(data.zid),
+                    zid: encodeURIComponent(data.zid),
                 })}
             >
                 <Icon name="eye-fill" />
                 {$t("history.see")}
+            </Button>
+            <Button
+                color="secondary"
+                outline
+                size="sm"
+                href={resolve("/domains/[dn]/history/[zid]/export", {
+                    dn: encodeURIComponent(domainLink(data.domain.id)),
+                    zid: encodeURIComponent(data.zid),
+                })}
+            >
+                <Icon name="file-earmark-text" />
+                {$t("domains.view.title")}
             </Button>
             {#if canRollback}
                 <Button

@@ -35,10 +35,12 @@ import type { CheckerLinks } from "$lib/checker_links";
  */
 export function domainLinks() {
     return {
-        zone: (_dn: string, _historyid?: string) => resolve("/domains"),
+        overview: (_dn: string) => resolve("/domains"),
+        subdomain: (_dn: string, _subdomain: string) => resolve("/domains"),
+        service: (_dn: string, _subdomain: string, _serviceid: string) => resolve("/domains"),
         history: (_dn: string) => resolve("/domains"),
-        checks: (_dn: string) => resolve("/domains"),
-        service: (_dn: string, _historyid: string, _subdomain: string, _serviceid: string) =>
+        historySubdomain: (_dn: string, _zid: string, _subdomain: string) => resolve("/domains"),
+        historyService: (_dn: string, _zid: string, _subdomain: string, _serviceid: string) =>
             resolve("/domains"),
     };
 }
@@ -46,7 +48,6 @@ export function domainLinks() {
 // The global zone templates show services, which have no checks.
 export function serviceCheckerLinks(
     _dn: string,
-    _historyid: string,
     _subdomain: string,
     _serviceid: string,
 ): CheckerLinks {
@@ -62,6 +63,8 @@ export function templateLinks() {
     return {
         list: resolve("/templates"),
         template: (tid: string) => resolve("/templates/[tid]", { tid }),
+        subdomain: (tid: string, subdomain: string) =>
+            resolve("/templates/[tid]/[subdomain]", { tid, subdomain }),
         service: (tid: string, subdomain: string, serviceid: string) =>
             resolve("/templates/[tid]/[subdomain]/[serviceid]", { tid, subdomain, serviceid }),
     };

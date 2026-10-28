@@ -22,169 +22,79 @@
 -->
 
 <script lang="ts">
-    import { goto } from "$app/navigation";
-    import { resolve } from "$app/paths";
-    import {
-        Button,
-        Dropdown,
-        DropdownItem,
-        DropdownMenu,
-        DropdownToggle,
-        Icon,
-        Spinner,
-    } from "@sveltestrap/sveltestrap";
+    import { page } from "$app/state";
+    import { Button, Icon } from "@sveltestrap/sveltestrap";
 
     import { isReverseZone } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
-    import type { ZoneMeta } from "$lib/model/zone";
-    import { domains_idx, domainLink } from "$lib/stores/domains";
+    import { checksBySubdomain } from "$lib/stores/domainchecks";
     import { isReadOnlyProvider, providers_idx } from "$lib/stores/providers";
-    import {
-        retrieveZone as StoreRetrieveZone,
-        sortedDomains,
-        sortedDomainsWithIntermediate,
-        thisZone,
-    } from "$lib/stores/thiszone";
+    import { sortedDomains, sortedDomainsWithIntermediate, thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
-    import { controls as ctrlDomainDelete } from "./ModalDomainDelete.svelte";
-    import { controls as ctrlDomainWhois } from "./ModalDomainWhois.svelte";
-    import { controls as ctrlUploadZone } from "./ModalUploadZone.svelte";
-    import { controls as ctrlApplyTemplate } from "./ModalApplyTemplate.svelte";
-    import { controls as ctrlSaveAsTemplate } from "./ModalSaveAsTemplate.svelte";
     import { controls as ctrlNewSubdomain } from "$lib/components/zones/NewSubdomainPath.svelte";
     import SubdomainListTiny from "$lib/components/zones/SubdomainListTiny.svelte";
+    import { useZoneEditor } from "$lib/components/zones/editor";
+    import HealthDot from "./HealthDot.svelte";
 
     interface Props {
         origin: Domain;
-        selectedDomain: string;
         selectedHistory: string | undefined;
-        onretrieveZoneDone: (zm: ZoneMeta) => void;
     }
 
-    let { origin, selectedDomain, selectedHistory, onretrieveZoneDone }: Props = $props();
+    let { origin, selectedHistory }: Props = $props();
+
+    const editor = useZoneEditor(() => origin);
 
     let readOnly = $derived(isReadOnlyProvider($providers_idx, origin.id_provider));
 
-    let retrievalInProgress = $state(false);
-    async function retrieveZone() {
-        retrievalInProgress = true;
-        const zm = await StoreRetrieveZone(origin);
-        retrievalInProgress = false;
-        onretrieveZoneDone(zm);
-    }
+    let subdomains = $derived(
+        isReverseZone(origin.domain) ? $sortedDomains : $sortedDomainsWithIntermediate,
+    );
 
-    function viewZone(): void {
-        if (!selectedHistory) return;
-        goto(resolve("/domains/[dn]/[[historyid]]/export", { dn: domainLink(selectedDomain) }));
-    }
+    let checks = $derived(
+        $checksBySubdomain?.domainId === origin.id ? $checksBySubdomain.sections : undefined,
+    );
 </script>
 
-<div class="d-flex gap-2 pb-2 sticky-top" style="padding-top: 10px">
-    <!-- A disabled button gets no pointer events: its wrapper carries the tooltip. -->
+<!-- Flush right, as the rows: its end lines up with their health dots. -->
+<div
+    class="d-flex align-items-center gap-1 pt-3 pb-1 small fw-semibold text-uppercase text-body-secondary"
+>
+    <span class="flex-fill text-truncate">
+        {$t("domains.sidebar.subdomains")}
+    </span>
+    <!-- A disabled button gets no pointer events: its wrapper carries the tooltip.
+         As wide as a health dot, it holds the button centered over them. -->
     <span
-        class="d-flex flex-fill"
-        style="min-width: 0"
-        title={readOnly ? $t("domains.read-only-edit") : undefined}
+        class="position-relative flex-shrink-0 p-1"
+        title={readOnly ? $t("domains.read-only-edit") : $t("domains.add-a-subdomain")}
     >
         <Button
             type="button"
-            color="secondary"
-            outline
+            color="link"
             size="sm"
-            class="flex-fill text-truncate"
+            class="position-absolute top-50 start-50 translate-middle text-body-secondary p-0 lh-1"
+            aria-label={$t("domains.add-a-subdomain")}
             disabled={!$sortedDomains || readOnly}
             on:click={() => ctrlNewSubdomain.Open()}
         >
-            <Icon name="server" />
-            {$t("domains.add-a-subdomain")}
+            <Icon name="plus-lg" />
         </Button>
     </span>
-    <Dropdown class="flex-shrink-0">
-        <DropdownToggle
-            color="secondary"
-            outline
-            size="sm"
-            class="text-nowrap"
-            aria-label={$t("domains.actions.others", {
-                domain: $domains_idx[selectedDomain].domain,
-            })}
-            title={$t("domains.actions.others", {
-                domain: $domains_idx[selectedDomain].domain,
-            })}
-        >
-            {#if retrievalInProgress}
-                <Spinner size="sm" />
-            {:else}
-                <Icon name="gear-fill" aria-hidden="true" />
-            {/if}
-            {$t("domains.actions.label")}
-        </DropdownToggle>
-        <DropdownMenu style="z-index: 11;">
-            <DropdownItem header>
-                {$t("domains.actions.menu-title")}
-                <span class="d-block font-monospace fw-normal text-muted text-truncate">
-                    {origin.domain}
-                </span>
-            </DropdownItem>
-            <DropdownItem href={`/domains/${domainLink(selectedDomain)}/history`}>
-                {$t("domains.actions.history")}
-            </DropdownItem>
-            <DropdownItem href={`/domains/${domainLink(selectedDomain)}/logs`}>
-                {$t("domains.actions.audit")}
-            </DropdownItem>
-            <DropdownItem href={`/domains/${domainLink(selectedDomain)}/checks`}>
-                {$t("domains.actions.checks")}
-            </DropdownItem>
-            <DropdownItem on:click={() => ctrlDomainWhois.Open()}>
-                {$t("domains.actions.whois")}
-            </DropdownItem>
-            <DropdownItem divider />
-            <DropdownItem on:click={retrieveZone}>
-                {$t("domains.actions.reimport")}
-            </DropdownItem>
-            <DropdownItem on:click={viewZone} disabled={!$sortedDomains}>
-                {$t("domains.actions.view")}
-            </DropdownItem>
-            <DropdownItem on:click={() => ctrlSaveAsTemplate.Open()} disabled={!$sortedDomains}>
-                {$t("domains.actions.save-template")}
-            </DropdownItem>
-            <DropdownItem
-                disabled={readOnly}
-                title={readOnly ? $t("domains.read-only-edit") : undefined}
-                on:click={() => ctrlUploadZone.Open()}
-            >
-                {$t("domains.actions.upload")}
-            </DropdownItem>
-            <DropdownItem
-                disabled={readOnly}
-                title={readOnly ? $t("domains.read-only-edit") : undefined}
-                on:click={() => ctrlApplyTemplate.Open()}
-            >
-                {$t("domains.actions.apply-template")}
-            </DropdownItem>
-            <DropdownItem divider />
-            <DropdownItem disabled title="Coming soon...">
-                {$t("domains.actions.share")}
-            </DropdownItem>
-            <DropdownItem on:click={() => ctrlDomainDelete.Open()}>
-                {$t("domains.stop")}
-            </DropdownItem>
-            <DropdownItem divider />
-            <DropdownItem
-                href={"/providers/" + encodeURIComponent($domains_idx[selectedDomain].id_provider)}
-            >
-                {$t("provider.update")}
-            </DropdownItem>
-        </DropdownMenu>
-    </Dropdown>
 </div>
 <div style="min-height:0; overflow-y: auto;" class="placeholder-glow">
-    {#if $sortedDomains && $sortedDomainsWithIntermediate && $thisZone && $thisZone.id == selectedHistory}
-        {#if isReverseZone(origin.domain)}
-            <SubdomainListTiny domains={$sortedDomains} {origin} />
-        {:else}
-            <SubdomainListTiny domains={$sortedDomainsWithIntermediate} {origin} />
-        {/if}
+    {#if subdomains && $thisZone && $thisZone.id == selectedHistory}
+        {@const zoneId = $thisZone.id}
+        <SubdomainListTiny
+            domains={subdomains}
+            {origin}
+            href={(dn) => editor.subdomainHref(zoneId, dn)}
+            current={page.data.subdomain}
+        >
+            {#snippet end(dn)}
+                <HealthDot section={checks?.get(dn)} />
+            {/snippet}
+        </SubdomainListTiny>
     {:else}
         <span class="d-block text-truncate font-monospace text-muted">
             {origin.domain}

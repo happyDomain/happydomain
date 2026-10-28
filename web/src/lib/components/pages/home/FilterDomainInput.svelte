@@ -60,7 +60,7 @@
         if (actionAddDomain) {
             if (!newDomainBlocked) addDomainToProvider();
         } else if (matchingDomains.length > 0) {
-            goto(domainLinks().zone(encodeURIComponent(matchingDomains[0].id)));
+            goto(domainLinks().overview(encodeURIComponent(matchingDomains[0].id)));
         }
     }
 
@@ -83,7 +83,7 @@
                 await refreshDomains();
                 addingNewDomain = false;
                 filteredName.set("");
-                goto(domainLinks().zone(domain.domain));
+                goto(domainLinks().overview(domain.domain));
             },
             (error) => {
                 addingNewDomain = false;

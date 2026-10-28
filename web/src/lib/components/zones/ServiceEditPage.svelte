@@ -108,7 +108,7 @@
     function goBack(historyid?: string) {
         // The editor resolves the path.
         // eslint-disable-next-line svelte/no-navigation-without-resolve
-        goto(editor.zoneHref(historyid ? historyid : history));
+        goto(editor.subdomainHref(historyid ? historyid : history, subdomain));
     }
 
     function submitServiceForm(e: SubmitEvent) {

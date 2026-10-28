@@ -19,7 +19,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { derived, writable, type Writable } from "svelte/store";
+import { derived, get, writable, type Writable } from "svelte/store";
 import { domainCompare } from "$lib/dns";
 import { retrieveZone as APIRetrieveZone, getZone as APIGetZone } from "$lib/api/zone";
 import type { Domain } from "$lib/model/domain";
@@ -65,14 +65,19 @@ export const sortedDomains = derived(thisZone, ($thisZone) => {
 });
 
 // Derived store to retrieve all subdomains, sorted, and with all intermediates, empty, subdomains
-export const sortedDomainsWithIntermediate = derived(sortedDomains, ($sortedDomains) => {
-    if (!$sortedDomains || $sortedDomains.length <= 1) return $sortedDomains;
+export const sortedDomainsWithIntermediate = derived(sortedDomains, ($sortedDomains) =>
+    $sortedDomains ? withIntermediates($sortedDomains) : $sortedDomains,
+);
 
-    const domains = [$sortedDomains[0]];
+// withIntermediates adds to subdomains, sorted, the empty ones between them.
+export function withIntermediates(sorted: Array<string>): Array<string> {
+    if (sorted.length <= 1) return sorted;
+
+    const domains = [sorted[0]];
     let previous = domains[0].split(".");
 
-    for (let i = 1; i < $sortedDomains.length; i++) {
-        const current = $sortedDomains[i].split(".");
+    for (let i = 1; i < sorted.length; i++) {
+        const current = sorted[i].split(".");
         if (previous.length < current.length && previous[0] !== current[current.length - previous.length]) {
             domains.push(current.slice(current.length - previous.length).join("."));
         }
@@ -85,7 +90,15 @@ export const sortedDomainsWithIntermediate = derived(sortedDomains, ($sortedDoma
     }
 
     return domains;
-});
+}
+
+// showZone loads a zone in thisZone, unless it is already there. It is left
+// pending: the pages wait for thisZone to hold it.
+export function showZone(domain: Domain, zoneId: string, loadFetch?: typeof fetch): void {
+    if (get(thisZone)?.id !== zoneId) {
+        getZone(domain, zoneId, loadFetch);
+    }
+}
 
 // getZone retrieve a given zone
 export async function getZone(domain: Domain, zoneId: string, loadFetch?: typeof fetch) {

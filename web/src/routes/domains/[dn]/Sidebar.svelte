@@ -36,6 +36,7 @@
     import type { ZoneMeta } from "$lib/model/zone";
     import { domainLink, domains_idx } from "$lib/stores/domains";
     import { thisZone } from "$lib/stores/thiszone";
+    import { useZoneEditor } from "$lib/components/zones/editor";
     import { t } from "$lib/translations";
     import { isReverseZone } from "$lib/dns";
     import { sortedDomains, sortedDomainsWithIntermediate } from "$lib/stores/thiszone";
@@ -43,6 +44,9 @@
     import HistoryTimeline from "$lib/components/zones/HistoryTimeline.svelte";
     import ServiceSidebar from "$lib/components/zones/ServiceSidebar.svelte";
     import SubdomainListTiny from "$lib/components/zones/SubdomainListTiny.svelte";
+    import DashboardSidebar from "./DashboardSidebar.svelte";
+    import DomainActionsMenu from "./DomainActionsMenu.svelte";
+    import OverviewLink from "./OverviewLink.svelte";
     import ZoneSidebar from "./ZoneSidebar.svelte";
 
     interface Props {
@@ -63,8 +67,10 @@
         onretrieveZoneDone,
     }: Props = $props();
 
+    const editor = useZoneEditor(() => domain);
+
     let isZonePage = $derived(
-        page.route.id === "/domains/[dn]" || page.route.id === "/domains/[dn]/[[historyid]]",
+        page.route.id === "/domains/[dn]" || page.route.id === "/domains/[dn]/zone/[subdomain]",
     );
     let showPublishFooter = $derived(
         isZonePage &&
@@ -75,15 +81,36 @@
             !!$thisZone,
     );
     let showDetachFooter = $derived(isZonePage && !showPublishFooter);
+
+    // The dashboard goes up to the list of domains; the zone, back to the
+    // dashboard; any other page, to its parent.
+    let isDashboard = $derived(page.route.id === "/domains/[dn]");
+    let backHref = $derived(
+        isDashboard
+            ? resolve("/domains")
+            : page.route.id === "/domains/[dn]/zone/[subdomain]"
+              ? resolve("/domains/[dn]", { dn: encodeURIComponent(domainLink(selectedDomain)) })
+              : "..",
+    );
 </script>
 
 {#if $domains_idx[selectedDomain]}
     <!-- Header: back button + domain selector (always visible) -->
     <div class="d-flex">
-        <Button href={isZonePage ? "/domains/" : ".."} class="fw-bolder" color="link">
-            <Icon name={isZonePage ? "chevron-up" : "chevron-left"} />
+        <Button href={backHref} class="fw-bolder" color="link">
+            <Icon name={isDashboard ? "chevron-up" : "chevron-left"} />
         </Button>
         <SelectDomain bind:selectedDomain />
+    </div>
+
+    <div class="d-flex align-items-stretch gap-1 pt-2 pb-1">
+        <OverviewLink {domain} active={isDashboard} />
+        <DomainActionsMenu
+            origin={domain}
+            {selectedDomain}
+            {selectedHistory}
+            {onretrieveZoneDone}
+        />
     </div>
 
     <!-- Main content: routed sidebar (scrolls along with the Col itself) -->
@@ -92,16 +119,38 @@
             {domain}
             links={domainCheckerLinks(encodeURIComponent(domainLink(selectedDomain)))}
         />
-    {:else if page.route.id && page.route.id.startsWith("/domains/[dn]/history")}
+    {:else if page.route.id === "/domains/[dn]/history/[zid]/zone/[subdomain]/[serviceid]"}
+        <ServiceSidebar
+            origin={domain}
+            subdomain={page.data.subdomain ?? ""}
+            serviceid={page.data.serviceid ?? ""}
+            historyId={page.data.history ?? ""}
+        />
+    {:else if page.route.id && page.route.id.startsWith("/domains/[dn]/history/[zid]/zone")}
         <a
-            href={resolve("/domains/[dn]/[[historyid]]", {
+            href={resolve("/domains/[dn]/history/[zid]", {
                 dn: encodeURIComponent(domainLink(selectedDomain)),
+                zid: encodeURIComponent(page.params.zid ?? ""),
             })}
             class="sidebar-back d-flex align-items-center gap-1 mt-3 text-muted text-decoration-none fw-semibold"
         >
             <Icon name="chevron-left" />
-            {$t("zones.return-to")}
+            {$t("history.title")}
         </a>
+        <div class="min-h-0 overflow-y-auto mt-2">
+            {#if $sortedDomains && $sortedDomainsWithIntermediate && $thisZone}
+                {@const zoneId = $thisZone.id}
+                <SubdomainListTiny
+                    domains={isReverseZone(domain.domain)
+                        ? $sortedDomains
+                        : $sortedDomainsWithIntermediate}
+                    origin={domain}
+                    href={(dn) => editor.subdomainHref(zoneId, dn)}
+                    current={page.data.subdomain}
+                />
+            {/if}
+        </div>
+    {:else if page.route.id && page.route.id.startsWith("/domains/[dn]/history")}
         {#if page.data.historyDomain}
             <div class="min-h-0 overflow-y-auto">
                 <HistoryTimeline
@@ -112,15 +161,6 @@
             </div>
         {/if}
     {:else if page.route.id && page.route.id.startsWith("/domains/[dn]/logs")}
-        <a
-            href={resolve("/domains/[dn]/[[historyid]]", {
-                dn: encodeURIComponent(domainLink(selectedDomain)),
-            })}
-            class="sidebar-back d-flex align-items-center gap-1 mt-3 text-muted text-decoration-none fw-semibold"
-        >
-            <Icon name="chevron-left" />
-            {$t("zones.return-to")}
-        </a>
         {#if page.data.logs}
             {@const onlyProblems = page.url.searchParams.get("only") === "problems"}
             <div class="min-h-0 overflow-y-auto">
@@ -136,44 +176,24 @@
                 />
             </div>
         {/if}
-    {:else if page.route.id && (page.route.id.startsWith("/domains/[dn]/checks") || page.route.id.startsWith("/domains/[dn]/[[historyid]]/export"))}
-        <a
-            href={resolve("/domains/[dn]/[[historyid]]", {
-                dn: encodeURIComponent(domainLink(selectedDomain)),
-            })}
-            class="sidebar-back d-flex align-items-center gap-1 mt-3 text-muted text-decoration-none fw-semibold"
-        >
-            <Icon name="chevron-left" />
-            {$t("zones.return-to")}
-        </a>
+    {:else if page.route.id && page.route.id.startsWith("/domains/[dn]/export")}
         <div class="min-h-0 overflow-y-auto mt-2">
             {#if $sortedDomains && $sortedDomainsWithIntermediate && $thisZone}
-                {#if isReverseZone(domain.domain)}
-                    <SubdomainListTiny domains={$sortedDomains} origin={domain} />
-                {:else}
-                    <SubdomainListTiny domains={$sortedDomainsWithIntermediate} origin={domain} />
-                {/if}
+                {@const zoneId = $thisZone.id}
+                <SubdomainListTiny
+                    domains={isReverseZone(domain.domain)
+                        ? $sortedDomains
+                        : $sortedDomainsWithIntermediate}
+                    origin={domain}
+                    href={(dn) => editor.subdomainHref(zoneId, dn)}
+                />
             {/if}
         </div>
-    {:else if page.route.id && page.route.id.startsWith("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]/checks")}
-        <a
-            href={resolve("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]", {
-                dn: encodeURIComponent(domainLink(selectedDomain)),
-                historyid: encodeURIComponent(page.data.history ?? ""),
-                subdomain: encodeURIComponent(page.params.subdomain ?? ""),
-                serviceid: encodeURIComponent(page.data.serviceid ?? ""),
-            })}
-            class="sidebar-back d-flex align-items-center gap-1 mt-3 text-muted text-decoration-none fw-semibold"
-        >
-            <Icon name="chevron-left" />
-            {$t("zones.return-to")}
-        </a>
-    {:else if page.route.id && page.route.id.startsWith("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]/checkers")}
+    {:else if page.route.id && page.route.id.startsWith("/domains/[dn]/zone/[subdomain]/[serviceid]/checkers")}
         <ChecksSidebarContent
             {domain}
             links={serviceCheckerLinks(
                 encodeURIComponent(domainLink(selectedDomain)),
-                encodeURIComponent(page.data.history ?? ""),
                 encodeURIComponent(page.params.subdomain ?? ""),
                 encodeURIComponent(page.data.serviceid ?? ""),
             )}
@@ -183,15 +203,17 @@
                 serviceid: page.data.serviceid ?? "",
             }}
         />
-    {:else if page.route.id === "/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]"}
+    {:else if page.route.id === "/domains/[dn]/zone/[subdomain]/[serviceid]"}
         <ServiceSidebar
             origin={domain}
             subdomain={page.data.subdomain ?? ""}
             serviceid={page.data.serviceid ?? ""}
             historyId={page.data.history ?? ""}
         />
+    {:else if page.route.id === "/domains/[dn]"}
+        <DashboardSidebar origin={domain} {selectedHistory} />
     {:else}
-        <ZoneSidebar origin={domain} {selectedDomain} {selectedHistory} {onretrieveZoneDone} />
+        <ZoneSidebar origin={domain} {selectedHistory} />
     {/if}
 
     <!-- Spacer so the last sidebar item isn't hidden behind the fixed footer -->

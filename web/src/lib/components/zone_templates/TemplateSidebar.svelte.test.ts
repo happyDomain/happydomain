@@ -52,15 +52,8 @@ const global = tpl("t2", "Google Workspace");
 
 beforeAll(async () => {
     await loadTranslations("en", "/");
-    // jsdom has none, and the list of subdomains watches which one is in view.
-    vi.stubGlobal(
-        "IntersectionObserver",
-        class {
-            observe() {}
-            unobserve() {}
-            disconnect() {}
-        },
-    );
+    // jsdom has none, and the list of subdomains brings the current one into view.
+    Element.prototype.scrollIntoView = () => {};
 });
 
 afterEach(() => {
@@ -70,11 +63,7 @@ afterEach(() => {
     zoneTemplates.set(undefined);
 });
 
-function setup(
-    template: ZoneTemplate,
-    readOnly: boolean,
-    service?: { subdomain: string; serviceid: string },
-) {
+function setup(template: ZoneTemplate, readOnly: boolean, subdomain?: string, serviceid?: string) {
     zoneTemplates.set([mine, global]);
     thisZone.set(templateAsZone(template));
     const onselect = vi.fn();
@@ -88,7 +77,15 @@ function setup(
         ),
     );
     render(TemplateSidebar, {
-        props: { template, readOnly, service, deleteInProgress: false, onselect, ondelete },
+        props: {
+            template,
+            readOnly,
+            subdomain,
+            serviceid,
+            deleteInProgress: false,
+            onselect,
+            ondelete,
+        },
         context,
     });
     return { onselect, ondelete };
@@ -107,16 +104,33 @@ describe("TemplateSidebar", () => {
         expect(onselect).toHaveBeenCalledWith("t2");
     });
 
-    it("lists the subdomains of the template", () => {
+    it("leads to the overview and to the page of each subdomain", () => {
         setup(mine, false);
 
         expect(screen.getByTitle("All my templates")).toHaveAttribute("href", "/templates");
+        expect(screen.getByRole("link", { name: /details · subdomains/ })).toHaveAttribute(
+            "aria-current",
+            "page",
+        );
 
-        expect(screen.getByRole("link", { name: "example.com." })).toHaveAttribute("href", "#@");
+        expect(screen.getByRole("link", { name: "example.com." })).toHaveAttribute(
+            "href",
+            "/templates/t1/%40",
+        );
         expect(screen.getByRole("link", { name: "mail.example.com." })).toHaveAttribute(
             "href",
-            "#mail",
+            "/templates/t1/mail",
         );
+    });
+
+    it("goes back to the overview from a subdomain", () => {
+        setup(mine, false, "mail");
+
+        expect(screen.getByTitle("Template overview")).toHaveAttribute("href", "/templates/t1");
+        expect(screen.getByRole("link", { name: /details · subdomains/ })).not.toHaveAttribute(
+            "aria-current",
+        );
+        expect(screen.getByRole("link", { name: "mail.example.com." })).toHaveClass("fw-bold");
     });
 
     it("offers to add a subdomain and to manage the template", async () => {
@@ -150,13 +164,13 @@ describe("TemplateSidebar", () => {
     });
 
     it("shows the services of the subdomain on the page of a service", () => {
-        setup(mine, false, { subdomain: "mail", serviceid: "s2" });
+        setup(mine, false, "mail", "s2");
 
         expect(screen.queryByRole("button", { name: /Add a subdomain/ })).toBeNull();
-        expect(screen.getByTitle("Go to the zone")).toHaveAttribute("href", "/templates/t1");
+        expect(screen.getByTitle("Go to the zone")).toHaveAttribute("href", "/templates/t1/mail");
         expect(screen.getByRole("link", { name: "example.com." })).toHaveAttribute(
             "href",
-            "/templates/t1#@",
+            "/templates/t1/%40",
         );
         expect(screen.getByRole("link", { name: /Server/ })).toHaveAttribute(
             "href",

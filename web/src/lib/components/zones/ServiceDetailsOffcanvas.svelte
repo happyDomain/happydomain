@@ -161,7 +161,6 @@
         editor.isDomain && service._id && zoneId
             ? serviceCheckerLinks(
                   encodeURIComponent(domain.domain),
-                  encodeURIComponent(zoneId),
                   encodeURIComponent(service._domain || "@"),
                   encodeURIComponent(service._id),
               )

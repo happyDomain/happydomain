@@ -29,7 +29,6 @@
 
     import { Col, Container, Row } from "@sveltestrap/sveltestrap";
 
-    import AliasModal from "$lib/components/modals/Alias.svelte";
     import RecordModal from "$lib/components/modals/Record.svelte";
     import NewServicePath from "$lib/components/services/NewServicePath.svelte";
     import { provideZoneEditor } from "$lib/components/zones/editor";
@@ -62,12 +61,14 @@
         backend: ZoneTemplateBackend;
         // Nothing can be changed, as a global template shown to a user.
         readOnly: boolean;
-        // The service being edited, when on its page.
-        service?: { subdomain: string; serviceid: string };
+        // The subdomain of the page, "" being the apex; none on the overview.
+        subdomain?: string;
+        // The service being edited, under subdomain, when on its page.
+        serviceid?: string;
         children?: Snippet;
     }
 
-    let { template, backend, readOnly, service, children }: Props = $props();
+    let { template, backend, readOnly, subdomain, serviceid, children }: Props = $props();
 
     function saved(t: ZoneTemplate) {
         thisTemplate.set(t);
@@ -149,7 +150,8 @@
             <TemplateSidebar
                 template={current}
                 {readOnly}
-                {service}
+                {subdomain}
+                {serviceid}
                 {deleteInProgress}
                 onselect={select}
                 ondelete={deleteTemplate}
@@ -173,7 +175,6 @@
     <NewSubdomainPath {origin} />
     <NewServicePath {origin} zone={$thisZone} historyId={template.id} />
     <RecordModal {origin} zone={$thisZone} />
-    <AliasModal {origin} />
     <ServiceDetailsOffcanvas domain={origin} selectedHistory={template.id} />
 {/if}
 <ModalTemplateDetails template={current} save={saveDetails} />

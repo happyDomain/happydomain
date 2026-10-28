@@ -46,7 +46,7 @@
     <ZoneList button display_by_groups domains={filteredDomains} links show_empty_groups>
         {#snippet badges({ domain })}
             <a
-                href={domainLinks().checks(encodeURIComponent(domain.domain))}
+                href={domainLinks().overview(encodeURIComponent(domain.domain))}
                 class={"text-" + getStatusColor(domain.last_check_status)}
             >
                 <Icon name={getStatusIcon(domain.last_check_status)} />

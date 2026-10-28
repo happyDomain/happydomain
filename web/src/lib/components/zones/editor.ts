@@ -58,20 +58,29 @@ export interface ZoneEditor {
     updateRecord(zoneId: string, subdomain: string, newrr: dnsRR, oldrr: dnsRR): Promise<Zone>;
     deleteRecord(zoneId: string, subdomain: string, record: dnsRR): Promise<Zone>;
 
-    /** The page showing the zone. */
-    zoneHref(zoneId: string): ResolvedPathname;
+    /** The page showing a subdomain of the zone; "" is the apex. */
+    subdomainHref(zoneId: string, subdomain: string): ResolvedPathname;
     /** The page editing a service of the zone; "new" as serviceId adds one. */
     serviceHref(zoneId: string, subdomain: string, serviceId: string): ResolvedPathname;
 }
 
-/** The editor of the zones of a domain; domain is read at each call. */
-export function domainZoneEditor(domain: () => Domain): ZoneEditor {
+/**
+ * The editor of the zones of a domain; domain is read at each call. The zone
+ * edited is the current one: a past version, given by version, is only shown.
+ */
+export function domainZoneEditor(
+    domain: () => Domain,
+    version: () => string | undefined = () => undefined,
+): ZoneEditor {
     const dn = () => encodeURIComponent(domainLink(domain().id));
+    const sub = (subdomain: string) => encodeURIComponent(subdomain === "" ? "@" : subdomain);
 
     return {
         isDomain: true,
         // Read-only providers are checked by each component (isReadOnlyProvider).
-        readOnly: false,
+        get readOnly() {
+            return !!version();
+        },
 
         addService: (zoneId, service) => addZoneService(domain(), zoneId, service),
         updateService: (zoneId, service) => updateZoneService(domain(), zoneId, service),
@@ -84,14 +93,25 @@ export function domainZoneEditor(domain: () => Domain): ZoneEditor {
         deleteRecord: (zoneId, subdomain, record) =>
             deleteZoneRecord(domain(), zoneId, subdomain, record),
 
-        zoneHref: (zoneId) => domainLinks().zone(dn(), encodeURIComponent(zoneId)),
-        serviceHref: (zoneId, subdomain, serviceId) =>
-            domainLinks().service(
-                dn(),
-                encodeURIComponent(zoneId),
-                encodeURIComponent(subdomain === "" ? "@" : subdomain),
-                encodeURIComponent(serviceId),
-            ),
+        // The current zone is the one in the path, whatever its id: a change
+        // may have derived a new one.
+        subdomainHref: (_zoneId, subdomain) => {
+            const zid = version();
+            return zid
+                ? domainLinks().historySubdomain(dn(), encodeURIComponent(zid), sub(subdomain))
+                : domainLinks().subdomain(dn(), sub(subdomain));
+        },
+        serviceHref: (_zoneId, subdomain, serviceId) => {
+            const zid = version();
+            return zid
+                ? domainLinks().historyService(
+                      dn(),
+                      encodeURIComponent(zid),
+                      sub(subdomain),
+                      encodeURIComponent(serviceId),
+                  )
+                : domainLinks().service(dn(), sub(subdomain), encodeURIComponent(serviceId));
+        },
     };
 }
 

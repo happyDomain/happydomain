@@ -90,24 +90,17 @@
                     case "logs":
                         return "/pages/domain-history/";
                     case "import_zone":
+                    case "export":
                         return "/pages/import-export/";
-                    case "checks":
                     case "checkers":
                         return "/pages/checks/";
-                    case "[[historyid]]":
-                        // /domains/[dn]/[[historyid]]/export
-                        if (path[4] == "export") return "/pages/import-export/";
-                        // /domains/[dn]/[[historyid]]/[subdomain]/...
-                        if (path[4] == "[subdomain]") {
-                            if (path[5] == "[serviceid]") {
-                                if (path[6] == "checks" || path[6] == "checkers")
-                                    return "/pages/checks/";
-                                return "/pages/services/";
-                            }
-                            return "/pages/subdomains/";
+                    case "zone":
+                        // /domains/[dn]/zone/[subdomain]/[serviceid]/...
+                        if (path[5] == "[serviceid]") {
+                            if (path[6] == "checkers") return "/pages/checks/";
+                            return "/pages/services/";
                         }
-                        // Bare zone editor.
-                        return "/pages/domain-abstract/";
+                        return "/pages/subdomains/";
                     default:
                         return "/pages/domain-abstract/";
                 }

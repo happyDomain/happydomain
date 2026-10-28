@@ -21,7 +21,7 @@
 
 import { cleanup, render, screen } from "@testing-library/svelte";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import type { Domain } from "$lib/model/domain";
 import type { Provider } from "$lib/model/provider";
@@ -34,15 +34,6 @@ import ZoneSidebar from "./ZoneSidebar.svelte";
 
 beforeAll(async () => {
     await loadTranslations("en", "/");
-    // jsdom has none, and the list of subdomains watches which one is in view.
-    vi.stubGlobal(
-        "IntersectionObserver",
-        class {
-            observe() {}
-            unobserve() {}
-            disconnect() {}
-        },
-    );
 });
 
 afterEach(() => {

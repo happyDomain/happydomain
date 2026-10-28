@@ -106,7 +106,7 @@
             timeout: 5000,
         });
         refreshDomains();
-        goto(resolve("/domains/[dn]/[[historyid]]", { dn: domain.domain }));
+        goto(resolve("/domains/[dn]", { dn: domain.domain }));
     }
 </script>
 

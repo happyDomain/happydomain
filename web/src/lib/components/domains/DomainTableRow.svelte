@@ -41,7 +41,7 @@
 
 <tr
     style="cursor: pointer; vertical-align: middle"
-    onclick={() => goto(domainLinks().zone(encodeURIComponent(domain.domain)))}
+    onclick={() => goto(domainLinks().overview(encodeURIComponent(domain.domain)))}
 >
     <td class="fw-semibold font-monospace">{domain.domain}</td>
     <td>{domain.group || ""}</td>
@@ -50,7 +50,7 @@
     </td>
     <td>
         <a
-            href={domainLinks().checks(encodeURIComponent(domain.domain))}
+            href={domainLinks().overview(encodeURIComponent(domain.domain))}
             class="text-decoration-none"
             onclick={(e) => e.stopPropagation()}
         >
@@ -66,7 +66,7 @@
                 title={$t("domains.actions.view")}
                 onclick={(e) => {
                     e.stopPropagation();
-                    goto(domainLinks().zone(encodeURIComponent(domain.domain)));
+                    goto(domainLinks().overview(encodeURIComponent(domain.domain)));
                 }}
             >
                 <Icon name="eye" />

@@ -22,76 +22,45 @@
 -->
 
 <script lang="ts">
+    import type { Snippet } from "svelte";
+
     import type { Domain } from "$lib/model/domain";
     import DomainTreeLink, { treeRails } from "./DomainTreeLink.svelte";
 
     interface Props {
         domains: Array<string>;
         origin: Domain;
+        // The page of each subdomain, "" being the apex.
+        href: (dn: string) => string;
+        // The subdomain of the page, when they have one each.
+        current?: string;
+        // Shown at the end of the row of each subdomain.
+        end?: Snippet<[string]>;
     }
 
-    let { domains, origin }: Props = $props();
+    let { domains, origin, href, current, end }: Props = $props();
 
     let rails = $derived(treeRails(domains));
 
-    let activeDn = $state("");
     let containerEl: HTMLElement | null = $state(null);
 
     $effect(() => {
-        activeDn = "";
-        // Built and read out within this scope, never kept as reactive state.
-        // eslint-disable-next-line svelte/prefer-svelte-reactivity
-        const visibleElements = new Map<string, number>();
-
-        const observer = new IntersectionObserver(
-            (entries) => {
-                for (const entry of entries) {
-                    if (entry.isIntersecting) {
-                        visibleElements.set(entry.target.id, entry.boundingClientRect.top);
-                    } else {
-                        visibleElements.delete(entry.target.id);
-                    }
-                }
-
-                let bestId = "";
-                let bestTop = Infinity;
-                for (const [id, top] of visibleElements) {
-                    if (top < bestTop) {
-                        bestTop = top;
-                        bestId = id;
-                    }
-                }
-                if (bestId) activeDn = bestId;
-            },
-            { rootMargin: "0px 0px -70% 0px", threshold: 0 },
-        );
-
-        for (const dn of domains) {
-            const id = dn ? dn : "@";
-            const el = document.getElementById(id);
-            if (el) observer.observe(el);
-        }
-
-        return () => observer.disconnect();
-    });
-
-    $effect(() => {
-        if (activeDn && containerEl) {
-            const el = containerEl.querySelector(`a[href="#${activeDn}"]`);
-            el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        if (current !== undefined && containerEl) {
+            const el = containerEl.querySelector(`a[href="${href(current)}"]`);
+            el?.scrollIntoView({ block: "nearest" });
         }
     });
 </script>
 
 <div bind:this={containerEl}>
-    {#each domains as dn, i}
-        {@const id = dn ? dn : "@"}
+    {#each domains as dn, i (dn)}
         <DomainTreeLink
-            href={"#" + id}
+            href={href(dn)}
             {dn}
             {origin}
             rails={rails[i]}
-            current={activeDn === id}
+            current={current === dn}
+            {end}
             style="scroll-margin-block: 2em;"
         />
     {/each}

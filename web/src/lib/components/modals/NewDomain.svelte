@@ -148,7 +148,7 @@
     // one they came to add.
     function onDomainAdded(dn: string): void {
         isOpen = false;
-        goto(resolve("/domains/[dn]/[[historyid]]", { dn }));
+        goto(resolve("/domains/[dn]", { dn }));
     }
 
     function previous(): void {

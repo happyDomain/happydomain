@@ -76,8 +76,7 @@
     let newSvcType = $derived(page.url.searchParams.get("type") ?? "");
 
     function subdomainLink(dn: string): ResolvedPathname {
-        // The fragment is what scrolls the zone to that subdomain.
-        return `${editor.zoneHref(historyId)}#${dn ? dn : "@"}` as ResolvedPathname;
+        return editor.subdomainHref(historyId, dn);
     }
 
     function serviceLink(svc: { _id?: string }): ResolvedPathname {

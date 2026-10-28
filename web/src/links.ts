@@ -43,38 +43,34 @@ export function domainCheckerLinks(dn: string): CheckerLinks {
                 checkerId,
                 execId,
             }),
-        back: resolve("/domains/[dn]/[[historyid]]", { dn }),
+        back: resolve("/domains/[dn]", { dn }),
     };
 }
 
 export function serviceCheckerLinks(
     dn: string,
-    historyid: string,
     subdomain: string,
     serviceid: string,
 ): CheckerLinks {
-    const params = { dn, historyid, subdomain, serviceid };
+    const params = { dn, subdomain, serviceid };
     return {
-        list: resolve(
-            "/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]/checkers",
-            params,
-        ),
+        list: resolve("/domains/[dn]/zone/[subdomain]/[serviceid]/checkers", params),
         checker: (checkerId) =>
-            resolve("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]/checkers/[checkerId]", {
+            resolve("/domains/[dn]/zone/[subdomain]/[serviceid]/checkers/[checkerId]", {
                 ...params,
                 checkerId,
             }),
         executions: (checkerId) =>
-            resolve(
-                "/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]/checkers/[checkerId]/executions",
-                { ...params, checkerId },
-            ),
+            resolve("/domains/[dn]/zone/[subdomain]/[serviceid]/checkers/[checkerId]/executions", {
+                ...params,
+                checkerId,
+            }),
         execution: (checkerId, execId) =>
             resolve(
-                "/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]/checkers/[checkerId]/executions/[execId]",
+                "/domains/[dn]/zone/[subdomain]/[serviceid]/checkers/[checkerId]/executions/[execId]",
                 { ...params, checkerId, execId },
             ),
-        back: resolve("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]", params),
+        back: resolve("/domains/[dn]/zone/[subdomain]/[serviceid]", params),
     };
 }
 
@@ -85,14 +81,18 @@ export function serviceCheckerLinks(
  */
 export function domainLinks() {
     return {
-        zone: (dn: string, historyid?: string) =>
-            resolve("/domains/[dn]/[[historyid]]", { dn, historyid }),
+        overview: (dn: string) => resolve("/domains/[dn]", { dn }),
+        subdomain: (dn: string, subdomain: string) =>
+            resolve("/domains/[dn]/zone/[subdomain]", { dn, subdomain }),
+        service: (dn: string, subdomain: string, serviceid: string) =>
+            resolve("/domains/[dn]/zone/[subdomain]/[serviceid]", { dn, subdomain, serviceid }),
         history: (dn: string) => resolve("/domains/[dn]/history", { dn }),
-        checks: (dn: string) => resolve("/domains/[dn]/checks", { dn }),
-        service: (dn: string, historyid: string, subdomain: string, serviceid: string) =>
-            resolve("/domains/[dn]/[[historyid]]/[subdomain]/[serviceid]", {
+        historySubdomain: (dn: string, zid: string, subdomain: string) =>
+            resolve("/domains/[dn]/history/[zid]/zone/[subdomain]", { dn, zid, subdomain }),
+        historyService: (dn: string, zid: string, subdomain: string, serviceid: string) =>
+            resolve("/domains/[dn]/history/[zid]/zone/[subdomain]/[serviceid]", {
                 dn,
-                historyid,
+                zid,
                 subdomain,
                 serviceid,
             }),
@@ -103,6 +103,8 @@ export function templateLinks() {
     return {
         list: resolve("/templates"),
         template: (tid: string) => resolve("/templates/[tid]", { tid }),
+        subdomain: (tid: string, subdomain: string) =>
+            resolve("/templates/[tid]/[subdomain]", { tid, subdomain }),
         service: (tid: string, subdomain: string, serviceid: string) =>
             resolve("/templates/[tid]/[subdomain]/[serviceid]", { tid, subdomain, serviceid }),
     };

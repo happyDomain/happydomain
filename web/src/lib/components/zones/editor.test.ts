@@ -33,9 +33,13 @@ vi.mock("$lib/api/zone", () => api);
 // Each app resolves the paths its own way: tell what the editor asks for.
 vi.mock("$links", () => ({
     domainLinks: () => ({
-        zone: (dn: string, historyid?: string) => `zone ${dn} ${historyid}`,
-        service: (dn: string, historyid: string, subdomain: string, serviceid: string) =>
-            `service ${dn} ${historyid} ${subdomain} ${serviceid}`,
+        subdomain: (dn: string, subdomain: string) => `subdomain ${dn} ${subdomain}`,
+        service: (dn: string, subdomain: string, serviceid: string) =>
+            `service ${dn} ${subdomain} ${serviceid}`,
+        historySubdomain: (dn: string, zid: string, subdomain: string) =>
+            `history ${zid} subdomain ${dn} ${subdomain}`,
+        historyService: (dn: string, zid: string, subdomain: string, serviceid: string) =>
+            `history ${zid} service ${dn} ${subdomain} ${serviceid}`,
     }),
 }));
 
@@ -71,11 +75,28 @@ describe("domainZoneEditor", () => {
         expect(editor.readOnly).toBe(false);
     });
 
-    it("links to the pages of the zone", () => {
+    it("links to the pages of the current zone, whatever the id of the zone changed", () => {
         const editor = domainZoneEditor(() => makeDomain({ id: "d/1" }));
 
-        expect(editor.zoneHref("z1")).toBe("zone d%2F1 z1");
-        expect(editor.serviceHref("z1", "", "new")).toBe("service d%2F1 z1 %40 new");
-        expect(editor.serviceHref("z1", "www", "s1")).toBe("service d%2F1 z1 www s1");
+        expect(editor.subdomainHref("z1", "")).toBe("subdomain d%2F1 %40");
+        expect(editor.subdomainHref("z2", "www")).toBe("subdomain d%2F1 www");
+        expect(editor.serviceHref("z1", "", "new")).toBe("service d%2F1 %40 new");
+        expect(editor.serviceHref("z1", "www", "s1")).toBe("service d%2F1 www s1");
+    });
+
+    it("shows a past version read-only, linking to its own pages", () => {
+        let version: string | undefined = "z/0";
+        const editor = domainZoneEditor(
+            () => makeDomain({ id: "d1" }),
+            () => version,
+        );
+
+        expect(editor.readOnly).toBe(true);
+        expect(editor.subdomainHref("z0", "www")).toBe("history z%2F0 subdomain d1 www");
+        expect(editor.serviceHref("z0", "", "s1")).toBe("history z%2F0 service d1 %40 s1");
+
+        version = undefined;
+        expect(editor.readOnly).toBe(false);
+        expect(editor.subdomainHref("z1", "www")).toBe("subdomain d1 www");
     });
 });

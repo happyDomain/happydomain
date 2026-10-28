@@ -99,7 +99,7 @@
         finished = true;
         await refreshDomains();
         goto(
-            resolve("/domains/[dn]/[[historyid]]", {
+            resolve("/domains/[dn]", {
                 dn: encodeURIComponent(
                     get(domains_idx)[data.domain.domain] ? data.domain.domain : data.domain.id,
                 ),

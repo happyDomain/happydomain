@@ -80,7 +80,8 @@ describe("templateZoneEditor", () => {
     it("links to the pages of the template", () => {
         const editor = templateZoneEditor(backend, () => false, vi.fn());
 
-        expect(editor.zoneHref("t1")).toBe("/templates/t1");
+        expect(editor.subdomainHref("t1", "")).toBe("/templates/t1/%40");
+        expect(editor.subdomainHref("t1", "www")).toBe("/templates/t1/www");
         expect(editor.serviceHref("t1", "", "new")).toBe("/templates/t1/%40/new");
         expect(editor.serviceHref("t1", "www", "s1")).toBe("/templates/t1/www/s1");
     });

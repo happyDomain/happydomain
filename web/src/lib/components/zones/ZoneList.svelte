@@ -154,7 +154,7 @@
     }
 
     function getDomainHref(domain: T): ResolvedPathname {
-        return domainLinks().zone(
+        return domainLinks().overview(
             encodeURIComponent($domains_idx[domain.domain] ? domain.domain : domain.id),
         );
     }
