@@ -19,18 +19,13 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import type { HappydnsApplyConfirm, HappydnsFieldHint, HappydnsUserSettings, HappydnsZoneView } from "$lib/api-base/types.gen";
+import type { HappydnsApplyConfirm, HappydnsFieldHint, HappydnsUserSettings } from "$lib/api-base/types.gen";
 
 export type FieldHint = HappydnsFieldHint;
 export const FieldHintHide: FieldHint = 0;
 export const FieldHintTooltip: FieldHint = 1;
 export const FieldHintFocused: FieldHint = 2;
 export const FieldHintAlways: FieldHint = 3;
-
-export type ZoneView = HappydnsZoneView;
-export const ZoneViewGrid: ZoneView = 0;
-export const ZoneViewList: ZoneView = 1;
-export const ZoneViewRecords: ZoneView = 2;
 
 export type ApplyConfirm = HappydnsApplyConfirm;
 export const ApplyConfirmUnexpected: ApplyConfirm = 0;

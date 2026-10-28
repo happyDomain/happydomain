@@ -25,7 +25,7 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     
-    import { Button, ButtonGroup, Icon, Input, Spinner } from "@sveltestrap/sveltestrap";
+    import { Button, Input, Spinner } from "@sveltestrap/sveltestrap";
 
     import { saveAccountSettings } from "$lib/api/user";
     import type { UserSettings } from "$lib/model/usersettings";
@@ -126,50 +126,6 @@
     </div>
 
     <div class="list-group-item">
-        <div class="d-flex flex-column">
-            <div class="mb-3">
-                <h5 class="mb-1">{$t("settings.zoneview.title")}</h5>
-                <p class="mb-0 text-muted small">{$t("settings.zoneview.description")}</p>
-            </div>
-            <ButtonGroup class="pt-2 pb-4" id="zoneview">
-                <Button
-                    type="button"
-                    color="secondary"
-                    outline
-                    active={settings.zoneview === 0}
-                    aria-pressed={settings.zoneview === 0}
-                    on:click={() => (settings.zoneview = 0)}
-                >
-                    <Icon name="grid-fill" aria-hidden="true" /><br />
-                    {$t("settings.zoneview.grid")}
-                </Button>
-                <Button
-                    type="button"
-                    color="secondary"
-                    outline
-                    active={settings.zoneview === 1}
-                    aria-pressed={settings.zoneview === 1}
-                    on:click={() => (settings.zoneview = 1)}
-                >
-                    <Icon name="list-ul" aria-hidden="true" /><br />
-                    {$t("settings.zoneview.list")}
-                </Button>
-                <Button
-                    type="button"
-                    color="secondary"
-                    outline
-                    active={settings.zoneview === 2}
-                    aria-pressed={settings.zoneview === 2}
-                    on:click={() => (settings.zoneview = 2)}
-                >
-                    <Icon name="menu-button-wide-fill" aria-hidden="true" /><br />
-                    {$t("settings.zoneview.records")}
-                </Button>
-            </ButtonGroup>
-        </div>
-    </div>
-
-    <div class="list-group-item">
         <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-start align-items-md-center gap-3">
             <label for="showrrtypes" class="flex-grow-1 cursor-pointer mb-0">
                 <div class="h5 mb-1">{$t("settings.showrrtypes-title")}</div>
@@ -211,12 +167,5 @@
         .settings-input {
             width: 200px;
         }
-    }
-
-    /* The chosen view reads as a selected row: a green tint, not a fill. */
-    #zoneview :global(.btn.active) {
-        --bs-btn-active-bg: var(--hd-bg-tint);
-        --bs-btn-active-border-color: var(--hd-accent-line);
-        --bs-btn-active-color: var(--hd-accent-text);
     }
 </style>

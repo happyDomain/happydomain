@@ -1727,13 +1727,6 @@ footer a:focus-visible,
     background: var(--hd-bg-hover);
 }
 
-.new-service-card .card-hover {
-    opacity: 0.5;
-}
-.new-service-card .card-hover:hover {
-    opacity: 0.8;
-}
-
 // ── List group: the active row is a tint, not a saturated slab ─────────────
 .list-group {
     --bs-list-group-bg: var(--hd-bg-canvas);

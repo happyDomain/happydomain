@@ -26,18 +26,10 @@ import ()
 type FieldHint uint8
 
 const (
-	FieldHintHide    FieldHint = iota
+	FieldHintHide FieldHint = iota
 	FieldHintTooltip
 	FieldHintFocused
 	FieldHintAlways
-)
-
-type ZoneView uint8
-
-const (
-	ZoneViewGrid    ZoneView = iota
-	ZoneViewList
-	ZoneViewRecords
 )
 
 type ApplyConfirm uint8
@@ -59,9 +51,6 @@ type UserSettings struct {
 	// FieldHint stores the way form hints are displayed.
 	FieldHint FieldHint `json:"fieldhint"`
 
-	// ZoneView keeps the view of the zone wanted by the user.
-	ZoneView ZoneView `json:"zoneview"`
-
 	// ApplyConfirm stores when to show a confirmation step before applying changes.
 	ApplyConfirm ApplyConfirm `json:"applyconfirm"`
 
@@ -74,7 +63,6 @@ func DefaultUserSettings() *UserSettings {
 		Language:     "en",
 		Newsletter:   false,
 		FieldHint:    FieldHintFocused,
-		ZoneView:     ZoneViewGrid,
 		ApplyConfirm: ApplyConfirmUnexpected,
 		ShowRRTypes:  false,
 	}

@@ -118,7 +118,6 @@
         "give-explicit-name": "Geben Sie einen aussagekräftigen Namen an, um diesen Dienst leicht zu finden.",
         "history": "Verlauf",
         "list": "Importierbare Domains auflisten",
-        "n-aliases": "{{count:lt; 2:{{count}} Alias; default:{{count}} Aliasse}}",
         "n-services": "{{count:lt; 2:{{count}} Dienst; default:{{count}} Dienste}}",
         "please-fill-fields": "Bitte füllen Sie die folgenden Felder aus:",
         "removal": "Domain-Entfernung bestätigen",
@@ -373,7 +372,6 @@
         "update": "Diesen Dienst aktualisieren",
         "form-new": "Einen neuen Dienst zu {{domain}} hinzufügen",
         "new": "Neuer Dienst",
-        "new-description": "Klicken Sie hier, um dieser Subdomain einen neuen Dienst hinzuzufügen.",
         "default-ttl": "Standard-TTL",
         "ttl": "TTL",
         "ttl-long": "Time-To-Live",
@@ -465,14 +463,7 @@
         "showrrtypes": "Ressourcentyp anzeigen, der mit Diensten verbunden ist (für Benutzer, die mit DNS vertraut sind)",
         "success": "Genießen Sie HappyDomain weiterhin.",
         "success-change": "Ihre Einstellungen wurden gespeichert.",
-        "title": "Einstellungen",
-        "zoneview": {
-            "grid": "Rasteransicht (am einfachsten)",
-            "list": "Listenansicht (am schnellsten)",
-            "records": "Liste mit Einträgen (fortgeschritten)",
-            "title": "Zonenlayout",
-            "description": "Wählen Sie aus, wie Sie Ihre Domainzonen anzeigen möchten"
-        }
+        "title": "Einstellungen"
     },
     "record": {
         "A": "IPv4-Adresse",

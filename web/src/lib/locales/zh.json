@@ -131,7 +131,6 @@
         "give-explicit-name": "给服务起个易懂的名字，方便查找。",
         "history": "历史记录",
         "list": "可导入域名列表",
-        "n-aliases": "{{count:lt; 2:{{count}} 个别名; default:{{count}} 个别名}}",
         "n-services": "{{count:lt; 2:{{count}} 个服务; default:{{count}} 个服务}}",
         "filtered-no-result": "筛选后没有符合条件的域名。",
         "please-fill-fields": "请填写以下字段：",
@@ -405,7 +404,6 @@
         "update": "更新服务",
         "form-new": "为 {{domain}} 添加服务",
         "new": "新服务",
-        "new-description": "点击此处添加服务。",
         "default-ttl": "默认 TTL",
         "ttl": "TTL",
         "ttl-long": "生存时间",
@@ -499,14 +497,7 @@
         "showrrtypes": "显示与服务关联的资源类型（适用于熟悉 DNS 的用户）",
         "success": "继续享用 HappyDomain。",
         "success-change": "您的设置已保存。",
-        "title": "设置",
-        "zoneview": {
-            "grid": "网格视图（最简单）",
-            "list": "列表视图（最快）",
-            "records": "带记录的列表（高级）",
-            "title": "区域视图布局",
-            "description": "选择您想如何显示您的域名区域"
-        }
+        "title": "设置"
     },
     "record": {
         "A": "IPv4 地址",

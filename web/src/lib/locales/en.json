@@ -120,6 +120,7 @@
         "add-a-subdomain": "Add a subdomain",
         "read-only-edit": "This provider is read-only: HappyDomain cannot change this zone.",
         "add-a-service": "Add a service",
+        "add-a-service-to": "Add a service to",
         "add-alias": "Add alias",
         "add-an-alias": "Add an alias to {{domain}}",
         "add-title": "New Domain",
@@ -158,9 +159,7 @@
         "commit-msg": "What's changed?",
         "create-new-key": "Create new {{id}} key",
         "discard": "Discard",
-        "service-details": "Service details",
         "give-explicit-name": "Give an explicit name in order to easily find this service.",
-        "n-aliases": "{{count:lt; 2:{{count}} alias; default:{{count}} aliases}}",
         "n-services": "{{count:lt; 2:{{count}} service; default:{{count}} services}}",
         "n-records": "{{count:lt; 2:{{count}} record; default:{{count}} records}}",
         "filtered-no-result": "There is no domain with those filters.",
@@ -724,6 +723,7 @@
         "success-change": "Your account's password has been changed with success."
     },
     "service": {
+        "actions": "Service actions",
         "add": "Add service",
         "all": "All",
         "delete": "Delete this service",
@@ -731,7 +731,6 @@
         "update": "Update this service",
         "form-new": "Add a new service to {{domain}}",
         "new": "New service",
-        "new-description": "Click here to add a new service to this subdomain.",
         "default-ttl": "Default TTL",
         "ttl": "TTL",
         "ttl-long": "Time-To-Live",
@@ -969,13 +968,6 @@
             "unexpected": "Ask on unexpected differences",
             "always": "Always ask",
             "never": "Never ask, overwrite on publish"
-        },
-        "zoneview": {
-            "grid": "Grid view (easiest)",
-            "list": "List view (fastest)",
-            "records": "List with records (advanced)",
-            "title": "Zone view layout",
-            "description": "Choose how you want to display your domain zones"
         }
     },
     "record": {

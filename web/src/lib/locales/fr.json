@@ -125,6 +125,7 @@
         "add-a-subdomain": "Ajouter un sous-domaine",
         "read-only-edit": "Cet hébergeur est en lecture seule : HappyDomain ne peut pas modifier cette zone.",
         "add-a-service": "Ajouter un service",
+        "add-a-service-to": "Ajouter un service à",
         "add-alias": "Ajout d'alias",
         "add-an-alias": "Ajouter un alias vers {{domain}}",
         "add-title": "Nouveau domaine",
@@ -157,11 +158,9 @@
         "commit-msg": "Qu'est-ce qui a changé ?",
         "create-new-key": "Créer une nouvelle clé {{id}}",
         "discard": "Supprimer",
-        "service-details": "Détails du service",
         "give-explicit-name": "Donnez un nom explicite afin de trouver facilement ce service.",
         "history": "Historique",
         "list": "Liste des domaines importables",
-        "n-aliases": "{{count:lt; 2:{{count}} alias; default:{{count}} alias}}",
         "n-services": "{{count:lt; 2:{{count}} service; default:{{count}} services}}",
         "n-records": "{{count:lt; 2:{{count}} enregistrement; default:{{count}} enregistrements}}",
         "please-fill-fields": "Veuillez remplir les champs suivants :",
@@ -733,6 +732,7 @@
         "success-change": "Le mot de passe de votre compte a été modifié avec succès."
     },
     "service": {
+        "actions": "Actions sur le service",
         "add": "Ajout d'un service",
         "all": "Tout",
         "delete": "Supprimer ce service",
@@ -740,7 +740,6 @@
         "update": "Mettre à jour ce service",
         "form-new": "Ajout d'un service sur {{domain}}",
         "new": "Nouveau service",
-        "new-description": "Cliquez ici pour ajouter un nouveau service à ce sous-domaine.",
         "default-ttl": "TTL par défaut",
         "ttl": "TTL",
         "ttl-long": "Time-To-Live",
@@ -821,13 +820,6 @@
             "unexpected": "Demander en cas de différences inattendues",
             "always": "Toujours demander",
             "never": "Ne jamais demander, écraser lors de la publication"
-        },
-        "zoneview": {
-            "grid": "Vue en grille (la plus lisible)",
-            "list": "Vue en liste (la plus rapide)",
-            "records": "Liste avec les enregistrements (avancés)",
-            "title": "Disposition de la vue des zones",
-            "description": "Choisissez comment vous voulez afficher vos zones de domaine"
         }
     },
     "record": {

@@ -42,12 +42,12 @@
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
-    import { goto, invalidateAll } from "$app/navigation";
+    import { goto } from "$app/navigation";
 
     import { listScopedCheckers } from "$lib/api/checkers";
     import { getServiceSpec } from "$lib/api/service_specs";
     import { useZoneEditor } from "./editor";
-    import { notifyServiceChange, zoneWasForked } from "$lib/stores/zonefeedback";
+    import { deleteService as doDeleteService, isDeletable, saveService } from "./serviceActions";
     import ServiceBadges from "./ServiceBadges.svelte";
     import PropagationStatus from "$lib/components/services/PropagationStatus.svelte";
     import RecordLine from "$lib/components/services/RecordLine.svelte";
@@ -55,11 +55,9 @@
     import type { Domain } from "$lib/model/domain";
     import DurationInput from "$lib/components/inputs/Duration.svelte";
     import { checkers } from "$lib/stores/checkers";
-    import { refreshDomains } from "$lib/stores/domains";
     import { isReadOnlyProvider, providers_idx } from "$lib/stores/providers";
     import { serviceDescription, serviceName } from "$lib/services/infos";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
-    import { thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
     import { getStatusColor, getStatusI18nKey } from "$lib/utils";
     import { trapFocus } from "$lib/utils/focustrap";
@@ -113,26 +111,13 @@
     let deleteInProgress = $state(false);
 
     function deleteService() {
-        if (!service || !$thisZone) return;
+        if (!service) return;
         deleteInProgress = true;
-        const previousZone = $thisZone;
-        const svctype = service._svctype;
-        const dn = service._domain;
-        editor.deleteService($thisZone.id, service).then(
-            (z) => {
+        doDeleteService(editor, service, selectedHistory).then(
+            () => {
                 deleteInProgress = false;
                 isOpen = false;
                 service = {} as ServiceWithValue;
-                notifyServiceChange("deleted", {
-                    svctype,
-                    dn,
-                    forked: zoneWasForked(previousZone, z),
-                });
-                if (z.id !== selectedHistory) {
-                    refreshDomains().then(() => invalidateAll());
-                } else {
-                    thisZone.set(z);
-                }
             },
             (err) => {
                 deleteInProgress = false;
@@ -143,12 +128,7 @@
 
     let readOnly = $derived(editor.readOnly || isReadOnlyProvider($providers_idx, domain.id_provider));
 
-    let canDelete = $derived(
-        !readOnly &&
-            !!service?._id &&
-            service._svctype !== "abstract.Origin" &&
-            service._svctype !== "abstract.NSOnlyOrigin",
-    );
+    let canDelete = $derived(!readOnly && !!service && isDeletable(service));
 
     const zoneId = $derived(selectedHistory || domain.zone_history?.[0] || "");
     const subdomain = $derived(service._domain || "@");
@@ -170,21 +150,10 @@
     let ttlSaveInProgress = $state(false);
 
     function saveTtl() {
-        if (!service || !$thisZone) return;
+        if (!service) return;
         ttlSaveInProgress = true;
-        const previousZone = $thisZone;
-        const svctype = service._svctype;
-        const dn = service._domain;
-        const serviceId = service._id;
-        editor.updateService($thisZone.id, service).then(
-            (z) => {
-                thisZone.set(z);
-                notifyServiceChange("updated", {
-                    svctype,
-                    dn,
-                    serviceId,
-                    forked: zoneWasForked(previousZone, z),
-                });
+        saveService(editor, service).then(
+            () => {
                 setTimeout(() => {
                     ttlSaveInProgress = false;
                 }, 500);

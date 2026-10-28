@@ -102,7 +102,6 @@ func Collect(
 	data.Database.Providers = map[string]int{}
 	data.UserSettings.Languages = map[string]int{}
 	data.UserSettings.FieldHints = map[int]int{}
-	data.UserSettings.ZoneView = map[int]int{}
 	for users.Next() {
 		data.Database.NbUsers++
 
@@ -115,7 +114,6 @@ func Collect(
 			data.UserSettings.Newsletter++
 		}
 		data.UserSettings.FieldHints[int(user.Settings.FieldHint)]++
-		data.UserSettings.ZoneView[int(user.Settings.ZoneView)]++
 
 		if providers, err := store.ListProviders(user); err == nil {
 			for _, provider := range providers {

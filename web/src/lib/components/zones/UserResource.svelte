@@ -22,21 +22,15 @@
 -->
 
 <script lang="ts">
-    import { goto } from "$app/navigation";
-    import { getServiceSpec } from "$lib/api/service_specs";
+    import { Icon } from "@sveltestrap/sveltestrap";
+
     import ServiceCard from "./ServiceCard.svelte";
-    import ServiceBadges from "./ServiceBadges.svelte";
     import { useZoneEditor } from "./editor";
-    import Service from "$lib/components/services/Service.svelte";
-    import RecordText from "$lib/components/records/RecordText.svelte";
-    import { controls as ctrlRecord } from "$lib/components/modals/Record.svelte";
+    import { controls as ctrlNewService } from "$lib/components/services/NewServicePath.svelte";
+    import { fqdn } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { ServiceWithValue } from "$lib/model/service.svelte";
-    import { ZoneViewList, ZoneViewRecords } from "$lib/model/usersettings";
-    import { serviceDescription, serviceName } from "$lib/services/infos";
     import { isReadOnlyProvider, providers_idx } from "$lib/stores/providers";
-    import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
-        import { userSession } from "$lib/stores/usersession";
     import { t } from "$lib/translations";
     import { highlightTarget } from "$lib/utils/zone-highlight";
 
@@ -51,121 +45,43 @@
 
     const editor = useZoneEditor(() => origin);
 
-    let readOnly = $derived(editor.readOnly || isReadOnlyProvider($providers_idx, origin.id_provider));
-
-    function openService(service: ServiceWithValue) {
-        const subdomain = service._domain === "@" ? "" : service._domain;
-        // The editor resolves the path.
-        // eslint-disable-next-line svelte/no-navigation-without-resolve
-        goto(editor.serviceHref(zoneId, subdomain, service._id!));
-    }
+    let readOnly = $derived(
+        editor.readOnly || isReadOnlyProvider($providers_idx, origin.id_provider),
+    );
 </script>
 
-{#if $userSession.settings?.zoneview === ZoneViewRecords || $userSession.settings?.zoneview === ZoneViewList}
-    {#if !services || services.length == 0}
-        <div class="d-flex justify-content-center align-items-center">
-            {$t("common.no-content")}
+<div class="d-flex flex-column gap-3 pb-3">
+    {#each services as service, i (service._id ?? i)}
+        <div
+            id={service._id ? `svc-${service._id}` : undefined}
+            use:highlightTarget={{ dn, serviceId: service._id }}
+        >
+            <ServiceCard {dn} {origin} {service} {zoneId} />
         </div>
-    {:else}
-        <table class="table table-bordered table-hover table-striped" style="table-layout: fixed;">
-            <tbody>
-                {#each services as service}
-                    {#if $userSession.settings?.zoneview === ZoneViewRecords}
-                        {#await getServiceSpec(service._svctype)}
-                            <tr>
-                                <td class="text-center">
-                                    <div
-                                        class="spinner-border spinner-border-sm me-2"
-                                        role="status"
-                                    >
-                                        <span class="visually-hidden">{$t("common.loading")}</span>
-                                    </div>
-                                    {$t("common.loading")}
-                                </td>
-                            </tr>
-                        {:then specs}
-                            <Service {specs} bind:value={service.Service}>
-                                {#snippet aservice(_type: string, rr: any)}
-                                    {#if rr}
-                                        <tr
-                                            id={service._id ? `svc-${service._id}` : undefined}
-                                            use:highlightTarget={{ dn, serviceId: service._id }}
-                                        >
-                                            <td
-                                                class="d-flex justify-content-between"
-                                                style="cursor: pointer"
-                                                onclick={() => ctrlRecord.Open(rr, service._domain)}
-                                            >
-                                                <RecordText {dn} {origin} {rr} />
-                                                {#if $servicesSpecsLoaded}
-                                                    <strong
-                                                        class="text-muted"
-                                                        style="white-space: nowrap"
-                                                    >
-                                                        {$serviceName($servicesSpecs[service._svctype], service._svctype)}
-                                                    </strong>
-                                                {/if}
-                                            </td>
-                                        </tr>
-                                    {/if}
-                                {/snippet}
-                            </Service>
-                        {/await}
-                    {:else if $servicesSpecsLoaded}
-                        <tr
-                            id={service._id ? `svc-${service._id}` : undefined}
-                            use:highlightTarget={{ dn, serviceId: service._id }}
-                        >
-                            <td
-                                class="d-flex justify-content-between gap-2"
-                                style="cursor: pointer"
-                                onclick={() => openService(service)}
-                            >
-                                <div style="min-width: 0" class="d-flex align-items-center gap-1">
-                                    <strong
-                                        title={$serviceDescription(
-                                            $servicesSpecs[service._svctype],
-                                            service._svctype,
-                                        ) || null}
-                                        style="white-space: nowrap"
-                                    >
-                                        {$serviceName($servicesSpecs[service._svctype], service._svctype)}
-                                    </strong>
-                                    {#if service._comment}
-                                        <span
-                                            class="flex-shrink-1 fst-italic text-muted"
-                                            title={service._comment}
-                                            style="min-width: 0"
-                                        >
-                                            {service._comment}
-                                        </span>
-                                    {/if}
-                                </div>
-                                <ServiceBadges {service} />
-                            </td>
-                        </tr>
-                    {/if}
-                {/each}
-            </tbody>
-        </table>
+    {/each}
+    {#if !readOnly}
+        <button
+            type="button"
+            class="new-service-card btn d-flex align-items-center justify-content-center gap-2 py-3 small"
+            onclick={() => ctrlNewService.Open(dn)}
+        >
+            <Icon name="plus-square" />
+            {$t("domains.add-a-service-to")}
+            <span class="font-monospace">{fqdn(dn, origin.domain)}</span>
+        </button>
     {/if}
-{:else}
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 pb-3 px-1">
-        {#each services as service}
-            <div
-                class="col mb-2 mb-md-3 px-2"
-                id={service._id ? `svc-${service._id}` : undefined}
-                use:highlightTarget={{ dn, serviceId: service._id }}
-            >
-                {#key service}
-                    <ServiceCard {dn} {service} />
-                {/key}
-            </div>
-        {/each}
-        {#if !readOnly}
-            <div class="col mb-2 mb-md-3 px-2 new-service-card">
-                <ServiceCard {dn} />
-            </div>
-        {/if}
-    </div>
-{/if}
+</div>
+
+<style>
+    .new-service-card {
+        --bs-btn-color: var(--bs-secondary-color);
+        --bs-btn-border-color: var(--bs-border-color);
+        --bs-btn-hover-color: var(--bs-body-color);
+        --bs-btn-hover-bg: var(--bs-tertiary-bg);
+        --bs-btn-hover-border-color: var(--bs-secondary-color);
+        --bs-btn-active-color: var(--bs-body-color);
+        --bs-btn-active-bg: var(--bs-secondary-bg);
+        --bs-btn-active-border-color: var(--bs-secondary-color);
+        border-style: dashed;
+    }
+</style>

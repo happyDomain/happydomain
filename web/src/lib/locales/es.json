@@ -118,7 +118,6 @@
         "give-explicit-name": "Da un nombre explícito para encontrar fácilmente este servicio.",
         "history": "Historial",
         "list": "Listar dominios importables",
-        "n-aliases": "{{count:lt; 2:{{count}} alias; default:{{count}} alias}}",
         "n-services": "{{count:lt; 2:{{count}} servicio; default:{{count}} servicios}}",
         "please-fill-fields": "Por favor completa los siguientes campos:",
         "removal": "Confirmar Eliminación de Dominio",
@@ -373,7 +372,6 @@
         "update": "Actualizar este servicio",
         "form-new": "Añadir un nuevo servicio a {{domain}}",
         "new": "Nuevo servicio",
-        "new-description": "Haz clic aquí para añadir un nuevo servicio a este subdominio.",
         "default-ttl": "TTL predeterminado",
         "ttl": "TTL",
         "ttl-long": "Tiempo de vida",
@@ -465,14 +463,7 @@
         "showrrtypes": "Mostrar tipo de recurso asociado con servicios (para usuarios familiarizados con DNS)",
         "success": "Continúa disfrutando de HappyDomain.",
         "success-change": "Tu configuración ha sido guardada.",
-        "title": "Configuración",
-        "zoneview": {
-            "grid": "Vista de cuadrícula (más fácil)",
-            "list": "Vista de lista (más rápida)",
-            "records": "Lista con registros (avanzado)",
-            "title": "Diseño de vista de zona",
-            "description": "Elige cómo quieres mostrar tus zonas de dominio"
-        }
+        "title": "Configuración"
     },
     "record": {
         "A": "Dirección IPv4",

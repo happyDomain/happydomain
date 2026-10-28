@@ -24,7 +24,6 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import type { Domain } from "$lib/model/domain";
 import type { User } from "$lib/model/user";
-import { ZoneViewGrid } from "$lib/model/usersettings";
 import type { Zone } from "$lib/model/zone";
 import { thisZone } from "$lib/stores/thiszone";
 import { userSession } from "$lib/stores/usersession";
@@ -43,7 +42,7 @@ afterEach(() => {
 });
 
 function setup(partial: boolean) {
-    userSession.set({ settings: { zoneview: ZoneViewGrid } } as unknown as User);
+    userSession.set({ settings: {} } as unknown as User);
     thisZone.set(makeZone({ id: "z1", partial, services: {} } as unknown as Partial<Zone>));
     return {
         domain: { id: "d1", domain: "example.com.", zone_history: ["z1"] } as unknown as Domain,

@@ -132,7 +132,6 @@
         "give-explicit-name": "Donu eksplicitan nomon por facile trovi ĉi tiun servon.",
         "history": "Historio",
         "list": "Listo de importeblaj domajnoj",
-        "n-aliases": "{{count:lt; 2:{{count}} alias; default:{{count}} aliasoj}}",
         "n-services": "{{count:lt; 2:{{count}} servo; default:{{count}} servoj}}",
         "filtered-no-result": "Ne estas domajno kun ĉi tiuj filtriloj.",
         "please-fill-fields": "Bonvolu plenigi la jenajn kampojn:",
@@ -370,7 +369,6 @@
         "update": "Ĝisdatigi servon",
         "form-new": "Aldoni servon por {{domain}}",
         "new": "Nova servo",
-        "new-description": "Klaku ĉi tie por aldoni servon.",
         "default-ttl": "Defaŭlta TTL",
         "ttl": "TTL",
         "ttl-long": "Tempo Por Vivi",
@@ -464,14 +462,7 @@
         "showrrtypes": "Montri resursajn tipojn asociitajn kun servo (por spertuloj)",
         "success": "Ĝuu HappyDomain plu.",
         "success-change": "Viaj agordoj estis konservitaj.",
-        "title": "Agordoj",
-        "zoneview": {
-            "grid": "Krada vido (plej simpla)",
-            "list": "Lista vido (plej rapida)",
-            "records": "Listo kun rikordoj (spertula)",
-            "title": "Zona vido",
-            "description": "Elektu kiel vi volas montri vian domajnan zonon"
-        }
+        "title": "Agordoj"
     },
     "record": {
         "A": "IPv4-adreso",

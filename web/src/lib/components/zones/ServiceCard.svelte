@@ -23,105 +23,291 @@
 
 <script lang="ts">
     import {
-        Card,
-        CardBody,
-        CardText,
-        CardTitle,
-        CardSubtitle,
+        Dropdown,
+        DropdownItem,
+        DropdownMenu,
+        DropdownToggle,
         Icon,
-        Spinner,
+        InputGroup,
         Progress,
+        Spinner,
     } from "@sveltestrap/sveltestrap";
+
+    import { goto } from "$app/navigation";
 
     import ServiceBadges from "./ServiceBadges.svelte";
     import { controls as ctrlServiceDetails } from "./ServiceDetailsOffcanvas.svelte";
-    import { controls as ctrlServicePath } from "$lib/components/services/NewServicePath.svelte";
+    import { useZoneEditor } from "./editor";
+    import { deleteService, isDeletable, saveService } from "./serviceActions";
+    import { getServiceSpec } from "$lib/api/service_specs";
+    import DurationInput from "$lib/components/inputs/Duration.svelte";
+    import { controls as ctrlRecord } from "$lib/components/modals/Record.svelte";
+    import RecordText from "$lib/components/records/RecordText.svelte";
+    import Service from "$lib/components/services/Service.svelte";
+    import PropagationCountdown from "$lib/components/services/PropagationCountdown.svelte";
+    import type { dnsRR } from "$lib/dns_rr";
     import type { Domain } from "$lib/model/domain";
     import type { ServiceWithValue } from "$lib/model/service.svelte";
     import { serviceDescription, serviceName } from "$lib/services/infos";
+    import { checkers } from "$lib/stores/checkers";
+    import { checksBySubdomain } from "$lib/stores/domainchecks";
+    import { isReadOnlyProvider, providers_idx } from "$lib/stores/providers";
     import { servicesSpecs, servicesSpecsLoaded } from "$lib/stores/services";
-    import { thisZone } from "$lib/stores/thiszone";
     import { t } from "$lib/translations";
-    import { getStatusColor, getStatusIcon } from "$lib/utils";
-    import PropagationCountdown from "$lib/components/services/PropagationCountdown.svelte";
+    import { getStatusColor } from "$lib/utils";
 
     interface Props {
         dn: string;
-        service?: ServiceWithValue;
+        origin: Domain;
+        service: ServiceWithValue;
+        // The zone shown, the service belongs to.
+        zoneId: string;
     }
 
-    let { dn, service }: Props = $props();
+    let { dn, origin, service, zoneId }: Props = $props();
+
+    const editor = useZoneEditor(() => origin);
+
+    let readOnly = $derived(
+        editor.readOnly || isReadOnlyProvider($providers_idx, origin.id_provider),
+    );
+    let canDelete = $derived(!readOnly && isDeletable(service));
+
+    let subdomain = $derived(service._domain === "@" ? "" : service._domain);
+    let href = $derived(
+        service._id ? editor.serviceHref(zoneId, subdomain, service._id) : undefined,
+    );
+
+    // The checks of the service; they are about the live zone.
+    let checks = $derived(
+        !editor.readOnly && service._id && $checksBySubdomain?.domainId === origin.id
+            ? ($checksBySubdomain.sections.get(subdomain)?.items ?? []).filter(
+                  (item) => item.target?.serviceId === service._id,
+              )
+            : [],
+    );
 
     // Will be changed by PropagationCountdown
     let isPropagating = $state(true);
 
-    function openService() {
-        if (service) {
-            ctrlServiceDetails.Open(service);
-        } else {
-            ctrlServicePath.Open(dn);
-        }
+    let menuOpen = $state(false);
+    let ttlSaveInProgress = $state(false);
+    let deleteInProgress = $state(false);
+
+    function saveTtl() {
+        ttlSaveInProgress = true;
+        saveService(editor, service).then(
+            () => {
+                setTimeout(() => {
+                    ttlSaveInProgress = false;
+                }, 500);
+            },
+            (err) => {
+                ttlSaveInProgress = false;
+                throw err;
+            },
+        );
+    }
+
+    function removeService() {
+        if (deleteInProgress) return;
+        deleteInProgress = true;
+        deleteService(editor, service, zoneId).then(
+            () => {
+                deleteInProgress = false;
+            },
+            (err) => {
+                deleteInProgress = false;
+                throw err;
+            },
+        );
+    }
+
+    function editService() {
+        // The editor resolves the path.
+        // eslint-disable-next-line svelte/no-navigation-without-resolve
+        if (!readOnly && href) goto(href);
     }
 </script>
 
-<Card
-    class="card-hover h-100"
-    style={"cursor: pointer; " + (!service ? "border-style: dashed; border-width: 2px" : "")}
-    on:click={openService}
->
-    {#if !$servicesSpecsLoaded}
-        <div class="d-flex justify-content-center">
-            <Spinner color="primary" />
-        </div>
-    {:else}
-        <CardBody
-            title={service && $servicesSpecs[service._svctype]
-                ? $serviceName($servicesSpecs[service._svctype])
-                : undefined}
-        >
-            <div class="d-flex justify-content-between gap-1 mb-2">
-                <CardTitle class="text-truncate mb-0">
-                    {#if service}
-                        {$serviceName($servicesSpecs[service._svctype], service._svctype)}
-                    {:else}
-                        <Icon name="plus-circle" /> {$t("service.new")}
-                    {/if}
-                </CardTitle>
-                {#if service?._id && $thisZone?.services_check_status?.[service._id] !== undefined}
-                    <span class={"text-" + getStatusColor($thisZone.services_check_status![service._id])}>
-                        <Icon name={getStatusIcon($thisZone.services_check_status![service._id])} />
-                    </span>
-                {:else if service?._propagated_at && isPropagating}
-                    <Progress
-                        class="rounded"
-                        barClassName="px-2 text-end"
-                        value={100}
-                        color="primary"
-                        striped
-                        animated
-                    >
-                        <PropagationCountdown
-                            bind:isPropagating
-                            propagatedAt={service?._propagated_at}
-                            localeString="service.propagating"
-                        />
-                    </Progress>
-                {:else}
-                    <ServiceBadges {service} />
-                {/if}
+<!-- Each card stacks its own layers; with its menu open, it goes over the next ones. -->
+<article class={["service-card card position-relative", menuOpen ? "z-2" : "z-1"]}>
+    <header class="service-head card-body d-flex align-items-start gap-3 pb-2">
+        <div class="flex-fill min-w-0">
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                <h3 class="h6 fw-semibold mb-0">
+                    <a {href} class="stretched-link link-body-emphasis text-decoration-none">
+                        {#if $servicesSpecsLoaded}
+                            {$serviceName($servicesSpecs[service._svctype], service._svctype)}
+                        {:else}
+                            {service._svctype}
+                        {/if}
+                    </a>
+                </h3>
+                <ServiceBadges {service} />
             </div>
-            <CardSubtitle class="mb-2 text-muted fst-italic">
-                {#if service}
+            {#if $servicesSpecsLoaded}
+                <p class="small text-body-secondary mb-0">
                     {$serviceDescription($servicesSpecs[service._svctype], service._svctype)}
-                {:else}
-                    {$t("service.new-description")}
-                {/if}
-            </CardSubtitle>
-            {#if service && service._comment}
-                <CardText style="font-size: 90%" class="text-truncate">
-                    {service._comment}
-                </CardText>
+                </p>
             {/if}
-        </CardBody>
-    {/if}
-</Card>
+            {#if service._comment}
+                <p
+                    class="small text-body-secondary fst-italic text-truncate mb-0"
+                    title={service._comment}
+                >
+                    {service._comment}
+                </p>
+            {/if}
+        </div>
+        <!-- Above the link stretched over the card, and the records with their menu. -->
+        <div class="d-flex align-items-center gap-2 flex-shrink-0 position-relative z-3">
+            {#if service._propagated_at && isPropagating}
+                <Progress
+                    class="rounded flex-shrink-0"
+                    style="width: 10rem"
+                    barClassName="px-2 text-end"
+                    value={100}
+                    color="primary"
+                    striped
+                    animated
+                >
+                    <PropagationCountdown
+                        bind:isPropagating
+                        propagatedAt={service._propagated_at}
+                        localeString="service.propagating"
+                    />
+                </Progress>
+            {/if}
+            {#if checks.length}
+                <button
+                    type="button"
+                    class="btn btn-sm btn-light rounded-pill d-inline-flex align-items-center gap-1 border"
+                    aria-label={$t("checkers.service-checks")}
+                    title={$t("checkers.service-checks")}
+                    onclick={() => ctrlServiceDetails.Open(service)}
+                >
+                    {#each checks as check (check.status.id)}
+                        <span
+                            class="check-dot d-inline-block p-1 rounded-circle bg-{getStatusColor(
+                                check.status.latestExecution?.result?.status,
+                            )}"
+                            title={$checkers?.[check.status.id ?? ""]?.name ??
+                                check.status.name ??
+                                check.status.id}
+                        ></span>
+                    {/each}
+                </button>
+            {/if}
+            <Dropdown size="sm" autoClose="outside" bind:isOpen={menuOpen}>
+                <DropdownToggle
+                    color="secondary"
+                    outline
+                    size="sm"
+                    title={$t("service.actions")}
+                    aria-label={$t("service.actions")}
+                >
+                    ···
+                </DropdownToggle>
+                <DropdownMenu end style="width: 16rem">
+                    {#if service._id}
+                        <div class="px-3 py-1">
+                            <label
+                                for={`svc_ttl_${service._id}`}
+                                title={$t("service.ttl-long")}
+                                class="form-label d-flex align-items-center gap-2 small text-body-secondary mb-1"
+                            >
+                                {$t("service.default-ttl")}
+                                {#if ttlSaveInProgress}
+                                    <Spinner size="sm" />
+                                {/if}
+                            </label>
+                            <InputGroup size="sm">
+                                <DurationInput
+                                    id={`svc_ttl_${service._id}`}
+                                    title={readOnly
+                                        ? $t("domains.read-only-edit")
+                                        : $t("service.ttl-tip")}
+                                    disabled={readOnly}
+                                    zeroHint={$t("service.ttl-zero")}
+                                    bind:value={service._ttl}
+                                    onchange={saveTtl}
+                                />
+                            </InputGroup>
+                        </div>
+                        <DropdownItem divider />
+                    {/if}
+                    <DropdownItem
+                        disabled={readOnly || !href}
+                        aria-disabled={readOnly || !href}
+                        title={readOnly ? $t("domains.read-only-edit") : undefined}
+                        on:click={editService}
+                    >
+                        <Icon name="pencil" />
+                        {$t("service.edit")}
+                    </DropdownItem>
+                    {#if canDelete}
+                        <DropdownItem
+                            class="text-danger"
+                            disabled={deleteInProgress}
+                            on:click={removeService}
+                        >
+                            {#if deleteInProgress}
+                                <Spinner size="sm" />
+                            {:else}
+                                <Icon name="trash" />
+                            {/if}
+                            {$t("service.delete")}
+                        </DropdownItem>
+                    {/if}
+                </DropdownMenu>
+            </Dropdown>
+        </div>
+    </header>
+
+    <div class="service-records list-group list-group-flush mx-3 mb-3 pt-2 border-top">
+        {#await getServiceSpec(service._svctype)}
+            <div class="text-center text-body-tertiary small py-1">
+                <Spinner size="sm" class="me-1" />
+                {$t("common.loading")}
+            </div>
+        {:then specs}
+            <Service {specs} bind:value={service.Service}>
+                {#snippet aservice(_type: string, rr: unknown)}
+                    {#if rr}
+                        <!-- Above the link stretched over the card. -->
+                        <button
+                            type="button"
+                            class="list-group-item list-group-item-action position-relative z-2 px-2 py-1 small"
+                            onclick={() => ctrlRecord.Open(rr as dnsRR, service._domain)}
+                        >
+                            <RecordText {dn} {origin} rr={rr as dnsRR} />
+                        </button>
+                    {/if}
+                {/snippet}
+            </Service>
+        {/await}
+    </div>
+</article>
+
+<style>
+    /* Only the service is tinted on hover, so the records keep their own hover. */
+    .service-head {
+        border-top-left-radius: var(--bs-card-inner-border-radius);
+        border-top-right-radius: var(--bs-card-inner-border-radius);
+        transition: background-color 0.15s;
+    }
+
+    .service-card:hover .service-head {
+        background: var(--hd-bg-hover);
+    }
+
+    .service-records {
+        --bs-border-style: dashed;
+        --bs-list-group-bg: transparent;
+    }
+
+    .service-records:empty {
+        display: none;
+    }
+</style>

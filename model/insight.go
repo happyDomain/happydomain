@@ -61,7 +61,6 @@ type Insights struct {
 		Languages   map[string]int `json:"languages"`
 		Newsletter  int            `json:"newsletter"`
 		FieldHints  map[int]int    `json:"field_hints"`
-		ZoneView    map[int]int    `json:"zone_view"`
 		ShowRRTypes int            `json:"showrrtypes"`
 	} `json:"user_settings"`
 }

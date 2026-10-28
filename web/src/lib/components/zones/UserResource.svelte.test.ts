@@ -25,7 +25,6 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import type { Domain } from "$lib/model/domain";
 import type { Provider } from "$lib/model/provider";
 import type { User } from "$lib/model/user";
-import { ZoneViewGrid } from "$lib/model/usersettings";
 import { providers } from "$lib/stores/providers";
 import { userSession } from "$lib/stores/usersession";
 import { loadTranslations } from "$lib/translations";
@@ -45,7 +44,7 @@ function setup(readonly: boolean) {
     providers.set([
         { _id: "p1", _srctype: "DDNSServer", _readonly: readonly } as unknown as Provider,
     ]);
-    userSession.set({ settings: { zoneview: ZoneViewGrid } } as unknown as User);
+    userSession.set({ settings: {} } as unknown as User);
     return {
         dn: "www",
         origin: { id: "d1", domain: "example.com.", id_provider: "p1" } as unknown as Domain,
@@ -66,7 +65,7 @@ describe("UserResource", () => {
     });
 
     // As the session of an administrator, who has no settings.
-    it("shows the services as cards to a session without settings", () => {
+    it("proposes a new service to a session without settings", () => {
         const props = setup(false);
         userSession.set({} as User);
 
