@@ -33,7 +33,7 @@
     } from "@sveltestrap/sveltestrap";
 
     import type { SecretCounts } from "$lib/api-admin";
-    import { sealedCount } from "./secrets";
+    import { sealedSplit } from "./secrets";
 
     interface Props {
         objects: Record<string, SecretCounts>;
@@ -48,17 +48,19 @@
         types.reduce(
             (acc, t) => ({
                 clear: acc.clear + (objects[t].clear ?? 0),
-                sealed: acc.sealed + sealedCount(objects[t]),
+                instance: acc.instance + sealedSplit(objects[t]).instance,
+                user: acc.user + sealedSplit(objects[t]).user,
                 locked: acc.locked + (objects[t].locked ?? 0),
                 unreadable: acc.unreadable + (objects[t].unreadable ?? 0),
                 undecodable: acc.undecodable + (objects[t].undecodable ?? 0),
             }),
-            { clear: 0, sealed: 0, locked: 0, unreadable: 0, undecodable: 0 },
+            { clear: 0, instance: 0, user: 0, locked: 0, unreadable: 0, undecodable: 0 },
         ),
     );
 
-    function sealedDetail(c: SecretCounts): string {
+    function userDetail(c: SecretCounts): string {
         return Object.entries(c.sealed ?? {})
+            .filter(([kind]) => kind !== "instance")
             .map(([kind, n]) => `${kind}: ${n}`)
             .join(", ");
     }
@@ -66,14 +68,16 @@
 
 {#snippet counters(
     clear: number,
-    sealed: number,
+    instance: number,
+    user: number,
     locked: number,
     unreadable: number,
     undecodable: number,
     detail?: string,
 )}
     <td class="text-end">{clear}</td>
-    <td class="text-end" title={detail}>{sealed}</td>
+    <td class="text-end">{instance}</td>
+    <td class="text-end" title={detail}>{user}</td>
     <td class="text-end">{locked}</td>
     <td class="text-end">
         {#if unreadable > 0}
@@ -103,7 +107,8 @@
                     <tr>
                         <th>Object type</th>
                         <th class="text-end">Clear</th>
-                        <th class="text-end">Sealed</th>
+                        <th class="text-end">Instance</th>
+                        <th class="text-end">User</th>
                         <th class="text-end">Locked</th>
                         <th class="text-end">Unreadable</th>
                         <th class="text-end">Undecodable</th>
@@ -112,7 +117,7 @@
                 <tbody>
                     {#if types.length === 0}
                         <tr>
-                            <td colspan="6" class="text-center text-muted py-3">
+                            <td colspan="7" class="text-center text-muted py-3">
                                 No object type holds credentials
                             </td>
                         </tr>
@@ -122,11 +127,12 @@
                                 <td><code>{t}</code></td>
                                 {@render counters(
                                     objects[t].clear ?? 0,
-                                    sealedCount(objects[t]),
+                                    sealedSplit(objects[t]).instance,
+                                    sealedSplit(objects[t]).user,
                                     objects[t].locked ?? 0,
                                     objects[t].unreadable ?? 0,
                                     objects[t].undecodable ?? 0,
-                                    sealedDetail(objects[t]),
+                                    userDetail(objects[t]),
                                 )}
                             </tr>
                         {/each}
@@ -138,7 +144,8 @@
                             <td>Total</td>
                             {@render counters(
                                 totals.clear,
-                                totals.sealed,
+                                totals.instance,
+                                totals.user,
                                 totals.locked,
                                 totals.unreadable,
                                 totals.undecodable,
@@ -151,7 +158,9 @@
     </CardBody>
     <CardFooter class="small text-muted">
         <strong>Clear</strong>: stored in clear.
-        <strong>Sealed</strong>: encrypted, and decrypting.
+        <strong>Instance</strong>: encrypted under the instance keyset, and decrypting.
+        <strong>User</strong>: encrypted in a keystore chosen by its owner, and decrypting; the
+        detail by keystore kind is in the tooltip.
         <strong>Locked</strong>: encrypted in a keystore only its owner unlocks; whether it decrypts
         is not known.
         <strong>Unreadable</strong>: encrypted, but no longer decrypting.

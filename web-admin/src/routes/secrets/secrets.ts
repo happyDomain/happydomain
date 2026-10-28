@@ -25,3 +25,10 @@ import type { SecretCounts } from "$lib/api-admin";
 export function sealedCount(c: SecretCounts): number {
     return Object.values(c.sealed ?? {}).reduce((acc, n) => acc + n, 0);
 }
+
+// sealedSplit separates the secrets sealed under the instance keyset from
+// those sealed in a keystore the users chose.
+export function sealedSplit(c: SecretCounts): { instance: number; user: number } {
+    const instance = c.sealed?.instance ?? 0;
+    return { instance, user: sealedCount(c) - instance };
+}
