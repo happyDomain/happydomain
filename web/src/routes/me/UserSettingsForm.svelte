@@ -37,7 +37,9 @@
         settings: UserSettings;
     }
 
-    let { settings = $bindable() }: Props = $props();
+    let { settings: initialSettings }: Props = $props();
+    // The session store holds a plain object: work on a reactive copy so the bindings below are reactive.
+    let settings: UserSettings = $state($state.snapshot(initialSettings) as UserSettings);
     let formSent = $state(false);
 
     function saveSettings(e: SubmitEvent) {

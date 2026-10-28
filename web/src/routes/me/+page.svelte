@@ -60,7 +60,7 @@
             {$t("settings.preferences.description")}
         </p>
 
-        <UserSettingsForm bind:settings={$userSession.settings} />
+        <UserSettingsForm settings={$userSession.settings} />
 
         <h2 id="notifications" class="display-7 fw-bold mt-5">
             <i class="bi bi-bell"></i>
