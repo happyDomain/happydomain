@@ -163,8 +163,14 @@
         "list": "Liste des domaines importables",
         "n-aliases": "{{count:lt; 2:{{count}} alias; default:{{count}} alias}}",
         "n-services": "{{count:lt; 2:{{count}} service; default:{{count}} services}}",
+        "n-records": "{{count:lt; 2:{{count}} enregistrement; default:{{count}} enregistrements}}",
         "please-fill-fields": "Veuillez remplir les champs suivants :",
         "removal": "Confirmer la suppression du domaine",
+        "checks": {
+            "failing": "{{count}} en échec",
+            "warning": "{{count:lt; 2:{{count}} avertissement; default:{{count}} avertissements}}",
+            "passing": "{{count}} tests sur {{total}} passent"
+        },
         "dashboard": {
             "attention": {
                 "title": "Ce qui demande votre attention"

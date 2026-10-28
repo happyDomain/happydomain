@@ -125,8 +125,13 @@
                                 >{dn === "" ? "" : "." + origin.domain}</span
                             >
                         </span>
-                        <span class="flex-fill small text-body-secondary">
+                        <span class="col-3 col-md-2 small text-body-secondary">
                             {$t("domains.n-services", { count: services.length })}
+                        </span>
+                        <span class="flex-fill small text-body-tertiary d-none d-md-inline">
+                            {$t("domains.n-records", {
+                                count: services.reduce((n, svc) => n + (svc._tmp_hint_nb ?? 0), 0),
+                            })}
                         </span>
                         <Icon name="chevron-right" class="ms-auto text-body-tertiary" />
                     </a>

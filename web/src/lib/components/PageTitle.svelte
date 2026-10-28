@@ -30,8 +30,8 @@
         /** Where the title and the summary line up when their heights differ */
         align?: "start" | "end";
 
-        /** Main section title (e.g. "Zone Editor", "History") */
-        title: string;
+        /** Main section title (e.g. "Zone Editor", "History"), or markup to style parts of it */
+        title: string | Snippet;
         /** Domain name displayed in monospace above the title */
         domain?: string;
         /** Optional subtitle or contextual hint below the title */
@@ -60,7 +60,13 @@
             {#if domain}
                 <div class="page-title-domain font-monospace">{domain}</div>
             {/if}
-            <h1 class="display-5 page-title-heading {classTitle}">{title}</h1>
+            <h1 class="display-5 page-title-heading {classTitle}">
+                {#if typeof title === "string"}
+                    {title}
+                {:else}
+                    {@render title()}
+                {/if}
+            </h1>
             {#if subtitle}
                 <p class="page-title-subtitle text-muted">{subtitle}</p>
             {/if}
@@ -80,6 +86,11 @@
     .page-title {
         padding: 0.75rem 0 1rem 0;
         border-bottom: 1px solid var(--bs-border-color-translucent);
+    }
+
+    .page-title-text {
+        flex: 1 1 20rem;
+        min-width: 0;
     }
 
     .page-title-text::before {
@@ -105,6 +116,9 @@
     .page-title-heading {
         margin: 0;
         color: var(--bs-emphasis-color);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .page-title-subtitle {

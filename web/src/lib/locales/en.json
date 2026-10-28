@@ -162,9 +162,15 @@
         "give-explicit-name": "Give an explicit name in order to easily find this service.",
         "n-aliases": "{{count:lt; 2:{{count}} alias; default:{{count}} aliases}}",
         "n-services": "{{count:lt; 2:{{count}} service; default:{{count}} services}}",
+        "n-records": "{{count:lt; 2:{{count}} record; default:{{count}} records}}",
         "filtered-no-result": "There is no domain with those filters.",
         "please-fill-fields": "Please fill the following fields:",
         "removal": "Confirm Domain Removal",
+        "checks": {
+            "failing": "{{count}} failing",
+            "warning": "{{count}} warning",
+            "passing": "{{count}} of {{total}} checks pass"
+        },
         "dashboard": {
             "attention": {
                 "title": "What needs your attention"
