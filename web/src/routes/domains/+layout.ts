@@ -4,11 +4,11 @@ import { get } from "svelte/store";
 import { domains, refreshDomains } from "$lib/stores/domains";
 import { providers, refreshProviders } from "$lib/stores/providers";
 
-export const load: Load = async ({ parent }) => {
+export const load: Load = async ({ parent, fetch }) => {
     const data = await parent();
 
-    if (!get(providers)) await refreshProviders();
-    if (!get(domains)) await refreshDomains();
+    if (!get(providers)) await refreshProviders(fetch);
+    if (!get(domains)) await refreshDomains(fetch);
 
     return data;
 };

@@ -22,7 +22,6 @@
 import { derived } from "svelte/store";
 import i18n from "sveltekit-i18n";
 import type { Config } from "sveltekit-i18n";
-const { MODE } = import.meta.env;
 
 interface Params {
     // Services carry their own translations, hence their own interpolation
@@ -124,13 +123,7 @@ export const config: Config<Params> = {
         {
             locale: "en",
             key: "",
-            loader: async () => {
-                if (MODE == "development") {
-                    return withServices("en", await (await fetch("/src/lib/locales/en.json")).json());
-                } else {
-                    return withServices("en", (await import("./locales/en.json")).default);
-                }
-            },
+            loader: async () => withServices("en", (await import("./locales/en.json")).default),
         },
         {
             locale: "es",
@@ -155,13 +148,7 @@ export const config: Config<Params> = {
         {
             locale: "en",
             key: "locales",
-            loader: async () => {
-                if (MODE == "development") {
-                    return await (await fetch("/src/lib/locales/lang.json")).json();
-                } else {
-                    return (await import("./locales/lang.json")).default;
-                }
-            },
+            loader: async () => (await import("./locales/lang.json")).default,
         },
     ],
 };

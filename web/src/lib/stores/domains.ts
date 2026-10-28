@@ -26,8 +26,8 @@ import type { HappydnsDomainWithCheckStatus } from "$lib/api-base/types.gen";
 export const domains: Writable<Array<HappydnsDomainWithCheckStatus> | undefined> = writable(undefined);
 export const newlyGroups: Writable<Array<string>> = writable([]);
 
-export async function refreshDomains() {
-    const data = await listDomains();
+export async function refreshDomains(loadFetch?: typeof fetch) {
+    const data = await listDomains(loadFetch);
     data.forEach((e) => {
         if (!e.group) e.group = "";
     });

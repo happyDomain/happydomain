@@ -26,7 +26,7 @@ import { domains, refreshDomains } from "$lib/stores/domains";
 import { userSession } from "$lib/stores/usersession";
 import { config as tsConfig, locale } from "$lib/translations";
 
-export const load: Load = async ({ parent }) => {
+export const load: Load = async ({ parent, fetch }) => {
     await parent();
 
     // If not connected, redirect to main website in the right language
@@ -42,9 +42,9 @@ export const load: Load = async ({ parent }) => {
     // Block on the first load only: when domains are already known, refresh
     // them in the background, the store will update the view when done.
     if (!get(domains)) {
-        await refreshDomains();
+        await refreshDomains(fetch);
     } else {
-        refreshDomains();
+        refreshDomains(fetch);
     }
 
     return {};

@@ -46,14 +46,21 @@ import type {
     ZoneTemplateInput,
 } from "$lib/model/zone_template";
 import { unwrapEmptyResponse, unwrapSdkResponse } from "./errors";
+import { loadFetch } from "$lib/hey-api";
 
 export async function listZoneTemplates(): Promise<ZoneTemplate[]> {
     return unwrapSdkResponse(await getTemplates()) as ZoneTemplate[];
 }
 
-export async function getZoneTemplate(id: string): Promise<ZoneTemplate> {
+export async function getZoneTemplate(
+    id: string,
+    loadFetchFn?: typeof fetch,
+): Promise<ZoneTemplate> {
     return unwrapSdkResponse(
-        await getTemplatesByTemplateId({ path: { templateId: id } }),
+        await getTemplatesByTemplateId({
+            path: { templateId: id },
+            ...(loadFetchFn ? { fetch: loadFetch(loadFetchFn) } : {}),
+        }),
     ) as ZoneTemplate;
 }
 

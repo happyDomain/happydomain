@@ -42,12 +42,18 @@ import type { dnsRR } from "$lib/dns_rr";
 import type { Correction, FullCorrection } from "$lib/model/correction";
 import type { Domain } from "$lib/model/domain";
 import type { Zone, ZoneMeta } from "$lib/model/zone";
+import { loadFetch } from "$lib/hey-api";
 import { unwrapSdkResponse } from "./errors";
 
-export async function getZone(domain: Domain, id: string): Promise<Zone> {
+export async function getZone(
+    domain: Domain,
+    id: string,
+    loadFetchFn?: typeof fetch,
+): Promise<Zone> {
     return unwrapSdkResponse(
         await getDomainsByDomainIdZoneByZoneId({
             path: { domainId: domain.id, zoneId: id },
+            ...(loadFetchFn ? { fetch: loadFetch(loadFetchFn) } : {}),
         }),
     ) as Zone;
 }

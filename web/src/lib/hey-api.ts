@@ -68,13 +68,19 @@ export function setRefreshingSession(val: boolean) {
     _isRefreshingSession = val;
 }
 
+// A load function must use the fetch SvelteKit hands it, not window.fetch.
+export function loadFetch(baseFetch: typeof fetch): typeof fetch {
+    return (input, init) => customFetch(input, init, baseFetch);
+}
+
 export async function customFetch(
     input: RequestInfo | URL,
     init?: RequestInit,
+    baseFetch: typeof fetch = fetch,
 ): Promise<Response> {
     // The body of a Request is read once: cloned before fetch, so a retry can send it.
     const replay = input instanceof Request ? input.clone() : input;
-    const response = await fetch(input, init);
+    const response = await baseFetch(input, init);
 
     // Handle 423 Locked: a keystore to unlock. Ask the user, then try again.
     if (response.status === 423) {
@@ -94,7 +100,7 @@ export async function customFetch(
             if (!(await requestUnlock(locked))) {
                 throw new KeystoreLockedError(errmsg, locked);
             }
-            return customFetch(replay, init);
+            return customFetch(replay, init, baseFetch);
         }
     }
 
@@ -168,7 +174,7 @@ export async function customFetch(
             const { refreshUserSession } = await import("$lib/stores/usersession");
             await refreshUserSession();
             // Retry the original request after successful session refresh
-            const retryResponse = await fetch(input, init);
+            const retryResponse = await baseFetch(input, init);
             return retryResponse;
         } catch (err) {
             if (err instanceof Error) {

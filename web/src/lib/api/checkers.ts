@@ -79,11 +79,14 @@ export type ObservationSnapshotWithData = HappydnsObservationSnapshot & {
     readonly data: Record<string, unknown>;
 };
 import { unwrapSdkResponse, unwrapEmptyResponse } from "./errors";
+import { loadFetch } from "$lib/hey-api";
 
 // Global (non-scoped) checker functions
 
-export async function listCheckers(): Promise<Record<string, CheckerCheckerDefinition>> {
-    return unwrapSdkResponse(await getCheckers()) as Record<string, CheckerCheckerDefinition>;
+export async function listCheckers(
+    loadFetchFn?: typeof fetch,
+): Promise<Record<string, CheckerCheckerDefinition>> {
+    return unwrapSdkResponse(await getCheckers(loadFetchFn ? { fetch: loadFetch(loadFetchFn) } : undefined)) as Record<string, CheckerCheckerDefinition>;
 }
 
 export async function getCheckStatus(checkerId: string): Promise<CheckerCheckerDefinition> {
@@ -150,7 +153,9 @@ export async function getScopedCheckStatus(
 export async function listScopedCheckers(
     scope: CheckerScope,
     options?: { withAvailables?: boolean },
+    loadFetchFn?: typeof fetch,
 ): Promise<HappydnsCheckerStatus[]> {
+    const fetchOpt = loadFetchFn ? { fetch: loadFetch(loadFetchFn) } : {};
     const query = options?.withAvailables ? { with_availables: true } : undefined;
     let list: HappydnsCheckerStatus[];
     if (isServiceScope(scope)) {
@@ -158,11 +163,12 @@ export async function listScopedCheckers(
             await getDomainsByDomainZoneByZoneidBySubdomainServicesByServiceidCheckers({
                 path: { domain: scope.domainId, zoneid: scope.zoneId, subdomain: scope.subdomain, serviceid: scope.serviceId },
                 query,
+                ...fetchOpt,
             }),
         ) as HappydnsCheckerStatus[]) ?? [];
     } else {
         list = (unwrapSdkResponse(
-            await getDomainsByDomainCheckers({ path: { domain: scope.domainId! }, query }),
+            await getDomainsByDomainCheckers({ path: { domain: scope.domainId! }, query, ...fetchOpt }),
         ) as HappydnsCheckerStatus[]) ?? [];
     }
     return list.sort((a, b) =>

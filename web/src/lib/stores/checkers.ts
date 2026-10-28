@@ -26,8 +26,8 @@ import type { CheckerCheckerDefinition, HappydnsExecution } from "$lib/api-base/
 export const checkers: Writable<Record<string, CheckerCheckerDefinition> | undefined> =
     writable(undefined);
 
-export async function refreshCheckers() {
-    const data = await listCheckers();
+export async function refreshCheckers(loadFetch?: typeof fetch) {
+    const data = await listCheckers(loadFetch);
     checkers.set(data);
     return data;
 }

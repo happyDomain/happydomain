@@ -23,12 +23,12 @@ import { error, type Load } from "@sveltejs/kit";
 import { getZoneTemplate } from "$lib/api/zone_template";
 import type { ZoneTemplate } from "$lib/model/zone_template";
 
-export const load: Load = async ({ parent, params }) => {
+export const load: Load = async ({ parent, params, fetch }) => {
     const data = await parent();
 
     let template: ZoneTemplate;
     try {
-        template = await getZoneTemplate(params.tid ?? "");
+        template = await getZoneTemplate(params.tid ?? "", fetch);
     } catch {
         error(404, { message: "Zone template not found" });
     }

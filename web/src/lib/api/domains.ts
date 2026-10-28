@@ -35,9 +35,12 @@ import type {
 import type { Domain, DomainLog } from "$lib/model/domain";
 import type { Provider } from "$lib/model/provider";
 import { unwrapSdkResponse, unwrapEmptyResponse } from "./errors";
+import { loadFetch } from "$lib/hey-api";
 
-export async function listDomains(): Promise<Array<HappydnsDomainWithCheckStatus>> {
-    return unwrapSdkResponse(await getDomains()) as Array<HappydnsDomainWithCheckStatus>;
+export async function listDomains(
+    loadFetchFn?: typeof fetch,
+): Promise<Array<HappydnsDomainWithCheckStatus>> {
+    return unwrapSdkResponse(await getDomains(loadFetchFn ? { fetch: loadFetch(loadFetchFn) } : undefined)) as Array<HappydnsDomainWithCheckStatus>;
 }
 
 export async function getDomain(id: string): Promise<HappydnsDomainWithZoneMetadata> {

@@ -3,7 +3,7 @@ import { error, redirect, type Load } from "@sveltejs/kit";
 
 import { getZone, thisZone } from "$lib/stores/thiszone";
 
-export const load: Load = async ({ parent, params }) => {
+export const load: Load = async ({ parent, params, fetch }) => {
     const data = await parent();
 
     const domain = data.domain;
@@ -34,7 +34,7 @@ export const load: Load = async ({ parent, params }) => {
 
     const currentZone = get(thisZone);
     if (currentZone?.id !== zoneId) {
-        getZone(domain, zoneId);
+        getZone(domain, zoneId, fetch);
     }
 
     return {

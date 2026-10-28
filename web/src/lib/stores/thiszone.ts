@@ -88,10 +88,10 @@ export const sortedDomainsWithIntermediate = derived(sortedDomains, ($sortedDoma
 });
 
 // getZone retrieve a given zone
-export async function getZone(domain: Domain, zoneId: string) {
+export async function getZone(domain: Domain, zoneId: string, loadFetch?: typeof fetch) {
     thisZone.set(null);
 
-    const zone = await APIGetZone(domain, zoneId);
+    const zone = await APIGetZone(domain, zoneId, loadFetch);
 
     thisZone.set(zone);
 

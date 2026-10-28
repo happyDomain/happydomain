@@ -28,7 +28,6 @@
     import { t } from "$lib/translations";
     import { base } from "$app/paths";
     import type { CheckerScope } from "$lib/api/checkers";
-    import { listScopedCheckers } from "$lib/api/checkers";
     import { checkers } from "$lib/stores/checkers";
     import type { CheckerCheckerDefinition, HappydnsCheckerStatus } from "$lib/api-base/types.gen";
     import { getStatusColor, getStatusI18nKey, formatCheckDate } from "$lib/utils";
@@ -38,17 +37,14 @@
 
     interface Props {
         scope: CheckerScope;
+        checkerStatuses: Promise<HappydnsCheckerStatus[]>;
         links: CheckerLinks;
         title: string;
         domainName: string;
         filterAvailability: "applyToDomain" | "applyToService";
     }
 
-    let { scope, links, title, domainName, filterAvailability }: Props = $props();
-
-    let checkersPromise = $derived(
-        listScopedCheckers(scope, { withAvailables: true }),
-    );
+    let { scope, checkerStatuses, links, title, domainName, filterAvailability }: Props = $props();
 
     let metricsApiUrl = $derived(
         scope.zoneId && scope.subdomain !== undefined && scope.serviceId
@@ -108,7 +104,7 @@
         </Button>
     </PageTitle>
 
-    {#await checkersPromise}
+    {#await checkerStatuses}
         <Card body>
             <p class="text-center mb-0">
                 <span class="spinner-border spinner-border-sm me-2"></span>

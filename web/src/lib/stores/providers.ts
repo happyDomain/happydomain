@@ -30,8 +30,8 @@ export const providers: Writable<Array<Provider> | undefined> = writable(undefin
 export const providersSpecs: Writable<Record<string, ProviderInfos> | undefined> =
     writable(undefined);
 
-export async function refreshProviders() {
-    const data = await listProviders();
+export async function refreshProviders(loadFetch?: typeof fetch) {
+    const data = await listProviders(loadFetch);
     providers.set(data);
 
     const $filteredProvider = get(filteredProvider);

@@ -31,11 +31,13 @@
     import CheckerListPage from "$lib/components/checkers/CheckerListPage.svelte";
 
     let domain: Domain = $derived(page.data.domain);
+    let checkerStatuses = $derived(page.data.checkerStatuses);
     let links = $derived(domainCheckerLinks(domainLink(domain.id)));
 </script>
 
 <CheckerListPage
     scope={{ domainId: domain.id }}
+    {checkerStatuses}
     {links}
     title={$t("checkers.list.title") + domain.domain}
     domainName={domain.domain}

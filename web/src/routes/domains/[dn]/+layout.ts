@@ -4,10 +4,10 @@ import { get } from "svelte/store";
 import type { HappydnsDomainWithCheckStatus } from "$lib/api-base/types.gen";
 import { domains, domains_idx, refreshDomains } from "$lib/stores/domains";
 
-export const load: Load = async ({ parent, params }) => {
+export const load: Load = async ({ parent, params, fetch }) => {
     const data = await parent();
 
-    if (!get(domains)) await refreshDomains();
+    if (!get(domains)) await refreshDomains(fetch);
 
     if (!params.dn) {
         error(404, {

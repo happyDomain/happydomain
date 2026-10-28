@@ -30,15 +30,17 @@ import {
 } from "$lib/api-base/sdk.gen";
 import type { Provider } from "$lib/model/provider";
 import { unwrapSdkResponse, unwrapEmptyResponse } from "./errors";
+import { loadFetch } from "$lib/hey-api";
 
-export async function listProviders(): Promise<Array<Provider>> {
-    return unwrapSdkResponse(await getProviders()) as Array<Provider>;
+export async function listProviders(loadFetchFn?: typeof fetch): Promise<Array<Provider>> {
+    return unwrapSdkResponse(await getProviders(loadFetchFn ? { fetch: loadFetch(loadFetchFn) } : undefined)) as Array<Provider>;
 }
 
-export async function getProvider(id: string): Promise<Provider> {
+export async function getProvider(id: string, loadFetchFn?: typeof fetch): Promise<Provider> {
     return unwrapSdkResponse(
         await getProvidersByProviderId({
             path: { providerId: id },
+            ...(loadFetchFn ? { fetch: loadFetch(loadFetchFn) } : {}),
         }),
     ) as Provider;
 }

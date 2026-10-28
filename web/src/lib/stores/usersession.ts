@@ -27,10 +27,12 @@ import type { User } from "$lib/model/user";
 
 export const userSession: Writable<User> = writable({} as User);
 
-export async function refreshUserSession() {
+// A load function passes SvelteKit's own fetch, to not trigger its warning
+// about window.fetch.
+export async function refreshUserSession(loadFetch?: typeof fetch) {
     setRefreshingSession(true);
     try {
-        const user = unwrapSdkResponse(await getAuth());
+        const user = unwrapSdkResponse(await getAuth(loadFetch ? { fetch: loadFetch } : undefined));
         userSession.set(user);
         return user;
     } catch (err) {
