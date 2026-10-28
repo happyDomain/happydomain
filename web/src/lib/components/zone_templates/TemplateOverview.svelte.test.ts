@@ -72,11 +72,15 @@ function setup(tpl: ZoneTemplate, readOnly: boolean) {
 }
 
 describe("TemplateOverview", () => {
-    it("shows the template, and its apex while empty", () => {
+    it("shows the template, and leads to its apex while empty", () => {
         setup(template, false);
 
         expect(screen.getByRole("heading", { name: "Mail" })).toBeVisible();
         expect(screen.getByText("Our mail servers")).toBeVisible();
+        expect(screen.getByRole("link", { name: /Edit zone records/ })).toHaveAttribute(
+            "href",
+            "/templates/t1/%40",
+        );
         expect(screen.getByRole("link", { name: /^@/ })).toHaveAttribute(
             "href",
             "/templates/t1/%40",
@@ -106,6 +110,7 @@ describe("TemplateOverview", () => {
 
         expect(screen.getAllByText(/Set up by the administrators/).length).toBeGreaterThan(0);
         expect(screen.getByText("Offered to everyone")).toBeVisible();
+        expect(screen.getByRole("link", { name: /View/ })).toBeVisible();
     });
 
     it("follows the changes saved to the template", () => {

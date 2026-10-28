@@ -22,14 +22,17 @@
 -->
 
 <script lang="ts">
+    import type { Snippet } from "svelte";
+
     import type { CheckerLinks } from "$lib/checker_links";
     import { Alert, Card, Icon } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
-    import type { CheckSection, CheckTarget } from "$lib/domain_checks";
-    import { fqdn } from "$lib/dns";
+    import type { CheckItem, CheckSection, CheckTarget } from "$lib/domain_checks";
     import { StatusCrit, StatusError, StatusWarn } from "$lib/utils/checkers";
     import CheckCard from "./CheckCard.svelte";
+    import CheckTile from "./CheckTile.svelte";
+    import DashboardSection from "$lib/components/DashboardSection.svelte";
     import PageTitle from "$lib/components/PageTitle.svelte";
 
     interface Props {
@@ -42,9 +45,43 @@
          * Handed in because only the route knows: this component is shared.
          */
         linksFor: (target?: CheckTarget) => CheckerLinks;
+        /** Actions and facts about the domain, shown beside its name. */
+        summary?: Snippet;
+        /** Shown after the checks, such as the subdomains of the zone. */
+        children?: Snippet;
     }
 
-    let { domainName, title, sections: sectionsPromise, linksFor }: Props = $props();
+    let {
+        domainName,
+        title,
+        sections: sectionsPromise,
+        linksFor,
+        summary,
+        children,
+    }: Props = $props();
+
+    // The last checks loaded: they stay shown while newer ones load, so
+    // coming back to the dashboard doesn't flash a loading screen.
+    let loaded: { sections?: CheckSection[]; error?: Error } = $state({});
+    $effect(() => {
+        const promise = sectionsPromise;
+        if (!promise) {
+            loaded = {};
+            return;
+        }
+        let current = true;
+        promise.then(
+            (sections) => {
+                if (current) loaded = { sections };
+            },
+            (error) => {
+                if (current) loaded = { error };
+            },
+        );
+        return () => {
+            current = false;
+        };
+    });
 
     function countCritical(sections: CheckSection[]): number {
         let n = 0;
@@ -67,8 +104,30 @@
         return n;
     }
 
-    function subdomainTitle(subdomain: string): string {
-        return fqdn(subdomain === "@" ? "" : subdomain, domainName);
+    function isAlarming(item: CheckItem): boolean {
+        const code = item.status.latestExecution?.result?.status;
+        return code === StatusWarn || code === StatusCrit || code === StatusError;
+    }
+
+    // The checks that found a problem, the most severe first.
+    function needingAttention(sections: CheckSection[]): CheckItem[] {
+        return sections
+            .flatMap((s) => s.items.filter(isAlarming))
+            .sort(
+                (a, b) =>
+                    (b.status.latestExecution?.result?.status ?? 0) -
+                    (a.status.latestExecution?.result?.status ?? 0),
+            );
+    }
+
+    // The checks about the domain itself rather than one of its services.
+    function domainLevel(sections: CheckSection[]): CheckItem[] {
+        return sections.flatMap((s) => s.items.filter((item) => !item.target));
+    }
+
+    function attentionChip(item: CheckItem): string | undefined {
+        if (!item.target) return undefined;
+        return item.chip ? `${item.chip} · ${item.target.subdomain}` : item.target.subdomain;
     }
 </script>
 
@@ -77,7 +136,34 @@
 </svelte:head>
 
 <div class="flex-fill mt-1 mb-5">
-    <PageTitle {title} domain={domainName}></PageTitle>
+    <PageTitle classTitle="font-monospace" title={domainName} align="start" children={summary}>
+        {#snippet undertitle()}
+            {#if loaded.sections}
+                {@const sections = loaded.sections}
+                {#if sections.some((s) => s.items.length > 0)}
+                    {@const critCount = countCritical(sections)}
+                    {@const warnCount = countWarn(sections)}
+                    {@const okCount =
+                        sections.reduce((n, s) => n + s.items.length, 0) - critCount - warnCount}
+                    {@const color =
+                        critCount > 0 ? "danger" : warnCount > 0 ? "warning" : "success"}
+                    <span
+                        class="badge rounded-pill d-inline-flex align-items-center gap-2 mt-3 px-3 py-2 fs-6 fw-semibold border bg-{color}-subtle text-{color}-emphasis border-{color}-subtle"
+                    >
+                        <span class="d-inline-block p-1 rounded-circle bg-{color}"></span>
+                        {[
+                            critCount > 0 && `${critCount} ${$t("checkers.dashboard.critical")}`,
+                            warnCount > 0 &&
+                                `${warnCount} ${$t("checkers.dashboard.needs-attention")}`,
+                            okCount > 0 && `${okCount} ${$t("checkers.dashboard.passing")}`,
+                        ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                    </span>
+                {/if}
+            {/if}
+        {/snippet}
+    </PageTitle>
 
     {#snippet loading()}
         <Card body>
@@ -88,266 +174,106 @@
         </Card>
     {/snippet}
 
-    {#if !sectionsPromise}
+    {#if loaded.error}
+        <Alert color="danger">
+            <Icon name="exclamation-triangle-fill" />
+            {$t("checkers.list.error-loading", { error: loaded.error.message })}
+        </Alert>
+    {:else if !loaded.sections}
         {@render loading()}
     {:else}
-        {#await sectionsPromise}
-            {@render loading()}
-        {:then sections}
-            {#if sections.every((s) => s.items.length === 0)}
-                <Alert color="info">
-                    <Icon name="info-circle" />
-                    {$t("checkers.list.no-checks")}
-                </Alert>
-            {:else}
-                {@const critCount = countCritical(sections)}
-                {@const warnCount = countWarn(sections)}
-                {@const needsLook = critCount + warnCount}
-                {@const totalItems = sections.reduce((n, s) => n + s.items.length, 0)}
-                {@const okCount = totalItems - needsLook}
-                {@const critPct = totalItems > 0 ? (critCount / totalItems) * 100 : 0}
-                {@const warnPct = totalItems > 0 ? (warnCount / totalItems) * 100 : 0}
-                {@const okPct = totalItems > 0 ? (okCount / totalItems) * 100 : 0}
+        {@const sections = loaded.sections}
+        {#if sections.every((s) => s.items.length === 0)}
+            <Alert color="info">
+                <Icon name="info-circle" />
+                {$t("checkers.list.no-checks")}
+            </Alert>
+        {:else}
+            {@const attention = needingAttention(sections)}
+            {@const critCount = countCritical(sections)}
+            {@const warnCount = countWarn(sections)}
+            {@const overview = domainLevel(sections)}
 
-                <div
-                    class="health-panel mb-5"
-                    class:health-all-ok={needsLook === 0}
-                    class:health-has-warn={needsLook > 0 && critCount === 0}
-                    class:health-has-crit={critCount > 0}
+            {#if attention.length > 0}
+                <DashboardSection
+                    title={$t("domains.dashboard.attention.title")}
+                    subtitle={[
+                        critCount > 0 && `${critCount} ${$t("checkers.dashboard.critical")}`,
+                        warnCount > 0 && `${warnCount} ${$t("checkers.dashboard.needs-attention")}`,
+                    ]
+                        .filter(Boolean)
+                        .join(" · ")}
                 >
-                    <div class="health-main">
-                        <span class="health-count">{needsLook > 0 ? needsLook : okCount}</span>
-                        <span class="health-label">
-                            {needsLook > 0
-                                ? $t("checkers.dashboard.need-a-look")
-                                : $t("checkers.dashboard.all-passing")}
-                        </span>
+                    <div class="vstack gap-3">
+                        {#each attention as item}
+                            {@const checker = item.status}
+                            {@const links = linksFor(item.target)}
+                            {@const exec = checker.latestExecution}
+                            <CheckCard
+                                status={exec?.result?.status}
+                                name={checker.name || checker.id || ""}
+                                chip={attentionChip(item)}
+                                configureLink={links.checker(checker.id!)}
+                                detailsLink={exec?.id
+                                    ? links.execution!(checker.id!, exec.id!)
+                                    : undefined}
+                                historyLink={links.executions!(checker.id!)}
+                                messages={exec?.messages}
+                                startedAt={exec?.startedAt}
+                                scope={item.scope}
+                                checkerId={checker.id}
+                                hasMetrics={checker.has_metrics}
+                            />
+                        {/each}
                     </div>
-                    <div class="health-details">
-                        <div
-                            class="health-bar"
-                            title="{critPct.toFixed(0)}% critical / {warnPct.toFixed(
-                                0,
-                            )}% warning / {okPct.toFixed(0)}% passing"
-                        >
-                            {#if critPct > 0}
-                                <div class="health-seg seg-crit" style="width:{critPct}%"></div>
-                            {/if}
-                            {#if warnPct > 0}
-                                <div class="health-seg seg-warn" style="width:{warnPct}%"></div>
-                            {/if}
-                            {#if okPct > 0}
-                                <div class="health-seg seg-ok" style="width:{okPct}%"></div>
-                            {/if}
-                        </div>
-                        <div class="health-stats">
-                            {#if critCount > 0}
-                                <span class="hstat hstat-crit">
-                                    {critCount}
-                                    {$t("checkers.dashboard.critical")}
-                                </span>
-                            {/if}
-                            {#if warnCount > 0}
-                                <span class="hstat hstat-warn">
-                                    {warnCount}
-                                    {$t("checkers.dashboard.needs-attention")}
-                                </span>
-                            {/if}
-                            {#if okCount > 0}
-                                <span class="hstat hstat-ok">
-                                    {okCount}
-                                    {$t("checkers.dashboard.passing")}
-                                </span>
-                            {/if}
-                        </div>
+                </DashboardSection>
+            {:else}
+                <section class="card card-body flex-row align-items-center gap-3 mt-5">
+                    <span
+                        class="d-flex flex-shrink-0 p-2 lh-1 rounded-circle bg-success-subtle text-success-emphasis fs-5"
+                    >
+                        <Icon name="check-lg" />
+                    </span>
+                    <div>
+                        <h2 class="fs-5 fw-semibold text-body-emphasis mb-0">
+                            {$t("domains.dashboard.clean.title")}
+                        </h2>
+                        <p class="small text-body-secondary mt-1 mb-0">
+                            {$t("domains.dashboard.clean.note", {
+                                count: sections.reduce((n, s) => n + s.items.length, 0),
+                            })}
+                        </p>
                     </div>
-                </div>
+                </section>
+            {/if}
 
-                {#each sections as section}
-                    {#if section.items.length > 0}
-                        <div class="d-flex align-items-end mt-5 mb-4 gap-3">
-                            <h2 class="mb-0 font-monospace" id={section.subdomain}>
-                                {subdomainTitle(section.subdomain)}
-                            </h2>
-                            <hr class="mt-0 mb-2 border-3 border-dark flex-fill" />
-                        </div>
-                        <div class="check-stack">
-                            {#each section.items as item}
-                                {@const checker = item.status}
-                                {@const links = linksFor(item.target)}
-                                {@const exec = checker.latestExecution}
-                                <CheckCard
+            {#if overview.length > 0}
+                <DashboardSection
+                    title={$t("domains.dashboard.health.title")}
+                    subtitle={$t("domains.dashboard.health.subtitle")}
+                >
+                    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
+                        {#each overview as item}
+                            {@const checker = item.status}
+                            {@const links = linksFor(item.target)}
+                            {@const exec = checker.latestExecution}
+                            <div class="col">
+                                <CheckTile
                                     status={exec?.result?.status}
                                     name={checker.name || checker.id || ""}
-                                    chip={item.chip}
-                                    configureLink={links.checker(checker.id!)}
-                                    detailsLink={exec?.id
-                                        ? links.execution!(checker.id!, exec.id!)
-                                        : undefined}
-                                    historyLink={links.executions!(checker.id!)}
-                                    messages={exec?.messages}
+                                    message={exec?.messages?.[0]}
                                     startedAt={exec?.startedAt}
-                                    scope={item.scope}
-                                    checkerId={checker.id}
-                                    hasMetrics={checker.has_metrics}
+                                    href={exec?.id
+                                        ? links.execution!(checker.id!, exec.id!)
+                                        : links.checker(checker.id!)}
                                 />
-                            {/each}
-                        </div>
-                    {/if}
-                {/each}
+                            </div>
+                        {/each}
+                    </div>
+                </DashboardSection>
             {/if}
-        {:catch error}
-            <Alert color="danger">
-                <Icon name="exclamation-triangle-fill" />
-                {$t("checkers.list.error-loading", { error: error.message })}
-            </Alert>
-        {/await}
+        {/if}
     {/if}
+
+    {@render children?.()}
 </div>
-
-<style>
-    /* ── health panel ── */
-    .health-panel {
-        --hd-crit: #ef4444;
-        --hd-warn: #f59e0b;
-        --hd-ok: #22c55e;
-
-        display: flex;
-        align-items: center;
-        gap: 1.5rem;
-        padding: 1rem 1.25rem;
-        border-radius: 0.5rem;
-        border: 1px solid var(--bs-border-color);
-        border-left: 4px solid var(--bs-border-color);
-        background: var(--bs-body-bg);
-        transition: border-left-color 0.2s;
-    }
-
-    :global([data-bs-theme="dark"]) .health-panel {
-        --hd-crit: #f87171;
-        --hd-warn: #fbbf24;
-        --hd-ok: #4ade80;
-    }
-
-    .health-panel.health-has-crit {
-        border-left-color: var(--hd-crit);
-    }
-    .health-panel.health-has-warn {
-        border-left-color: var(--hd-warn);
-    }
-    .health-panel.health-all-ok {
-        border-left-color: var(--hd-ok);
-    }
-
-    .health-main {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        min-width: 4ch;
-        flex-shrink: 0;
-    }
-
-    .health-count {
-        font-family: var(--bs-font-monospace);
-        font-size: 2.25rem;
-        font-weight: 700;
-        line-height: 1;
-    }
-
-    .health-has-crit .health-count {
-        color: var(--hd-crit);
-    }
-    .health-has-warn .health-count {
-        color: var(--hd-warn);
-    }
-    .health-all-ok .health-count {
-        color: var(--hd-ok);
-    }
-
-    .health-label {
-        font-size: 0.68rem;
-        letter-spacing: 0.07em;
-        text-transform: uppercase;
-        color: var(--bs-secondary-color);
-        white-space: nowrap;
-    }
-
-    .health-details {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .health-bar {
-        display: flex;
-        height: 5px;
-        border-radius: 3px;
-        overflow: hidden;
-        background: var(--bs-border-color);
-        gap: 2px;
-    }
-
-    .health-seg {
-        border-radius: 2px;
-        transition: width 0.5s ease;
-    }
-
-    .seg-crit {
-        background: var(--hd-crit);
-    }
-    .seg-warn {
-        background: var(--hd-warn);
-    }
-    .seg-ok {
-        background: var(--hd-ok);
-    }
-
-    .health-stats {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.9rem;
-    }
-
-    .hstat {
-        font-size: 0.78rem;
-        font-family: var(--bs-font-monospace);
-        display: flex;
-        align-items: center;
-        gap: 0.35rem;
-        color: var(--bs-secondary-color);
-    }
-
-    .hstat::before {
-        content: "";
-        display: inline-block;
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        flex-shrink: 0;
-    }
-
-    .hstat-crit {
-        color: var(--hd-crit);
-    }
-    .hstat-warn {
-        color: var(--hd-warn);
-    }
-
-    .hstat-crit::before {
-        background: var(--hd-crit);
-    }
-    .hstat-warn::before {
-        background: var(--hd-warn);
-    }
-    .hstat-ok::before {
-        background: var(--hd-ok);
-    }
-
-    /* ── check stack ── */
-    .check-stack {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-    }
-</style>

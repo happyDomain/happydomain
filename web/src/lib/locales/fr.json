@@ -165,6 +165,30 @@
         "n-services": "{{count:lt; 2:{{count}} service; default:{{count}} services}}",
         "please-fill-fields": "Veuillez remplir les champs suivants :",
         "removal": "Confirmer la suppression du domaine",
+        "dashboard": {
+            "attention": {
+                "title": "Ce qui demande votre attention"
+            },
+            "clean": {
+                "title": "Tout est en ordre.",
+                "note": "{{count:lt; 2:Le seul test passe.; default:Les {{count}} tests passent.}}"
+            },
+            "health": {
+                "title": "Vue d'ensemble de la santé",
+                "subtitle": "Tests portant sur le domaine dans son ensemble"
+            },
+            "subdomains": {
+                "title": "Les sous-domaines en un coup d'œil",
+                "subtitle": "{{count:lt; 2:{{count}} entrée; default:{{count}} entrées}} · cliquez sur une ligne pour modifier ses services",
+                "all-pass": "tous les tests passent"
+            }
+        },
+        "edit-records": "Modifier les enregistrements",
+        "meta": {
+            "provider": "Hébergeur",
+            "last-publish": "Dernière publication",
+            "never-published": "jamais"
+        },
         "save-modifications": "Enregistrer ces modifications",
         "sidebar": {
             "overview": "Vue d'ensemble du domaine",

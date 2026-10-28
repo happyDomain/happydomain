@@ -22,8 +22,10 @@
 -->
 
 <script lang="ts">
-    import { domainCheckerLinks, serviceCheckerLinks } from "$links";
+    import { domainCheckerLinks, domainLinks, serviceCheckerLinks } from "$links";
     import { page } from "$app/state";
+
+    import { Button, Icon } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
     import type { CheckTarget } from "$lib/domain_checks";
@@ -31,6 +33,10 @@
     import { domainLink } from "$lib/stores/domains";
     import { domainChecks } from "$lib/stores/domainchecks";
     import CheckResultsDashboard from "$lib/components/checkers/CheckResultsDashboard.svelte";
+    import ProviderLink from "$lib/components/providers/ProviderLink.svelte";
+    import DashboardSection from "$lib/components/DashboardSection.svelte";
+    import { sortedDomains } from "$lib/stores/thiszone";
+    import SubdomainGlance from "./SubdomainGlance.svelte";
 
     let domain: Domain = $derived(page.data.domain);
     let sections = $derived(
@@ -44,6 +50,17 @@
                   encodeURIComponent(target.serviceId),
               )
             : domainCheckerLinks(domainLink(domain.id));
+
+    // The most recent version of the zone sent to the provider.
+    let lastPublished = $derived(
+        domain.zone_history
+            .map((id) => domain.zone_meta?.[id]?.published)
+            .find((published) => published),
+    );
+    const publishFmt = new Intl.DateTimeFormat(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+    });
 </script>
 
 <CheckResultsDashboard
@@ -51,4 +68,46 @@
     {linksFor}
     domainName={domain.domain}
     title={$t("checkers.list.title") + domain.domain}
-/>
+>
+    {#snippet summary()}
+        <div class="d-flex flex-column align-items-end gap-2">
+            <Button
+                color="primary"
+                class="fw-semibold"
+                href={domainLinks().subdomain(encodeURIComponent(domainLink(domain.id)), "@")}
+            >
+                {$t("domains.edit-records")}
+                <Icon name="chevron-right" />
+            </Button>
+            <dl class="vstack gap-1 align-items-end small mb-0">
+                <div class="d-flex gap-3">
+                    <dt class="fw-normal text-body-secondary">{$t("domains.meta.provider")}</dt>
+                    <dd class="fw-medium text-body-emphasis mb-0">
+                        <ProviderLink id_provider={domain.id_provider} />
+                    </dd>
+                </div>
+                <div class="d-flex gap-3">
+                    <dt class="fw-normal text-body-secondary">
+                        {$t("domains.meta.last-publish")}
+                    </dt>
+                    <dd class="fw-medium text-body-emphasis mb-0">
+                        {lastPublished
+                            ? publishFmt.format(new Date(lastPublished))
+                            : $t("domains.meta.never-published")}
+                    </dd>
+                </div>
+            </dl>
+        </div>
+    {/snippet}
+
+    {#if $sortedDomains}
+        <DashboardSection
+            title={$t("domains.dashboard.subdomains.title")}
+            subtitle={$t("domains.dashboard.subdomains.subtitle", {
+                count: $sortedDomains.length,
+            })}
+        >
+            <SubdomainGlance origin={domain} />
+        </DashboardSection>
+    {/if}
+</CheckResultsDashboard>

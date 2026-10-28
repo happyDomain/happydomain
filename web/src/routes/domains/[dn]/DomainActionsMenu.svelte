@@ -137,11 +137,5 @@
         <DropdownItem on:click={() => ctrlDomainDelete.Open()}>
             {$t("domains.stop")}
         </DropdownItem>
-        <DropdownItem divider />
-        <DropdownItem
-            href={"/providers/" + encodeURIComponent($domains_idx[selectedDomain].id_provider)}
-        >
-            {$t("provider.update")}
-        </DropdownItem>
     </DropdownMenu>
 </Dropdown>

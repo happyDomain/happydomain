@@ -26,6 +26,9 @@
 
     interface Props {
         class?: string;
+        classTitle?: string;
+        /** Where the title and the summary line up when their heights differ */
+        align?: "start" | "end";
 
         /** Main section title (e.g. "Zone Editor", "History") */
         title: string;
@@ -35,20 +38,34 @@
         subtitle?: string;
         /** Optional slot for status badges, health checks, or summary indicators */
         children?: Snippet;
+        /** Optional slot displayed under the title */
+        undertitle?: Snippet;
     }
 
-    let { class: className = "mb-4", title, domain, subtitle, children }: Props = $props();
+    let {
+        class: className = "mb-4",
+        classTitle = "",
+        align = "end",
+        title,
+        domain,
+        subtitle,
+        children,
+        undertitle,
+    }: Props = $props();
 </script>
 
 <header class="page-title {className}">
-    <div class="d-flex align-items-end justify-content-between gap-3 flex-wrap pb-1">
+    <div class="d-flex align-items-{align} justify-content-between gap-3 flex-wrap pb-1">
         <div class="page-title-text">
             {#if domain}
                 <div class="page-title-domain font-monospace">{domain}</div>
             {/if}
-            <h1 class="display-5 page-title-heading">{title}</h1>
+            <h1 class="display-5 page-title-heading {classTitle}">{title}</h1>
             {#if subtitle}
                 <p class="page-title-subtitle text-muted">{subtitle}</p>
+            {/if}
+            {#if undertitle}
+                {@render undertitle()}
             {/if}
         </div>
         {#if children}

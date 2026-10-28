@@ -706,6 +706,7 @@ $carousel-caption-color-dark: $hd-dark-fg-1;
 
 $theme-colors: map-merge($theme-colors, $custom-theme-colors);
 
+// Color of the start border alone: .border-start-danger.
 // .min-w-0 and .min-h-0 let a flex item shrink below its content, to
 // truncate it or to scroll it.
 $utilities: map-merge(
@@ -724,6 +725,14 @@ $utilities: map-merge(
             values: (
                 0: 0,
             ),
+        ),
+        "border-start-color": (
+            property: border-left-color,
+            class: border-start,
+            local-vars: (
+                "border-opacity": 1,
+            ),
+            values: $utilities-border-colors,
         ),
     )
 );
