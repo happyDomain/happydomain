@@ -272,6 +272,10 @@ type Destination struct {
 
 	// policyOnly ignores the keystores of the owner, for a reseal.
 	policyOnly bool
+
+	// not is a keystore the secrets cannot go to, as the one a secret of a
+	// safe opens: chosen, it is refused; the default, it gives way.
+	not string
 }
 
 // UnderPolicy returns d ignoring the keystores of the owner, for what is
@@ -441,7 +445,7 @@ func (x *sealer) sealClear(ctx context.Context, sc SecretContext, s *happydns.Se
 		if _, ok := x.m.stores[x.safe.Kind]; !ok {
 			return fmt.Errorf("safe %s needs the %q secret store, which is not configured", x.safe.Id.String(), x.safe.Kind)
 		}
-		unlocked, err := x.m.unlock(ctx, x.safe)
+		unlocked, err := x.m.unlock(ctx, x.safe, nil)
 		if err != nil {
 			return err
 		}
@@ -591,6 +595,9 @@ func (m *Manager) open(ctx context.Context, sc SecretContext, s *happydns.Secret
 	}
 
 	u, ok := unlocked[sv.SafeId.String()]
+	if ok && u.UnlockedSafe == nil {
+		return "", fmt.Errorf("safe %s: %w", sv.SafeId.String(), errSafeCycle)
+	}
 	if !ok {
 		if m.safes == nil {
 			return "", fmt.Errorf("%w %s", ErrUnknownSafe, sv.SafeId.String())
@@ -611,8 +618,12 @@ func (m *Manager) open(ctx context.Context, sc SecretContext, s *happydns.Secret
 			return "", fmt.Errorf("safe %s does not belong to the owner of this secret", sv.SafeId.String())
 		}
 
-		us, err := m.unlock(ctx, safe)
+		// Being unlocked: met again while opening its secret, it is in a
+		// cycle.
+		unlocked[sv.SafeId.String()] = unlockedSafe{}
+		us, err := m.unlock(ctx, safe, unlocked)
 		if err != nil {
+			delete(unlocked, sv.SafeId.String())
 			return "", err
 		}
 		u = unlockedSafe{kind: safe.Kind, UnlockedSafe: us}

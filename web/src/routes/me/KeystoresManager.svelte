@@ -55,6 +55,8 @@
     import { requestUnlock } from "$lib/stores/unlock";
     import { t } from "$lib/translations";
 
+    import KeystoreSecretParams from "./KeystoreSecretParams.svelte";
+
     let keystores_req = $state(refreshKeystores());
     let kinds_req = listKeystoreKinds();
 
@@ -98,15 +100,18 @@
     // The keystore whose update form is open, and what is entered in it.
     let updating = $state("");
     let updateParams: Record<string, unknown> = $state({});
+    // Where the secret of the keystore goes, for one keeping a secret.
+    let updateKeystoreRef = $state("");
 
     function toggleUpdate(ks: Keystore) {
         updating = updating === ks.ref ? "" : ks.ref!;
         updateParams = {};
+        updateKeystoreRef = "";
     }
 
     function update(ks: Keystore) {
         act(ks.ref!, async () => {
-            await updateKeystore(ks.ref!, updateParams);
+            await updateKeystore(ks.ref!, updateParams, updateKeystoreRef);
             updating = "";
             updateParams = {};
             toasts.addToast({ message: $t("keystores.updated"), type: "success", timeout: 5000 });
@@ -147,11 +152,13 @@
     let newKind = $state("");
     let newName = $state("");
     let newParams: Record<string, unknown> = $state({});
+    let newKeystoreRef = $state("");
     let creating = $state(false);
 
     function openCreate() {
         newName = "";
         newParams = {};
+        newKeystoreRef = "";
         createModalOpen = true;
     }
 
@@ -160,7 +167,7 @@
         if (!kind || !newName) return;
         creating = true;
         try {
-            await createKeystore(kind, newName, newParams);
+            await createKeystore(kind, newName, newParams, newKeystoreRef);
             newName = "";
             newParams = {};
             createModalOpen = false;
@@ -249,14 +256,24 @@
                                 update(ks);
                             }}
                         >
-                            {#each ks.updateForm ?? [] as field (field.id)}
-                                <ResourceInput
-                                    edit
-                                    index={"keystore-update-" + field.id}
-                                    specs={field as Field}
-                                    bind:value={updateParams[field.id!]}
+                            {#if ks.keepsSecret}
+                                <KeystoreSecretParams
+                                    fields={(ks.updateForm ?? []) as Array<Field>}
+                                    bind:values={updateParams}
+                                    prefix="keystore-update-"
+                                    objectId={ks.ref}
+                                    bind:keystore={updateKeystoreRef}
                                 />
-                            {/each}
+                            {:else}
+                                {#each ks.updateForm ?? [] as field (field.id)}
+                                    <ResourceInput
+                                        edit
+                                        index={"keystore-update-" + field.id}
+                                        specs={field as Field}
+                                        bind:value={updateParams[field.id!]}
+                                    />
+                                {/each}
+                            {/if}
                             <Button
                                 type="submit"
                                 color="primary"
@@ -402,14 +419,25 @@
                             {$t("keystores.references-help", { hint: kind.referenceHint ?? "" })}
                         </p>
                     {/if}
-                    {#each kind?.form ?? [] as field (field.id)}
-                        <ResourceInput
-                            edit
-                            index={"keystore-" + field.id}
-                            specs={field as Field}
-                            bind:value={newParams[field.id!]}
-                        />
-                    {/each}
+                    {#if kind?.keepsSecret}
+                        {#key kind.kind}
+                            <KeystoreSecretParams
+                                fields={(kind.form ?? []) as Array<Field>}
+                                bind:values={newParams}
+                                prefix="keystore-"
+                                bind:keystore={newKeystoreRef}
+                            />
+                        {/key}
+                    {:else}
+                        {#each kind?.form ?? [] as field (field.id)}
+                            <ResourceInput
+                                edit
+                                index={"keystore-" + field.id}
+                                specs={field as Field}
+                                bind:value={newParams[field.id!]}
+                            />
+                        {/each}
+                    {/if}
                 </form>
             </ModalBody>
             <ModalFooter>

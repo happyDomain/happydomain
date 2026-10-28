@@ -50,6 +50,18 @@ type memSafeStorage struct {
 	creates int
 }
 
+// storedSafe encodes and decodes safe, as the real storage does: a secret
+// that cannot be encoded is refused, and reads back as it is stored.
+func storedSafe(safe *happydns.Safe) (happydns.Safe, error) {
+	raw, err := json.Marshal(safe)
+	if err != nil {
+		return happydns.Safe{}, err
+	}
+	var stored happydns.Safe
+	err = json.Unmarshal(raw, &stored)
+	return stored, err
+}
+
 func newMemSafeStorage() *memSafeStorage {
 	return &memSafeStorage{safes: map[string]happydns.Safe{}, damaged: map[string]error{}}
 }
@@ -111,7 +123,11 @@ func (m *memSafeStorage) CreateSafe(safe *happydns.Safe) error {
 	if _, ok := m.safes[safe.Id.String()]; ok {
 		return fmt.Errorf("safe %s already exists", safe.Id.String())
 	}
-	m.safes[safe.Id.String()] = *safe
+	stored, err := storedSafe(safe)
+	if err != nil {
+		return err
+	}
+	m.safes[safe.Id.String()] = stored
 	m.creates++
 	return nil
 }
@@ -122,7 +138,11 @@ func (m *memSafeStorage) UpdateSafe(safe *happydns.Safe) error {
 	if _, ok := m.safes[safe.Id.String()]; !ok {
 		return happydns.ErrSafeNotFound
 	}
-	m.safes[safe.Id.String()] = *safe
+	stored, err := storedSafe(safe)
+	if err != nil {
+		return err
+	}
+	m.safes[safe.Id.String()] = stored
 	return nil
 }
 

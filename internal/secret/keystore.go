@@ -110,6 +110,11 @@ type Keystore struct {
 	// as a new credential: empty for a keystore that cannot be updated.
 	UpdateForm []happydns.Field `json:"updateForm,omitempty"`
 
+	// KeepsSecret tells whether the keystore keeps a secret of its own, such
+	// as the token of a Vault, sealed in the keystore its owner chooses, see
+	// SecretKeeping.
+	KeepsSecret bool `json:"keepsSecret"`
+
 	// SafeId is the safe behind the keystore, empty for a keystore of the
 	// instance not created yet.
 	SafeId happydns.Identifier `json:"safeId,omitempty" swaggertype:"string"`
@@ -132,6 +137,10 @@ type KindInfo struct {
 	// Keystore.References.
 	References    bool   `json:"references"`
 	ReferenceHint string `json:"referenceHint,omitempty"`
+
+	// KeepsSecret tells whether its keystores keep a secret of their own,
+	// see Keystore.KeepsSecret.
+	KeepsSecret bool `json:"keepsSecret"`
 
 	// Form describes the parameters of its creation.
 	Form []happydns.Field `json:"form"`
@@ -161,7 +170,7 @@ func (m *Manager) describe(safe *happydns.Safe) Keystore {
 		Kind:       safe.Kind,
 		Name:       safe.Name,
 		Scope:      ScopePersonal,
-		Unattended: available && opensUnattended(store),
+		Unattended: available && m.safeOpensUnattended(safe),
 		Available:  available,
 		SafeId:     safe.Id,
 	}
@@ -175,6 +184,7 @@ func (m *Manager) describe(safe *happydns.Safe) Keystore {
 	} else if u, ok := store.(Updater); ok {
 		ks.UpdateForm = u.UpdateForm()
 	}
+	_, ks.KeepsSecret = store.(SecretKeeping)
 	m.describeReferences(&ks)
 	return ks
 }
@@ -278,6 +288,7 @@ func (m *Manager) CreatableKinds() []KindInfo {
 			if r, ok := c.(Referencing); ok {
 				k.References, k.ReferenceHint = true, r.ReferenceHint()
 			}
+			_, k.KeepsSecret = c.(SecretKeeping)
 			kinds = append(kinds, k)
 		}
 	}
@@ -345,8 +356,17 @@ func (m *Manager) CreateKeystore(ctx context.Context, owner happydns.Identifier,
 		if err := store.(PasswordBound).Bind(ctx, safe, p[PasswordParam]); err != nil {
 			return Keystore{}, fmt.Errorf("%w: %w", ErrInvalidKeystore, err)
 		}
-	} else if err := creator.Create(ctx, safe, params); err != nil {
-		return Keystore{}, fmt.Errorf("%w: %w", ErrInvalidKeystore, err)
+	} else {
+		// The secret of the safe is sealed first: what the store checks is
+		// the secret it opens to, a reference resolving.
+		if keeper, ok := store.(SecretKeeping); ok {
+			if params, err = m.sealSafeSecret(ctx, safe, keeper, params, Destination{Keystore: KeystoreFromContext(ctx)}); err != nil {
+				return Keystore{}, err
+			}
+		}
+		if err := creator.Create(ctx, safe, params); err != nil {
+			return Keystore{}, fmt.Errorf("%w: %w", ErrInvalidKeystore, err)
+		}
 	}
 	if err := m.safes.CreateSafe(safe); err != nil {
 		return Keystore{}, err
@@ -396,6 +416,15 @@ func (m *Manager) UpdateKeystore(ctx context.Context, owner happydns.Identifier,
 	// Update a copy: the safe the storage handed out stays as it is if
 	// the update is not stored.
 	updated := *safe
+	if keeper, ok := store.(SecretKeeping); ok {
+		current, err := SafesOf(&SafeSecret{Secret: safe.Secret})
+		if err != nil {
+			return Keystore{}, err
+		}
+		if params, err = m.sealSafeSecret(ctx, &updated, keeper, params, Destination{Keystore: KeystoreFromContext(ctx), Current: current}); err != nil {
+			return Keystore{}, err
+		}
+	}
 	if err := store.Update(ctx, &updated, params); err != nil {
 		return Keystore{}, fmt.Errorf("%w: %w", ErrInvalidKeystore, err)
 	}
@@ -577,6 +606,9 @@ func (m *Manager) newSealer(ctx context.Context, owner happydns.Identifier, dst 
 func (m *Manager) resolve(owner happydns.Identifier, dst Destination) (*sealer, error) {
 	ref := dst.Keystore
 	explicit := ref != ""
+	if explicit && ref == dst.not {
+		return nil, fmt.Errorf("%w: keystore %q cannot keep its own secret", ErrInvalidKeystore, ref)
+	}
 
 	inInstance := false
 	if !explicit && !dst.policyOnly {
@@ -593,7 +625,7 @@ func (m *Manager) resolve(owner happydns.Identifier, dst Destination) (*sealer, 
 		if err != nil {
 			return nil, err
 		}
-		if def != "" {
+		if def != "" && def != dst.not {
 			if x, err := m.target(owner, def, dst.Unattended); err == nil {
 				return x, nil
 			}
@@ -669,11 +701,10 @@ func (m *Manager) target(owner happydns.Identifier, ref string, unattended bool)
 		// A keystore of the instance whose store is not configured here.
 		return nil, fmt.Errorf("%w %q: its store is not configured", ErrUnknownKeystore, ref)
 	}
-	store, ok := m.stores[safe.Kind]
-	if !ok {
+	if _, ok := m.stores[safe.Kind]; !ok {
 		return nil, fmt.Errorf("keystore %q needs the %q secret store, which is not configured: %w", ref, safe.Kind, ErrUnknownKeystore)
 	}
-	if unattended && !opensUnattended(store) {
+	if unattended && !m.safeOpensUnattended(safe) {
 		return nil, fmt.Errorf("%w: %q", ErrKeystoreNotUnattended, safe.Name)
 	}
 	return &sealer{safe: safe, kind: safe.Kind}, nil

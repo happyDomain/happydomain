@@ -38,22 +38,27 @@
     const choice = useKeystoreChoice();
 
     let eligible: Array<Keystore> = $derived(
-        $keystores && choice ? eligibleKeystores($keystores, choice.unattended) : [],
+        $keystores && choice
+            ? eligibleKeystores($keystores, choice.unattended).filter(
+                  (ks) => ks.ref !== choice.exclude,
+              )
+            : [],
     );
 
     // Where the secrets are, or go without any choice: the keystore the object
     // already uses, else the default one.
-    let current: Keystore | undefined = $derived(
-        $keystores && choice
-            ? effectiveKeystore(
-                  $keystores,
-                  choice.objectType,
-                  choice.objectId,
-                  "",
-                  choice.unattended,
-              )
-            : undefined,
-    );
+    // The keystore excluded gives way to the policy, as on the server.
+    let current: Keystore | undefined = $derived.by(() => {
+        if (!$keystores || !choice) return undefined;
+        const ks = effectiveKeystore(
+            $keystores,
+            choice.objectType,
+            choice.objectId,
+            "",
+            choice.unattended,
+        );
+        return ks?.ref === choice.exclude ? undefined : ks;
+    });
 
     function label(ks: Keystore): string {
         return ks.scope === "instance"

@@ -102,7 +102,7 @@ func (kc *KeystoreController) CreateKeystore(c *gin.Context) {
 		middleware.ErrorResponse(c, http.StatusBadRequest, err)
 		return
 	}
-	ks, err := kc.keystores.Create(c.Request.Context(), keystoreOwner(c), req.Kind, req.Name, req.Params)
+	ks, err := kc.keystores.Create(secret.WithKeystore(c.Request.Context(), req.Keystore), keystoreOwner(c), req.Kind, req.Name, req.Params)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusBadRequest, err)
 		return

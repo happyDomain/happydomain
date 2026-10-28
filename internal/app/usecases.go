@@ -28,6 +28,7 @@ import (
 
 	checkerPkg "git.happydns.org/happyDomain/internal/dnschecker"
 	notifPkg "git.happydns.org/happyDomain/internal/notifier"
+	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/internal/usecase"
 	authuserUC "git.happydns.org/happyDomain/internal/usecase/authuser"
 	backupUC "git.happydns.org/happyDomain/internal/usecase/backup"
@@ -278,5 +279,6 @@ func (app *App) secretHolders() map[string]usecase.SecretHolder {
 		providerUC.SecretObjectType:       providerUC.NewService(app.store, nil, app.guards.Outbound, app.cfg.DefaultResolvers, app.secrets),
 		notifPkg.SecretObjectType:         notifUC.NewChannelSecrets(app.store, app.usecases.notificationRegistry),
 		checkerUC.OptionsSecretObjectType: checkerUC.NewCheckerOptionsSecrets(app.store, app.secrets),
+		secret.SafeSecretObjectType:       app.secrets.SafeSecrets(),
 	}
 }

@@ -53,9 +53,11 @@ export async function createKeystore(
     kind: string,
     name: string,
     params: Record<string, unknown>,
+    // Where the secret among params goes, for a keystore keeping one.
+    keystore = "",
 ): Promise<SecretKeystore> {
     return unwrapSdkResponse(
-        await postKeystores({ body: { kind, name, params } }),
+        await postKeystores({ body: { kind, name, params, keystore: keystore || undefined } }),
     ) as SecretKeystore;
 }
 
@@ -63,9 +65,14 @@ export async function createKeystore(
 export async function updateKeystore(
     ref: string,
     params: Record<string, unknown>,
+    // Where the secret among params goes, for a keystore keeping one.
+    keystore = "",
 ): Promise<SecretKeystore> {
     return unwrapSdkResponse(
-        await putKeystoresByRef({ path: { ref }, body: { params } }),
+        await putKeystoresByRef({
+            path: { ref },
+            body: { params, keystore: keystore || undefined },
+        }),
     ) as SecretKeystore;
 }
 

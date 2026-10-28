@@ -100,8 +100,9 @@ func (m *Manager) ownerLock(key string) *sync.Mutex {
 
 // unlock returns what seals and opens the secrets of safe: through the store
 // of its kind, or else through a copy of its key, an entry of its keyring a
-// KEK here unwraps.
-func (m *Manager) unlock(ctx context.Context, safe *happydns.Safe) (UnlockedSafe, error) {
+// KEK here unwraps. A safe keeping a secret opens it first, among the safes
+// already unlocked, which may be nil.
+func (m *Manager) unlock(ctx context.Context, safe *happydns.Safe, unlocked unlockedSafes) (UnlockedSafe, error) {
 	// Only what its owner gives opens it: a copy of its key would make
 	// that of no use.
 	if store, ok := m.stores[safe.Kind].(Interactive); ok {
@@ -109,6 +110,13 @@ func (m *Manager) unlock(ctx context.Context, safe *happydns.Safe) (UnlockedSafe
 			return u, nil
 		}
 		return nil, lockedError(safe, store)
+	}
+	if store, ok := m.stores[safe.Kind].(SecretKeeping); ok {
+		secret, err := m.openSafeSecret(ctx, safe, unlocked)
+		if err != nil {
+			return nil, err
+		}
+		return store.UnlockWithSecret(ctx, safe, secret)
 	}
 
 	var errs []error
@@ -212,7 +220,7 @@ func (m *Manager) CheckSafe(ctx context.Context, safe *happydns.Safe) error {
 	if _, ok := store.(*instanceStore); !ok {
 		return nil
 	}
-	_, err := m.unlock(ctx, safe)
+	_, err := m.unlock(ctx, safe, nil)
 	return err
 }
 

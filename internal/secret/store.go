@@ -225,19 +225,19 @@ type KeyReporter interface {
 	WrappingKey(w happydns.WrappedKeyset) (uint32, error)
 }
 
-// KeyBorrower is a Store whose keyring entries are sealed by the keys of
-// another, its lender, such as a token sealed under the instance keyset: the
-// key status counts them under the keys of the lender, which they keep from
-// being removed. It wraps them again itself, as a Rewrapper.
-type KeyBorrower interface {
-	Store
+// SecretKeeping is a Creator whose safe keeps a secret of its owner, such as
+// the token reading a Vault: the Manager seals it, as the secrets of any
+// object, in the keystore its owner chooses, and opens it to unlock the safe.
+// Create and Update check the secret, which params holds as SecretParam, but
+// leave it out of the safe.
+type SecretKeeping interface {
+	Creator
 
-	// Lender names the store whose keys seal the entries of this one.
-	Lender() string
+	// SecretParam names the parameter holding the secret.
+	SecretParam() string
 
-	// WrappingKey returns the identifier of the key of the lender that
-	// sealed w, an entry of this store.
-	WrappingKey(w happydns.WrappedKeyset) (uint32, error)
+	// UnlockWithSecret is Unlock, given the secret of safe in clear.
+	UnlockWithSecret(ctx context.Context, safe *happydns.Safe, secret []byte) (UnlockedSafe, error)
 }
 
 // StoreFactory returns the store of a kind for cfg, or ErrStoreUnavailable

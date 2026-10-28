@@ -44,6 +44,10 @@ type Safe struct {
 	// encryption key able to unwrap it.
 	Keyring []WrappedKeyset `json:"keyring"`
 
+	// Secret is a secret of the safe itself, such as the token reading a
+	// Vault, sealed in another keystore as the secrets of any object are.
+	Secret Secret `json:"secret,omitzero"`
+
 	CreatedAt time.Time `json:"createdAt"`
 }
 

@@ -42,6 +42,10 @@ export class KeystoreChoice {
     // the same, so each of them empties itself.
     resetSecrets = $state(0);
 
+    // A keystore the secrets cannot go to: the one a keystore keeping a
+    // secret of its own opens.
+    exclude: string | undefined = $state(undefined);
+
     constructor(
         readonly objectType: string,
         objectId: string | undefined,

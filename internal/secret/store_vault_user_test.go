@@ -51,73 +51,13 @@ func vaultUserParams(addr, token string) json.RawMessage {
 	return b
 }
 
-func newTestVaultUserStore(t *testing.T, key *InstanceKey) *vaultUserStore {
+func newTestVaultUserStore(t *testing.T) *vaultUserStore {
 	t.Helper()
-	store, err := newVaultUserStore(Config{InstanceKey: key, Outbound: loopbackGuard(t)})
+	store, err := newVaultUserStore(Config{Outbound: loopbackGuard(t)})
 	if err != nil {
 		t.Fatal(err)
 	}
 	return store.(*vaultUserStore)
-}
-
-func TestVaultUserStoreNeedsTheInstanceKeyset(t *testing.T) {
-	if _, err := newVaultUserStore(Config{}); !errors.Is(err, ErrStoreUnavailable) {
-		t.Errorf("newVaultUserStore(no keyset) = %v, want ErrStoreUnavailable", err)
-	}
-	if _, err := newVaultUserStore(Config{InstanceKey: testInstanceKey(t), Stores: []string{KindVaultUser}}); !errors.Is(err, ErrStoreUnavailable) {
-		t.Errorf("newVaultUserStore(instance store left out) = %v, want ErrStoreUnavailable", err)
-	}
-	if _, err := newVaultUserStore(Config{InstanceKey: testInstanceKey(t), Stores: []string{KindInstance, KindVaultUser}}); err != nil {
-		t.Errorf("newVaultUserStore = %v", err)
-	}
-}
-
-func TestVaultUserStoreSealsTheToken(t *testing.T) {
-	ctx := context.Background()
-	v := newTestVault(t)
-	v.put("dns/ovh", map[string]any{"app_secret": "s3cr3t"})
-	store := newTestVaultUserStore(t, testInstanceKey(t))
-	owner := happydns.Identifier{0x01}
-
-	safe := vaultSafe(t, store, owner, KindVaultUser, vaultUserParams(v.URL, "user-token"))
-	if len(safe.Keyring) != 1 || safe.Keyring[0].KEK != KindVaultUser {
-		t.Fatalf("keyring = %+v", safe.Keyring)
-	}
-	if bytes.Contains(safe.Keyring[0].Blob, []byte("user-token")) || bytes.Contains(safe.Keyring[0].Params, []byte("user-token")) {
-		t.Error("the token is stored in clear")
-	}
-
-	u, err := store.Unlock(ctx, safe)
-	if err != nil {
-		t.Fatalf("Unlock: %v", err)
-	}
-	payload, err := u.Seal(ctx, objectContext(), []byte("dns/ovh#app_secret"))
-	if err != nil {
-		t.Fatalf("Seal: %v", err)
-	}
-	if ref, err := store.Reference(payload); err != nil || ref != "dns/ovh#app_secret" {
-		t.Errorf("Reference = %q, %v", ref, err)
-	}
-	if got, err := u.Open(ctx, objectContext(), payload); err != nil || string(got) != "s3cr3t" {
-		t.Errorf("Open = %q, %v", got, err)
-	}
-
-	// The token is bound to its safe: moved to another, it does not open.
-	moved := *safe
-	moved.Id = happydns.Identifier{0x06}
-	if _, err := store.Unlock(ctx, &moved); err == nil {
-		t.Error("the token of a safe opened another safe")
-	}
-	stolen := *safe
-	stolen.Owner = happydns.Identifier{0x02}
-	if _, err := store.Unlock(ctx, &stolen); err == nil {
-		t.Error("the token of a safe opened for another owner")
-	}
-
-	// Under another keyset, it does not open.
-	if _, err := newTestVaultUserStore(t, testInstanceKey(t)).Unlock(ctx, safe); err == nil {
-		t.Error("the token opened under another keyset")
-	}
 }
 
 func TestVaultUserStoreCreate(t *testing.T) {
@@ -127,7 +67,7 @@ func TestVaultUserStoreCreate(t *testing.T) {
 	v.addToken("fixed-user-token", map[string]any{"renewable": false})
 	v.addToken("batch-user-token", map[string]any{"renewable": false, "type": "batch"})
 	v.addToken("forever-user-token", map[string]any{"ttl": 0, "renewable": false})
-	store := newTestVaultUserStore(t, testInstanceKey(t))
+	store := newTestVaultUserStore(t)
 
 	for name, params := range map[string]json.RawMessage{
 		"no address":        vaultUserParams("", "user-token"),
@@ -156,7 +96,7 @@ func TestVaultUserStoreCreate(t *testing.T) {
 
 	// The address is checked as the endpoint of a provider is: by default,
 	// no address that is not public.
-	guarded, err := newVaultUserStore(Config{InstanceKey: testInstanceKey(t)})
+	guarded, err := newVaultUserStore(Config{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -172,14 +112,14 @@ func TestVaultUserStoreCreate(t *testing.T) {
 func TestVaultUserStoreRenewsAtUnlock(t *testing.T) {
 	ctx := context.Background()
 	v := newTestVault(t)
-	store := newTestVaultUserStore(t, testInstanceKey(t))
+	store := newTestVaultUserStore(t)
 	now := time.Now()
 	store.now = func() time.Time { return now }
 	safe := vaultSafe(t, store, happydns.Identifier{0x01}, KindVaultUser, vaultUserParams(v.URL, "user-token"))
 
 	unlock := func(want int, why string) {
 		t.Helper()
-		if _, err := store.Unlock(ctx, safe); err != nil {
+		if _, err := store.UnlockWithSecret(ctx, safe, []byte("user-token")); err != nil {
 			t.Fatalf("Unlock (%s): %v", why, err)
 		}
 		if got := v.renewAttempts(); got != want {
@@ -199,7 +139,7 @@ func TestVaultUserStoreRenewsAtUnlock(t *testing.T) {
 	if err := store.Create(ctx, other, vaultUserParams(v.URL, "user-token")); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := store.Unlock(ctx, other); err != nil {
+	if _, err := store.UnlockWithSecret(ctx, other, []byte("user-token")); err != nil {
 		t.Fatal(err)
 	}
 	if got := v.renewAttempts(); got != 3 {
@@ -226,13 +166,13 @@ func TestVaultUserStoreStopsRenewingWhatVaultDoesNot(t *testing.T) {
 	ctx := context.Background()
 	v := newTestVault(t)
 	v.addToken("forever-user-token", map[string]any{"ttl": 0, "renewable": false})
-	store := newTestVaultUserStore(t, testInstanceKey(t))
+	store := newTestVaultUserStore(t)
 	now := time.Now()
 	store.now = func() time.Time { return now }
 	safe := vaultSafe(t, store, happydns.Identifier{0x01}, KindVaultUser, vaultUserParams(v.URL, "forever-user-token"))
 
 	for range 3 {
-		if _, err := store.Unlock(ctx, safe); err != nil {
+		if _, err := store.UnlockWithSecret(ctx, safe, []byte("forever-user-token")); err != nil {
 			t.Fatal(err)
 		}
 		now = now.Add(24 * time.Hour)
@@ -242,69 +182,20 @@ func TestVaultUserStoreStopsRenewingWhatVaultDoesNot(t *testing.T) {
 	}
 }
 
-// The token follows the rotation of the instance keyset, and the key status
-// tells which instance key it is sealed with.
-func TestVaultUserStoreRewrap(t *testing.T) {
-	ctx := context.Background()
-	v := newTestVault(t)
-	v.put("k", map[string]any{"v": "x"})
-	h, err := GenerateInstanceKeyset()
-	if err != nil {
-		t.Fatal(err)
-	}
-	key, _ := NewInstanceKey(h)
-	safe := vaultSafe(t, newTestVaultUserStore(t, key), happydns.Identifier{0x01}, KindVaultUser, vaultUserParams(v.URL, "user-token"))
-
-	rh, err := RotateInstanceKeyset(h)
-	if err != nil {
-		t.Fatal(err)
-	}
-	rotated, _ := NewInstanceKey(rh)
-	store := newTestVaultUserStore(t, rotated)
-	if id, err := store.WrappingKey(safe.Keyring[0]); err != nil || id == rotated.PrimaryKeyId() {
-		t.Fatalf("WrappingKey before the rewrap = %d, %v; want the previous key", id, err)
-	}
-	if store.Lender() != KindInstance {
-		t.Errorf("Lender = %q, want the instance store", store.Lender())
-	}
-
-	w := safe.Keyring[0]
-	changed, err := store.Rewrap(ctx, safe, &w)
-	if err != nil || !changed {
-		t.Fatalf("Rewrap = %v, %v", changed, err)
-	}
-	if id, _ := store.WrappingKey(w); id != rotated.PrimaryKeyId() {
-		t.Errorf("WrappingKey after the rewrap = %d, want the primary key %d", id, rotated.PrimaryKeyId())
-	}
-	if changed, err := store.Rewrap(ctx, safe, &w); err != nil || changed {
-		t.Errorf("Rewrap again = %v, %v; want nothing to do", changed, err)
-	}
-
-	safe.Keyring[0] = w
-	u, err := store.Unlock(ctx, safe)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got, err := u.Open(ctx, objectContext(), []byte("k#v")); err != nil || string(got) != "x" {
-		t.Errorf("Open after the rewrap = %q, %v", got, err)
-	}
-}
-
 // The address is checked at each request too, not only at creation: a
 // keystore whose Vault the guard no longer allows does not read.
 func TestVaultUserStoreGuardsEachRequest(t *testing.T) {
 	ctx := context.Background()
 	v := newTestVault(t)
 	v.put("dns/ovh", map[string]any{"app_secret": "s3cr3t"})
-	key := testInstanceKey(t)
-	safe := vaultSafe(t, newTestVaultUserStore(t, key), happydns.Identifier{0x01}, KindVaultUser, vaultUserParams(v.URL, "user-token"))
+	safe := vaultSafe(t, newTestVaultUserStore(t), happydns.Identifier{0x01}, KindVaultUser, vaultUserParams(v.URL, "user-token"))
 
-	guarded, err := newVaultUserStore(Config{InstanceKey: key})
+	guarded, err := newVaultUserStore(Config{})
 	if err != nil {
 		t.Fatal(err)
 	}
 	before := v.renewAttempts()
-	u, err := guarded.(*vaultUserStore).Unlock(ctx, safe)
+	u, err := guarded.(*vaultUserStore).UnlockWithSecret(ctx, safe, []byte("user-token"))
 	if err != nil {
 		t.Fatalf("Unlock = %v, want the keystore to open, the renewal failing quietly", err)
 	}
@@ -319,54 +210,36 @@ func TestVaultUserStoreGuardsEachRequest(t *testing.T) {
 func TestVaultUserStoreUnlockRefusesMalformedSafes(t *testing.T) {
 	ctx := context.Background()
 	v := newTestVault(t)
-	store := newTestVaultUserStore(t, testInstanceKey(t))
+	store := newTestVaultUserStore(t)
 	good := vaultSafe(t, store, happydns.Identifier{0x01}, KindVaultUser, vaultUserParams(v.URL, "user-token"))
+	if _, err := store.UnlockWithSecret(ctx, good, []byte("user-token")); err != nil {
+		t.Fatalf("UnlockWithSecret = %v", err)
+	}
+	if bytes.Contains(good.Keyring[0].Params, []byte("user-token")) || len(good.Keyring[0].Blob) != 0 {
+		t.Error("the keyring keeps the token: the Manager seals it as the secret of the safe")
+	}
+	if _, err := store.Unlock(ctx, good); err == nil {
+		t.Error("Unlock opened without the token")
+	}
 
 	otherKind := *good
 	otherKind.Kind = KindInstance
 	noEntry := *good
-	noEntry.Keyring = []happydns.WrappedKeyset{{KEK: KindInstance, Blob: good.Keyring[0].Blob}}
+	noEntry.Keyring = []happydns.WrappedKeyset{{KEK: KindInstance}}
 	badParams := *good
-	badParams.Keyring = []happydns.WrappedKeyset{{KEK: KindVaultUser, Params: json.RawMessage(`nope`), Blob: good.Keyring[0].Blob}}
-	badBlob := *good
-	badBlob.Keyring = []happydns.WrappedKeyset{{KEK: KindVaultUser, Params: good.Keyring[0].Params, Blob: []byte("garbage")}}
+	badParams.Keyring = []happydns.WrappedKeyset{{KEK: KindVaultUser, Params: json.RawMessage(`nope`)}}
 
 	for name, safe := range map[string]*happydns.Safe{
 		"another kind":      &otherKind,
 		"no vault-user key": &noEntry,
 		"bad parameters":    &badParams,
-		"bad token blob":    &badBlob,
 	} {
-		if _, err := store.Unlock(ctx, safe); err == nil {
-			t.Errorf("Unlock(%s) succeeded", name)
+		if _, err := store.UnlockWithSecret(ctx, safe, []byte("user-token")); err == nil {
+			t.Errorf("UnlockWithSecret(%s) succeeded", name)
 		}
 	}
-}
-
-// At startup, a keyset that is not the one the database was used with is
-// refused: the tokens would not open.
-func TestVaultUserStoreCheckStartup(t *testing.T) {
-	ctx := context.Background()
-	checks := &memCheckStorage{}
-	key := testInstanceKey(t)
-	store, err := newVaultUserStore(Config{InstanceKey: key, Checks: checks})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := store.(StartupChecker).CheckStartup(ctx); err != nil {
-		t.Errorf("CheckStartup = %v", err)
-	}
-
-	other, err := newVaultUserStore(Config{InstanceKey: testInstanceKey(t), Checks: checks})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := other.(StartupChecker).CheckStartup(ctx); !errors.Is(err, ErrWrongInstanceKey) {
-		t.Errorf("CheckStartup(another keyset) = %v, want ErrWrongInstanceKey", err)
-	}
-
-	if err := newTestVaultUserStore(t, key).CheckStartup(ctx); err != nil {
-		t.Errorf("CheckStartup(no check storage) = %v", err)
+	if _, err := store.UnlockWithSecret(ctx, good, nil); err == nil {
+		t.Error("UnlockWithSecret(no token) succeeded")
 	}
 }
 
@@ -386,11 +259,11 @@ func TestVaultUserStoreReadsItsMountAndNamespace(t *testing.T) {
 		}
 	}))
 	t.Cleanup(srv.Close)
-	store := newTestVaultUserStore(t, testInstanceKey(t))
+	store := newTestVaultUserStore(t)
 	safe := vaultSafe(t, store, happydns.Identifier{0x01}, KindVaultUser,
 		json.RawMessage(`{"address":"`+srv.URL+`","token":"user-token","mount":"kv/team","namespace":"ops"}`))
 
-	u, err := store.Unlock(ctx, safe)
+	u, err := store.UnlockWithSecret(ctx, safe, []byte("user-token"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -407,13 +280,13 @@ func TestVaultUserStoreStopsRenewingWithoutLease(t *testing.T) {
 	ctx := context.Background()
 	v := newTestVault(t)
 	v.lease = 0
-	store := newTestVaultUserStore(t, testInstanceKey(t))
+	store := newTestVaultUserStore(t)
 	now := time.Now()
 	store.now = func() time.Time { return now }
 	safe := vaultSafe(t, store, happydns.Identifier{0x01}, KindVaultUser, vaultUserParams(v.URL, "user-token"))
 
 	for range 3 {
-		if _, err := store.Unlock(ctx, safe); err != nil {
+		if _, err := store.UnlockWithSecret(ctx, safe, []byte("user-token")); err != nil {
 			t.Fatal(err)
 		}
 		now = now.Add(24 * time.Hour)
@@ -427,14 +300,12 @@ func TestVaultUserKindIsBuiltin(t *testing.T) {
 	if _, ok := builtinStores[KindVaultUser]; !ok {
 		t.Fatalf("no builtin store %q", KindVaultUser)
 	}
-	store := Store(newTestVaultUserStore(t, testInstanceKey(t)))
+	store := Store(newTestVaultUserStore(t))
 	for name, ok := range map[string]bool{
-		"Creator":        is[Creator](store),
-		"Updater":        is[Updater](store),
-		"Referencing":    is[Referencing](store),
-		"Rewrapper":      is[Rewrapper](store),
-		"KeyBorrower":    is[KeyBorrower](store),
-		"StartupChecker": is[StartupChecker](store),
+		"Creator":       is[Creator](store),
+		"Updater":       is[Updater](store),
+		"Referencing":   is[Referencing](store),
+		"SecretKeeping": is[SecretKeeping](store),
 	} {
 		if !ok {
 			t.Errorf("vault-user is not a %s", name)
@@ -443,8 +314,8 @@ func TestVaultUserKindIsBuiltin(t *testing.T) {
 	if is[Interactive](store) {
 		t.Error("vault-user is Interactive")
 	}
-	if is[KeyReporter](store) {
-		t.Error("vault-user is a KeyReporter: the instance keys would be listed twice")
+	if is[KeyReporter](store) || is[Rewrapper](store) {
+		t.Error("vault-user has keys of its own: its token is sealed as any secret")
 	}
 	if is[KEK](store) {
 		t.Error("vault-user is a KEK: its entry would be taken for a copy of a key")
@@ -569,7 +440,7 @@ func TestVaultUserKeystoreUpdate(t *testing.T) {
 			t.Errorf("UpdateKeystore(%s): the error repeats the token: %v", name, err)
 		}
 	}
-	if after, _ := safes.GetSafe(ks.SafeId); !bytes.Equal(after.Keyring[0].Blob, before.Keyring[0].Blob) {
+	if after, _ := safes.GetSafe(ks.SafeId); after.Secret.Token() != before.Secret.Token() {
 		t.Error("a refused update changed the token")
 	}
 
@@ -584,8 +455,8 @@ func TestVaultUserKeystoreUpdate(t *testing.T) {
 		t.Errorf("UpdateKeystore = %+v", updated)
 	}
 	stored, _ := safes.GetSafe(ks.SafeId)
-	if bytes.Contains(stored.Keyring[0].Blob, []byte("new-user-token")) {
-		t.Error("the new token is stored in clear")
+	if stored.Secret.Token() == before.Secret.Token() || strings.Contains(stored.Secret.Token(), "new-user-token") {
+		t.Error("the new token is not sealed in place of the old one")
 	}
 	if !bytes.Equal(stored.Keyring[0].Params, before.Keyring[0].Params) {
 		t.Errorf("the location changed: %s, was %s", stored.Keyring[0].Params, before.Keyring[0].Params)

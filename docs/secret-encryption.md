@@ -99,7 +99,7 @@ A keystore is where the credentials of a user are sealed. Each user has:
   `login-password` (bound to the login password), `vault` (references to
   the Vault of the instance) and `vault-user` (references to a Vault of the
   user) are enabled by default, but offered only once configured (`vault`
-  needs `-secret-vault-addr`, `vault-user` the instance keyset). `file`
+  needs `-secret-vault-addr`). `file`
   (references to files on the server) and `program` (references answered by
   programs on the server) reach the server itself: the administrator enables
   them on purpose with `-secret-store`, for instance
@@ -392,13 +392,18 @@ Once Vault no longer knows the token, its owner replaces it from their
 keystores: the secrets it holds, references, open again with the new one.
 
 The address is checked as the endpoint of a provider is: only public
-addresses, unless `-outbound-allowed-target` allows others. The token is
-sealed under the instance keyset, bound to its keystore: a database leaked
-alone does not give it away, a compromised server does. This kind therefore
-needs the instance keyset, and the `instance` store enabled. The token is
-wrapped again by a [rewrap](#rotating-the-keyset), and the key status counts
-it under the instance key that seals it: do not delete such a key while a
-token needs it.
+addresses, unless `-outbound-allowed-target` allows others.
+
+The token is a credential like any other: it goes to the keystore its owner
+chooses when creating or updating the keystore, else where their new
+credentials go, but never to the Vault keystore it opens. In the instance
+keystore, it follows the policy: a [reseal](#going-back-to-clear) or a
+[migration](#migrating-existing-credentials) moves it as any credential, and
+a [rewrap](#rotating-the-keyset) covers it. In a `login-password` or
+`passphrase` keystore, no administrator reads it, but the Vault then opens
+only in its owner's session: it is not offered to checkers and notifications,
+which run in the background. In a keystore of references, the token entered
+is a reference too.
 
 ## Startup checks
 
@@ -525,10 +530,6 @@ rewrap: the users' keys it holds are protected by them.
    unreadable credentials entered again, or delete the objects concerned,
    then run it again. The credentials users keep in their own keystores stay
    there.
-
-   A user's Vault keystore keeps its token encrypted under the keyset: while
-   one is left, the users' keys are deleted but the keyset check record is
-   kept, and the keyset stays required at startup.
 
 4. Remove `secret-keyset-file` from the configuration, and restart.
 

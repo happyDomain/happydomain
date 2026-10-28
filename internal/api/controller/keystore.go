@@ -53,12 +53,21 @@ type KeystoreCreation struct {
 
 	// Params holds what the kind needs, following its form.
 	Params json.RawMessage `json:"params,omitempty" swaggertype:"object"`
+
+	// Keystore is the reference of the keystore the secret among Params,
+	// such as the token of a Vault, is sealed in; empty, it goes where new
+	// secrets go.
+	Keystore string `json:"keystore,omitempty"`
 }
 
 // KeystoreUpdate asks to update a personal keystore.
 type KeystoreUpdate struct {
 	// Params holds what the keystore needs, following its update form.
 	Params json.RawMessage `json:"params,omitempty" swaggertype:"object"`
+
+	// Keystore is the reference of the keystore the secret among Params is
+	// sealed in; empty, it stays where it was.
+	Keystore string `json:"keystore,omitempty"`
 }
 
 // KeystoreMigration asks to move the secrets of a keystore into another.
@@ -127,7 +136,7 @@ func (kc *KeystoreController) CreateKeystore(c *gin.Context) {
 		return
 	}
 
-	ks, err := kc.keystores.Create(c.Request.Context(), middleware.MyUser(c).Id, req.Kind, req.Name, req.Params)
+	ks, err := kc.keystores.Create(secret.WithKeystore(c.Request.Context(), req.Keystore), middleware.MyUser(c).Id, req.Kind, req.Name, req.Params)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
@@ -158,7 +167,7 @@ func (kc *KeystoreController) UpdateKeystore(c *gin.Context) {
 		return
 	}
 
-	ks, err := kc.keystores.Update(c.Request.Context(), middleware.MyUser(c).Id, c.Param("ref"), req.Params)
+	ks, err := kc.keystores.Update(secret.WithKeystore(c.Request.Context(), req.Keystore), middleware.MyUser(c).Id, c.Param("ref"), req.Params)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return
