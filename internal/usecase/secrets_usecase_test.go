@@ -282,6 +282,64 @@ func TestSecretsUsecaseDropSafesRefusedWithUnreadable(t *testing.T) {
 	}
 }
 
+// countsStub reports counts, and reseals nothing.
+type countsStub struct {
+	holderStub
+	counts secret.Counts
+}
+
+func (h countsStub) InspectSecrets(context.Context) (secret.Counts, error) {
+	return h.counts, nil
+}
+
+// Dropping the safes lets go of the instance keyset only: a secret kept in a
+// keystore of its owner does not hold it back, one sealed under the keyset
+// does.
+func TestSecretsUsecaseDropSafesIgnoresOtherKeystores(t *testing.T) {
+	ctx := context.Background()
+	for _, tc := range []struct {
+		kind string
+		ok   bool
+	}{
+		{secret.KindVaultUser, true},
+		{secret.KindInstance, false},
+	} {
+		t.Run(tc.kind, func(t *testing.T) {
+			db, err := inmemory.Instantiate()
+			if err != nil {
+				t.Fatal(err)
+			}
+			h, _ := secret.GenerateInstanceKeyset()
+			key, _ := secret.NewInstanceKey(h)
+			instance, _ := secret.NewManager(secret.Config{Policy: secret.PolicyInstance, InstanceKey: key, Safes: db})
+			plaintext, _ := secret.NewManager(secret.Config{Policy: secret.PolicyPlaintext, InstanceKey: key, Safes: db})
+			// Leaves the instance safe of the owner behind.
+			seedSecretProvider(t, db, instance, 1, "sealed-1")
+
+			uc := usecase.NewSecretsUsecase(plaintext, map[string]usecase.SecretHolder{
+				"a": countsStub{counts: secret.Counts{Clear: 1, Sealed: map[string]int{tc.kind: 1}}},
+			}, db)
+			n, err := uc.DropSafes(ctx)
+			_, getErr := db.GetSafeByOwner(happydns.Identifier{0x01}, secret.KindInstance)
+			if tc.ok {
+				if err != nil || n != 1 {
+					t.Errorf("DropSafes = %d, %v; want the instance safe dropped", n, err)
+				}
+				if getErr == nil {
+					t.Error("the instance safe was kept")
+				}
+			} else {
+				if err == nil || !strings.Contains(err.Error(), "still sealed") {
+					t.Errorf("DropSafes = %d, %v; want it refused", n, err)
+				}
+				if getErr != nil {
+					t.Errorf("the instance safe was deleted: %v", getErr)
+				}
+			}
+		})
+	}
+}
+
 // holderStub counts one clear secret and reseals nothing, or fails with err.
 type holderStub struct{ err error }
 

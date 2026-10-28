@@ -74,25 +74,28 @@
             (acc, c) => ({
                 clear: acc.clear + (c.clear ?? 0),
                 sealed: acc.sealed + sealedCount(c),
+                // Only these need the keyset: the others stay in the
+                // keystores their owners chose.
+                sealedInstance: acc.sealedInstance + (c.sealed?.instance ?? 0),
                 unreadable: acc.unreadable + (c.unreadable ?? 0),
                 undecodable: acc.undecodable + (c.undecodable ?? 0),
             }),
-            { clear: 0, sealed: 0, unreadable: 0, undecodable: 0 },
+            { clear: 0, sealed: 0, sealedInstance: 0, unreadable: 0, undecodable: 0 },
         ),
     );
 
     // Some credentials are not stored the way the policy stores new ones.
     const resealNeeded = $derived(
         (status?.policy === "instance" && totals.clear > 0) ||
-            (status?.policy === "plaintext" && totals.sealed > 0),
+            (status?.policy === "plaintext" && totals.sealedInstance > 0),
     );
 
     // Mirrors the checks of DropSafes on the server, which refuses anyway.
     const dropSafesBlocker = $derived.by(() => {
         if (status?.policy !== "plaintext")
             return "Switch to the plaintext policy, restart, and reseal first.";
-        if (totals.sealed + totals.unreadable > 0)
-            return "Credentials are still sealed: reseal first, or have the unreadable ones entered again.";
+        if (totals.sealedInstance + totals.unreadable > 0)
+            return "Credentials are still sealed under the keyset: reseal first, or have the unreadable ones entered again.";
         if (totals.undecodable > 0)
             return "Some objects could not be looked at and may hold sealed credentials: repair or delete them first.";
         return undefined;

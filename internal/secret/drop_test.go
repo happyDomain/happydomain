@@ -118,3 +118,31 @@ func TestDropSafesKeepsCheckRecordBesideDamagedRecords(t *testing.T) {
 		t.Error("the check record was deleted beside a damaged record")
 	}
 }
+
+// The token of a user Vault keystore is sealed under the instance keyset:
+// while such a safe is left, the instance safes go, but the check record
+// stays, and so does the keyset.
+func TestDropSafesKeepsCheckRecordForBorrowers(t *testing.T) {
+	instance, plaintext, store := instanceManagers(t)
+	sealOne(t, instance, objectContext(), "v")
+
+	vault := happydns.Safe{Id: happydns.Identifier{0x0f}, Owner: happydns.Identifier{0x01}, Kind: KindVaultUser}
+	if err := store.CreateSafe(&vault); err != nil {
+		t.Fatal(err)
+	}
+	checks := &memCheckStorage{record: []byte("record")}
+
+	n, err := plaintext.DropSafes(context.Background(), checks)
+	if err == nil || n != 1 {
+		t.Errorf("DropSafes = %d, %v; want the instance safe dropped and an error telling the keyset stays required", n, err)
+	}
+	if _, err := store.GetSafe(vault.Id); err != nil {
+		t.Errorf("the Vault safe was dropped: %v", err)
+	}
+	if len(store.safes) != 1 {
+		t.Errorf("%d safes left, want the Vault one only", len(store.safes))
+	}
+	if checks.record == nil {
+		t.Error("the check record was deleted while a Vault keystore still needs the keyset")
+	}
+}

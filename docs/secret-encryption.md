@@ -519,10 +519,16 @@ rewrap: the users' keys it holds are protected by them.
    curl --unix-socket happydomain.sock -X POST http://localhost/api/secrets/drop-safes
    ```
 
-   It refuses while a credential is still counted as `sealed` or `unreadable`,
-   and while an object is counted as `undecodable`: those would be lost for
-   good. Reseal again, have the unreadable credentials entered again, or
-   delete the objects concerned, then run it again.
+   It refuses while a credential is still counted as `sealed` under
+   `instance` or as `unreadable`, and while an object is counted as
+   `undecodable`: those would be lost for good. Reseal again, have the
+   unreadable credentials entered again, or delete the objects concerned,
+   then run it again. The credentials users keep in their own keystores stay
+   there.
+
+   A user's Vault keystore keeps its token encrypted under the keyset: while
+   one is left, the users' keys are deleted but the keyset check record is
+   kept, and the keyset stays required at startup.
 
 4. Remove `secret-keyset-file` from the configuration, and restart.
 

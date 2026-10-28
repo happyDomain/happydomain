@@ -26,6 +26,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"maps"
+	"slices"
 
 	"git.happydns.org/happyDomain/model"
 )
@@ -38,7 +40,8 @@ import (
 // Whatever is still sealed in them no longer opens: the caller makes sure
 // nothing is, see SecretsUsecase.DropSafes. A safe record that does not
 // decode is left as it is, and so is the check record: the keyset stays
-// required until it is dealt with.
+// required until it is dealt with. So is it while a safe is left whose store
+// seals its entries under the instance keyset, see KeyBorrower.
 func (m *Manager) DropSafes(ctx context.Context, checks CheckStorage) (int, error) {
 	if m == nil || m.safes == nil {
 		return 0, errNoManager
@@ -49,11 +52,14 @@ func (m *Manager) DropSafes(ctx context.Context, checks CheckStorage) (int, erro
 
 	var ids []happydns.Identifier
 	damaged := 0
+	borrowers := map[string]int{}
 	err := eachSafe(m.safes, func(safe *happydns.Safe) {
 		// Only the instance keyset is let go of: a safe of another kind
 		// holds secrets its owner chose to keep there.
 		if safe.Kind == KindInstance {
 			ids = append(ids, safe.Id)
+		} else if b, ok := m.stores[safe.Kind].(KeyBorrower); ok && b.Lender() == KindInstance {
+			borrowers[safe.Kind]++
 		}
 	}, func(key string, err error) {
 		log.Printf("secret: safe record %q does not decode, left as it is: %s", key, err)
@@ -73,6 +79,14 @@ func (m *Manager) DropSafes(ctx context.Context, checks CheckStorage) (int, erro
 
 	if damaged > 0 {
 		return dropped, fmt.Errorf("%d safe records do not decode and were left as they are, with the keyset check record: the keyset stays required at startup", damaged)
+	}
+	if len(borrowers) > 0 {
+		var errs []error
+		for _, kind := range slices.Sorted(maps.Keys(borrowers)) {
+			errs = append(errs, fmt.Errorf("%d safes of kind %q seal their keys under the instance keyset and were left as they are", borrowers[kind], kind))
+		}
+		errs = append(errs, errors.New("the keyset check record is kept: the keyset stays required at startup"))
+		return dropped, errors.Join(errs...)
 	}
 
 	if err := checks.DeleteSecretCheck(); err != nil && !errors.Is(err, happydns.ErrNotFound) {

@@ -128,13 +128,14 @@ func (u *SecretsUsecase) Reseal(ctx context.Context) ([]secret.ResealReport, err
 	return reports, nil
 }
 
-// DropSafes deletes the safes and the keyset check record once every secret
-// is stored in clear, after going back to the plaintext policy: the keyset is
-// then no longer needed. It returns how many safes it deleted.
+// DropSafes deletes the instance safes and the keyset check record once no
+// secret is sealed in them any more, after going back to the plaintext
+// policy: the keyset is then no longer needed. It returns how many safes it
+// deleted. The secrets kept in the keystores of their owners stay there.
 //
-// It refuses while a secret is still sealed, opening or not, and while an
-// object could not be looked at: it may hold sealed secrets, which would be
-// lost for good.
+// It refuses while a secret is still sealed under the keyset, or does not
+// open, and while an object could not be looked at: it may hold sealed
+// secrets, which would be lost for good.
 func (u *SecretsUsecase) DropSafes(ctx context.Context) (int, error) {
 	if u.manager.Policy() != secret.PolicyPlaintext {
 		return 0, fmt.Errorf("switch to the %q secret policy, restart, and reseal first", secret.PolicyPlaintext)
@@ -146,10 +147,9 @@ func (u *SecretsUsecase) DropSafes(ctx context.Context) (int, error) {
 	}
 	for _, t := range u.types() {
 		c := status.Objects[t]
-		sealed := c.Unreadable
-		for _, n := range c.Sealed {
-			sealed += n
-		}
+		// The secrets kept in another keystore stay there: only those of
+		// the instance safes would be lost.
+		sealed := c.Unreadable + c.Sealed[secret.KindInstance]
 		if sealed > 0 {
 			return 0, fmt.Errorf("%s: %d secrets are still sealed: reseal first, or have the unreadable ones entered again", t, sealed)
 		}
