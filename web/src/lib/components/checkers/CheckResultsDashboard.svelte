@@ -28,9 +28,14 @@
     import { Alert, Card, Icon } from "@sveltestrap/sveltestrap";
 
     import { t } from "$lib/translations";
-    import type { CheckItem, CheckSection, CheckTarget } from "$lib/domain_checks";
+    import {
+        attentionGroups,
+        type CheckItem,
+        type CheckSection,
+        type CheckTarget,
+    } from "$lib/domain_checks";
     import { StatusCrit, StatusError, StatusWarn } from "$lib/utils/checkers";
-    import CheckCard from "./CheckCard.svelte";
+    import CheckGroupCard from "./CheckGroupCard.svelte";
     import CheckTile from "./CheckTile.svelte";
     import DashboardSection from "$lib/components/DashboardSection.svelte";
     import PageTitle from "$lib/components/PageTitle.svelte";
@@ -49,6 +54,10 @@
         summary?: Snippet;
         /** Shown after the checks, such as the subdomains of the zone. */
         children?: Snippet;
+        /** How many problems to show; all of them when unset. */
+        attentionLimit?: number;
+        /** Where all the problems are listed, offered past the limit. */
+        attentionLink?: string;
     }
 
     let {
@@ -58,6 +67,8 @@
         linksFor,
         summary,
         children,
+        attentionLimit,
+        attentionLink,
     }: Props = $props();
 
     // The last checks loaded: they stay shown while newer ones load, so
@@ -104,30 +115,9 @@
         return n;
     }
 
-    function isAlarming(item: CheckItem): boolean {
-        const code = item.status.latestExecution?.result?.status;
-        return code === StatusWarn || code === StatusCrit || code === StatusError;
-    }
-
-    // The checks that found a problem, the most severe first.
-    function needingAttention(sections: CheckSection[]): CheckItem[] {
-        return sections
-            .flatMap((s) => s.items.filter(isAlarming))
-            .sort(
-                (a, b) =>
-                    (b.status.latestExecution?.result?.status ?? 0) -
-                    (a.status.latestExecution?.result?.status ?? 0),
-            );
-    }
-
     // The checks about the domain itself rather than one of its services.
     function domainLevel(sections: CheckSection[]): CheckItem[] {
         return sections.flatMap((s) => s.items.filter((item) => !item.target));
-    }
-
-    function attentionChip(item: CheckItem): string | undefined {
-        if (!item.target) return undefined;
-        return item.chip ? `${item.chip} · ${item.target.subdomain}` : item.target.subdomain;
     }
 </script>
 
@@ -189,42 +179,31 @@
                 {$t("checkers.list.no-checks")}
             </Alert>
         {:else}
-            {@const attention = needingAttention(sections)}
-            {@const critCount = countCritical(sections)}
-            {@const warnCount = countWarn(sections)}
+            {@const attention = attentionGroups(sections)}
             {@const overview = domainLevel(sections)}
 
             {#if attention.length > 0}
+                {@const shown = attentionLimit ? attention.slice(0, attentionLimit) : attention}
                 <DashboardSection
                     title={$t("domains.dashboard.attention.title")}
-                    subtitle={[
-                        critCount > 0 && `${critCount} ${$t("checkers.dashboard.critical")}`,
-                        warnCount > 0 && `${warnCount} ${$t("checkers.dashboard.needs-attention")}`,
-                    ]
-                        .filter(Boolean)
-                        .join(" · ")}
+                    subtitle={$t("domains.dashboard.attention.subtitle", {
+                        count: attention.length,
+                    })}
                 >
                     <div class="vstack gap-3">
-                        {#each attention as item}
-                            {@const checker = item.status}
-                            {@const links = linksFor(item.target)}
-                            {@const exec = checker.latestExecution}
-                            <CheckCard
-                                status={exec?.result?.status}
-                                name={checker.name || checker.id || ""}
-                                chip={attentionChip(item)}
-                                configureLink={links.checker(checker.id!)}
-                                detailsLink={exec?.id
-                                    ? links.execution!(checker.id!, exec.id!)
-                                    : undefined}
-                                historyLink={links.executions!(checker.id!)}
-                                messages={exec?.messages}
-                                startedAt={exec?.startedAt}
-                                scope={item.scope}
-                                checkerId={checker.id}
-                                hasMetrics={checker.has_metrics}
-                            />
+                        {#each shown as group (group.status + group.checkerId)}
+                            <CheckGroupCard {group} {linksFor} />
                         {/each}
+                        {#if shown.length < attention.length && attentionLink}
+                            <a
+                                href={attentionLink}
+                                class="btn btn-outline-secondary align-self-center"
+                            >
+                                {$t("domains.dashboard.attention.see-all", {
+                                    count: attention.length,
+                                })}
+                            </a>
+                        {/if}
                     </div>
                 </DashboardSection>
             {:else}

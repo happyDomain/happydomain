@@ -172,7 +172,12 @@
         },
         "dashboard": {
             "attention": {
-                "title": "Ce qui demande votre attention"
+                "title": "Ce qui demande votre attention",
+                "subtitle": "{{count:lt; 2:Un point mérite un coup d'œil; default:{{count}} points méritent un coup d'œil}}",
+                "see-all": "Voir les {{count}} points à regarder",
+                "the-domain": "le domaine",
+                "unfold": "Afficher {{count}} de plus",
+                "fold": "Afficher moins"
             },
             "clean": {
                 "title": "Tout est en ordre.",

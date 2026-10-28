@@ -23,6 +23,7 @@ import { listScopedCheckers, type CheckerScope } from "$lib/api/checkers";
 import type { HappydnsCheckerStatus, HappydnsStatus } from "$lib/api-base/types.gen";
 import { domainCompare } from "$lib/dns";
 import type { Zone } from "$lib/model/zone";
+import { StatusCrit, StatusWarn } from "$lib/utils/checkers";
 
 /** The service of the zone a check is about; none for the domain itself. */
 export interface CheckTarget {
@@ -156,4 +157,64 @@ export async function loadCheckSections(
         ),
     );
     return sections;
+}
+
+/** The checks of one checker that found the same kind of problem. */
+export interface AttentionGroup {
+    checkerId: string;
+    // The worst status of the items.
+    status: HappydnsStatus;
+    // In the order of the zone, the domain itself first.
+    items: CheckItem[];
+}
+
+// Where a check stands: the domain, a service of the apex, or of a subdomain.
+function placeRank(item: CheckItem): number {
+    if (!item.target) return 0;
+    return item.target.subdomain === "@" ? 1 : 2;
+}
+
+function subdomainOf(item: CheckItem): string {
+    return !item.target || item.target.subdomain === "@" ? "" : item.target.subdomain;
+}
+
+/**
+ * The checks that found a problem, a group per checker: errors before
+ * warnings, then the domain before the services of the apex, before those
+ * of the other subdomains.
+ */
+export function attentionGroups(sections: CheckSection[]): AttentionGroup[] {
+    const groups = new Map<string, AttentionGroup & { error: boolean }>();
+    for (const s of sections) {
+        for (const item of s.items) {
+            const code = item.status.latestExecution?.result?.status;
+            if (code === undefined || code === null || code < StatusWarn) continue;
+            const checkerId = item.status.id || item.status.name || "";
+            const error = code >= StatusCrit;
+            const key = `${error}|${checkerId}`;
+            let g = groups.get(key);
+            if (!g) {
+                g = { checkerId, status: code, items: [], error };
+                groups.set(key, g);
+            }
+            if (code > g.status) g.status = code;
+            g.items.push(item);
+        }
+    }
+
+    const byPlace = (a: CheckItem, b: CheckItem) =>
+        placeRank(a) - placeRank(b) || domainCompare(subdomainOf(a), subdomainOf(b));
+    for (const g of groups.values()) g.items.sort(byPlace);
+
+    return Array.from(groups.values())
+        .sort(
+            (a, b) =>
+                Number(b.error) - Number(a.error) ||
+                placeRank(a.items[0]) - placeRank(b.items[0]) ||
+                b.status - a.status ||
+                (a.items[0].status.name || a.checkerId).localeCompare(
+                    b.items[0].status.name || b.checkerId,
+                ),
+        )
+        .map(({ error: _, ...g }) => g);
 }

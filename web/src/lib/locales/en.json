@@ -172,7 +172,12 @@
         },
         "dashboard": {
             "attention": {
-                "title": "What needs your attention"
+                "title": "What needs your attention",
+                "subtitle": "{{count:lt; 2:One thing could use a look; default:{{count}} things could use a look}}",
+                "see-all": "See all {{count}} things to look at",
+                "the-domain": "the domain",
+                "unfold": "Show {{count}} more",
+                "fold": "Show less"
             },
             "clean": {
                 "title": "All systems clean.",

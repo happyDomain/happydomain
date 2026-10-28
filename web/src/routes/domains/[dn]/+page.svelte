@@ -68,6 +68,8 @@
     {linksFor}
     domainName={domain.domain}
     title={$t("checkers.list.title") + domain.domain}
+    attentionLimit={5}
+    attentionLink={domainCheckerLinks(domainLink(domain.id)).list}
 >
     {#snippet summary()}
         <div class="d-flex flex-column align-items-end gap-2">

@@ -26,8 +26,8 @@ vi.mock("$lib/api/checkers", () => api);
 
 import type { HappydnsCheckerStatus } from "$lib/api-base/types.gen";
 import { makeService, makeZone } from "$lib/test-utils/fixtures";
-import { StatusCrit, StatusOK, StatusWarn } from "$lib/utils/checkers";
-import { loadCheckSections, worstStatus, type CheckItem } from "./domain_checks";
+import { StatusCrit, StatusError, StatusInfo, StatusOK, StatusWarn } from "$lib/utils/checkers";
+import { attentionGroups, loadCheckSections, worstStatus, type CheckItem } from "./domain_checks";
 
 function checker(id: string, status?: number): HappydnsCheckerStatus {
     return {
@@ -98,5 +98,51 @@ describe("loadCheckSections", () => {
         expect(sections).toHaveLength(1);
         expect(sections[0].subdomain).toBe("@");
         expect(api.listScopedCheckers).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe("attentionGroups", () => {
+    function at(id: string, status: number, subdomain?: string): CheckItem {
+        return {
+            status: checker(id, status),
+            scope: { domainId: "d1" },
+            target: subdomain ? { subdomain, serviceId: id + subdomain } : undefined,
+        };
+    }
+
+    it("puts errors first, then the domain, the apex and the other subdomains", () => {
+        const groups = attentionGroups([
+            {
+                subdomain: "@",
+                items: [at("dnssec", StatusWarn), at("zonemaster", StatusCrit), at("ok", StatusOK)],
+            },
+            { subdomain: "@", items: [at("smtp", StatusCrit, "@"), at("caa", StatusWarn, "@")] },
+            { subdomain: "www", items: [at("http", StatusError, "www")] },
+        ]);
+
+        expect(groups.map((g) => g.checkerId)).toEqual([
+            "zonemaster",
+            "smtp",
+            "http",
+            "dnssec",
+            "caa",
+        ]);
+    });
+
+    it("gathers the checks of one checker, the apex first, keeping warnings apart", () => {
+        const groups = attentionGroups([
+            {
+                subdomain: "www",
+                items: [at("ssh", StatusCrit, "www"), at("ssh", StatusWarn, "www")],
+            },
+            { subdomain: "@", items: [at("ssh", StatusError, "@")] },
+            { subdomain: "a", items: [at("ssh", StatusCrit, "a"), at("ping", StatusInfo, "a")] },
+        ]);
+
+        expect(groups).toHaveLength(2);
+        expect(groups[0].status).toBe(StatusError);
+        expect(groups[0].items.map((i) => i.target?.subdomain)).toEqual(["@", "a", "www"]);
+        expect(groups[1].status).toBe(StatusWarn);
+        expect(groups[1].items).toHaveLength(1);
     });
 });
