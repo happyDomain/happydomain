@@ -28,7 +28,6 @@
     import type { CheckerScope, CheckMetric, ObservationSnapshotWithData } from "$lib/api/checkers";
     import { getScopedExecutionHTMLReport } from "$lib/api/checkers";
     import { showHTMLReport, reportViewMode, cachedHTMLReport } from "$lib/stores/checkers";
-    import CheckMetricsChart from "./CheckMetricsChart.svelte";
 
     interface Props {
         observations: ObservationSnapshotWithData;
@@ -61,7 +60,6 @@
     >
         {#if $reportViewMode === "metrics" && metrics && metrics.length > 0}
             <div style="width: 100%;">
-                <CheckMetricsChart {metrics} />
                 <Table size="sm" hover striped class="mt-3">
                     <thead>
                         <tr>
