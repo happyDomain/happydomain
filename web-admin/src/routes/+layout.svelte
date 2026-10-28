@@ -77,7 +77,7 @@
 </script>
 
 <Navbar style="z-index: 100" container="md" expand="md">
-    <NavbarBrand href="/" style="padding: 0; margin: -.5rem 1rem -.5rem 0;" target="_self">
+    <NavbarBrand href="/" style="padding: 0; margin: -.5rem 1rem -.5rem 0;">
         <img src="/img/happyDomain-mark.svg" alt="HappyDomain" height="26" class="d-sm-none" />
         <img src="/img/happyDomain.svg" alt="HappyDomain" height="25" class="d-none d-sm-inline" />
         <Badge color="danger" class="d-none d-sm-inline">ADMIN</Badge>
