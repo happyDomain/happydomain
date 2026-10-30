@@ -65,7 +65,7 @@ require (
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/tink-crypto/tink-go/v2 v2.9.0
 	github.com/wneessen/go-mail v0.8.1
-	github.com/yuin/goldmark v1.8.6
+	github.com/yuin/goldmark v1.8.7
 	golang.org/x/crypto v0.58.0
 	golang.org/x/oauth2 v0.37.0
 	golang.org/x/term v0.47.0
