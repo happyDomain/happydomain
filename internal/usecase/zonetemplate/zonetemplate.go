@@ -45,10 +45,12 @@ type ServiceValidator interface {
 	Validate(svc happydns.ServiceBody, subdomain happydns.Subdomain, origin happydns.Origin) ([]byte, error)
 }
 
-// RecordEditor adds records to the services of a zone, and removes some.
+// RecordEditor adds records to the services of a zone, removes some, and
+// changes some.
 type RecordEditor interface {
 	AddRecord(zone *happydns.Zone, origin string, record happydns.Record) error
 	DeleteRecord(zone *happydns.Zone, origin string, record happydns.Record) error
+	UpdateRecord(zone *happydns.Zone, origin string, oldRecord, newRecord happydns.Record) error
 }
 
 // EditableZoneActor runs an action on an editable zone of a domain, deriving

@@ -471,13 +471,7 @@ func (zc *ZoneController) UpdateRecord(c *gin.Context) {
 	oldRecord = helpers.RRRelative(oldRecord, domain.DomainName)
 	newRecord = helpers.RRRelative(newRecord, domain.DomainName)
 
-	err = zc.zoneService.DeleteRecord(zone, domain.DomainName, oldRecord)
-	if err != nil {
-		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
-		return
-	}
-
-	err = zc.zoneService.AddRecord(zone, domain.DomainName, newRecord)
+	err = zc.zoneService.UpdateRecord(zone, domain.DomainName, oldRecord, newRecord)
 	if err != nil {
 		middleware.ErrorResponse(c, http.StatusInternalServerError, err)
 		return

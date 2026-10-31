@@ -226,9 +226,6 @@ func (s *Service) UpdateZoneTemplateRecord(user *happydns.User, id happydns.Iden
 			return err
 		}
 
-		if err := s.records.DeleteRecord(zone, happydns.ZoneTemplateOrigin, oldRR); err != nil {
-			return err
-		}
-		return s.records.AddRecord(zone, happydns.ZoneTemplateOrigin, newRR)
+		return s.records.UpdateRecord(zone, happydns.ZoneTemplateOrigin, oldRR, newRR)
 	})
 }

@@ -176,6 +176,7 @@ type ZoneUsecase interface {
 	GetZone(Identifier) (*Zone, error)
 	GetZoneMeta(Identifier) (*ZoneMeta, error)
 	LoadZoneFromId(domain *Domain, id Identifier) (*Zone, error)
+	UpdateRecord(zone *Zone, origin string, oldRecord, newRecord Record) error
 	UpdateZone(Identifier, func(*Zone)) error
 }
 

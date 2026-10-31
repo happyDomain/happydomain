@@ -28,7 +28,7 @@
 //   - UpdateZoneUsecase – functional update pattern (fetch → mutate → save).
 //   - ListRecordsUsecase – flattens the service tree of a zone into a list of
 //     raw DNS records; ToZoneFile renders them as a standard zone file.
-//   - AddRecordUsecase / DeleteRecordUsecase – individual record-level mutations
+//   - AddRecordUsecase / DeleteRecordUsecase / UpdateRecordUsecase – individual record-level mutations
 //     that re-analyse affected services and keep the zone consistent.
 //   - ZoneDifferUsecase – computes the corrections between two zone snapshots.
 //   - ReassociateMetadata – transfers user-supplied metadata (comments, IDs,
@@ -53,6 +53,7 @@ type Service struct {
 	DiffZoneUC     *ZoneDifferUsecase
 	GetZoneUC      *GetZoneUsecase
 	ListRecordsUC  *ListRecordsUsecase
+	UpdateRecordUC *UpdateRecordUsecase
 	UpdateZoneUC   *UpdateZoneUsecase
 }
 
@@ -61,15 +62,18 @@ type Service struct {
 func NewZoneUsecases(store ZoneStorage, serviceUC *service.Service) *Service {
 	getZone := NewGetZoneUsecase(store)
 	listRecords := NewListRecordsUsecase(serviceUC.ListRecordsUC)
+	addRecord := NewAddRecordUsecase(serviceUC.ListRecordsUC)
+	deleteRecord := NewDeleteRecordUsecase(serviceUC.ListRecordsUC, serviceUC.SearchRecordUC)
 
 	return &Service{
-		AddRecordUC:    NewAddRecordUsecase(serviceUC.ListRecordsUC),
+		AddRecordUC:    addRecord,
 		CreateZoneUC:   NewCreateZoneUsecase(store),
-		DeleteRecordUC: NewDeleteRecordUsecase(serviceUC.ListRecordsUC, serviceUC.SearchRecordUC),
+		DeleteRecordUC: deleteRecord,
 		DeleteZoneUC:   NewDeleteZoneUsecase(store),
 		DiffZoneUC:     NewZoneDifferUsecase(getZone, listRecords),
 		GetZoneUC:      getZone,
 		ListRecordsUC:  listRecords,
+		UpdateRecordUC: NewUpdateRecordUsecase(addRecord, deleteRecord, serviceUC.ListRecordsUC, serviceUC.SearchRecordUC),
 		UpdateZoneUC:   NewUpdateZoneUsease(store, getZone),
 	}
 }
@@ -94,6 +98,12 @@ func (s *Service) DeleteZone(zoneid happydns.Identifier) error {
 // services to keep the zone consistent.
 func (s *Service) DeleteRecord(zone *happydns.Zone, origin string, record happydns.Record) error {
 	return s.DeleteRecordUC.Delete(zone, origin, record)
+}
+
+// UpdateRecord replaces oldRecord by newRecord in zone, keeping the service
+// that owns it in place.
+func (s *Service) UpdateRecord(zone *happydns.Zone, origin string, oldRecord, newRecord happydns.Record) error {
+	return s.UpdateRecordUC.Update(zone, origin, oldRecord, newRecord)
 }
 
 // DiffZones computes the corrections needed to go from the zone identified by

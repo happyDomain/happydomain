@@ -56,7 +56,7 @@ func (uc *DeleteRecordUsecase) delete(zone *happydns.Zone, origin string, record
 		return err
 	}
 
-	record = helpers.RRAbsolute(record, origin)
+	record = helpers.RRAbsolute(helpers.CopyRecord(record), origin)
 
 	// Drop given record
 	rr_found := false
@@ -81,21 +81,10 @@ func (uc *DeleteRecordUsecase) delete(zone *happydns.Zone, origin string, record
 			return err
 		}
 
-		ReassociateMetadata(
-			map[happydns.Subdomain][]*happydns.Service{dn: {svc}},
-			newsvc,
-			origin,
-			0,
-		)
 	}
 
 	// Register in zone
-	for i, s := range zone.Services[dn] {
-		if s.Id.Equals(svc.Id) {
-			zone.Services[dn] = append(zone.Services[dn][:i], append(newsvc[dn], zone.Services[dn][i+1:]...)...)
-			break
-		}
-	}
+	replaceService(zone, dn, svc, newsvc[dn], origin)
 
 	return nil
 }

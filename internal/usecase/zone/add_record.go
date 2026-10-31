@@ -45,7 +45,9 @@ func NewAddRecordUsecase(serviceListRecordsUC *service.ListRecordsUsecase) *AddR
 // Add inserts record into zone under origin. The record name is first
 // qualified to a FQDN. If a service of the same type already exists under the
 // target subdomain, the record is merged into that service and the service is
-// re-analysed; otherwise a new service is appended.
+// re-analysed. Otherwise, it is merged into the first service of the subdomain
+// that absorbs it (e.g. a NS record into an abstract.Origin, a SOA into an
+// abstract.NSOnlyOrigin); failing that, a new service is appended.
 func (uc *AddRecordUsecase) Add(zone *happydns.Zone, origin string, record happydns.Record) error {
 	record = helpers.CopyRecord(record)
 
@@ -59,46 +61,60 @@ func (uc *AddRecordUsecase) Add(zone *happydns.Zone, origin string, record happy
 
 	for dn := range newsvc {
 		for _, newsvctype := range newsvc[dn] {
+			merged := false
+
 			// Is there such kind of service in the subdomain?
-			var foundsamesvc *happydns.Service
-			for i, s := range zone.Services[dn] {
+			for _, s := range zone.Services[dn] {
 				if s.Type == newsvctype.Type {
-					foundsamesvc = s
-
-					// Export service related records
-					svc_rrs, err := uc.serviceListRecordsUC.List(foundsamesvc, origin, 0)
+					mergedsvc, err := uc.merge(s, origin, record)
 					if err != nil {
 						return err
 					}
 
-					svc_rrs = append([]happydns.Record{record}, svc_rrs...)
-
-					// Recreate the service
-					mergedsvc, _, err := intsvc.AnalyzeZone(origin, svc_rrs)
-					if err != nil {
-						return err
-					}
-
-					ReassociateMetadata(
-						map[happydns.Subdomain][]*happydns.Service{dn: {foundsamesvc}},
-						mergedsvc,
-						origin,
-						0,
-					)
-
-					// Replace in zone
-					zone.Services[dn] = append(zone.Services[dn][:i], append(mergedsvc[dn], zone.Services[dn][i+1:]...)...)
-
+					replaceService(zone, dn, s, mergedsvc[dn], origin)
+					merged = true
 					break
 				}
 			}
 
-			if foundsamesvc == nil {
+			// Is there a service that the record completes?
+			for _, s := range zone.Services[dn] {
+				if merged {
+					break
+				}
+
+				mergedsvc, err := uc.merge(s, origin, record)
+				if err != nil {
+					return err
+				}
+
+				if len(mergedsvc) == 1 && len(mergedsvc[dn]) == 1 {
+					replaceService(zone, dn, s, mergedsvc[dn], origin)
+					merged = true
+				}
+			}
+
+			if !merged {
 				// Register in zone
-				zone.Services[dn] = append(zone.Services[dn], newsvc[dn]...)
+				zone.Services[dn] = append(zone.Services[dn], newsvctype)
 			}
 		}
 	}
 
 	return nil
+}
+
+// merge analyses the records of svc along with record.
+func (uc *AddRecordUsecase) merge(svc *happydns.Service, origin string, record happydns.Record) (map[happydns.Subdomain][]*happydns.Service, error) {
+	// Export service related records
+	svc_rrs, err := uc.serviceListRecordsUC.List(svc, origin, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	svc_rrs = append([]happydns.Record{record}, svc_rrs...)
+
+	// Recreate the service
+	mergedsvc, _, err := intsvc.AnalyzeZone(origin, svc_rrs)
+	return mergedsvc, err
 }

@@ -48,6 +48,7 @@ import (
 type records struct {
 	add *zoneUC.AddRecordUsecase
 	del *zoneUC.DeleteRecordUsecase
+	upd *zoneUC.UpdateRecordUsecase
 }
 
 func (r records) AddRecord(zone *happydns.Zone, origin string, record happydns.Record) error {
@@ -56,6 +57,10 @@ func (r records) AddRecord(zone *happydns.Zone, origin string, record happydns.R
 
 func (r records) DeleteRecord(zone *happydns.Zone, origin string, record happydns.Record) error {
 	return r.del.Delete(zone, origin, record)
+}
+
+func (r records) UpdateRecord(zone *happydns.Zone, origin string, oldRecord, newRecord happydns.Record) error {
+	return r.upd.Update(zone, origin, oldRecord, newRecord)
 }
 
 // zones runs the actions on the zone given, telling how many ran.
@@ -90,10 +95,13 @@ func newFixture(t *testing.T, maxPerUser int) *fixture {
 // through zones.
 func (f *fixture) service(zones zonetemplate.EditableZoneActor, maxPerUser int) *zonetemplate.Service {
 	list := serviceUC.NewListRecordsUsecase()
+	search := serviceUC.NewSearchRecordUsecase(list)
+	add := zoneUC.NewAddRecordUsecase(list)
+	del := zoneUC.NewDeleteRecordUsecase(list, search)
 	return zonetemplate.NewService(
 		f.store,
 		serviceUC.NewValidateServiceUsecase(),
-		records{add: zoneUC.NewAddRecordUsecase(list), del: zoneUC.NewDeleteRecordUsecase(list, serviceUC.NewSearchRecordUsecase(list))},
+		records{add: add, del: del, upd: zoneUC.NewUpdateRecordUsecase(add, del, list, search)},
 		zones,
 		f.store,
 		maxPerUser,
