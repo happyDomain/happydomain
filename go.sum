@@ -14,6 +14,8 @@ git.happydns.org/checker-authoritative-consistency v0.2.0 h1:iPp0b9RWAUfSoFdnz6x
 git.happydns.org/checker-authoritative-consistency v0.2.0/go.mod h1:hPxEDSyrPq+KY9YU5QoZ1btecw/cU/Miouuacaz4wzk=
 git.happydns.org/checker-blacklist v0.5.1 h1:IT0LKmG3mBPB1zYOy3J/OlUo6xFojShapYSZQbQTRyU=
 git.happydns.org/checker-blacklist v0.5.1/go.mod h1:+r4KJobvypx9xixg2Vsjd7rIpRxxlD9HfwJQnz35kKo=
+git.happydns.org/checker-blacklist v0.5.2 h1:Ud+Fe9sbO7qK1Ea0GkyL+yyKjdZEvbRntOtWvopBnq4=
+git.happydns.org/checker-blacklist v0.5.2/go.mod h1:+r4KJobvypx9xixg2Vsjd7rIpRxxlD9HfwJQnz35kKo=
 git.happydns.org/checker-caa v0.2.2 h1:ojfWKnZ5QWv/U0a83FLuCW9DTlwsezERKLDOj525JQc=
 git.happydns.org/checker-caa v0.2.2/go.mod h1:d4DjMLOH5m3a9uQRT8gEBVUspSsQP43nMAtqo63xHlQ=
 git.happydns.org/checker-dane v0.2.0 h1:itN9q3zfZeiJgibyjUhQsHDr5StLSDk5CgOHBE3OWw8=
