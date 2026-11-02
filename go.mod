@@ -48,8 +48,11 @@ require (
 	github.com/gorilla/securecookie v1.1.2
 	github.com/gorilla/sessions v1.4.0
 	github.com/lib/pq v1.12.3
+	github.com/libdns/alidns v1.0.7
+	github.com/libdns/cloudflare v0.2.2
 	github.com/libdns/dreamhost v0.2.0
 	github.com/libdns/godaddy v1.1.0
+	github.com/libdns/huaweicloud v1.0.1
 	github.com/libdns/ionos v1.3.0
 	github.com/libdns/libdns v1.1.1
 	github.com/libdns/spaceship v1.0.0

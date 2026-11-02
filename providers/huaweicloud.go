@@ -22,41 +22,20 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	_ "github.com/DNSControl/dnscontrol/v4/providers/huaweicloud"
-
-	"git.happydns.org/happyDomain/internal/adapters"
-	providerReg "git.happydns.org/happyDomain/internal/providerregistry"
 	"git.happydns.org/happyDomain/model"
 )
 
+// HuaweiCloudAPI is shared by both implementations of the provider:
+// DNSControl in the full build, libdns in the nocloud one. Keeping a single
+// struct lets a stored provider be read by either build.
 type HuaweiCloudAPI struct {
 	KeyID     string          `json:"KeyId,omitempty" happydomain:"label=Access Key ID,required"`
 	SecretKey happydns.Secret `json:"SecretKey,omitzero" happydomain:"label=Secret Access Key,required,secret"`
 	Region    string          `json:"Region,omitempty" happydomain:"label=Region,placeholder=cn-north-1,required"`
 }
 
-func (s *HuaweiCloudAPI) DNSControlName() string {
-	return "HUAWEICLOUD"
-}
-
-func (s *HuaweiCloudAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
-	return adapter.NewDNSControlProviderAdapter(s)
-}
-
-func (s *HuaweiCloudAPI) ToDNSControlConfig() (map[string]string, error) {
-	return map[string]string{
-		"KeyId":     s.KeyID,
-		"SecretKey": s.SecretKey.Reveal(),
-		"Region":    s.Region,
-	}, nil
-}
-
-func init() {
-	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
-		return &HuaweiCloudAPI{}
-	}, happydns.ProviderInfos{
-		Name:        "Huawei Cloud DNS",
-		Description: "Huawei Cloud's global DNS service.",
-		Website:     "https://www.huaweicloud.com",
-	}, providerReg.RegisterProvider)
+var huaweiCloudInfos = happydns.ProviderInfos{
+	Name:        "Huawei Cloud DNS",
+	Description: "Huawei Cloud's global DNS service.",
+	Website:     "https://www.huaweicloud.com",
 }

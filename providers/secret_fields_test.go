@@ -157,7 +157,9 @@ func TestProviderSecretFieldsAreSecrets(t *testing.T) {
 
 func TestNotSecretAllowlistIsCurrent(t *testing.T) {
 	known := map[string]bool{}
+	built := map[string]bool{}
 	for _, name := range sortedProviders() {
+		built[name] = true
 		for _, f := range providerFields(t, name) {
 			if f.typ != secretType {
 				known[f.name] = true
@@ -166,6 +168,10 @@ func TestNotSecretAllowlistIsCurrent(t *testing.T) {
 	}
 
 	for name := range notSecret {
+		// A build tag (nocloud) can leave the provider out of this build.
+		if !built[name[:strings.Index(name, ".")]] {
+			continue
+		}
 		if !known[name] {
 			t.Errorf("notSecret lists %s, which is not a non-secret field of a provider", name)
 		}

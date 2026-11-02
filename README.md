@@ -321,6 +321,8 @@ go build -tags swagger,web ./cmd/happyDomain
 
 This last command will create a binary `happyDomain` you can use standalone.
 
+Add the `nocloud` tag (`-tags swagger,web,nocloud`) to build a light binary, about a third smaller: it leaves out the providers pulling the heaviest SDKs (AWS Route 53, Azure, Google Cloud, Oracle Cloud, Exoscale, SoftLayer, DreamHost and Akamai Edge DNS), and talks to Cloudflare, Alibaba Cloud and Huawei Cloud through libdns instead of DNSControl.
+
 
 Development environment
 -----------------------

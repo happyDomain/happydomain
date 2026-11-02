@@ -22,39 +22,19 @@
 package providers // import "git.happydns.org/happyDomain/providers"
 
 import (
-	_ "github.com/DNSControl/dnscontrol/v4/providers/cloudflare"
-
-	"git.happydns.org/happyDomain/internal/adapters"
-	providerReg "git.happydns.org/happyDomain/internal/providerregistry"
 	"git.happydns.org/happyDomain/model"
 )
 
+// CloudflareAPI is shared by both implementations of the provider: DNSControl
+// in the full build, libdns in the nocloud one. Keeping a single struct lets a
+// stored provider be read by either build.
 type CloudflareAPI struct {
 	AccountID string          `json:"AccountID,omitempty" happydomain:"label=Account ID,placeholder=xxxxxxxx,required,description=Your Cloudflare account ID"`
 	ApiToken  happydns.Secret `json:"ApiToken,omitzero" happydomain:"label=API Token,placeholder=xxxxxxxx,required,secret,description=Your Cloudflare API token"`
 }
 
-func (s *CloudflareAPI) DNSControlName() string {
-	return "CLOUDFLAREAPI"
-}
-
-func (s *CloudflareAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
-	return adapter.NewDNSControlProviderAdapter(s)
-}
-
-func (s *CloudflareAPI) ToDNSControlConfig() (map[string]string, error) {
-	return map[string]string{
-		"accountid": s.AccountID,
-		"apitoken":  s.ApiToken.Reveal(),
-	}, nil
-}
-
-func init() {
-	adapter.RegisterDNSControlProviderAdapter(func() happydns.ProviderBody {
-		return &CloudflareAPI{}
-	}, happydns.ProviderInfos{
-		Name:        "Cloudflare",
-		Description: "Global CDN and DNS provider with advanced features like proxy and DNSSEC support.",
-		Website:     "https://www.cloudflare.com",
-	}, providerReg.RegisterProvider)
+var cloudflareInfos = happydns.ProviderInfos{
+	Name:        "Cloudflare",
+	Description: "Global CDN and DNS provider with advanced features like proxy and DNSSEC support.",
+	Website:     "https://www.cloudflare.com",
 }
