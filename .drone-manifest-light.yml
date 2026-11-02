@@ -1,0 +1,19 @@
+image: happydomain/happydomain:{{#if build.tag}}{{trimPrefix "v" build.tag}}-{{/if}}light
+{{#if build.tag}}
+{{#if build.tags}}
+tags:
+{{#each build.tags}}
+  - {{this}}-light
+{{/each}}
+{{/if}}
+{{/if}}
+manifests:
+  - image: happydomain/happydomain:{{#if build.tag}}{{trimPrefix "v" build.tag}}-{{/if}}light-linux-amd64
+    platform:
+      architecture: amd64
+      os: linux
+  - image: happydomain/happydomain:{{#if build.tag}}{{trimPrefix "v" build.tag}}-{{/if}}light-linux-arm64
+    platform:
+      architecture: arm64
+      os: linux
+      variant: v8

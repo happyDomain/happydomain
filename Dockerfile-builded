@@ -28,5 +28,7 @@ WORKDIR /data
 
 VOLUME /data
 
-COPY happydomain /usr/sbin/happyDomain
+ARG BINARY=happydomain
+
+COPY ${BINARY} /usr/sbin/happyDomain
 COPY hadmin.sh /usr/bin/hadmin

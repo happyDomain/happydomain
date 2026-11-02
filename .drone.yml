@@ -95,6 +95,35 @@ steps:
       event:
         - tag
 
+  # Light variant, without the heaviest cloud providers
+  - name: backend-commit light
+    image: golang:1-alpine
+    commands:
+      - apk add --no-cache git
+      - go build -trimpath -ldflags '-s -w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}"' -o deploy/happydomain-light-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+      - ln deploy/happydomain-light-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain-light
+    environment:
+      CGO_ENABLED: 0
+      GOFLAGS: "-tags=netgo,swagger,web,nomsgpack,nocloud"
+    when:
+      event:
+        - push
+      branch:
+        - master
+
+  - name: backend-tag light
+    image: golang:1-alpine
+    commands:
+      - apk add --no-cache git
+      - go build -trimpath -ldflags '-s -w -X main.Version=${DRONE_SEMVER}' -o deploy/happydomain-light-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} ./cmd/happyDomain/
+      - ln deploy/happydomain-light-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH} happydomain-light
+    environment:
+      CGO_ENABLED: 0
+      GOFLAGS: "-tags=netgo,swagger,web,nomsgpack,nocloud"
+    when:
+      event:
+        - tag
+
   - name: generate SBOM
     image: nemunaire/drone-syft
     settings:
@@ -195,6 +224,44 @@ steps:
       dockerfile: Dockerfile-builded
       build_args:
         - VERSION=${DRONE_SEMVER}
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+    when:
+      event:
+        - tag
+
+  - name: publish light on Docker Hub
+    image: plugins/docker
+    settings:
+      repo: happydomain/happydomain
+      auto_tag: true
+      auto_tag_suffix: light-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+      dockerfile: Dockerfile-builded
+      build_args:
+        - VERSION=${DRONE_BRANCH}-${DRONE_COMMIT}
+        - BINARY=happydomain-light
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+    when:
+      event:
+        - push
+      branch:
+        - master
+
+  - name: publish light on Docker Hub (tag)
+    image: plugins/docker
+    settings:
+      repo: happydomain/happydomain
+      auto_tag: true
+      auto_tag_suffix: light-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+      dockerfile: Dockerfile-builded
+      build_args:
+        - VERSION=${DRONE_SEMVER}
+        - BINARY=happydomain-light
       username:
         from_secret: docker_username
       password:
@@ -330,6 +397,33 @@ steps:
       event:
         - tag
 
+  # Light variant, only for the image: no arm64 light binary is released
+  - name: backend-commit light
+    image: golang:1-alpine
+    commands:
+      - apk add --no-cache git
+      - go build -trimpath -ldflags '-s -w -X "main.Version=${DRONE_BRANCH}-${DRONE_COMMIT}"' -o happydomain-light ./cmd/happyDomain/
+    environment:
+      CGO_ENABLED: 0
+      GOFLAGS: "-tags=netgo,swagger,web,nomsgpack,nocloud"
+    when:
+      event:
+        - push
+      branch:
+        - master
+
+  - name: backend-tag light
+    image: golang:1-alpine
+    commands:
+      - apk add --no-cache git
+      - go build -trimpath -ldflags '-s -w -X main.Version=${DRONE_SEMVER}' -o happydomain-light ./cmd/happyDomain/
+    environment:
+      CGO_ENABLED: 0
+      GOFLAGS: "-tags=netgo,swagger,web,nomsgpack,nocloud"
+    when:
+      event:
+        - tag
+
   - name: vet and tests
     image: golang:1-alpine
     commands:
@@ -440,6 +534,44 @@ steps:
       event:
         - tag
 
+  - name: publish light on Docker Hub
+    image: plugins/docker
+    settings:
+      repo: happydomain/happydomain
+      auto_tag: true
+      auto_tag_suffix: light-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+      dockerfile: Dockerfile-builded
+      build_args:
+        - VERSION=${DRONE_BRANCH}-${DRONE_COMMIT}
+        - BINARY=happydomain-light
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+    when:
+      event:
+        - push
+      branch:
+        - master
+
+  - name: publish light on Docker Hub (tag)
+    image: plugins/docker
+    settings:
+      repo: happydomain/happydomain
+      auto_tag: true
+      auto_tag_suffix: light-${DRONE_STAGE_OS}-${DRONE_STAGE_ARCH}
+      dockerfile: Dockerfile-builded
+      build_args:
+        - VERSION=${DRONE_SEMVER}
+        - BINARY=happydomain-light
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+    when:
+      event:
+        - tag
+
   - name: publish release on gitea
     image: plugins/gitea-release
     settings:
@@ -504,6 +636,24 @@ steps:
         from_secret: docker_username
       password:
         from_secret: docker_password
+
+  - name: publish light on Docker Hub
+    image: plugins/manifest
+    settings:
+      auto_tag: true
+      ignore_missing: true
+      spec: .drone-manifest-light.yml
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+    when:
+      event:
+        - push
+        - tag
+      ref:
+        - refs/heads/master
+        - refs/tags/*
 
 trigger:
   branch:
