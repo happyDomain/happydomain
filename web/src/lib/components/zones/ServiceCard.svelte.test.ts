@@ -26,6 +26,15 @@ vi.mock("$lib/api/service_specs", () => ({
     getServiceSpec: vi.fn(async () => ({ fields: [{ id: "A", type: "dns.A" }] })),
 }));
 
+// Each app resolves the paths its own way: tell what the card links to.
+vi.mock("$links", async (importOriginal) => ({
+    ...(await importOriginal<typeof import("$links")>()),
+    domainLinks: () => ({
+        service: (dn: string, subdomain: string, serviceid: string) =>
+            `service ${dn} ${subdomain} ${serviceid}`,
+    }),
+}));
+
 import type { HappydnsCheckerStatus } from "$lib/api-base/types.gen";
 import type { CheckSection } from "$lib/domain_checks";
 import type { Domain } from "$lib/model/domain";
@@ -88,10 +97,7 @@ function withChecks(serviceId: string) {
 describe("ServiceCard", () => {
     it("leads to the editor of the service", () => {
         setup(false);
-        expect(screen.getByRole("link")).toHaveAttribute(
-            "href",
-            expect.stringMatching(/\/www\/.*s1/),
-        );
+        expect(screen.getByRole("link")).toHaveAttribute("href", "service d1 www s1");
     });
 
     it("opens a record in its modal, rather than the editor of the service", async () => {
