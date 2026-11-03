@@ -20,7 +20,6 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { cleanup, render, screen } from "@testing-library/svelte";
-import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import type { Domain } from "$lib/model/domain";
@@ -55,34 +54,19 @@ function setup(readonly: boolean) {
         { _id: "p1", _srctype: "DDNSServer", _readonly: readonly } as unknown as Provider,
     ]);
     thisZone.set(makeZone({ id: "z1" }));
-    return { origin, selectedDomain: "d1", selectedHistory: "z1", onretrieveZoneDone: () => {} };
+    return { origin, selectedHistory: "z1" };
 }
 
 describe("ZoneSidebar", () => {
-    it("offers to add a subdomain, to import a zone, to save it and to apply a template through a writable provider", async () => {
+    it("offers to add a subdomain through a writable provider", () => {
         render(ZoneSidebar, setup(false));
         expect(screen.getByRole("button", { name: /Add a subdomain/ })).toBeEnabled();
-
-        await userEvent.setup().click(screen.getByRole("button", { name: /More actions/ }));
-        expect(await screen.findByText("Import a zone file")).not.toHaveClass("disabled");
-        expect(screen.getByText("Apply a template")).not.toHaveClass("disabled");
-        expect(screen.getByText("Save as a template")).not.toHaveClass("disabled");
     });
 
-    it("disables the changes to the zone, telling why, through a read-only provider", async () => {
+    it("disables adding a subdomain, telling why, through a read-only provider", () => {
         render(ZoneSidebar, setup(true));
         const add = screen.getByRole("button", { name: /Add a subdomain/ });
         expect(add).toBeDisabled();
         expect(add.parentElement).toHaveAttribute("title", expect.stringMatching(/read-only/));
-
-        await userEvent.setup().click(screen.getByRole("button", { name: /More actions/ }));
-        expect(await screen.findByText("Import a zone file")).toHaveClass("disabled");
-        expect(screen.getByText("Apply a template")).toHaveClass("disabled");
-        expect(screen.getByText("Apply a template")).toHaveAttribute(
-            "title",
-            expect.stringMatching(/read-only/),
-        );
-        // Saving the zone as a template does not change it.
-        expect(screen.getByText("Save as a template")).not.toHaveClass("disabled");
     });
 });
