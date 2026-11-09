@@ -33,7 +33,7 @@
     interface Props {
         class?: ClassValue;
         domainName: string;
-        currentCheckerName: string;
+        currentCheckerName?: string;
         links: CheckerLinks;
         scope?: "domain" | "service";
         serviceType?: string;
