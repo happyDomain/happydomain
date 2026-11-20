@@ -45,6 +45,9 @@ type CollectStorage interface {
 
 	// ListDomains retrieves all domains owned by the given User.
 	ListDomains(u *happydns.User) ([]*happydns.Domain, error)
+
+	// ListAllSafes lists every safe, the storage of the keystores.
+	ListAllSafes() (happydns.Iterator[happydns.Safe], error)
 }
 
 // Collect gathers anonymous usage statistics about the running instance.
@@ -134,5 +137,26 @@ func Collect(
 		return nil, err
 	}
 
+	data.Database.Keystores = countKeystores(store)
+
 	return &data, nil
+}
+
+// countKeystores counts the keystores by kind. A keystore not created yet
+// has no safe and is not counted. Statistics are best effort: a listing that
+// fails, or a record that does not decode, only leaves keystores out.
+func countKeystores(store CollectStorage) map[string]int {
+	keystores := map[string]int{}
+
+	safes, err := store.ListAllSafes()
+	if err != nil {
+		return keystores
+	}
+	defer safes.Close()
+
+	for safes.Next() {
+		keystores[safes.Item().Kind]++
+	}
+
+	return keystores
 }

@@ -53,6 +53,7 @@ type Insights struct {
 		Version     int            `json:"schemaVersion"`
 		NbAuthUsers int            `json:"nbAuthUsers"`
 		NbDomains   int            `json:"nbDomains"`
+		Keystores   map[string]int `json:"keystores"`
 		Providers   map[string]int `json:"providers"`
 		NbUsers     int            `json:"nbUsers"`
 		NbZones     int            `json:"nbZones"`
