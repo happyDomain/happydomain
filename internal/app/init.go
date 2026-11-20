@@ -32,6 +32,7 @@ import (
 	"git.happydns.org/happyDomain/internal/newsletter"
 	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/internal/storage"
+	happydns "git.happydns.org/happyDomain/model"
 )
 
 func (app *App) initCaptcha() {
@@ -46,30 +47,44 @@ func (app *App) initCaptcha() {
 }
 
 func (app *App) initMailer() {
-	if app.cfg.MailSMTPHost != "" {
-		smtpMailer, err := mailer.NewSMTPMailer(app.cfg.MailSMTPHost, app.cfg.MailSMTPPort, app.cfg.MailSMTPUsername, app.cfg.MailSMTPPassword)
+	m, err := newMailer(app.cfg)
+	if err != nil {
+		log.Fatal("Could not initialize SMTP mailer: ", err)
+	}
+	app.mailer = m
+}
+
+// newMailer picks how mails leave the instance: through the SMTP server
+// configured, through the system sendmail, or, with -no-mail, nowhere but the
+// console.
+func newMailer(cfg *happydns.Options) (happydns.Mailer, error) {
+	// Checked first: whatever else is configured, -no-mail sends nothing.
+	if cfg.NoMail {
+		return &mailer.LogMailer{}, nil
+	}
+
+	if cfg.MailSMTPHost != "" {
+		smtpMailer, err := mailer.NewSMTPMailer(cfg.MailSMTPHost, cfg.MailSMTPPort, cfg.MailSMTPUsername, cfg.MailSMTPPassword)
 		if err != nil {
-			log.Fatal("Could not initialize SMTP mailer: ", err)
+			return nil, err
 		}
 
-		if app.cfg.MailSMTPTLSSNoVerify {
+		if cfg.MailSMTPTLSSNoVerify {
 			if err := smtpMailer.WithTLSNoVerify(); err != nil {
-				log.Fatal("Could not initialize SMTP mailer: ", err)
+				return nil, err
 			}
 		}
 
-		app.mailer = &mailer.Mailer{
-			MailFrom:   &app.cfg.MailFrom,
+		return &mailer.Mailer{
+			MailFrom:   &cfg.MailFrom,
 			SendMethod: smtpMailer,
-		}
-	} else if !app.cfg.NoMail {
-		app.mailer = &mailer.Mailer{
-			MailFrom:   &app.cfg.MailFrom,
-			SendMethod: &mailer.SystemSendmail{},
-		}
-	} else {
-		app.mailer = &mailer.LogMailer{}
+		}, nil
 	}
+
+	return &mailer.Mailer{
+		MailFrom:   &cfg.MailFrom,
+		SendMethod: &mailer.SystemSendmail{},
+	}, nil
 }
 
 func (app *App) initStorageEngine() {
