@@ -211,6 +211,14 @@ func (app *App) initUsecases() {
 	registry.Register(notifPkg.Adapt(notifPkg.NewEmailSender(app.mailer, baseURL), app.guards.Outbound))
 	registry.Register(notifPkg.Adapt(notifPkg.NewWebhookSender(baseURL, app.guards.Outbound), app.guards.Outbound))
 	registry.Register(notifPkg.Adapt(notifPkg.NewUnifiedPushSender(baseURL, app.guards.Outbound), app.guards.Outbound))
+	if app.cfg.NotificationChannelTypes != nil {
+		types := make([]happydns.NotificationChannelType, 0, len(app.cfg.NotificationChannelTypes))
+		for _, t := range app.cfg.NotificationChannelTypes {
+			types = append(types, happydns.NotificationChannelType(t))
+		}
+		registry.Restrict(types)
+		log.Printf("Notification channel types enabled: %v", registry.Types())
+	}
 	app.usecases.notificationRegistry = registry
 	app.usecases.keystores = usecase.NewKeystoreUsecase(app.secrets, app.secretHolders()).
 		WithLoginPasswords(authUserService)

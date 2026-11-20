@@ -150,6 +150,9 @@ func (p *Pool) runSend(ch *happydns.NotificationChannel, payload *notifPkg.Notif
 	if !ok {
 		return fmt.Errorf("no sender for channel type %q", ch.Type)
 	}
+	if !p.registry.Enabled(ch.Type) {
+		return fmt.Errorf("%w: %q", notifPkg.ErrChannelTypeDisabled, ch.Type)
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), sendTimeout)
 	defer cancel()
 	cfg, err := p.registry.OpenChannelConfig(ctx, ch)

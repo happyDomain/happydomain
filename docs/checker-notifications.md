@@ -109,6 +109,28 @@ transports. Senders that carry secrets implement `ConfigRedactor[C]`, so the
 client never sees the secret, and `ConfigMerger[C]`, so an empty value on
 update preserves the stored secret rather than wiping it.
 
+A new transport must also be listed in `notifier.KnownChannelTypes()`:
+`Registry.Register` panics otherwise, and that list is what the
+`-notification-channel-types` option checks and documents.
+
+### Enabling channel types
+
+By default every type is enabled. `-notification-channel-types` (or
+`HAPPYDOMAIN_NOTIFICATION_CHANNEL_TYPES`) restricts them, repeated or comma
+separated; `none` disables them all. On a public demo, where any visitor could
+otherwise make happyDomain POST to an address of their choice:
+
+```
+happyDomain -notification-channel-types email -no-mail
+```
+
+`GET /api/notifications/channel-types` then lists only the enabled types, so
+the interface offers only those. Creating or updating a channel of a disabled
+type is refused, and so is testing one. Channels already stored with a
+disabled type stay visible and can be deleted, but nothing is sent through
+them: each attempt is recorded as failed. With `-no-mail`, emails are written
+to the console instead of being sent.
+
 ## Events not tied to a checker
 
 Other features reuse the channels, the worker pool and the audit log to tell

@@ -347,6 +347,10 @@ func (nc *NotificationController) TestChannel(c *gin.Context) {
 	ch := middleware.MyNotificationChannel(c)
 
 	if err := nc.dispatcher.SendTestNotification(c.Request.Context(), ch, user); err != nil {
+		if errors.Is(err, notifPkg.ErrChannelTypeDisabled) {
+			middleware.ErrorResponse(c, http.StatusForbidden, err)
+			return
+		}
 		internalError(c, err)
 		return
 	}

@@ -78,6 +78,13 @@ func notifyUser(t *testing.T, setup func(db notifUC.NotificationChannelStorage, 
 // notifyUserOf is notifyUser, sending payload to user.
 func notifyUserOf(t *testing.T, user *happydns.User, payload *notifPkg.NotificationPayload, setup func(db notifUC.NotificationChannelStorage, prefs notifUC.NotificationPreferenceStorage, user *happydns.User)) ([]sentMail, []*happydns.NotificationRecord) {
 	t.Helper()
+	return notifyUserWithTypes(t, nil, user, payload, setup)
+}
+
+// notifyUserWithTypes is notifyUserOf on an instance enabling only the
+// channel types given, or every type when nil.
+func notifyUserWithTypes(t *testing.T, types []happydns.NotificationChannelType, user *happydns.User, payload *notifPkg.NotificationPayload, setup func(db notifUC.NotificationChannelStorage, prefs notifUC.NotificationPreferenceStorage, user *happydns.User)) ([]sentMail, []*happydns.NotificationRecord) {
+	t.Helper()
 
 	db, err := inmemory.Instantiate()
 	if err != nil {
@@ -96,6 +103,9 @@ func notifyUserOf(t *testing.T, user *happydns.User, payload *notifPkg.Notificat
 		t.Fatal(err)
 	}
 	registry.Register(notifPkg.Adapt(notifPkg.NewWebhookSender("https://happydomain.example", guard), guard))
+	if types != nil {
+		registry.Restrict(types)
+	}
 
 	if setup != nil {
 		setup(db, db, user)

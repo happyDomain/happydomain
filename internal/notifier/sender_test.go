@@ -25,6 +25,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 
@@ -151,5 +152,98 @@ func TestEventURL(t *testing.T) {
 		if got := eventURL(tc.base, &NotificationEvent{Path: tc.path}); got != tc.want {
 			t.Errorf("eventURL(%q, %q) = %q, want %q", tc.base, tc.path, got, tc.want)
 		}
+	}
+}
+
+// registryWithAllTypes registers the three transports, as the application does.
+func registryWithAllTypes(t *testing.T) *Registry {
+	t.Helper()
+	guard := publicOnlyGuard(t)
+	r := newTestRegistry(t)
+	r.Register(Adapt(NewEmailSender(nil, "https://happydomain.example"), nil))
+	r.Register(Adapt(NewWebhookSender("https://happydomain.example", guard), guard))
+	r.Register(Adapt(NewUnifiedPushSender("https://happydomain.example", guard), guard))
+	return r
+}
+
+func TestKnownChannelTypesAreTheRegisteredOnes(t *testing.T) {
+	r := registryWithAllTypes(t)
+	for _, typ := range KnownChannelTypes() {
+		if _, ok := r.Get(typ); !ok {
+			t.Errorf("KnownChannelTypes() lists %q, which no sender handles", typ)
+		}
+	}
+	if got, want := len(KnownChannelTypes()), len(r.Types()); got != want {
+		t.Errorf("KnownChannelTypes() lists %d types, the registry %d", got, want)
+	}
+}
+
+func TestRegistryWithoutRestrictionEnablesEveryType(t *testing.T) {
+	r := registryWithAllTypes(t)
+
+	want := []happydns.NotificationChannelType{ChannelTypeEmail, ChannelTypeUnifiedPush, ChannelTypeWebhook}
+	if got := r.Types(); !slices.Equal(got, want) {
+		t.Errorf("Types() = %v, want %v", got, want)
+	}
+	for _, typ := range want {
+		if !r.Enabled(typ) {
+			t.Errorf("Enabled(%q) = false, want true", typ)
+		}
+	}
+	if r.Enabled("unregistered") {
+		t.Error(`Enabled("unregistered") = true, want false`)
+	}
+}
+
+func TestRegistryRestrict(t *testing.T) {
+	r := registryWithAllTypes(t)
+	r.Restrict([]happydns.NotificationChannelType{ChannelTypeEmail})
+
+	if got, want := r.Types(), []happydns.NotificationChannelType{ChannelTypeEmail}; !slices.Equal(got, want) {
+		t.Errorf("Types() = %v, want %v", got, want)
+	}
+	if !r.Enabled(ChannelTypeEmail) {
+		t.Error("Enabled(email) = false, want true")
+	}
+	if r.Enabled(ChannelTypeWebhook) || r.Enabled(ChannelTypeUnifiedPush) {
+		t.Error("a type left out of Restrict is still enabled")
+	}
+
+	// A disabled sender stays registered, so the secrets of the channels
+	// already stored keep being maintained.
+	if _, ok := r.Get(ChannelTypeWebhook); !ok {
+		t.Error("Restrict unregistered the webhook sender")
+	}
+}
+
+func TestRegistryRestrictToNothing(t *testing.T) {
+	r := registryWithAllTypes(t)
+	r.Restrict([]happydns.NotificationChannelType{})
+
+	if got := r.Types(); len(got) != 0 {
+		t.Errorf("Types() = %v, want none", got)
+	}
+}
+
+// Creating or updating a channel goes through CheckIncomingChannel: a disabled
+// type must be refused there, before anything is dialed to check it.
+func TestCheckIncomingChannelRefusesADisabledType(t *testing.T) {
+	r := registryWithAllTypes(t)
+	r.Restrict([]happydns.NotificationChannelType{ChannelTypeEmail})
+
+	err := r.CheckIncomingChannel(&happydns.NotificationChannel{
+		Type:   ChannelTypeWebhook,
+		Config: json.RawMessage(`{"url":"https://example.com/hook"}`),
+	})
+	if !errors.Is(err, ErrChannelTypeDisabled) {
+		t.Errorf("CheckIncomingChannel(webhook) = %v, want ErrChannelTypeDisabled", err)
+	}
+
+	err = r.CheckIncomingChannel(&happydns.NotificationChannel{
+		Type:   ChannelTypeEmail,
+		Config: json.RawMessage(`{"address":"user@example.com"}`),
+	})
+	if err != nil {
+		t.Errorf("CheckIncomingChannel(email) = %v, want nil", err)
 	}
 }

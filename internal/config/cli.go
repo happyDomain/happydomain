@@ -73,6 +73,7 @@ func declareFlags(o *happydns.Options) {
 	flag.IntVar(&o.ListmonkID, "newsletter-id", 1, "Listmonk identifier of the list receiving the new user")
 
 	flag.BoolVar(&o.NoMail, "no-mail", o.NoMail, "Disable all automatic mails, skip email verification at registration")
+	flag.Var(notificationChannelTypeList(&o.NotificationChannelTypes), "notification-channel-types", fmt.Sprintf("Notification channel types users can create and receive notifications through, among: %s; all of them by default; may be repeated or comma separated; use \"none\" to disable them all. Channels of a disabled type are kept, but nothing is sent through them", quotedChannelTypes()))
 	flag.Var(&mailAddress{&o.MailFrom}, "mail-from", "Define the sender name and address for all e-mail sent")
 	flag.StringVar(&o.MailSMTPHost, "mail-smtp-host", o.MailSMTPHost, "Use the given SMTP server as default way to send emails")
 	flag.UintVar(&o.MailSMTPPort, "mail-smtp-port", o.MailSMTPPort, "Define the port to use to send e-mail through SMTP method")

@@ -31,6 +31,7 @@ import (
 	"strconv"
 	"strings"
 
+	"git.happydns.org/happyDomain/internal/notifier"
 	"git.happydns.org/happyDomain/internal/secret"
 	"git.happydns.org/happyDomain/model"
 	"git.happydns.org/happyDomain/pkg/favicon"
@@ -187,6 +188,33 @@ func secretStoreList(values *[]string) *entryList {
 			return item, nil
 		},
 	}
+}
+
+// notificationChannelTypeList builds the flag.Value behind
+// -notification-channel-types. Types are checked against the known
+// transports, so that a typo stops happyDomain at startup rather than leave a
+// type enabled, or silently disable one.
+func notificationChannelTypeList(values *[]string) *entryList {
+	return &entryList{
+		stringSlice: stringSlice{values},
+		validate: func(item string) (string, error) {
+			item = strings.ToLower(item)
+			if !slices.Contains(notifier.KnownChannelTypes(), happydns.NotificationChannelType(item)) {
+				return "", fmt.Errorf("unknown notification channel type %q, expected one of: %s", item, quotedChannelTypes())
+			}
+			return item, nil
+		},
+	}
+}
+
+// quotedChannelTypes lists the known notification channel types, quoted and
+// comma separated, for the help and error messages.
+func quotedChannelTypes() string {
+	var quoted []string
+	for _, t := range notifier.KnownChannelTypes() {
+		quoted = append(quoted, strconv.Quote(string(t)))
+	}
+	return strings.Join(quoted, ", ")
 }
 
 // checkerOptionFlag is a flag.Value that writes the parsed flag value into a

@@ -141,7 +141,7 @@
     <p class="mb-0 text-muted">
         {$t("settings.notifications.channels.description")}
     </p>
-    <Button color="primary" size="sm" on:click={openCreate} disabled={!$notificationChannelTypes}>
+    <Button color="primary" size="sm" on:click={openCreate} disabled={!$notificationChannelTypes?.length}>
         <i class="bi bi-plus-lg"></i>
         {$t("settings.notifications.channels.add")}
     </Button>

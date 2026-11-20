@@ -170,6 +170,10 @@ type Options struct {
 	MailSMTPPassword     string
 	MailSMTPTLSSNoVerify bool
 
+	// NotificationChannelTypes lists the notification channel types users can
+	// create, test and receive notifications through. Nil enables every type.
+	NotificationChannelTypes []string
+
 	OIDCClients []OIDCSettings
 
 	// CheckerMaxConcurrency is the maximum number of checker jobs that can

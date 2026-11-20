@@ -23,6 +23,7 @@ package config // import "git.happydns.org/happyDomain/internal/config"
 
 import (
 	"net/url"
+	"slices"
 	"testing"
 
 	"git.happydns.org/happyDomain/model"
@@ -93,6 +94,22 @@ func TestParseLine(t *testing.T) {
 	}
 	if !cfg.NoAuth {
 		t.Fatalf(`parseLine("NO_AUTH=true") = %v, want true`, cfg.NoAuth)
+	}
+
+	err = parseLine(cfg, "HAPPYDOMAIN_NO_MAIL=1")
+	if err != nil {
+		t.Fatalf(`parseLine("HAPPYDOMAIN_NO_MAIL=1") => %v`, err.Error())
+	}
+	if !cfg.NoMail {
+		t.Fatalf(`parseLine("HAPPYDOMAIN_NO_MAIL=1") = %v, want true`, cfg.NoMail)
+	}
+
+	err = parseLine(cfg, "HAPPYDOMAIN_NOTIFICATION_CHANNEL_TYPES=email,webhook")
+	if err != nil {
+		t.Fatalf(`parseLine("HAPPYDOMAIN_NOTIFICATION_CHANNEL_TYPES=email,webhook") => %v`, err.Error())
+	}
+	if !slices.Equal(cfg.NotificationChannelTypes, []string{"email", "webhook"}) {
+		t.Fatalf(`parseLine("HAPPYDOMAIN_NOTIFICATION_CHANNEL_TYPES=email,webhook") = %v, want [email webhook]`, cfg.NotificationChannelTypes)
 	}
 
 	t.Setenv("DO_NOT_TRACK", "1")

@@ -42,6 +42,9 @@ func (t *Tester) Send(ctx context.Context, ch *happydns.NotificationChannel, use
 	if !ok {
 		return notifPkg.ErrUnknownChannelType
 	}
+	if !t.registry.Enabled(ch.Type) {
+		return notifPkg.ErrChannelTypeDisabled
+	}
 	ctx, cancel := context.WithTimeout(ctx, sendTimeout)
 	defer cancel()
 	cfg, err := t.registry.OpenChannelConfig(ctx, ch)

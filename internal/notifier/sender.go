@@ -27,6 +27,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"slices"
 
 	"git.happydns.org/happyDomain/internal/netguard"
 	"git.happydns.org/happyDomain/internal/secret"
@@ -343,10 +344,22 @@ func (a *typedAdapter[C]) OpenConfig(ctx context.Context, secrets *secret.Manage
 	return c, nil
 }
 
+// KnownChannelTypes lists every transport happyDomain implements, so the
+// configuration can check and document the types an administrator enables
+// before the registry exists. Register refuses a type missing from it.
+func KnownChannelTypes() []happydns.NotificationChannelType {
+	return []happydns.NotificationChannelType{ChannelTypeEmail, ChannelTypeUnifiedPush, ChannelTypeWebhook}
+}
+
 // Senders self-register at startup; adding a transport requires no changes here.
 type Registry struct {
 	senders map[happydns.NotificationChannelType]ChannelSender
 	secrets *secret.Manager
+	// enabled restricts the types users can create, test and receive
+	// notifications through; nil enables every registered type. A disabled
+	// sender stays registered so the secrets of the channels already stored
+	// keep being maintained.
+	enabled map[happydns.NotificationChannelType]bool
 }
 
 // secrets seals the channel secrets before they are stored, and opens them
@@ -378,6 +391,9 @@ func (r *Registry) CheckIncomingChannel(ch *happydns.NotificationChannel) error 
 	s, ok := r.Get(ch.Type)
 	if !ok {
 		return fmt.Errorf("%w: %q", ErrUnknownChannelType, ch.Type)
+	}
+	if !r.Enabled(ch.Type) {
+		return fmt.Errorf("%w: %q", ErrChannelTypeDisabled, ch.Type)
 	}
 	return s.CheckIncomingConfig(ch.Config)
 }
@@ -449,6 +465,9 @@ func (r *Registry) OpenChannelConfig(ctx context.Context, ch *happydns.Notificat
 // Panics on duplicate — programming error.
 func (r *Registry) Register(s ChannelSender) {
 	t := s.Type()
+	if !slices.Contains(KnownChannelTypes(), t) {
+		panic(fmt.Sprintf("notification: sender type %q is missing from KnownChannelTypes", t))
+	}
 	if _, exists := r.senders[t]; exists {
 		panic(fmt.Sprintf("notification: sender already registered for type %q", t))
 	}
@@ -460,11 +479,33 @@ func (r *Registry) Get(t happydns.NotificationChannelType) (ChannelSender, bool)
 	return s, ok
 }
 
+// Restrict enables only the given types; the others stay registered but
+// can no longer be created, tested or sent through.
+func (r *Registry) Restrict(types []happydns.NotificationChannelType) {
+	r.enabled = make(map[happydns.NotificationChannelType]bool, len(types))
+	for _, t := range types {
+		r.enabled[t] = true
+	}
+}
+
+// Enabled reports whether channels of type t can be created, tested and sent
+// through.
+func (r *Registry) Enabled(t happydns.NotificationChannelType) bool {
+	if _, ok := r.senders[t]; !ok {
+		return false
+	}
+	return r.enabled == nil || r.enabled[t]
+}
+
+// Types lists the enabled types, sorted.
 func (r *Registry) Types() []happydns.NotificationChannelType {
 	out := make([]happydns.NotificationChannelType, 0, len(r.senders))
 	for t := range r.senders {
-		out = append(out, t)
+		if r.Enabled(t) {
+			out = append(out, t)
+		}
 	}
+	slices.Sort(out)
 	return out
 }
 
@@ -564,6 +605,10 @@ func (r *Registry) MergeChannelForUpdate(existing, incoming *happydns.Notificati
 }
 
 var ErrUnknownChannelType = errors.New("unknown channel type")
+
+// ErrChannelTypeDisabled is returned for a channel whose type the
+// administrator did not enable with -notification-channel-types.
+var ErrChannelTypeDisabled = errors.New("this notification channel type is disabled on this instance")
 
 // ErrChannelSecretsUnavailable is returned, wrapping the reason, when the
 // stored secrets of a channel do not open: the user cannot fix it, and the

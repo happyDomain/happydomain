@@ -254,3 +254,67 @@ func TestSecretStoreListSet(t *testing.T) {
 		})
 	}
 }
+
+func TestNotificationChannelTypeListSet(t *testing.T) {
+	tests := []struct {
+		name    string
+		values  []string
+		want    []string
+		wantErr bool
+	}{
+		{
+			name:   "a single type",
+			values: []string{"email"},
+			want:   []string{"email"},
+		},
+		{
+			name:   "a comma separated list, as the environment gives it",
+			values: []string{"email, unifiedpush"},
+			want:   []string{"email", "unifiedpush"},
+		},
+		{
+			name:   "a repeated flag",
+			values: []string{"email", "webhook"},
+			want:   []string{"email", "webhook"},
+		},
+		{
+			name:   "none disables every type",
+			values: []string{"email", "none"},
+			want:   []string{},
+		},
+		{
+			// A typo would silently disable a type, or leave one enabled.
+			name:    "an unknown type is refused",
+			values:  []string{"webhok"},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var got []string
+			p := notificationChannelTypeList(&got)
+
+			var err error
+			for _, value := range tt.values {
+				if err = p.Set(value); err != nil {
+					break
+				}
+			}
+
+			if tt.wantErr {
+				if err == nil {
+					t.Fatalf("Set(%v) = nil error, want an error", tt.values)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("Set(%v) => %s", tt.values, err.Error())
+			}
+			if !slices.Equal(got, tt.want) || got == nil {
+				t.Fatalf("Set(%v) = %#v, want %#v", tt.values, got, tt.want)
+			}
+		})
+	}
+}
