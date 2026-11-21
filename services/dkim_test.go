@@ -173,3 +173,41 @@ func TestDKIMIgnoresNonDKIM(t *testing.T) {
 		t.Error("the non-DKIM TXT record was lost")
 	}
 }
+
+func TestDKIMRevokedKey(t *testing.T) {
+	// An empty p= revokes the key (RFC 6376 section 3.6.1): the record is
+	// still a DKIM one, and must be kept as is.
+	txtStr := "v=DKIM1; k=rsa; p="
+	rr, err := dns.NewRR("sel._domainkey.example.com. 3600 IN TXT \"" + txtStr + "\"")
+	if err != nil {
+		t.Fatalf("dns.NewRR failed: %v", err)
+	}
+
+	s, _, err := svc.AnalyzeZone("example.com.", []happydns.Record{rr})
+	if err != nil {
+		t.Fatalf("AnalyzeZone failed: %v", err)
+	}
+	if len(s[""]) != 1 {
+		t.Fatalf("Expected 1 service, got %d: %v", len(s[""]), s)
+	}
+	dkimRec, ok := s[""][0].Service.(*svcs.DKIMRecord)
+	if !ok {
+		t.Fatalf("Expected service to be of type *DKIMRecord, got %T", s[""][0].Service)
+	}
+
+	recs, err := dkimRec.GetRecords("example.com.", 3600, "example.com.")
+	if err != nil {
+		t.Fatalf("GetRecords failed: %v", err)
+	}
+	if r, ok := recs[0].(*happydns.TXT); !ok || r.Txt != txtStr {
+		t.Errorf("GetRecords = %v, want TXT %q", recs[0], txtStr)
+	}
+
+	parsed, err := dkimRec.Analyze()
+	if err != nil {
+		t.Fatalf("Analyze failed: %v", err)
+	}
+	if str := parsed.String(); !strings.HasSuffix(str, ";p=") {
+		t.Errorf("String() = %q, want the empty p= kept", str)
+	}
+}

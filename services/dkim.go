@@ -106,9 +106,8 @@ func (t *DKIM) String() string {
 	if t.Notes != "" {
 		fields = append(fields, fmt.Sprintf("n=%s", t.Notes))
 	}
-	if len(t.PublicKey) > 0 {
-		fields = append(fields, fmt.Sprintf("p=%s", base64.StdEncoding.EncodeToString(t.PublicKey)))
-	}
+	// p= is mandatory, an empty one revokes the key (RFC 6376 section 3.6.1)
+	fields = append(fields, fmt.Sprintf("p=%s", base64.StdEncoding.EncodeToString(t.PublicKey)))
 	if len(t.ServiceType) > 1 || (len(t.ServiceType) > 0 && t.ServiceType[0] != "*") {
 		fields = append(fields, fmt.Sprintf("s=%s", strings.Join(t.ServiceType, ":")))
 	}

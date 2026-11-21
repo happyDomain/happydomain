@@ -491,3 +491,23 @@ describe("parseDKIM and stringifyDKIM roundtrip", () => {
         expect(parsedRoundtrip.f).toEqual(["s"]);
     });
 });
+
+describe("revoked key (empty p=)", () => {
+    it("keeps an empty p= when parsing", () => {
+        expect(parseDKIM("v=DKIM1; p=").p).toBe("");
+        expect(parseDKIM("v=DKIM1; p= ; k=rsa").p).toBe("");
+    });
+
+    it("leaves p undefined when the tag is absent", () => {
+        expect(parseDKIM("v=DKIM1; k=rsa").p).toBeUndefined();
+    });
+
+    it("writes the empty p= back", () => {
+        const txt = "v=DKIM1; k=rsa; p=";
+        expect(stringifyDKIM(parseDKIM(txt), txt)).toBe(txt);
+    });
+
+    it("writes no p= when the tag is absent", () => {
+        expect(stringifyDKIM(parseDKIM("v=DKIM1;k=rsa"))).toBe("v=DKIM1;k=rsa");
+    });
+});

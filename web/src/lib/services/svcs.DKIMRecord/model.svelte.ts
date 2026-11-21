@@ -37,8 +37,14 @@ export interface DKIMValue {
 export function parseDKIM(val: string): DKIMValue {
     const kv = parseKeyValueTxt(val);
 
+    // parseKeyValueTxt drops empty values, but an empty p= revokes the key
+    // (RFC 6376 sec. 3.6.1): keep it, so that the record is not rewritten
+    // without any key at all.
+    const revoked = kv.p === undefined && /(?:^|;)\s*p\s*=\s*(?:;|$)/i.test(val);
+
     return {
         ...kv,
+        ...(revoked ? { p: "" } : {}),
         h: kv.h ? kv.h.split(":") : [],
         s: kv.s ? kv.s.split(":") : [],
         t: kv.t ? kv.t.split(":") : [],
@@ -54,7 +60,7 @@ export function stringifyDKIM(val: DKIMValue, existingValue: string = ""): strin
               (val.h?.length ? sep + "h=" + val.h.join(":") : "") +
               (val.k ? sep + "k=" + val.k : "") +
               (val.n ? sep + "n=" + val.n : "") +
-              (val.p ? sep + "p=" + val.p : "") +
+              (val.p !== undefined ? sep + "p=" + val.p : "") +
               (val.s?.length ? sep + "s=" + val.s.join(":") : "") +
               (val.t?.length ? sep + "t=" + val.t.join(":") : "") +
               (val.f?.length ? sep + "f=" + val.f.join(":") : "");
