@@ -29,9 +29,15 @@ import (
 	"git.happydns.org/happyDomain/model"
 )
 
+// GandiAPI authenticates against the Gandi API either with a Personal Access
+// Token or with a (deprecated) API key, as chosen in the first step of its
+// settings form (see gandiv5_settings.go). AuthMethod only carries that
+// choice across the creation steps and is never stored.
 type GandiAPI struct {
-	APIKey    happydns.Secret `json:"api_key,omitzero" happydomain:"label=API Key,placeholder=xxxxxxxxxx,required,secret,description=Get your API Key in the Security section at https://account.gandi.net/"`
-	SharingID string          `json:"sharing_id,omitempty" happydomain:"label=Sharing ID,placeholder=xxxxxxxxxx,description=Organization sharing ID (required if member of multiple organizations)"`
+	AuthMethod string          `json:"auth_method,omitempty" happydomain:"label=Authentication method,choices=Personal Access Token;API key (legacy)"`
+	Token      happydns.Secret `json:"token,omitzero" happydomain:"label=Personal Access Token,placeholder=xxxxxxxxxx,secret,description=Create a Personal Access Token in your account settings at https://admin.gandi.net/organizations/account/pat (permission \"Manage domain name technical configurations\" is required)"`
+	APIKey     happydns.Secret `json:"api_key,omitzero" happydomain:"label=API Key,placeholder=xxxxxxxxxx,secret,description=Get your API Key in the Security section at https://account.gandi.net/"`
+	SharingID  string          `json:"sharing_id,omitempty" happydomain:"label=Sharing ID,placeholder=xxxxxxxxxx,description=Organization sharing ID (required if member of multiple organizations)"`
 }
 
 func (s *GandiAPI) DNSControlName() string {
@@ -43,10 +49,17 @@ func (s *GandiAPI) InstantiateProvider() (happydns.ProviderActuator, error) {
 }
 
 func (s *GandiAPI) ToDNSControlConfig() (map[string]string, error) {
-	return map[string]string{
-		"apikey":     s.APIKey.Reveal(),
-		"sharing_id": s.SharingID,
-	}, nil
+	cfg := map[string]string{}
+	if s.SharingID != "" {
+		cfg["sharing_id"] = s.SharingID
+	}
+	if !s.Token.IsEmpty() {
+		cfg["token"] = s.Token.Reveal()
+	}
+	if !s.APIKey.IsEmpty() {
+		cfg["apikey"] = s.APIKey.Reveal()
+	}
+	return cfg, nil
 }
 
 func init() {
