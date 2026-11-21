@@ -138,7 +138,33 @@ func (s *DKIMRecord) GetNbResources() int {
 }
 
 func (s *DKIMRecord) GenComment() string {
-	return strings.SplitN(s.Record.Header().Name, ".", 2)[0]
+	selector := strings.SplitN(s.Record.Header().Name, ".", 2)[0]
+	fields := analyseFields(s.Record.Txt)
+
+	// An empty p= revokes the key (RFC 6376 section 3.6.1): nothing else
+	// about it matters any more.
+	if p, ok := fields["p"]; ok && p == "" {
+		return selector + " (revoked)"
+	}
+
+	var notes []string
+	// rsa is the default key type, only mention the others.
+	if k := strings.ToLower(fields["k"]); k != "" && k != "rsa" {
+		notes = append(notes, k)
+	}
+	// t=y asks verifiers not to act on a failing signature.
+	for flag := range strings.SplitSeq(fields["t"], ":") {
+		if strings.TrimSpace(flag) == "y" {
+			notes = append(notes, "testing")
+			break
+		}
+	}
+
+	if len(notes) > 0 {
+		return selector + " (" + strings.Join(notes, ", ") + ")"
+	}
+
+	return selector
 }
 
 func (s *DKIMRecord) GetRecords(domain string, ttl uint32, origin string) ([]happydns.Record, error) {

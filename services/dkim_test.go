@@ -203,11 +203,36 @@ func TestDKIMRevokedKey(t *testing.T) {
 		t.Errorf("GetRecords = %v, want TXT %q", recs[0], txtStr)
 	}
 
+	if c := dkimRec.GenComment(); c != "sel (revoked)" {
+		t.Errorf("GenComment() = %q, want %q", c, "sel (revoked)")
+	}
+
 	parsed, err := dkimRec.Analyze()
 	if err != nil {
 		t.Fatalf("Analyze failed: %v", err)
 	}
 	if str := parsed.String(); !strings.HasSuffix(str, ";p=") {
 		t.Errorf("String() = %q, want the empty p= kept", str)
+	}
+}
+
+func TestDKIMRecordComment(t *testing.T) {
+	for txt, want := range map[string]string{
+		"v=DKIM1; k=rsa; p=AAAA":          "sel",
+		"v=DKIM1; p=AAAA":                 "sel",
+		"v=DKIM1; k=ed25519; p=AAAA":      "sel (ed25519)",
+		"v=DKIM1; t=y; p=AAAA":            "sel (testing)",
+		"v=DKIM1; t=s:y; p=AAAA":          "sel (testing)",
+		"v=DKIM1; t=s; p=AAAA":            "sel",
+		"v=DKIM1; k=ed25519; t=y; p=AAAA": "sel (ed25519, testing)",
+		"v=DKIM1; k=ed25519; t=y; p=":     "sel (revoked)",
+	} {
+		rec := &svcs.DKIMRecord{Record: happydns.NewTXT(&dns.TXT{
+			Hdr: dns.RR_Header{Name: "sel._domainkey", Rrtype: dns.TypeTXT, Class: dns.ClassINET},
+			Txt: []string{txt},
+		})}
+		if got := rec.GenComment(); got != want {
+			t.Errorf("GenComment() for %q = %q, want %q", txt, got, want)
+		}
 	}
 }
