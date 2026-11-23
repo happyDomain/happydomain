@@ -58,5 +58,6 @@ func init() {
 		Name:        "AutoDNS / InterNetX",
 		Description: "German hosting provider.",
 		Website:     "https://www.internetx.com/en/autodns/",
+		Nameservers: []string{`([a-d]|any\d+)\.ns14\.net`},
 	}, providerReg.RegisterProvider)
 }

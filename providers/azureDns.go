@@ -62,5 +62,6 @@ func init() {
 		Name:        "Azure DNS",
 		Description: "Cloud computing service operated by Microsoft",
 		Website:     "https://azure.microsoft.com/products/dns",
+		Nameservers: []string{`ns\d-\d+\.azure-dns\.(com|net|org|info)`},
 	}, providerReg.RegisterProvider)
 }

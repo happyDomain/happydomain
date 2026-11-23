@@ -58,5 +58,6 @@ func init() {
 		Name:        "Netcup",
 		Description: "German registrar and hosting company",
 		Website:     "https://www.netcup.de",
+		Nameservers: []string{`(root|second|third)-dns\.netcup\.net`},
 	}, providerReg.RegisterProvider)
 }

@@ -54,5 +54,6 @@ func init() {
 		Name:        "DigitalOcean",
 		Description: "Cloud infrastructure provider with managed DNS service.",
 		Website:     "https://www.digitalocean.com",
+		Nameservers: []string{`ns\d\.digitalocean\.com`},
 	}, providerReg.RegisterProvider)
 }

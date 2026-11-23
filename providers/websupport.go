@@ -56,5 +56,6 @@ func init() {
 		Name:        "WebSupport",
 		Description: "Slovak domain registrar and hosting provider (websupport.sk).",
 		Website:     "https://www.websupport.sk",
+		Nameservers: []string{`ns\d\.websupport\.sk`},
 	}, providerReg.RegisterProvider)
 }

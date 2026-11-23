@@ -58,5 +58,6 @@ func init() {
 		Name:        "Huawei Cloud DNS",
 		Description: "Huawei Cloud's global DNS service.",
 		Website:     "https://www.huaweicloud.com",
+		Nameservers: []string{`ns\d\.huaweicloud-dns\.(com|cn|net|org)`},
 	}, providerReg.RegisterProvider)
 }

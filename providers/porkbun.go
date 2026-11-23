@@ -56,5 +56,6 @@ func init() {
 		Name:        "Porkbun",
 		Description: "US Name Registrar.",
 		Website:     "https://porkbun.com",
+		Nameservers: []string{`[a-z]+\.ns\.porkbun\.com`},
 	}, providerReg.RegisterProvider)
 }

@@ -63,5 +63,6 @@ func init() {
 		Name:        "Hurricane Electric",
 		Description: "American Internet service provider.",
 		Website:     "https://dns.he.net",
+		Nameservers: []string{`ns\d\.he\.net`},
 	}, providerReg.RegisterProvider)
 }

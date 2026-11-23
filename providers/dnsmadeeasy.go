@@ -56,5 +56,6 @@ func init() {
 		Name:        "DNSMadeEasy",
 		Description: "Fast and reliable DNS service provider.",
 		Website:     "https://dnsmadeeasy.com",
+		Nameservers: []string{`ns\d+\.dnsmadeeasy\.com`},
 	}, providerReg.RegisterProvider)
 }

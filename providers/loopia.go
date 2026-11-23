@@ -56,5 +56,6 @@ func init() {
 		Name:        "Loopia",
 		Description: "Swedish hosting and DNS provider.",
 		Website:     "https://www.loopia.se",
+		Nameservers: []string{`ns\d\.loopia\.se`},
 	}, providerReg.RegisterProvider)
 }

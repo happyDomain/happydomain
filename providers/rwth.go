@@ -54,5 +54,6 @@ func init() {
 		Name:        "RWTH Aachen University",
 		Description: "German University",
 		Website:     "https://www.rwth-aachen.de",
+		Nameservers: []string{`zs\d\.rz\.rwth-aachen\.de`},
 	}, providerReg.RegisterProvider)
 }

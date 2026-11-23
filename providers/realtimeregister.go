@@ -65,5 +65,6 @@ func init() {
 		Name:        "Realtime Register",
 		Description: "Domain registrar and DNS hosting provider.",
 		Website:     "https://www.realtimeregister.com",
+		Nameservers: []string{`ns\d\.yoursrs\.com`},
 	}, providerReg.RegisterProvider)
 }

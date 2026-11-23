@@ -61,5 +61,6 @@ func init() {
 		Name:        "Hosting.de",
 		Description: "German hosting provider.",
 		Website:     "https://www.hosting.de",
+		Nameservers: []string{`ns\d\.hosting\.de`},
 	}, providerReg.RegisterProvider)
 }

@@ -58,5 +58,6 @@ func init() {
 		Name:        "ClouDNS",
 		Description: "ClouDNS LTD is provider of global Managed DNS services, including GeoDNS, Anycast DNS and DDoS protected DNS",
 		Website:     "https://www.cloudns.net",
+		Nameservers: []string{`(ns|pns|dns)\d+\.cloudns\.(net|uk)`},
 	}, providerReg.RegisterProvider)
 }

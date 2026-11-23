@@ -54,5 +54,6 @@ func init() {
 		Name:        "Hetzner DNS",
 		Description: "German hosting provider with DNS services.",
 		Website:     "https://www.hetzner.com",
+		Nameservers: []string{`helium\.ns\.hetzner\.de`, `(hydrogen|oxygen)\.ns\.hetzner\.com`},
 	}, providerReg.RegisterProvider)
 }

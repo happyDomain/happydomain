@@ -61,5 +61,6 @@ func init() {
 		Name:        "NexDNS",
 		Description: "DNS hosting provider, requires a plan including API access.",
 		Website:     "https://nexdns.io",
+		Nameservers: []string{`ns\d\.nexdns\.io`},
 	}, providerReg.RegisterProvider)
 }

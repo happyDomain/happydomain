@@ -56,5 +56,6 @@ func init() {
 		Name:        "Gidinet",
 		Description: "DNS and domain registrar service with comprehensive management features.",
 		Website:     "https://www.gidinet.com",
+		Nameservers: []string{`dnsl?\d\.gidinet\.com`},
 	}, providerReg.RegisterProvider)
 }

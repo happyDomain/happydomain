@@ -61,5 +61,6 @@ func init() {
 		Name:        "INWX.de",
 		Description: "Berlin-based domain registrar.",
 		Website:     "https://www.inwx.de",
+		Nameservers: []string{`ns2?\.inwx\.de`, `ns3\.inwx\.eu`, `ns4\.inwx\.com`, `ns5\.inwx\.net`},
 	}, providerReg.RegisterProvider)
 }

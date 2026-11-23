@@ -56,5 +56,6 @@ func init() {
 		Name:        "Mythic Beasts",
 		Description: "UK-based internet infrastructure company specializing in domain registration, web hosting, and virtual & dedicated servers.",
 		Website:     "https://www.mythic-beasts.com",
+		Nameservers: []string{`ns\d\.mythic-beasts\.com`},
 	}, providerReg.RegisterProvider)
 }

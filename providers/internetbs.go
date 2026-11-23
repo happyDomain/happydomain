@@ -56,5 +56,6 @@ func init() {
 		Name:        "Internet.bs",
 		Description: "Domain registration and web hosting company based in the Bahamas",
 		Website:     "https://internetbs.net",
+		Nameservers: []string{`ns-(usa|uk|canada)\.topdns\.com`},
 	}, providerReg.RegisterProvider)
 }

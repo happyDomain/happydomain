@@ -54,5 +54,6 @@ func init() {
 		Name:        "Infomaniak",
 		Description: "Swiss cloud and hosting provider with DNS management and privacy-focused services.",
 		Website:     "https://www.infomaniak.com",
+		Nameservers: []string{`ns\d+\.infomaniak\.ch`, `nsany\d\.infomaniak\.com`},
 	}, providerReg.RegisterProvider)
 }

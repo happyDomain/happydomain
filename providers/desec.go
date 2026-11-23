@@ -54,5 +54,6 @@ func init() {
 		Name:        "deSEC",
 		Description: "Free and secure DNS hosting with DNSSEC support.",
 		Website:     "https://desec.io",
+		Nameservers: []string{`ns1\.desec\.io`, `ns2\.desec\.org`},
 	}, providerReg.RegisterProvider)
 }

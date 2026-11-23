@@ -56,5 +56,6 @@ func init() {
 		Name:        "Namecheap",
 		Description: "Domain registrar and web hosting company with DNS management.",
 		Website:     "https://www.namecheap.com",
+		Nameservers: []string{`dns\d\.registrar-servers\.com`},
 	}, providerReg.RegisterProvider)
 }

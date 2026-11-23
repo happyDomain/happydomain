@@ -58,5 +58,6 @@ func init() {
 		Name:        "Sakura Cloud",
 		Description: "Japanees Cloud Provider",
 		Website:     "https://cloud.sakura.ad.jp",
+		Nameservers: []string{`ns\d\.gslb\d+\.sakura\.ne\.jp`},
 	}, providerReg.RegisterProvider)
 }

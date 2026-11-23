@@ -63,5 +63,6 @@ func init() {
 		Name:        "Alibaba Cloud DNS",
 		Description: "Alibaba Cloud's global DNS service (formerly Aliyun DNS).",
 		Website:     "https://www.alibabacloud.com/product/dns",
+		Nameservers: []string{`(ns|vip)\d+\.alidns\.com`, `dns\d+\.hichina\.com`},
 	}, providerReg.RegisterProvider)
 }

@@ -58,5 +58,6 @@ func init() {
 		Name:        "Scaleway",
 		Description: "French cloud hosting provider.",
 		Website:     "https://www.scaleway.com",
+		Nameservers: []string{`ns\d\.dom\.scw\.cloud`},
 	}, providerReg.RegisterProvider)
 }

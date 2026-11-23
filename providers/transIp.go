@@ -58,5 +58,6 @@ func init() {
 		Name:        "TransIP B.V.",
 		Description: "Dutch hosting company",
 		Website:     "https://www.transip.nl",
+		Nameservers: []string{`ns0\.transip\.net`, `ns1\.transip\.nl`, `ns2\.transip\.eu`},
 	}, providerReg.RegisterProvider)
 }

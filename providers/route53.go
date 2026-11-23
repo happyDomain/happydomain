@@ -78,5 +78,6 @@ func init() {
 		Name:        "AWS Route 53",
 		Description: "Amazon's highly available and scalable DNS web service with global anycast network.",
 		Website:     "https://aws.amazon.com/route53/",
+		Nameservers: []string{`ns-\d+\.awsdns-\d+\.(com|net|org|co\.uk)`},
 	}, providerReg.RegisterProvider)
 }

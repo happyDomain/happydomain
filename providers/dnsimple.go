@@ -54,5 +54,6 @@ func init() {
 		Name:        "DNSimple",
 		Description: "Easy DNS hosting provider.",
 		Website:     "https://dnsimple.com",
+		Nameservers: []string{`ns\d\.dnsimple\.com`, `ns\d\.dnsimple-edge\.(com|net|io|org)`},
 	}, providerReg.RegisterProvider)
 }

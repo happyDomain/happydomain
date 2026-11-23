@@ -61,5 +61,7 @@ func init() {
 		Name:        "Netlify",
 		Description: "US remote-first cloud computing company.",
 		Website:     "https://www.netlify.com",
+		// Netlify relies on NS1: this pattern is the one of NS1 too.
+		Nameservers: []string{`dns\d\.p\d+\.nsone\.net`},
 	}, providerReg.RegisterProvider)
 }

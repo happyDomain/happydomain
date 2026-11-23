@@ -64,5 +64,6 @@ func init() {
 		Name:        "Akamai Edge DNS",
 		Description: "American content delivery network and cloud service company",
 		Website:     "https://www.akamai.com/products/edge-dns",
+		Nameservers: []string{`a\d+-\d+\.akam\.net`},
 	}, providerReg.RegisterProvider)
 }

@@ -54,6 +54,12 @@ type ProviderInfos struct {
 
 	// Website is the URL of the provider's website, used for favicon fetching.
 	Website string `json:"website,omitempty"`
+
+	// Nameservers are regular expressions matching the names of the name
+	// servers of the zones hosted by the provider. They apply to the whole
+	// name, in lower case and without its final dot. Leave it empty when the
+	// provider has no name server of its own, such as self-hosted software.
+	Nameservers []string `json:"-"`
 }
 
 // RegisterProviderFunc abstract the registration of a Provider

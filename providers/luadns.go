@@ -56,5 +56,6 @@ func init() {
 		Name:        "LuaDNS",
 		Description: "Bulk DNS hosting company with Git integration",
 		Website:     "https://www.luadns.com",
+		Nameservers: []string{`ns\d\.luadns\.net`},
 	}, providerReg.RegisterProvider)
 }

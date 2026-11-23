@@ -54,5 +54,6 @@ func init() {
 		Name:        "Vultr",
 		Description: "Global cloud infrastructure provider with managed DNS.",
 		Website:     "https://www.vultr.com",
+		Nameservers: []string{`ns\d\.vultr\.com`},
 	}, providerReg.RegisterProvider)
 }

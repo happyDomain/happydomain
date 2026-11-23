@@ -56,5 +56,6 @@ func init() {
 		Name:        "Cloudflare",
 		Description: "Global CDN and DNS provider with advanced features like proxy and DNSSEC support.",
 		Website:     "https://www.cloudflare.com",
+		Nameservers: []string{`[a-z]+\.ns\.cloudflare\.com`},
 	}, providerReg.RegisterProvider)
 }

@@ -61,5 +61,6 @@ func init() {
 		Name:        "DNScale",
 		Description: "European DNS hosting provider with advanced features and API support.",
 		Website:     "https://www.dnscale.com",
+		Nameservers: []string{`ns\d\.dnscale\.(eu|com)`},
 	}, providerReg.RegisterProvider)
 }

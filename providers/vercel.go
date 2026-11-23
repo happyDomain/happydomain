@@ -56,5 +56,6 @@ func init() {
 		Name:        "Vercel",
 		Description: "DNS management for domains associated with Vercel projects.",
 		Website:     "https://vercel.com",
+		Nameservers: []string{`ns\d\.vercel-dns(-\d+)?\.com`},
 	}, providerReg.RegisterProvider)
 }

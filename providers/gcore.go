@@ -54,5 +54,6 @@ func init() {
 		Name:        "Gcore",
 		Description: "Luxembourg cloud provider",
 		Website:     "https://gcore.com",
+		Nameservers: []string{`ns\d\.gcorelabs\.net`, `ns\d\.gcdn\.services`},
 	}, providerReg.RegisterProvider)
 }

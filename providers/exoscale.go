@@ -58,5 +58,6 @@ func init() {
 		Name:        "Exoscale",
 		Description: "Cloud computing provider based in Switzerland, offering infrastructure-as-a-service (IaaS) solutions.",
 		Website:     "https://www.exoscale.com",
+		Nameservers: []string{`ns\d\.exoscale\.(ch|com|io|net)`},
 	}, providerReg.RegisterProvider)
 }

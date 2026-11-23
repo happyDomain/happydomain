@@ -50,5 +50,6 @@ func init() {
 		Name:        "DreamHost",
 		Description: "American web hosting provider and domain registrar.",
 		Website:     "https://www.dreamhost.com",
+		Nameservers: []string{`ns\d\.dreamhost\.com`},
 	}, providerReg.RegisterProvider)
 }

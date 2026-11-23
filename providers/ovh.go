@@ -69,5 +69,6 @@ func init() {
 		Name:        "OVH",
 		Description: "European cloud and hosting provider with DNS services.",
 		Website:     "https://www.ovh.com",
+		Nameservers: []string{`d?ns\d*\.ovh\.net`, `d?ns\d+\.anycast\.me`},
 	}, providerReg.RegisterProvider)
 }

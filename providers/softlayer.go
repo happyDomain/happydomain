@@ -56,5 +56,6 @@ func init() {
 		Name:        "SoftLayer",
 		Description: "Hosting provider, now IBM Cloud.",
 		Website:     "https://cloud.ibm.com",
+		Nameservers: []string{`ns\d\.softlayer\.com`},
 	}, providerReg.RegisterProvider)
 }

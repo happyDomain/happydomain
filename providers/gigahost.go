@@ -54,5 +54,6 @@ func init() {
 		Name:        "Gigahost",
 		Description: "Danish hosting provider with DNS services.",
 		Website:     "https://www.gigahost.dk",
+		Nameservers: []string{`ns\d\.gigahost\.no`},
 	}, providerReg.RegisterProvider)
 }

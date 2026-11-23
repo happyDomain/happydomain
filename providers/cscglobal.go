@@ -58,5 +58,6 @@ func init() {
 		Name:        "CSC Global",
 		Description: "Corporation Service Company (CSC) provides various business, legal, and financial services.",
 		Website:     "https://www.cscglobal.com",
+		Nameservers: []string{`dns\d\.cscdns\.net`, `udns\d\.cscudns\.(com|org)`},
 	}, providerReg.RegisterProvider)
 }

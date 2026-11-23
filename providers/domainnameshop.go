@@ -56,5 +56,6 @@ func init() {
 		Name:        "Domeneshop AS",
 		Description: "Norwegian registrar and hosting company",
 		Website:     "https://domene.shop",
+		Nameservers: []string{`ns\d\.hyp\.net`},
 	}, providerReg.RegisterProvider)
 }

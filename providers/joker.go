@@ -66,5 +66,6 @@ func init() {
 		Name:        "Joker.com",
 		Description: "Domain registrar and DNS hosting service.",
 		Website:     "https://joker.com",
+		Nameservers: []string{`[a-z]\.ns\.joker\.com`},
 	}, providerReg.RegisterProvider)
 }

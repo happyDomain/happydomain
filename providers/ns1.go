@@ -54,5 +54,7 @@ func init() {
 		Name:        "NS1",
 		Description: "Intelligent DNS and traffic management platform (now part of IBM).",
 		Website:     "https://ns1.com",
+		// Netlify serves its zones from there too.
+		Nameservers: []string{`dns\d\.p\d+\.nsone\.net`},
 	}, providerReg.RegisterProvider)
 }

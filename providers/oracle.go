@@ -64,5 +64,6 @@ func init() {
 		Name:        "Oracle Cloud",
 		Description: "American multinational computer technology corporation headquartered in Austin, Texas",
 		Website:     "https://www.oracle.com/cloud/",
+		Nameservers: []string{`ns\d\.p\d+\.dns\.oraclecloud\.net`},
 	}, providerReg.RegisterProvider)
 }

@@ -58,5 +58,6 @@ func init() {
 		Name:        "OpenSRS",
 		Description: "Domain registrar platform and wholesale domain services provider based in Toronto, Canada, and part of Tucows.",
 		Website:     "https://opensrs.com",
+		Nameservers: []string{`ns\d\.systemdns\.com`},
 	}, providerReg.RegisterProvider)
 }

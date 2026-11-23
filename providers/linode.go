@@ -54,5 +54,6 @@ func init() {
 		Name:        "Linode (Akamai)",
 		Description: "Cloud infrastructure provider with managed DNS service.",
 		Website:     "https://www.linode.com",
+		Nameservers: []string{`ns\d\.linode\.com`},
 	}, providerReg.RegisterProvider)
 }

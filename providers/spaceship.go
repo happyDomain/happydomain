@@ -52,5 +52,6 @@ func init() {
 		Name:        "Spaceship",
 		Description: "Domain registrar and DNS provider",
 		Website:     "https://www.spaceship.com",
+		Nameservers: []string{`launch\d\.spaceship\.net`},
 	}, providerReg.RegisterProvider)
 }

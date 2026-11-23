@@ -54,5 +54,6 @@ func init() {
 		Name:        "Packetframe",
 		Description: "Open Source CDN",
 		Website:     "https://packetframe.com",
+		Nameservers: []string{`ns\d\.packetframe\.com`},
 	}, providerReg.RegisterProvider)
 }

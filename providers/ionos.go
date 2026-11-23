@@ -51,5 +51,6 @@ func init() {
 		Name:        "IONOS",
 		Description: "German hosting provider (1&1 IONOS)",
 		Website:     "https://www.ionos.com",
+		Nameservers: []string{`ns\d+\.ui-dns\.(com|org|biz|de)`},
 	}, providerReg.RegisterProvider)
 }

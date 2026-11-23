@@ -54,5 +54,6 @@ func init() {
 		Name:        "Bunny DNS",
 		Description: "High-performance DNS service from Bunny.net CDN.",
 		Website:     "https://bunny.net",
+		Nameservers: []string{`(kiki|coco)\.bunny\.net`},
 	}, providerReg.RegisterProvider)
 }

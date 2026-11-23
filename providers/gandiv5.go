@@ -69,5 +69,6 @@ func init() {
 		Name:        "Gandi",
 		Description: "Domain registrar and hosting provider with LiveDNS service.",
 		Website:     "https://www.gandi.net",
+		Nameservers: []string{`ns-\d+-[abc]\.gandi\.net`},
 	}, providerReg.RegisterProvider)
 }

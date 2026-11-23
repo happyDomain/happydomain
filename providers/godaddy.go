@@ -51,5 +51,6 @@ func init() {
 		Name:        "GoDaddy",
 		Description: "American domain registrar and web hosting company.",
 		Website:     "https://www.godaddy.com",
+		Nameservers: []string{`(ns|pdns)\d+\.domaincontrol\.com`},
 	}, providerReg.RegisterProvider)
 }

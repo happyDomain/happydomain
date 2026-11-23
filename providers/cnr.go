@@ -58,5 +58,6 @@ func init() {
 		Name:        "CentralNic Reseller (CNR)",
 		Description: "DNS and domain management through CentralNic Reseller platform.",
 		Website:     "https://www.centralnicreseller.com",
+		Nameservers: []string{`ns\d\.rrpproxy\.net`},
 	}, providerReg.RegisterProvider)
 }

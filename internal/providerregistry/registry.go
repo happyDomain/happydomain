@@ -24,13 +24,22 @@ package providerregistry
 import (
 	"fmt"
 	"reflect"
+	"regexp"
 	"slices"
+	"strings"
 
 	"git.happydns.org/happyDomain/model"
 )
 
 // providerRegistry stores all existing Provider in happyDNS.
 var providerRegistry = map[string]happydns.ProviderCreator{}
+
+// nameserverMatcher recognizes the name servers of a provider.
+type nameserverMatcher []*regexp.Regexp
+
+// nameserverMatchers stores the compiled ProviderInfos.Nameservers of the
+// registered providers having some.
+var nameserverMatchers = map[string]nameserverMatcher{}
 
 // RegisterProvider registers a provider definition globally.
 func RegisterProvider(creator happydns.ProviderCreatorFunc, infos happydns.ProviderInfos) {
@@ -47,6 +56,37 @@ func RegisterProvider(creator happydns.ProviderCreatorFunc, infos happydns.Provi
 		Creator: creator,
 		Infos:   infos,
 	}
+
+	if len(infos.Nameservers) > 0 {
+		var matcher nameserverMatcher
+		for _, pattern := range infos.Nameservers {
+			matcher = append(matcher, regexp.MustCompile(`^(?:`+pattern+`)$`))
+		}
+		nameserverMatchers[name] = matcher
+	}
+}
+
+// match tells whether ns, in lower case and without its final dot, is a name
+// server of the provider.
+func (m nameserverMatcher) match(ns string) bool {
+	return slices.ContainsFunc(m, func(re *regexp.Regexp) bool { return re.MatchString(ns) })
+}
+
+// MatchNameservers returns, sorted, the types of the providers at least one of
+// the given name servers belongs to.
+func MatchNameservers(nameservers []string) []string {
+	types := []string{}
+
+	for name, matcher := range nameserverMatchers {
+		if slices.ContainsFunc(nameservers, func(ns string) bool {
+			return matcher.match(strings.TrimSuffix(strings.ToLower(ns), "."))
+		}) {
+			types = append(types, name)
+		}
+	}
+
+	slices.Sort(types)
+	return types
 }
 
 // GetProviders returns all registered provider definitions.
