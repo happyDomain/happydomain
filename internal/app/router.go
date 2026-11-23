@@ -175,6 +175,7 @@ func (app *App) setupRouter() {
 			Provider:              app.usecases.provider,
 			ProviderSettings:      app.usecases.providerSettings,
 			ProviderSpecs:         app.usecases.providerSpecs,
+			ProviderSuggestion:    app.usecases.providerSuggestion,
 			RemoteZoneImporter:    app.usecases.orchestrator.RemoteZoneImporter,
 			Resolver:              app.usecases.resolver,
 			Service:               app.usecases.service,

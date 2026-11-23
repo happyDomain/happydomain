@@ -86,6 +86,7 @@ func (app *App) initUsecases() {
 	app.usecases.provider = providerService
 	app.usecases.providerAdmin = providerAdminService
 	app.usecases.providerSettings = usecase.NewProviderSettingsUsecase(app.cfg, app.usecases.provider)
+	app.usecases.providerSuggestion = usecase.NewProviderSuggestionUsecase(app.cfg)
 	app.usecases.service = serviceService
 	app.usecases.serviceSpecs = usecase.NewServiceSpecsUsecase()
 	app.usecases.zone = zoneService

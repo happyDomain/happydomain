@@ -134,6 +134,10 @@ func DeclareRoutes(cfg *happydns.Options, router *gin.RouterGroup, captchaVerifi
 		appConfig["disable_providers"] = true
 	}
 
+	if !happydns.EnableProviderSuggestion {
+		appConfig["disable_provider_suggestion"] = true
+	}
+
 	if cfg.DisableRegistration {
 		appConfig["disable_registration"] = true
 	}

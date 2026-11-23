@@ -51,31 +51,32 @@ import (
 )
 
 type Usecases struct {
-	backup           happydns.BackupUsecase
-	authentication   happydns.AuthenticationUsecase
-	authUser         happydns.AuthUserUsecase
-	authUserAdmin    happydns.AdminAuthUserUsecase
-	domain           happydns.DomainUsecase
-	domainAdmin      happydns.AdminDomainUsecase
-	domainInfo       happydns.DomainInfoUsecase
-	domainLog        happydns.DomainLogUsecase
-	domainWatch      happydns.DomainWatchUsecase
-	emailAutoconfig  happydns.EmailAutoconfigUsecase
-	mtasts           happydns.MTASTSUsecase
-	bimi             happydns.BIMIUsecase
-	provider         happydns.ProviderUsecase
-	providerAdmin    happydns.ProviderUsecase
-	providerSpecs    happydns.ProviderSpecsUsecase
-	providerSettings happydns.ProviderSettingsUsecase
-	resolver         happydns.ResolverUsecase
-	session          happydns.SessionUsecase
-	service          happydns.ServiceUsecase
-	serviceSpecs     happydns.ServiceSpecsUsecase
-	user             happydns.UserUsecase
-	userAdmin        happydns.AdminUserUsecase
-	zone             happydns.ZoneUsecase
-	zoneService      happydns.ZoneServiceUsecase
-	zoneTemplate     happydns.ZoneTemplateUsecase
+	backup             happydns.BackupUsecase
+	authentication     happydns.AuthenticationUsecase
+	authUser           happydns.AuthUserUsecase
+	authUserAdmin      happydns.AdminAuthUserUsecase
+	domain             happydns.DomainUsecase
+	domainAdmin        happydns.AdminDomainUsecase
+	domainInfo         happydns.DomainInfoUsecase
+	domainLog          happydns.DomainLogUsecase
+	domainWatch        happydns.DomainWatchUsecase
+	emailAutoconfig    happydns.EmailAutoconfigUsecase
+	mtasts             happydns.MTASTSUsecase
+	bimi               happydns.BIMIUsecase
+	provider           happydns.ProviderUsecase
+	providerAdmin      happydns.ProviderUsecase
+	providerSpecs      happydns.ProviderSpecsUsecase
+	providerSettings   happydns.ProviderSettingsUsecase
+	providerSuggestion happydns.ProviderSuggestionUsecase
+	resolver           happydns.ResolverUsecase
+	session            happydns.SessionUsecase
+	service            happydns.ServiceUsecase
+	serviceSpecs       happydns.ServiceSpecsUsecase
+	user               happydns.UserUsecase
+	userAdmin          happydns.AdminUserUsecase
+	zone               happydns.ZoneUsecase
+	zoneService        happydns.ZoneServiceUsecase
+	zoneTemplate       happydns.ZoneTemplateUsecase
 
 	orchestrator *orchestrator.Orchestrator
 
