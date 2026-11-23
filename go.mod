@@ -55,7 +55,7 @@ require (
 	github.com/libdns/spaceship v1.0.0
 	github.com/miekg/dns v1.1.73
 	github.com/mileusna/useragent v1.3.5
-	github.com/oracle/nosql-go-sdk v1.4.8
+	github.com/oracle/nosql-go-sdk v1.4.9
 	github.com/ovh/go-ovh v1.10.0
 	github.com/rrivera/identicon v0.0.0-20240116195454-d5ba35832c0d
 	github.com/sbrunk/libdns-hostinger v0.1.2
