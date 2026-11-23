@@ -140,4 +140,84 @@ describe("NewDomain", () => {
         );
         expect(ondone).not.toHaveBeenCalled();
     });
+
+    describe("with a suggestion", () => {
+        const ovh = { _id: "p3", _srctype: "OVHAPI", _comment: "My OVH" } as unknown as Provider;
+        const suggestion = { nameservers: ["ns103.ovh.net.", "dns103.ovh.net."], providers: ["OVHAPI"] };
+
+        it("only offers the accounts of the suggested provider, and tells why", async () => {
+            providers.set([ddns, ovh]);
+            const ondone = vi.fn();
+            render(NewDomain);
+            controls.Open({ ondone, suggestion });
+
+            expect(await screen.findByText(/ns103\.ovh\.net, dns103\.ovh\.net/)).toBeInTheDocument();
+            expect(screen.queryByRole("button", { name: /Mine/ })).toBeNull();
+            expect(
+                screen.getByRole("button", { name: /Monitor a domain hosted elsewhere/ }),
+            ).toBeInTheDocument();
+
+            await userEvent.click(screen.getByRole("button", { name: /My OVH/ }));
+            expect(ondone).toHaveBeenCalledWith(ovh);
+        });
+
+        it("offers the other accounts on demand", async () => {
+            providers.set([ddns, ovh]);
+            render(NewDomain);
+            controls.Open({ suggestion });
+
+            await userEvent.click(await screen.findByRole("button", { name: /Use another provider/ }));
+
+            expect(screen.getByRole("button", { name: /Mine/ })).toBeInTheDocument();
+            expect(screen.getByRole("button", { name: /My OVH/ })).toBeInTheDocument();
+            expect(screen.queryByText(/ns103\.ovh\.net/)).toBeNull();
+        });
+
+        it("offers to connect the suggested provider to a user without account", async () => {
+            providers.set([]);
+            render(NewDomain);
+            controls.Open({ suggestion });
+
+            await userEvent.click(
+                await screen.findByRole("button", { name: /Connect a new OVHAPI account/ }),
+            );
+
+            await vi.waitFor(() =>
+                expect(
+                    screen.queryByRole("button", { name: /Connect a new OVHAPI account/ }),
+                ).toBeNull(),
+            );
+            // Straight to its settings: not among all the types.
+            expect(screen.queryByRole("button", { name: /Dynamic DNS/ })).toBeNull();
+        });
+
+        it("lets a user without account connect any other provider", async () => {
+            providers.set([]);
+            render(NewDomain);
+            controls.Open({ suggestion });
+
+            await userEvent.click(await screen.findByRole("button", { name: /Use another provider/ }));
+
+            expect(await screen.findByRole("button", { name: /Dynamic DNS/ })).toBeInTheDocument();
+        });
+
+        it("tells which account refused the domain", async () => {
+            providers.set([ovh]);
+            render(NewDomain);
+            controls.Open({ suggestion, failure: { provider: ovh, message: "no such zone" } });
+
+            expect(await screen.findByRole("alert")).toHaveTextContent(/“My OVH”: no such zone/);
+        });
+
+        it("forgets the suggestion the next time it opens", async () => {
+            providers.set([ddns, ovh]);
+            render(NewDomain);
+            controls.Open({ suggestion, failure: { provider: ovh, message: "no such zone" } });
+            await screen.findByRole("alert");
+            controls.Open();
+
+            expect(await screen.findByRole("button", { name: /Mine/ })).toBeInTheDocument();
+            expect(screen.queryByRole("alert")).toBeNull();
+        });
+    });
 });

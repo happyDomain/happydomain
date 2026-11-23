@@ -25,8 +25,17 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 vi.mock("$app/navigation", () => ({ goto: vi.fn() }));
 
+const suggestion = vi.hoisted(() => ({
+    addDomainSomewhere: vi.fn(),
+    addDomainTo: vi.fn(),
+    addDomainToOnly: vi.fn(),
+}));
+vi.mock("$lib/provider_suggestion", () => suggestion);
+
 import { domains } from "$lib/stores/domains";
-import { filteredName } from "$lib/stores/home";
+import { filteredName, filteredProvider } from "$lib/stores/home";
+import type { Provider } from "$lib/model/provider";
+import { providers } from "$lib/stores/providers";
 import { loadTranslations } from "$lib/translations";
 import FilterDomainInput from "./FilterDomainInput.svelte";
 
@@ -37,6 +46,9 @@ beforeAll(async () => {
 afterEach(() => {
     filteredName.set("");
     domains.set(undefined);
+    filteredProvider.set(null);
+    providers.set(undefined);
+    vi.clearAllMocks();
 });
 
 async function typeName(name: string) {
@@ -69,5 +81,35 @@ describe("FilterDomainInput", () => {
 
         expect(screen.getByText(/character “_” is unusual/)).toHaveClass("text-warning-emphasis");
         expect(add).toBeEnabled();
+    });
+
+    describe("adding the domain", () => {
+        const first = { _id: "p1", _srctype: "OVHAPI" } as Provider;
+        const second = { _id: "p2", _srctype: "GandiAPI" } as Provider;
+        const addition = expect.objectContaining({ domain: "example.com" });
+
+        it("goes to the provider the list is filtered on", async () => {
+            providers.set([first, second]);
+            filteredProvider.set(second);
+            await userEvent.click(await typeName("example.com"));
+
+            expect(suggestion.addDomainTo).toHaveBeenCalledExactlyOnceWith(addition, second);
+            expect(suggestion.addDomainSomewhere).not.toHaveBeenCalled();
+        });
+
+        it("goes to the only account first", async () => {
+            providers.set([first]);
+            await userEvent.click(await typeName("example.com"));
+
+            expect(suggestion.addDomainToOnly).toHaveBeenCalledExactlyOnceWith(addition, first);
+            expect(suggestion.addDomainSomewhere).not.toHaveBeenCalled();
+        });
+
+        it("relies on the name servers with several accounts", async () => {
+            providers.set([first, second]);
+            await userEvent.click(await typeName("example.com"));
+
+            expect(suggestion.addDomainSomewhere).toHaveBeenCalledExactlyOnceWith(addition);
+        });
     });
 });

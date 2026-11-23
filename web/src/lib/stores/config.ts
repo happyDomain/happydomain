@@ -29,6 +29,7 @@ interface AppConfig {
     captcha_site_key?: string;
     disable_checker_scheduler?: boolean;
     disable_embedded_login?: boolean;
+    disable_provider_suggestion?: boolean;
     disable_providers?: boolean;
     disable_registration?: boolean;
     enable_keystore_extraction?: boolean;
@@ -46,6 +47,7 @@ const defaultConfig: AppConfig = {
     admin_auth_required: false,
     disable_checker_scheduler: false,
     disable_embedded_login: false,
+    disable_provider_suggestion: false,
     disable_providers: false,
     disable_registration: false,
     enable_keystore_extraction: false,

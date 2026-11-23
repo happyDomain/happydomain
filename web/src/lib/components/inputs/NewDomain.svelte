@@ -34,11 +34,10 @@
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
-    import { addDomain } from "$lib/api/domains";
-    import { controls as newDomainControls } from "$lib/components/modals/NewDomain.svelte";
     import { validateDomain } from "$lib/dns";
     import type { Domain } from "$lib/model/domain";
     import type { Provider } from "$lib/model/provider";
+    import { addDomainSomewhere, addDomainTo } from "$lib/provider_suggestion";
     import { refreshDomains } from "$lib/stores/domains";
     import { t } from "$lib/translations";
 
@@ -78,41 +77,24 @@
             return;
         }
 
-        if (!provider) {
-            newDomainControls.Open({ ondone: onProviderSelected });
-            addingNewDomain = false;
+        const addition = {
+            domain: value,
+            added: onDomainAdded,
+            busy: (busy: boolean) => (addingNewDomain = busy),
+        };
+        if (provider) {
+            await addDomainTo(addition, provider);
         } else {
-            addDomain(value, provider).then(
-                (domain) => {
-                    addingNewDomain = false;
-                    value = "";
-                    dispatch("newDomainAdded", domain);
-                    refreshDomains().then(() => onadded?.(domain));
-                },
-                (error) => {
-                    addingNewDomain = false;
-                    throw error;
-                },
-            );
+            await addDomainSomewhere(addition);
         }
     }
 
-    async function onProviderSelected(selectedProvider: Provider) {
-        addingNewDomain = true;
-        addDomain(value, selectedProvider).then(
-            (domain) => {
-                addingNewDomain = false;
-                value = "";
-                dispatch("newDomainAdded", domain);
-                // The domain page looks the domain up in the list: it has to
-                // know about it before onadded can take the user there.
-                refreshDomains().then(() => onadded?.(domain));
-            },
-            (error) => {
-                addingNewDomain = false;
-                throw error;
-            },
-        );
+    function onDomainAdded(domain: Domain) {
+        value = "";
+        dispatch("newDomainAdded", domain);
+        // The domain page looks the domain up in the list: it has to
+        // know about it before onadded can take the user there.
+        refreshDomains().then(() => onadded?.(domain));
     }
 
     let newDomainState: boolean | undefined = $derived(validateNewDomain(value));

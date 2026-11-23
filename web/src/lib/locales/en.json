@@ -794,6 +794,11 @@
         "read-only-title": "HappyDomain reads the zone through this provider but never changes it",
         "kind": "domain provider",
         "select-provider": "Select the DNS provider hosting your zone:",
+        "suggestion": {
+            "connect": "Connect a new {{provider}} account",
+            "hosted-by": "According to its name servers ({{nameservers}}), your domain seems to be hosted by: {{providers}}.",
+            "refused": "The domain could not be added to “{{provider}}”: {{error}}"
+        },
         "provider-name": "Host's name",
         "provider-type": "Hosting provider type",
         "title": "Your domain providers",

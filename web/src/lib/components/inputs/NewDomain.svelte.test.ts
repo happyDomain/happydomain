@@ -1,10 +1,11 @@
 import { render, screen } from "@testing-library/svelte";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Domain } from "$lib/model/domain";
 import type { Provider } from "$lib/model/provider";
 import type { NewDomainRequest } from "$lib/components/modals/NewDomain.svelte";
+import { providers } from "$lib/stores/providers";
 import { loadTranslations } from "$lib/translations";
 import NewDomain from "./NewDomain.svelte";
 
@@ -18,11 +19,18 @@ vi.mock("$lib/stores/domains", () => ({
     refreshDomains: () => refreshDomains(),
 }));
 
+const getProviderSuggestion = vi.hoisted(() => vi.fn());
+vi.mock("$lib/api/provider_suggestion", () => ({ getProviderSuggestion }));
+
 const openNewDomain = vi.fn((_request?: NewDomainRequest) => {});
 
 vi.mock("$lib/components/modals/NewDomain.svelte", () => ({
     controls: { Open: (request?: NewDomainRequest) => openNewDomain(request) },
 }));
+
+beforeEach(() => {
+    getProviderSuggestion.mockResolvedValue({ nameservers: [], providers: [] });
+});
 
 beforeAll(async () => {
     await loadTranslations("en", "/");
@@ -30,6 +38,7 @@ beforeAll(async () => {
 
 afterEach(() => {
     vi.clearAllMocks();
+    providers.set(undefined);
     document.querySelectorAll("form").forEach((form) => form.remove());
 });
 
@@ -135,8 +144,29 @@ describe("New domain input", () => {
         await user.type(screen.getByPlaceholderText("my.new.domain."), "example.com");
         await user.click(screen.getByRole("button", { name: /Add new domain/ }));
 
-        expect(openNewDomain).toHaveBeenCalledWith({ ondone: expect.any(Function) });
+        await vi.waitFor(() =>
+            expect(openNewDomain).toHaveBeenCalledWith({ ondone: expect.any(Function) }),
+        );
         expect(addDomain).not.toHaveBeenCalled();
+    });
+
+    it("adds the domain where its name servers tell, when no provider is set", async () => {
+        const user = userEvent.setup();
+        const ovh = { _id: "ovh", _srctype: "OVHAPI" } as Provider;
+        providers.set([ovh]);
+        getProviderSuggestion.mockResolvedValueOnce({
+            nameservers: ["ns103.ovh.net."],
+            providers: ["OVHAPI"],
+        });
+        const onNewDomainAdded = vi.fn();
+        mount({ onNewDomainAdded });
+
+        await user.type(screen.getByPlaceholderText("my.new.domain."), "example.com");
+        await user.click(screen.getByRole("button", { name: /Add new domain/ }));
+
+        await vi.waitFor(() => expect(onNewDomainAdded).toHaveBeenCalled());
+        expect(addDomain).toHaveBeenCalledExactlyOnceWith("example.com", ovh);
+        expect(openNewDomain).not.toHaveBeenCalled();
     });
 
     it("skips adding the domain when preAddFunc rejects it", async () => {
@@ -195,7 +225,7 @@ describe("New domain input", () => {
         await user.type(screen.getByPlaceholderText("my.new.domain."), "example.com");
         await user.click(screen.getByRole("button", { name: /Add new domain/ }));
 
-        expect(openNewDomain).toHaveBeenCalled();
+        await vi.waitFor(() => expect(openNewDomain).toHaveBeenCalled());
 
         openNewDomain.mock.calls[0][0]!.ondone!({ _id: "picked-provider" } as Provider);
 

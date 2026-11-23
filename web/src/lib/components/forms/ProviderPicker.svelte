@@ -28,6 +28,7 @@
     import ImgProvider from "$lib/components/providers/ImgProvider.svelte";
     import type { Provider } from "$lib/model/provider";
     import type { ProviderForm } from "$lib/model/provider_form.svelte.ts";
+    import { matchingProviders } from "$lib/provider_suggestion";
     import {
         providers,
         providersSpecs,
@@ -45,6 +46,8 @@
         formId?: string;
         /** Bound by parent so it can conditionalize its footer. */
         providerType?: string;
+        /** Types of the providers to offer first; emptied when the user wants another one. */
+        suggestedTypes?: string[];
         /** Called when a provider has been selected or created. */
         ondone?: (provider: Provider) => void;
     }
@@ -54,6 +57,7 @@
         form = $bindable({} as ProviderForm),
         formId = "providerpicker",
         providerType = $bindable(""),
+        suggestedTypes = $bindable([]),
         ondone,
     }: Props = $props();
 
@@ -65,13 +69,36 @@
         addingProvider = false;
         ondone?.(provider);
     }
+
+    let offered = $derived(
+        suggestedTypes.length
+            ? matchingProviders($providers ?? [], suggestedTypes)
+            : ($providers ?? []),
+    );
+
+    function typeName(ptype: string): string {
+        return $providersSpecs?.[ptype]?.name ?? ptype;
+    }
+
+    function connect(ptype: string): void {
+        // Left over when the same type has been given up before.
+        form = {} as ProviderForm;
+        providerType = ptype;
+        addingProvider = true;
+    }
+
+    function useAnother(): void {
+        suggestedTypes = [];
+        // There is nothing to pick from: go straight to adding one.
+        if (!$providers?.length) addingProvider = true;
+    }
 </script>
 
 {#if addingProvider}
     <ProviderConnect bind:form bind:providerType {formId} ondone={providerAdded} />
 {:else}
     <ListGroup>
-        {#each $providers ?? [] as provider (provider._id)}
+        {#each offered as provider (provider._id)}
             <ListGroupItem
                 tag="button"
                 class="d-flex align-items-center gap-3"
@@ -90,25 +117,46 @@
                         {/if}
                     </div>
                     <small class="text-muted">
-                        {#if $providersSpecs && $providersSpecs[provider._srctype]}
-                            {$providersSpecs[provider._srctype].name}
-                        {:else}
-                            {provider._srctype}
-                        {/if}
+                        {typeName(provider._srctype)}
                     </small>
                 </div>
                 <Icon name="chevron-right" class="ms-auto text-muted" />
             </ListGroupItem>
         {/each}
-        <ListGroupItem
-            tag="button"
-            class="d-flex align-items-center gap-3 text-primary"
-            onclick={() => (addingProvider = true)}
-        >
-            <Icon name="plus-circle" style="font-size: 1.5em; flex-shrink: 0;" />
-            <div class="text-start fw-semibold">
-                {$t("common.add-new-thing", { thing: $t("provider.kind") })}
-            </div>
-        </ListGroupItem>
+        {#if suggestedTypes.length}
+            {#each suggestedTypes as ptype (ptype)}
+                <ListGroupItem
+                    tag="button"
+                    class="d-flex align-items-center gap-3 text-primary"
+                    onclick={() => connect(ptype)}
+                >
+                    <Icon name="plus-circle" style="font-size: 1.5em; flex-shrink: 0;" />
+                    <div class="text-start fw-semibold">
+                        {$t("provider.suggestion.connect", { provider: typeName(ptype) })}
+                    </div>
+                </ListGroupItem>
+            {/each}
+            <ListGroupItem
+                tag="button"
+                class="d-flex align-items-center gap-3 text-muted"
+                onclick={useAnother}
+            >
+                <Icon name="list-ul" style="font-size: 1.5em; flex-shrink: 0;" />
+                <div class="text-start">
+                    {$t("provider.another")}
+                </div>
+            </ListGroupItem>
+        {:else}
+            <ListGroupItem
+                tag="button"
+                class="d-flex align-items-center gap-3 text-primary"
+                onclick={() => (addingProvider = true)}
+            >
+                <Icon name="plus-circle" style="font-size: 1.5em; flex-shrink: 0;" />
+                <div class="text-start fw-semibold">
+                    {$t("common.add-new-thing", { thing: $t("provider.kind") })}
+                </div>
+            </ListGroupItem>
+        {/if}
     </ListGroup>
 {/if}

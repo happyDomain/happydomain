@@ -885,6 +885,11 @@
         "read-only-title": "HappyDomain lit la zone par cet hébergeur mais ne la modifie jamais",
         "kind": "un hébergeur de domaines",
         "select-provider": "Sélectionnez d'abord l'hébergeur de votre domaine :",
+        "suggestion": {
+            "connect": "Connecter un nouveau compte {{provider}}",
+            "hosted-by": "D'après ses serveurs de noms ({{nameservers}}), votre domaine semble hébergé par : {{providers}}.",
+            "refused": "Le domaine n'a pas pu être ajouté à « {{provider}} » : {{error}}"
+        },
         "provider-name": "Nom de l'hébergeur",
         "provider-type": "Type d'hébergement",
         "title": "Les hébergeurs de vos domaines",

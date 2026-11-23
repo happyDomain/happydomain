@@ -22,6 +22,7 @@
 -->
 
 <script module lang="ts">
+    import type { ProviderSuggestion } from "$lib/api/provider_suggestion";
     import type { Provider } from "$lib/model/provider";
 
     export interface NewDomainRequest {
@@ -30,6 +31,10 @@
         // Without it, the dialog goes on with importing domains from the
         // provider.
         ondone?: (provider: Provider) => void;
+        // suggestion tells which providers to offer first.
+        suggestion?: ProviderSuggestion;
+        // failure tells which account already refused the domain, and why.
+        failure?: { provider: Provider; message: string };
     }
 
     // The dialog is mounted once, by each page opening it: the home page and
@@ -43,6 +48,7 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import {
+        Alert,
         Button,
         Icon,
         ModalBody,
@@ -58,7 +64,11 @@
     import SettingsStateButtons from "$lib/components/providers/SettingsStateButtons.svelte";
     import { updateProvider } from "$lib/api/provider";
     import type { ProviderForm } from "$lib/model/provider_form.svelte.ts";
-    import { providers, refreshProviders } from "$lib/stores/providers";
+    import {
+        providers,
+        providersSpecs,
+        refreshProviders,
+    } from "$lib/stores/providers";
     import { toasts } from "$lib/stores/toasts";
     import { t } from "$lib/translations";
 
@@ -81,13 +91,17 @@
     let pickingDiscovery = $state(false);
 
     let isOpen = $state(false);
-    let request: NewDomainRequest = {};
+    let request: NewDomainRequest = $state.raw({});
+    // Emptied by the picker when the user wants another provider.
+    let suggestedTypes: string[] = $state([]);
 
     function Open(newRequest: NewDomainRequest = {}): void {
         isOpen = true;
         request = newRequest;
         step = 0;
-        addingProvider = !$providers || $providers.length === 0;
+        suggestedTypes = newRequest.suggestion?.providers ?? [];
+        addingProvider =
+            suggestedTypes.length === 0 && (!$providers || $providers.length === 0);
         providerType = "";
         myProvider = {} as Provider;
         noDomainsList = false;
@@ -151,11 +165,18 @@
         goto(resolve("/domains/[dn]", { dn }));
     }
 
+    function typeName(ptype: string): string {
+        return $providersSpecs?.[ptype]?.name ?? ptype;
+    }
+
     function previous(): void {
         if (providerType) {
             form.previousState().then(() => {
-                if (form.state < 0) providerType = "";
-                else form = form;
+                if (form.state < 0) {
+                    providerType = "";
+                    // Back to the suggestions this type was picked from.
+                    if (suggestedTypes.length) addingProvider = false;
+                } else form = form;
             });
         } else if (addingProvider && $providers && $providers.length > 0) {
             addingProvider = false;
@@ -172,13 +193,35 @@
 
     <ModalBody>
         {#if step === 0}
-            <p>
-                {$t("provider.select-provider")}
-            </p>
+            {#if request.failure}
+                <Alert color="warning" fade={false}>
+                    {$t("provider.suggestion.refused", {
+                        provider:
+                            request.failure.provider._comment ||
+                            typeName(request.failure.provider._srctype),
+                        error: request.failure.message,
+                    })}
+                </Alert>
+            {/if}
+            {#if suggestedTypes.length && request.suggestion}
+                <p>
+                    {$t("provider.suggestion.hosted-by", {
+                        providers: suggestedTypes.map(typeName).join(", "),
+                        nameservers: request.suggestion.nameservers
+                            .map((ns) => ns.replace(/\.$/, ""))
+                            .join(", "),
+                    })}
+                </p>
+            {:else}
+                <p>
+                    {$t("provider.select-provider")}
+                </p>
+            {/if}
             <ProviderPicker
                 bind:addingProvider
                 bind:form
                 bind:providerType
+                bind:suggestedTypes
                 formId="newdomainproviderform"
                 ondone={onProviderSelected}
             />

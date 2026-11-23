@@ -35,13 +35,16 @@
         Spinner,
     } from "@sveltestrap/sveltestrap";
 
-    import { addDomain } from "$lib/api/domains";
     import DomainNameIssue from "$lib/components/inputs/DomainNameIssue.svelte";
-    import { controls as newDomainControls } from "$lib/components/modals/NewDomain.svelte";
     import { domainNameIssue, domainNameIssueBlocks, fqdn, validateDomain } from "$lib/dns";
     import { domains, refreshDomains } from "$lib/stores/domains";
     import { filterDomains, filteredName, filteredProvider } from "$lib/stores/home";
-    import type { Provider } from "$lib/model/provider";
+    import type { Domain } from "$lib/model/domain";
+    import {
+        addDomainSomewhere,
+        addDomainTo,
+        addDomainToOnly,
+    } from "$lib/provider_suggestion";
     import { providers } from "$lib/stores/providers";
     import { t } from "$lib/translations";
 
@@ -64,32 +67,27 @@
         }
     }
 
-    function addDomainToProvider() {
+    async function addDomainToProvider() {
+        const addition = {
+            domain: $filteredName,
+            added: openDomain,
+            busy: (busy: boolean) => (addingNewDomain = busy),
+        };
         if ($filteredProvider) {
-            addDomainAndOpen($filteredProvider);
+            await addDomainTo(addition, $filteredProvider);
         } else if ($providers && $providers.length == 1) {
-            addDomainAndOpen($providers[0]);
+            await addDomainToOnly(addition, $providers[0]);
         } else {
-            newDomainControls.Open({ ondone: addDomainAndOpen });
+            await addDomainSomewhere(addition);
         }
     }
 
-    // addDomainAndOpen takes the user to the domain once added. The domain
-    // page looks the domain up in the list: it has to be refreshed first.
-    function addDomainAndOpen(provider: Provider) {
-        addingNewDomain = true;
-        addDomain($filteredName, provider).then(
-            async (domain) => {
-                await refreshDomains();
-                addingNewDomain = false;
-                filteredName.set("");
-                goto(domainLinks().overview(domain.domain));
-            },
-            (error) => {
-                addingNewDomain = false;
-                throw error;
-            },
-        );
+    // openDomain takes the user to the domain once added. The domain page
+    // looks the domain up in the list: it has to be refreshed first.
+    async function openDomain(domain: Domain) {
+        await refreshDomains();
+        filteredName.set("");
+        goto(domainLinks().overview(domain.domain));
     }
 
     let newDomainState: boolean | undefined = $derived(validateNewDomain($filteredName));

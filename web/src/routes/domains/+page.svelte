@@ -36,13 +36,13 @@
         Row,
     } from "@sveltestrap/sveltestrap";
 
-    import { addDomain } from "$lib/api/domains";
     import PageTitle from "$lib/components/PageTitle.svelte";
     import DomainTable from "$lib/components/domains/Table.svelte";
     import NewDomainModal, {
         controls as newDomainControls,
     } from "$lib/components/modals/NewDomain.svelte";
-    import type { Provider } from "$lib/model/provider";
+    import type { Domain } from "$lib/model/domain";
+    import { addDomainSomewhere } from "$lib/provider_suggestion";
     import { domains, refreshDomains } from "$lib/stores/domains";
     import { providers } from "$lib/stores/providers";
     import { toasts } from "$lib/stores/toasts";
@@ -92,12 +92,15 @@
 
     $effect(() => {
         if (newDomainName) {
-            newDomainControls.Open({ ondone: onNewDomainProviderSelected });
+            // Coming from a mere link, nothing is added unless the user asks.
+            addDomainSomewhere(
+                { domain: newDomainName, added: onNewDomainAdded },
+                { auto: false },
+            );
         }
     });
 
-    async function onNewDomainProviderSelected(provider: Provider) {
-        const domain = await addDomain(newDomainName!, provider);
+    function onNewDomainAdded(domain: Domain) {
         toasts.addToast({
             title: $t("domains.attached-new"),
             message: $t("domains.added-success", { domain: domain.domain }),
