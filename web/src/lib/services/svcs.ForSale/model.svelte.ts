@@ -62,9 +62,12 @@ export function isForSaleTag(tag: string | null): tag is ForSaleTag {
 /**
  * Split a for-sale record into its tag and value. A single space following the
  * version tag is tolerated, as RFC 10023 section 3.6 allows.
+ *
+ * Trailing whitespace is kept: the editor shows the parsed value back on each
+ * key press, so trimming it would swallow the space ending a word being typed.
  */
 export function parseForSale(txt: string): ForSalePair {
-    const trimmed = txt.trim();
+    const trimmed = txt.trimStart();
 
     if (!trimmed.startsWith(FORSALE_VERSION)) {
         return { tag: null, value: trimmed, invalidVersion: true, malformed: false };

@@ -105,6 +105,21 @@ describe("For Sale editor", () => {
         expect(svc.published()).toEqual(["v=FORSALE1;ftxt=Cheap!"]);
     });
 
+    it("keeps the spaces typed in a message, one key press each", async () => {
+        const user = userEvent.setup();
+        const svc = mount();
+
+        await user.click(screen.getByRole("button", { name: "Message" }));
+        const input = screen.getByPlaceholderText("Call for info.");
+
+        await user.type(input, "Call ");
+        expect(input).toHaveValue("Call ");
+
+        await user.type(input, "for info.");
+        expect(input).toHaveValue("Call for info.");
+        expect(svc.published()).toEqual(["v=FORSALE1;ftxt=Call for info."]);
+    });
+
     it("replaces the placeholder bare record instead of adding alongside it", async () => {
         const user = userEvent.setup();
         const svc = mount([txtRecord(FORSALE_VERSION)]);

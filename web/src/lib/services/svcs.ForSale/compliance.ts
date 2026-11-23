@@ -108,7 +108,7 @@ function forsaleSync(raw: Record<string, any>, _ctx: ComplianceContext): Complia
             continue;
         }
 
-        const pair = parseForSale(txt);
+        const pair = parseForSale(txt.trim());
 
         if (pair.malformed) {
             issues.push({

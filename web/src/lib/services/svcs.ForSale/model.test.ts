@@ -87,13 +87,18 @@ describe("parseForSale", () => {
         expect(parseForSale("v=FORSALE1;garbage").malformed).toBe(true);
     });
 
-    it("tolerates surrounding whitespace around the whole record", () => {
-        expect(parseForSale("  v=FORSALE1;fval=USD750  ")).toEqual({
+    it("tolerates whitespace before the version tag", () => {
+        expect(parseForSale("  v=FORSALE1;fval=USD750")).toEqual({
             tag: "fval",
             value: "USD750",
             invalidVersion: false,
             malformed: false,
         });
+    });
+
+    it("keeps the trailing whitespace of the value", () => {
+        expect(parseForSale("v=FORSALE1;ftxt=Call ").value).toBe("Call ");
+        expect(parseForSale("v=FORSALE1;ftxt= ").value).toBe(" ");
     });
 
     it("reports an empty tag before the =", () => {

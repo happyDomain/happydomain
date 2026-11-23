@@ -109,6 +109,11 @@ describe("For Sale compliance", () => {
         expect(ids(run([rr("v=FORSALE1;ftxt=" + "a".repeat(239))]))).toEqual([]);
     });
 
+    it("ignores the whitespace ending a record", () => {
+        expect(ids(run([rr("v=FORSALE1;fval=USD750 ")]))).toEqual([]);
+        expect(ids(run([rr("v=FORSALE1;ftxt= ")]))).toContain("forsale.empty-value");
+    });
+
     it("flags a malformed price", () => {
         for (const value of ["750", "usd750", "USD", "USD1.2.3"]) {
             expect(ids(run([rr("v=FORSALE1;fval=" + value)]))).toContain("forsale.invalid-price");
